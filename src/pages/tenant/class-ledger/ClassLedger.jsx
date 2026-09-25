@@ -34,6 +34,8 @@ import {
   DialogActions,
   Skeleton,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
@@ -70,6 +72,7 @@ import {
 import useNotification from '@/hooks/useNotification';
 import StudentLedgerModal from './StudentLedgerModal';
 import LearnerWalletTransactionsModal from './LearnerWalletTransactionsModal';
+import StudentCategoryPlacementTab from './components/StudentCategoryPlacementTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -114,6 +117,8 @@ const ClassLedger = () => {
   const [bursarySessionTermId, setBursarySessionTermId] = useState(null);
 
   const notify = useNotification();
+
+  const [mainTab, setMainTab] = useState(0);
 
   const handleFilterChange = React.useCallback(async (key, val) => {
     if (key === 'programme') {
@@ -494,6 +499,22 @@ const ClassLedger = () => {
   return (
     <PageContainer title="Class Ledger">
       <Breadcrumb title="Class Ledger" items={BCrumb} />
+
+      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={mainTab}
+          onChange={(e, val) => setMainTab(val)}
+          sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
+        >
+          <Tab label="Class Ledger" />
+          <Tab label="Student Category Placement" />
+        </Tabs>
+      </Box>
+
+      {mainTab === 1 && <StudentCategoryPlacementTab />}
+
+      {mainTab === 0 && (
+        <>
       <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
@@ -1001,6 +1022,8 @@ const ClassLedger = () => {
           onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
+        </>
+      )}
 
       <StudentLedgerModal
         open={isLedgerModalOpen}

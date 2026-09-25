@@ -103,6 +103,9 @@ export const updateAdmissionStatus = async (formNumber, status, options = {}) =>
   if (options.class_arm_id) {
     payload.class_arm_id = options.class_arm_id;
   }
+  if (options.bursary_payment_category_id) {
+    payload.bursary_payment_category_id = options.bursary_payment_category_id;
+  }
   if (options.admission_number) {
     payload.admission_number = options.admission_number;
   }

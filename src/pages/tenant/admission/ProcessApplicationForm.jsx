@@ -29,16 +29,8 @@ import {
   HourglassEmpty as PendingIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import {
-  IconId,
-  IconCalendar,
-  IconMapPin,
-  IconSchool,
-  IconCheck,
-  IconX,
-} from '@tabler/icons-react';
+import { IconCheck, IconX } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
-import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
 import {
   getApplicantByFormNumber,
@@ -50,9 +42,10 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import WardReview from '@/components/tenant/admission/review/WardReview';
-import AcademicReview from '@/components/tenant/admission/review/AcademicReview';
-import DocumentsReview from '@/components/tenant/admission/review/DocumentsReview';
+import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
+import WardReview from './process-review/WardReview';
+import AcademicReview from './process-review/AcademicReview';
+import DocumentsReview from './process-review/DocumentsReview';
 
 const statusConfig = {
   admitted: { label: 'Admitted', color: 'success', icon: CheckCircleIcon },
@@ -60,33 +53,6 @@ const statusConfig = {
   pending: { label: 'Pending', color: 'warning', icon: PendingIcon },
   revoked: { label: 'Revoked', color: 'error', icon: CancelIcon },
 };
-
-const DetailRow = ({ icon: Icon, label, value }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-    <Box
-      sx={{
-        width: 32,
-        height: 32,
-        borderRadius: 1,
-        bgcolor: 'primary.light',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <Icon size={16} />
-    </Box>
-    <Box sx={{ minWidth: 0 }}>
-      <Typography variant="caption" color="text.secondary">
-        {label}
-      </Typography>
-      <Typography variant="body2" fontWeight={600} noWrap>
-        {value || '—'}
-      </Typography>
-    </Box>
-  </Box>
-);
 
 const readOnlyFieldSx = {
   '& .MuiOutlinedInput-root': {
@@ -106,8 +72,6 @@ const ProcessApplicationForm = () => {
   const [admission, setAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [newStatus, setNewStatus] = useState('');
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, status: '' });
   const [declineDialog, setDeclineDialog] = useState({ open: false, reason: '' });
   const [revokeDialog, setRevokeDialog] = useState({ open: false, reason: '' });
   // ── Admit form state (shown by default) ──
@@ -115,9 +79,11 @@ const ProcessApplicationForm = () => {
     programmes: [],
     classes: [],
     classArms: [],
+    payCategories: [],
     selectedProgramme: '',
     selectedClass: '',
     selectedClassArm: '',
+    selectedPayCategory: '',
     admissionNumber: '',
     hasCodeFormat: false,
   });
@@ -140,7 +106,6 @@ const ProcessApplicationForm = () => {
         const response = await getApplicantByFormNumber(form_number);
         const data = response?.data ?? response;
         setAdmission(data);
-        setNewStatus(data?.admission_status || 'pending');
       } catch (err) {
         console.error('Failed to load admission:', err);
         notify.error('Failed to load application details');
@@ -156,13 +121,15 @@ const ProcessApplicationForm = () => {
   const loadAdmitFormData = useCallback(async () => {
     setAdmitFormLoading(true);
     try {
-      const [programmesRes, codeFormatRes] = await Promise.all([
+      const [programmesRes, codeFormatRes, payCategoriesRes] = await Promise.all([
         fetchProgrammes(),
         fetchAdmissionCodeFormat(),
+        fetchActiveCategories(),
       ]);
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
       const hasCodeFormat = !!codeFormatRes?.data?.code_format;
-      setAdmitForm((prev) => ({ ...prev, programmes, hasCodeFormat }));
+      const payCategories = Array.isArray(payCategoriesRes?.data) ? payCategoriesRes.data : [];
+      setAdmitForm((prev) => ({ ...prev, programmes, hasCodeFormat, payCategories }));
     } catch (err) {
       console.error('Failed to load admit form data:', err);
     } finally {
@@ -181,7 +148,6 @@ const ProcessApplicationForm = () => {
       const response = await getApplicantByFormNumber(form_number);
       const data = response?.data ?? response;
       setAdmission(data);
-      setNewStatus(data?.admission_status || 'pending');
       // Reload fresh form data after status change
       loadAdmitFormData();
     } catch (err) {
@@ -190,33 +156,6 @@ const ProcessApplicationForm = () => {
   }, [form_number, loadAdmitFormData]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────
-  const handleStatusChange = (e) => {
-    const status = e.target.value;
-    if (status === admission.admission_status) return;
-    setConfirmDialog({ open: true, status });
-  };
-
-  const handleConfirmStatus = async () => {
-    const status = confirmDialog.status;
-    setConfirmDialog({ open: false, status: '' });
-    setSubmitting(true);
-    try {
-      await updateAdmissionStatus(form_number, status);
-      notify.success(`Application status updated to "${statusConfig[status]?.label || status}"`);
-      setAdmission((prev) => ({ ...prev, admission_status: status }));
-      setNewStatus(status);
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to update admission status');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancelConfirm = () => {
-    setConfirmDialog({ open: false, status: '' });
-    setNewStatus(admission?.admission_status || 'pending');
-  };
-
   const handleBack = () => {
     navigate('/process-applications');
   };
@@ -375,92 +314,43 @@ const ProcessApplicationForm = () => {
           </Button>
         </Box>
 
-        {/* ── Applicant Summary Card ────────────────────────────────────── */}
+        {/* ── Application Form Details (each section supplies its own
+             card chrome via ReviewSection — no outer card wrapper here) ── */}
+        <Stack spacing={3} sx={{ position: 'relative', zIndex: 1 }}>
+          <WardReview
+            wardData={wardData}
+            intendingClass={
+              admission.intending_class?.class_code || admission.intending_class?.class_name
+            }
+            selectedBatch={selectedBatch}
+            academicData={academicData}
+          />
 
-        {/* ── Application Form Details ──────────────────────────────────── */}
-        <ParentCard
-          title="Application Form Details"
-          sx={{
-            position: 'relative',
-            zIndex: 1,
-            bgcolor: (theme) => theme.palette.background.paper,
-            boxShadow: (theme) =>
-              theme.palette.mode === 'dark'
-                ? '0 4px 24px rgba(0,0,0,0.4)'
-                : '0 2px 16px rgba(0,0,0,0.08)',
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'divider',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)'
-                  : 'linear-gradient(90deg, #6366f1 0%, #7c3aed 100%)',
-              borderRadius: '3px 3px 0 0',
-            },
-          }}
-        >
-          <Stack spacing={3}>
-            <WardReview
-              wardData={wardData}
-              intendingClass={
-                admission.intending_class?.class_code || admission.intending_class?.class_name
-              }
-              selectedBatch={selectedBatch}
-              academicData={academicData}
-            />
+          <AcademicReview
+            academicData={academicData}
+            intendingClass={
+              admission.intending_class?.class_code || admission.intending_class?.class_name
+            }
+            selectedBatch={selectedBatch}
+          />
 
-            <Divider />
+          <DocumentsReview
+            documentsData={documentsData}
+            hasPreviousSchool={Boolean(admission.has_previous_school)}
+          />
+        </Stack>
 
-            <AcademicReview
-              academicData={academicData}
-              intendingClass={
-                admission.intending_class?.class_code || admission.intending_class?.class_name
-              }
-              selectedBatch={selectedBatch}
-            />
-
-            <Divider />
-
-            <DocumentsReview
-              documentsData={documentsData}
-              hasPreviousSchool={Boolean(admission.has_previous_school)}
-            />
-          </Stack>
-        </ParentCard>
-
-        {/* ── Parent/Guardian Information ───────────────────────────────── */}
+        {/* ── Parent/Guardian Information (quiet, read-only reference card) ── */}
         <Paper
+          variant="outlined"
           sx={{
             p: 3,
             mb: 3,
-            borderRadius: 3,
             mt: 3,
+            borderRadius: 3,
             position: 'relative',
             zIndex: 1,
             bgcolor: (theme) => theme.palette.background.paper,
-            boxShadow: (theme) =>
-              theme.palette.mode === 'dark'
-                ? '0 4px 24px rgba(0,0,0,0.4)'
-                : '0 2px 16px rgba(0,0,0,0.08)',
-            border: '1px solid',
-            borderColor: 'divider',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: 4,
-              height: '100%',
-              bgcolor: 'primary.main',
-              borderRadius: '3px 0 0 3px',
-            },
           }}
         >
           <Typography
@@ -470,21 +360,8 @@ const ProcessApplicationForm = () => {
             alignItems="center"
             gap={1}
             mb={2}
-            sx={{ pl: 1 }}
           >
-            <Box
-              sx={{
-                width: 28,
-                height: 28,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <PersonIcon fontSize="small" sx={{ color: 'primary.dark' }} />
-            </Box>
+            <PersonIcon fontSize="small" sx={{ color: 'text.secondary' }} />
             Parent / Guardian Information
           </Typography>
 
@@ -728,28 +605,8 @@ const ProcessApplicationForm = () => {
           </Grid>
 
           {/* ── Admit Section (always visible) ────────────────────────── */}
-          <Box
-            sx={{
-              p: 3,
-              mt: 2.5,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(99,102,241,0.1)' : 'rgba(99,102,241,0.06)',
-              borderRadius: 3,
-              border: '2px solid',
-              borderColor: (theme) =>
-                admission.admission_status === 'admitted'
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(76,175,80,0.5)'
-                    : 'rgba(76,175,80,0.5)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(99,102,241,0.5)'
-                    : 'rgba(99,102,241,0.35)',
-              boxShadow: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? '0 2px 16px rgba(0,0,0,0.3)'
-                  : '0 2px 16px rgba(99,102,241,0.12)',
-            }}
-          >
+          <Divider sx={{ mt: 2.5, mb: 2.5 }} />
+          <Box>
             <Typography
               variant="subtitle2"
               fontWeight={700}
@@ -929,77 +786,81 @@ const ProcessApplicationForm = () => {
                       slotProps={{ input: { readOnly: true } }}
                     />
                   ) : (
-                    <>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={600}
-                        sx={{ mb: 1, display: 'block' }}
+                    <FormControl fullWidth size="small" disabled={!admitForm.selectedClass}>
+                      <InputLabel>Class Arm *</InputLabel>
+                      <Select
+                        value={admitForm.selectedClassArm}
+                        label="Class Arm *"
+                        onChange={(e) =>
+                          setAdmitForm((prev) => ({
+                            ...prev,
+                            selectedClassArm: e.target.value,
+                          }))
+                        }
                       >
-                        Select Class Arm *
-                      </Typography>
-                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                         {admitFormLoading ? (
-                          <CircularProgress size={20} sx={{ ml: 1 }} />
+                          <MenuItem disabled>
+                            <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                          </MenuItem>
                         ) : admitForm.classArms.length > 0 ? (
-                          admitForm.classArms.map((arm) => {
-                            const isSelected = admitForm.selectedClassArm === arm.id;
-                            return (
-                              <Chip
-                                key={arm.id}
-                                label={
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 0.5,
-                                    }}
-                                  >
-                                    <Typography variant="body2" fontWeight={isSelected ? 700 : 500}>
-                                      {arm.class_arm_names}
-                                    </Typography>
-                                    {arm.student_count !== undefined && (
-                                      <Typography
-                                        variant="caption"
-                                        sx={{
-                                          color: isSelected ? 'common.white' : 'text.secondary',
-                                          opacity: 0.8,
-                                        }}
-                                      >
-                                        ({arm.student_count})
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                }
-                                variant={isSelected ? 'filled' : 'outlined'}
-                                color={isSelected ? 'primary' : 'default'}
-                                onClick={() =>
-                                  setAdmitForm((prev) => ({
-                                    ...prev,
-                                    selectedClassArm: arm.id,
-                                  }))
-                                }
-                                sx={{
-                                  cursor: 'pointer',
-                                  fontWeight: isSelected ? 700 : 500,
-                                  transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    transform: 'translateY(-1px)',
-                                    boxShadow: isSelected ? 2 : 1,
-                                  },
-                                }}
-                              />
-                            );
-                          })
+                          [
+                            <MenuItem key="" value="">
+                              -- Select Class Arm --
+                            </MenuItem>,
+                            ...admitForm.classArms.map((arm) => (
+                              <MenuItem key={arm.id} value={arm.id}>
+                                {arm.class_arm_names}
+                                {arm.student_count !== undefined &&
+                                  ` — (${arm.student_count} learner${arm.student_count === 1 ? '' : 's'})`}
+                              </MenuItem>
+                            )),
+                          ]
                         ) : (
-                          <Typography variant="caption" color="text.disabled" sx={{ py: 1 }}>
+                          <MenuItem disabled value="">
                             {admitForm.selectedProgramme
                               ? 'No class arms available'
                               : 'Select a programme first'}
-                          </Typography>
+                          </MenuItem>
                         )}
-                      </Stack>
-                    </>
+                      </Select>
+                    </FormControl>
+                  )}
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  {admission.admission_status === 'admitted' ? (
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Pay Category"
+                      value={
+                        admitForm.payCategories.find(
+                          (c) => c.id === admission.admitted_bursary_payment_category_id,
+                        )?.name || '—'
+                      }
+                      slotProps={{ input: { readOnly: true } }}
+                    />
+                  ) : (
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Pay Category *</InputLabel>
+                      <Select
+                        value={admitForm.selectedPayCategory}
+                        label="Pay Category *"
+                        onChange={(e) =>
+                          setAdmitForm((prev) => ({
+                            ...prev,
+                            selectedPayCategory: e.target.value,
+                          }))
+                        }
+                      >
+                        <MenuItem value="">-- Select Pay Category --</MenuItem>
+                        {admitForm.payCategories.map((cat) => (
+                          <MenuItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
                 </Grid>
               </Grid>
@@ -1041,12 +902,20 @@ const ProcessApplicationForm = () => {
                         selectedProgramme,
                         selectedClass,
                         selectedClassArm,
+                        selectedPayCategory,
                         admissionNumber,
                         hasCodeFormat,
                       } = admitForm;
 
-                      if (!selectedProgramme || !selectedClass || !selectedClassArm) {
-                        notify.warning('Please select programme, class, and class arm');
+                      if (
+                        !selectedProgramme ||
+                        !selectedClass ||
+                        !selectedClassArm ||
+                        !selectedPayCategory
+                      ) {
+                        notify.warning(
+                          'Please select programme, class, class arm, and pay category',
+                        );
                         return;
                       }
 
@@ -1057,7 +926,14 @@ const ProcessApplicationForm = () => {
 
                       setAdmitConfirmDialog({ open: true });
                     }}
-                    disabled={submitting}
+                    disabled={
+                      submitting ||
+                      !admitForm.selectedProgramme ||
+                      !admitForm.selectedClass ||
+                      !admitForm.selectedClassArm ||
+                      !admitForm.selectedPayCategory ||
+                      (!admitForm.hasCodeFormat && !admitForm.admissionNumber.trim())
+                    }
                     sx={{
                       fontWeight: 600,
                       borderRadius: 2,
@@ -1329,6 +1205,13 @@ const ProcessApplicationForm = () => {
                         ?.class_arm_names || '—'}
                     </strong>
                   </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Pay Category:{' '}
+                    <strong>
+                      {admitForm.payCategories.find((c) => c.id === admitForm.selectedPayCategory)
+                        ?.name || '—'}
+                    </strong>
+                  </Typography>
                   {!admitForm.hasCodeFormat && admitForm.admissionNumber && (
                     <Typography variant="caption" color="text.secondary">
                       Admission Number: <strong>{admitForm.admissionNumber}</strong>
@@ -1360,6 +1243,7 @@ const ProcessApplicationForm = () => {
                     programme_id: admitForm.selectedProgramme,
                     class_id: admitForm.selectedClass,
                     class_arm_id: admitForm.selectedClassArm,
+                    bursary_payment_category_id: admitForm.selectedPayCategory,
                     admission_number: admitForm.hasCodeFormat
                       ? null
                       : admitForm.admissionNumber.trim(),
@@ -1510,37 +1394,6 @@ const ProcessApplicationForm = () => {
               sx={{ fontWeight: 600 }}
             >
               {submitting ? 'Processing...' : 'Yes, Revoke'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* ── Status Update Confirmation ────────────────────────────────── */}
-        <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 600 }}>Update Admission Status</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" color="text.secondary">
-              Are you sure you want to change the admission status for <strong>{fullName}</strong>{' '}
-              to{' '}
-              <Chip
-                label={statusConfig[confirmDialog.status]?.label || confirmDialog.status}
-                size="small"
-                color={statusConfig[confirmDialog.status]?.color || 'default'}
-                sx={{ fontWeight: 600 }}
-              />
-              ?
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={handleCancelConfirm}>
-              Cancel
-            </Button>
-            <Button
-              size="small"
-              color={confirmDialog.status === 'declined' ? 'error' : 'primary'}
-              onClick={handleConfirmStatus}
-              disabled={submitting}
-            >
-              {submitting ? 'Updating...' : 'Confirm'}
             </Button>
           </DialogActions>
         </Dialog>

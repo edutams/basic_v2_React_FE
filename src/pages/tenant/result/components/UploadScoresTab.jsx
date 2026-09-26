@@ -271,7 +271,9 @@ const UploadScoresTab = () => {
   };
 
   const handleUploaded = () => {
-    showSnackbar('Operation completed successfully!');
+    // No toast here — UploadResultDialog/UploadCaExamDialog already show
+    // their own inline success message, and this fires while their dialog
+    // is still open, where a separate toast would render behind it anyway.
     fetchAllocations();
   };
 
@@ -778,6 +780,7 @@ const UploadScoresTab = () => {
         autoHideDuration={3000}
         onClose={() => setSnackbar(s => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert onClose={() => setSnackbar(s => ({ ...s, open: false }))} severity={snackbar.severity}>
           {snackbar.message}

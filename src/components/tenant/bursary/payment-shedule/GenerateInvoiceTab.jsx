@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useMemo } from 'react';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
 import {
   fetchBursarySessionTerms,
@@ -30,12 +30,15 @@ import {
   Chip,
   TablePagination,
   Alert,
+  LinearProgress,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   Search as SearchIcon,
-  AssignmentTurnedIn as AssignmentTurnedInIcon,
   CheckCircle as CheckCircleIcon,
+  GroupsOutlined as GroupsIcon,
+  TaskAltOutlined as TaskAltIcon,
+  PendingActionsOutlined as PendingIcon,
 } from '@mui/icons-material';
 
 const GenerateInvoiceTab = ({
@@ -56,7 +59,11 @@ const GenerateInvoiceTab = ({
 
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
-  const [selectedSessionTermId, setSelectedSessionTermId] = useState('');
+  // Session and term are picked separately — `sessions` is still a flat
+  // list of session_term rows underneath, but selectedSessionTermId below
+  // is derived from these two rather than picked directly.
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedTermId, setSelectedTermId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -73,6 +80,26 @@ const GenerateInvoiceTab = ({
   // True when at least one bursary schedule exists for the selected class & session
   const hasSchedules =
     !loadingScheduleData && scheduleData.length > 0 && tableCategories.length > 0;
+
+  const distinctSessions = useMemo(() => {
+    const bySessionId = new Map();
+    sessions.forEach((item) => {
+      if (!bySessionId.has(item.session_id)) {
+        bySessionId.set(item.session_id, item);
+      }
+    });
+    return Array.from(bySessionId.values());
+  }, [sessions]);
+
+  const termsForSelectedSession = useMemo(
+    () => sessions.filter((item) => item.session_id === selectedSessionId),
+    [sessions, selectedSessionId],
+  );
+
+  const selectedSessionTermId =
+    sessions.find(
+      (item) => item.session_id === selectedSessionId && item.term_id === selectedTermId,
+    )?.id || '';
 
   const selectedSessionLabel =
     sessions.find((s) => s.id === selectedSessionTermId)?.session?.session_name || '';
@@ -102,7 +129,8 @@ const GenerateInvoiceTab = ({
           const activeSessionTerm = activeRes?.status ? activeRes.data : null;
           const defaultItem =
             (activeSessionTerm && list.find((item) => item.id === activeSessionTerm.id)) || list[0];
-          setSelectedSessionTermId(defaultItem.id);
+          setSelectedSessionId(defaultItem.session_id);
+          setSelectedTermId(defaultItem.term_id);
         }
       } catch (err) {
         console.error('Failed to load session terms', err);
@@ -115,6 +143,17 @@ const GenerateInvoiceTab = ({
     };
     loadSessions();
   }, []);
+
+  // If the picked term doesn't exist for whichever session is now selected
+  // (e.g. switching to a session that only has two terms set up so far),
+  // fall back to the first term that session does have.
+  useEffect(() => {
+    if (!selectedSessionId || termsForSelectedSession.length === 0) return;
+    const stillValid = termsForSelectedSession.some((item) => item.term_id === selectedTermId);
+    if (!stillValid) {
+      setSelectedTermId(termsForSelectedSession[0].term_id);
+    }
+  }, [selectedSessionId, termsForSelectedSession, selectedTermId]);
 
   // Fetch classes on mount
   useEffect(() => {
@@ -171,7 +210,15 @@ const GenerateInvoiceTab = ({
     loadClassInvoiceStatus();
   }, [selectedSessionTermId, classes.length]);
 
-  // Fetch schedule data when session term or selected class changes
+  // Only re-fetches on an explicit "Fetch" click, not on every keystroke —
+  // matches the Fetch-button convention used elsewhere in this app (no
+  // auto-fetch while typing).
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
+
+  // Fetch schedule data when session term, selected class, or the applied
+  // search term changes. Filtering by payment name happens server-side
+  // (`search` param) rather than over the already-loaded rows, so the
+  // table and its totals only ever reflect what the backend matched.
   useEffect(() => {
     const loadScheduleData = async () => {
       if (!selectedSessionTermId) return;
@@ -181,6 +228,7 @@ const GenerateInvoiceTab = ({
         const data = await fetchGenerateInvoiceData({
           sessionTermId: selectedSessionTermId,
           classId: selectedClass || undefined,
+          search: appliedSearchQuery || undefined,
         });
         const categories = Array.isArray(data?.categories) ? data.categories : [];
         setTableCategories(categories);
@@ -212,15 +260,14 @@ const GenerateInvoiceTab = ({
       }
     };
     loadScheduleData();
-  }, [selectedSessionTermId, selectedClass]);
+  }, [selectedSessionTermId, selectedClass, appliedSearchQuery]);
 
   const calculateTotal = (column) => {
-    return scheduleData
-      .reduce((sum, row) => {
-        const value = row[column];
-        return sum + (typeof value === 'number' ? value : 0);
-      }, 0)
-      .toLocaleString();
+    const total = scheduleData.reduce((sum, row) => {
+      const value = row[column];
+      return sum + (typeof value === 'number' ? value : 0);
+    }, 0);
+    return `₦${total.toLocaleString()}`;
   };
 
   useEffect(() => {
@@ -252,7 +299,8 @@ const GenerateInvoiceTab = ({
   };
 
   const handleFetch = () => {
-    showSnackbar?.(`Fetching data for ${selectedClass}...`, 'info');
+    setAppliedSearchQuery(searchQuery.trim());
+    setPage(0);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -270,41 +318,62 @@ const GenerateInvoiceTab = ({
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            flexDirection: { xs: 'column', lg: 'row' },
             justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
+            alignItems: { xs: 'stretch', lg: 'center' },
             gap: 2,
             mb: 3,
           }}
         >
-          <FormControl size="small" sx={{ minWidth: { sm: 200 } }}>
-            <InputLabel>Session Term</InputLabel>
-            <Select
-              value={selectedSessionTermId}
-              label="Session Term"
-              onChange={(e) => setSelectedSessionTermId(e.target.value)}
-              disabled={loadingSessions}
-            >
-              {loadingSessions ? (
-                <MenuItem disabled>
-                  <CircularProgress size={16} />
-                </MenuItem>
-              ) : (
-                sessions.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.session?.session_name} - {item.term?.term_name}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <FormControl size="small" sx={{ minWidth: { sm: 180 } }}>
+              <InputLabel>Session</InputLabel>
+              <Select
+                value={selectedSessionId}
+                label="Session"
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                disabled={loadingSessions}
+              >
+                {loadingSessions ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={16} />
                   </MenuItem>
-                ))
-              )}
-            </Select>
-          </FormControl>
+                ) : (
+                  distinctSessions.map((item) => (
+                    <MenuItem key={item.session_id} value={item.session_id}>
+                      {item.session?.session_name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
 
-          <Stack direction="row" spacing={1} alignItems="center">
+            <FormControl size="small" sx={{ minWidth: { sm: 160 } }}>
+              <InputLabel>Term</InputLabel>
+              <Select
+                value={selectedTermId}
+                label="Term"
+                onChange={(e) => setSelectedTermId(e.target.value)}
+                disabled={loadingSessions || termsForSelectedSession.length === 0}
+              >
+                {termsForSelectedSession.map((item) => (
+                  <MenuItem key={item.term_id} value={item.term_id}>
+                    {item.term?.term_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="center">
             <TextField
               size="small"
-              placeholder="Search"
+              placeholder="Search payment item..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFetch();
+              }}
               slotProps={{
                 input: {
                   startAdornment: (
@@ -314,16 +383,29 @@ const GenerateInvoiceTab = ({
                   ),
                 },
               }}
-              sx={{ width: 250 }}
+              sx={{ width: { xs: '100%', sm: 320 } }}
             />
+
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleFetch}
+              sx={{ fontWeight: 600, minWidth: 90, whiteSpace: 'nowrap' }}
+            >
+              Fetch
+            </Button>
 
             <Button
               variant="contained"
               size="small"
-              onClick={handleFetch}
-              sx={{ fontWeight: 600, minWidth: 100 }}
+              disabled={!hasSchedules}
+              onClick={() => {
+                const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
+                window.open(url, '_blank');
+              }}
+              sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
             >
-              Fetch
+              Generate Invoice
             </Button>
           </Stack>
         </Box>
@@ -394,111 +476,145 @@ const GenerateInvoiceTab = ({
           )}
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            alignItems: { xs: 'stretch', sm: 'center' },
-            mb: 2,
-            gap: 2,
-          }}
-        >
-          <Alert severity="info" sx={{ flex: 1 }}>
-            Payment Schedule for {selectedSessionLabel} - {selectedClassName}
-          </Alert>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button
-              variant="contained"
-              size="small"
-              disabled={!hasSchedules}
-              onClick={() => {
-                const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-                window.open(url, '_blank');
-              }}
-              sx={{ fontWeight: 600 }}
-            >
-              Generate Invoice / {selectedClassName}
-            </Button>
-          </Stack>
-        </Box>
-
         {selectedClass && (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: 2,
-                mb: 1,
-                p: 2,
-                bgcolor: isDark ? 'background.default' : 'grey.50',
-                borderRadius: 1,
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'grey.200',
-              }}
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              mb: 2,
+              borderRadius: 2,
+              bgcolor: isDark ? 'background.default' : '#fff',
+            }}
+          >
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              justifyContent="space-between"
             >
-              <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ flex: 1 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Students
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700}>
-                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.total}
-                  </Typography>
+              <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'grey.100',
+                      color: 'text.secondary',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <GroupsIcon sx={{ fontSize: 18 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Total Students
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+                      {loadingCounts ? <CircularProgress size={16} /> : studentCounts.total}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Invoice Generated
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="success.main">
-                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.generated}
-                  </Typography>
+
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(0,194,146,0.15)' : '#ebfaf2',
+                      color: 'success.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <TaskAltIcon sx={{ fontSize: 18 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Invoices Generated
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color="success.main"
+                      sx={{ lineHeight: 1.2 }}
+                    >
+                      {loadingCounts ? <CircularProgress size={16} /> : studentCounts.generated}
+                    </Typography>
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pending
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="error.main">
-                    {loadingCounts ? <CircularProgress size={16} /> : studentCounts.pending}
-                  </Typography>
+
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box
+                    sx={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor:
+                        studentCounts.pending > 0
+                          ? isDark
+                            ? 'rgba(253,201,15,0.15)'
+                            : '#fff4e5'
+                          : isDark
+                            ? 'rgba(0,194,146,0.15)'
+                            : '#ebfaf2',
+                      color: studentCounts.pending > 0 ? 'warning.main' : 'success.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <PendingIcon sx={{ fontSize: 18 }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Still Pending
+                    </Typography>
+                    <Typography
+                      variant="h6"
+                      fontWeight={700}
+                      color={studentCounts.pending > 0 ? 'warning.main' : 'success.main'}
+                      sx={{ lineHeight: 1.2 }}
+                    >
+                      {loadingCounts ? <CircularProgress size={16} /> : studentCounts.pending}
+                    </Typography>
+                  </Box>
                 </Box>
               </Stack>
-            </Box>
 
-            {hasSchedules && studentCounts.pending > 0 && (
-              <Alert
-                severity="warning"
-                action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    color="warning"
-                    onClick={handleGenerateForPending}
-                    sx={{ fontWeight: 600, whiteSpace: 'nowrap', ml: 2 }}
-                  >
-                    Generate Now
-                  </Button>
-                }
-                sx={{ mb: 2, alignItems: 'center' }}
-              >
-                <Typography variant="body2" fontWeight={600}>
-                  {studentCounts.pending} student(s) still need invoice generation. Click
-                  &quot;Generate Now&quot; to go to the invoice page and generate for pending
-                  students.
-                </Typography>
-              </Alert>
-            )}
+              {hasSchedules && studentCounts.pending > 0 && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="warning"
+                  onClick={handleGenerateForPending}
+                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  Generate for {studentCounts.pending} Pending
+                </Button>
+              )}
+            </Stack>
 
-            {hasSchedules && studentCounts.total > 0 && studentCounts.pending === 0 && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                <Typography variant="body2" fontWeight={600}>
-                  All {studentCounts.total} student(s) have invoices generated successfully.
+            {hasSchedules && studentCounts.total > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(studentCounts.generated / studentCounts.total) * 100}
+                  color={studentCounts.pending === 0 ? 'success' : 'warning'}
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  {studentCounts.pending === 0
+                    ? `All ${studentCounts.total} student(s) have invoices generated`
+                    : `${studentCounts.generated} of ${studentCounts.total} student(s) invoiced — ${studentCounts.pending} left to go`}
                 </Typography>
-              </Alert>
+              </Box>
             )}
-          </>
+          </Paper>
         )}
 
         {/* Empty state - no bursary schedules configured */}
@@ -559,7 +675,16 @@ const GenerateInvoiceTab = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {scheduleData.map((row) => (
+                {scheduleData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2 + tableCategories.length} align="center" sx={{ py: 4 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No payment item matches &quot;{appliedSearchQuery}&quot;
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  scheduleData.map((row) => (
                   <TableRow key={row.id} hover>
                     <TableCell>{row.id}</TableCell>
                     <TableCell>
@@ -573,13 +698,14 @@ const GenerateInvoiceTab = ({
                       return (
                         <TableCell key={cat.id}>
                           <Typography variant="body2">
-                            {typeof amount === 'number' ? amount.toLocaleString() : amount || '-'}
+                            {typeof amount === 'number' ? `₦${amount.toLocaleString()}` : amount || '-'}
                           </Typography>
                         </TableCell>
                       );
                     })}
                   </TableRow>
-                ))}
+                  ))
+                )}
                 <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
                   <TableCell colSpan={2}>
                     <Typography variant="body2" fontWeight={700}>

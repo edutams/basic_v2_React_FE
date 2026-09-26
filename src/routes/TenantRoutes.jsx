@@ -123,11 +123,15 @@ const ChartOfAccounts = Loadable(
 const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
 const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
 const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
-const ResultConsiderationPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')));
+const ResultConsiderationPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')),
+);
 const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
 const ScoreSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreSheetPage')));
 const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBreakdownPage')));
-const PerformanceAnalyticsPage = Loadable(lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')));
+const PerformanceAnalyticsPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')),
+);
 const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
@@ -135,7 +139,9 @@ const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/Report
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
-const CommunicationsPage = Loadable(lazy(() => import('@/pages/tenant/communications/CommunicationsPage')));
+const CommunicationsPage = Loadable(
+  lazy(() => import('@/pages/tenant/communications/CommunicationsPage')),
+);
 
 const TenantRoutes = [
   {
@@ -525,7 +531,7 @@ const TenantRoutes = [
       {
         path: 'result-cabreakdown',
         element: (
-          <TenantProtectedRoute permission="result.client.cabreakdown">
+          <TenantProtectedRoute permission="result.client.ca_breakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),

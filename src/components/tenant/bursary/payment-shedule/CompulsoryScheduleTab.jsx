@@ -48,6 +48,7 @@ import EditPaymentItemModal from './EditPaymentItemModal';
 import {
   fetchTermsBySessionTerm,
   fetchPaymentSchedules,
+  fetchClasses,
   deletePaymentSchedule,
   deletePaymentSchedulesByPaymentName,
   togglePaymentScheduleStatus,
@@ -76,6 +77,11 @@ const CompulsoryScheduleTab = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [scheduleData, setScheduleData] = useState([]);
+  // Every class in the school — cross-referenced against each payment
+  // item's own payschedules below so a class that's never had a schedule
+  // entered for it still shows up as a clickable "add" chip, instead of
+  // silently not appearing at all.
+  const [allClasses, setAllClasses] = useState([]);
 
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -129,6 +135,12 @@ const CompulsoryScheduleTab = ({
     loadData();
   }, [sessionId, termId]);
 
+  useEffect(() => {
+    fetchClasses()
+      .then((res) => setAllClasses(Array.isArray(res?.data) ? res.data : []))
+      .catch(() => showSnackbar?.('Failed to load classes', 'error'));
+  }, []);
+
   const loadPaymentSchedules = async (searchTerm = '') => {
     if (!sessionId || !selectedTermId || !categoryId) return;
     try {
@@ -145,7 +157,7 @@ const CompulsoryScheduleTab = ({
       // Transform the data to match expected structure
       if (data?.data && Array.isArray(data.data)) {
         const transformedData = data.data.map((paymentName) => {
-          const classes =
+          const scheduledClasses =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.class_id,
               name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
@@ -155,6 +167,24 @@ const CompulsoryScheduleTab = ({
               status: schedule.status,
               invoices_count: schedule.invoices_count || 0,
             })) || [];
+
+          // Classes with no payschedule row at all for this payment item
+          // never show up above — without this, they'd silently not
+          // render anything (not even a clickable "add" chip), instead of
+          // telling the bursar this payment still needs to be set for them.
+          const scheduledIds = new Set(scheduledClasses.map((c) => c.id));
+          const unscheduledClasses = allClasses
+            .filter((cls) => !scheduledIds.has(cls.id))
+            .map((cls) => ({
+              id: cls.id,
+              name: cls.class_code || cls.class_name || `Class ${cls.id}`,
+              amount: 0,
+              schedule_id: null,
+              bursary_installment_id: null,
+              status: null,
+              invoices_count: 0,
+            }));
+          const classes = [...scheduledClasses, ...unscheduledClasses];
 
           return {
             payment_name: {
@@ -188,7 +218,7 @@ const CompulsoryScheduleTab = ({
 
   useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey]);
+  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey, allClasses]);
 
   const [schedules, setSchedules] = useState({});
 
@@ -454,18 +484,6 @@ const CompulsoryScheduleTab = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" fontWeight={600}>
-          Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.term?.term_name ||
-            terms[currentTerm]?.display_term?.display_name ||
-            terms[currentTerm]?.name ||
-            terms[currentTerm]?.term_name ||
-            (loadingTerms ? 'Loading...' : '')}{' '}
-          ({categoryLabel || '...'})
-        </Typography>
-      </Alert>
-
       <Paper sx={{ p: 1.5 }}>
         <Box
           display="flex"
@@ -626,11 +644,15 @@ const CompulsoryScheduleTab = ({
                             return (
                               <Chip
                                 key={cls.id}
+                                variant={hasAmount ? 'filled' : 'outlined'}
+                                icon={
+                                  hasAmount ? undefined : (
+                                    <AddIcon sx={{ fontSize: 14, color: 'error.main !important' }} />
+                                  )
+                                }
                                 label={
                                   <Tooltip title="Click to set or edit payment amount">
-                                    <span>
-                                      {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
-                                    </span>
+                                    <span>{hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}</span>
                                   </Tooltip>
                                 }
                                 size="small"
@@ -701,20 +723,20 @@ const CompulsoryScheduleTab = ({
                                         <DeleteIcon sx={{ fontSize: 14 }} />
                                       </Tooltip>
                                     </Box>
-                                  ) : (
-                                    <Tooltip title="Add payment for this class">
-                                      <AddIcon sx={{ fontSize: 14 }} />
-                                    </Tooltip>
-                                  )
+                                  ) : undefined
                                 }
                                 sx={{
                                   bgcolor: hasAmount
                                     ? cls.status === 'inactive'
                                       ? 'error.main'
                                       : '#5CB979'
-                                    : 'grey.300',
+                                    : 'transparent',
 
-                                  color: hasAmount ? 'white' : 'text.secondary',
+                                  borderRadius: '16px',
+                                  border: hasAmount ? 'none' : '1.5px dashed',
+                                  borderColor: hasAmount ? 'transparent' : 'error.main',
+
+                                  color: hasAmount ? 'white' : 'error.main',
                                   fontWeight: 600,
                                   fontSize: 11,
                                   cursor: 'pointer',
@@ -727,7 +749,7 @@ const CompulsoryScheduleTab = ({
                                       ? cls.status === 'inactive'
                                         ? 'error.dark'
                                         : '#5CB979'
-                                      : 'grey.400',
+                                      : 'error.light',
                                   },
 
                                   '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {

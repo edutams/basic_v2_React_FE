@@ -23,6 +23,7 @@ import {
   InputLabel,
   CircularProgress,
   Snackbar,
+  Portal,
   Alert,
   Radio,
   Autocomplete,
@@ -1871,20 +1872,26 @@ const SubjectBank = () => {
       </Dialog>
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
+      {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it can
+          get trapped under an open Dialog's stacking context regardless of
+          z-index. Portal escapes it to document.body, same as Dialog. */}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </>
   );
 };

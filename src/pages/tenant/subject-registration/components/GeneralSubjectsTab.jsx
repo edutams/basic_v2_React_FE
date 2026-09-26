@@ -1,11 +1,21 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Stack, CircularProgress, Typography, Alert, Button } from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
-const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+const GeneralSubjectsTab = forwardRef(function GeneralSubjectsTab(
+  { session, term, termId, programme, classLevel, classArm, onStatusChange },
+  ref,
+) {
   const navigate = useNavigate();
   // ── Data States ───────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
@@ -136,6 +146,16 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
     }
   };
 
+  // Lets the parent render its own "Save Selected" button up on the tabs
+  // row (same action, just also reachable without scrolling down) —
+  // pendingCount/saving are reported up for that button's label/disabled
+  // state, and the actual save is triggered back down via this ref.
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected }));
+
+  useEffect(() => {
+    onStatusChange?.({ pendingCount, saving });
+  }, [pendingCount, saving, onStatusChange]);
+
   const registerAll = (subjectId) => {
     setLearners((prev) =>
       prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: true } })),
@@ -231,6 +251,6 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       )}
     </Box>
   );
-};
+});
 
 export default GeneralSubjectsTab;

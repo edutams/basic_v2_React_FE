@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -32,6 +32,7 @@ import {
   Stars as OptionalIcon,
   Build as TradeIcon,
   SwapHoriz as MigrateIcon,
+  Save as SaveIcon,
 } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
@@ -160,6 +161,16 @@ const SubjectRegistration = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+
+  // Mirrors the Compulsory Subjects tab's own "Save Selected" button up
+  // onto the tabs row, so it's reachable without scrolling down — the
+  // bottom button stays too. generalSubjectsTabRef triggers the actual
+  // save; generalTabStatus drives this button's label/visibility.
+  const generalSubjectsTabRef = useRef(null);
+  const [generalTabStatus, setGeneralTabStatus] = useState({ pendingCount: 0, saving: false });
+  const handleGeneralStatusChange = useCallback((status) => {
+    setGeneralTabStatus(status);
+  }, []);
 
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -625,7 +636,16 @@ const SubjectRegistration = () => {
             </Grid>
           </Grid>
 
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <Tabs
               value={activeTab}
               onChange={(_, val) => setActiveTab(val)}
@@ -644,9 +664,31 @@ const SubjectRegistration = () => {
               <Tab label="2. Optional Subjects" />
               <Tab label="3. Trade Subjects" />
             </Tabs>
+            {activeTab === 0 && generalTabStatus.pendingCount > 0 && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  generalTabStatus.saving ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <SaveIcon />
+                  )
+                }
+                onClick={() => generalSubjectsTabRef.current?.save()}
+                disabled={generalTabStatus.saving}
+                sx={{ flexShrink: 0 }}
+              >
+                {generalTabStatus.saving
+                  ? 'SAVING...'
+                  : `SAVE SELECTED (${generalTabStatus.pendingCount})`}
+              </Button>
+            )}
           </Box>
           {activeTab === 0 && (
             <GeneralSubjectsTab
+              ref={generalSubjectsTabRef}
+              onStatusChange={handleGeneralStatusChange}
               session={pSession}
               term={pTerm}
               termId={pTermId}

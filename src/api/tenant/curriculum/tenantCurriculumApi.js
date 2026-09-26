@@ -154,6 +154,12 @@ export const addOrUpdateClassSubject = async (data) => {
   return response.data;
 };
 
+// Remove a subject from a class's roster
+export const deleteClassSubjectRecord = async (id) => {
+  const response = await api.delete(`/curriculum/class-subjects/${id}`);
+  return response.data;
+};
+
 // Fetch classes by programme
 export const fetchClassesByProgramme = async (programmeId) => {
   const response = await api.get(`/curriculum/classes-by-programme/${programmeId}`);

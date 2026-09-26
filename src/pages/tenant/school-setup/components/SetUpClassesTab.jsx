@@ -874,6 +874,7 @@ const SetUpClassesTab = forwardRef(
           autoHideDuration={3000}
           onClose={() => setNotification({ ...notification, open: false })}
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
         >
           <Alert
             onClose={() => setNotification({ ...notification, open: false })}

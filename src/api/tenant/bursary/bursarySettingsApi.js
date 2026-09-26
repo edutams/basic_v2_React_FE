@@ -104,11 +104,12 @@ export const deletePaymentSchedulesByPaymentName = async (paymentNameId) => {
 };
 
 
-export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
+export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId, search } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
     if (classId) params.class_id = classId;
     if (categoryId) params.category_id = categoryId;
+    if (search) params.search = search;
     const res = await api.get('/bursary/payment_schedule/generate_invoice_data', { params });
     return res.data;
 };

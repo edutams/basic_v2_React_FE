@@ -33,7 +33,6 @@ import {
   Skeleton,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import {
   IconEdit,
   IconTrash,
@@ -49,6 +48,7 @@ import {
   fetchClassesByProgramme,
   fetchClassSubjects,
   addOrUpdateClassSubject,
+  deleteClassSubjectRecord,
   fetchAvailableSubjectsForClass as fetchAvailableSubjectsForClassApi,
   fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -92,11 +92,8 @@ const ClassSubject = () => {
 
   // Modal states for Class Subjects
   const [openAddSubjectToClassModal, setOpenAddSubjectToClassModal] = useState(false);
-  const [openEditClassSubjectModal, setOpenEditClassSubjectModal] = useState(false);
   const [openDeleteClassSubjectModal, setOpenDeleteClassSubjectModal] = useState(false);
   const [selectedClassSubject, setSelectedClassSubject] = useState(null);
-  const [classSubjectAnchorEl, setClassSubjectAnchorEl] = useState(null);
-  const [openClassSubjectMenu, setOpenClassSubjectMenu] = useState(false);
   const [classSubjectFormData, setClassSubjectFormData] = useState({
     subject_id: '',
     pass_mark: '',
@@ -123,7 +120,12 @@ const ClassSubject = () => {
 
   // Loading states for buttons
   const [loadingAddSubject, setLoadingAddSubject] = useState(false);
-  const [loadingUpdateSubject, setLoadingUpdateSubject] = useState(false);
+  const [loadingDeleteClassSubject, setLoadingDeleteClassSubject] = useState(false);
+  // Shown inside the delete dialog itself, not as a separate toast — a
+  // Snackbar can end up visually behind an open Dialog depending on the
+  // browser/stacking context, so the failure reason (e.g. "students
+  // already registered") is shown right where the user is already looking.
+  const [deleteClassSubjectError, setDeleteClassSubjectError] = useState('');
 
   // Methods
   const showSnackbar = (message, severity = 'success') => {
@@ -208,28 +210,6 @@ const ClassSubject = () => {
     setOpenAddSubjectToClassModal(false);
   };
 
-  const handleOpenEditClassSubjectModal = (event, subject) => {
-    setSelectedClassSubject(subject);
-    setClassSubjectFormData({
-      subject_id: subject.subject_id,
-      pass_mark: subject.pass_mark,
-      unit: subject.unit,
-      status: subject.status || 'compulsory',
-    });
-    // Ensure available subjects are loaded for display
-    if (availableSubjectsForClass.length === 0) {
-      fetchAvailableSubjectsForClass();
-    }
-    setOpenEditClassSubjectModal(true);
-    setClassSubjectAnchorEl(event?.currentTarget);
-    setOpenClassSubjectMenu(false);
-  };
-
-  const handleCloseEditClassSubjectModal = () => {
-    setOpenEditClassSubjectModal(false);
-    setSelectedClassSubject(null);
-  };
-
   const handleAddSubjectToClass = async () => {
     setFieldErrors({});
     setLoadingAddSubject(true);
@@ -299,83 +279,10 @@ const ClassSubject = () => {
     }
   };
 
-  const handleUpdateClassSubject = async () => {
-    setFieldErrors({});
-    setLoadingUpdateSubject(true);
-
-    // Validate required fields before submission
-    const validationErrors = {};
-    if (!selectedClass) validationErrors.class_id = ['Please select a class'];
-    if (!program) validationErrors.programme_id = ['Please select a programme'];
-    if (!classSubjectFormData.subject_id) validationErrors.subject_id = ['Please select a subject'];
-    if (!classSubjectFormData.pass_mark) validationErrors.pass_mark = ['Pass mark is required'];
-    if (!classSubjectFormData.unit) validationErrors.unit = ['Unit is required'];
-    if (!classSubjectFormData.status) validationErrors.status = ['Status is required'];
-
-    if (Object.keys(validationErrors).length > 0) {
-      setFieldErrors(validationErrors);
-      setLoadingUpdateSubject(false);
-      return;
-    }
-
-    try {
-      // Prepare payload with all required fields
-      const payload = {
-        class_id: selectedClass,
-        programme_id: program,
-        subject_id: classSubjectFormData.subject_id,
-        pass_mark: classSubjectFormData.pass_mark,
-        unit: classSubjectFormData.unit,
-        status: classSubjectFormData.status,
-      };
-
-      const response = await addOrUpdateClassSubject(payload);
-
-      if (response.status) {
-        showSnackbar('Class subject updated successfully', 'success');
-        handleCloseEditClassSubjectModal();
-        fetchClassSubjectsData(selectedClass);
-        fetchStats();
-      } else {
-        // Display the detailed error message from the backend
-        const errorMessage = response.error || response.message || 'Failed to update class subject';
-        showSnackbar(errorMessage, 'error');
-      }
-    } catch (error) {
-      if (error.response?.status === 422) {
-        const errors = error.response.data?.errors;
-
-        if (errors) {
-          setFieldErrors(errors);
-        }
-
-        showSnackbar(error.response.data?.message || 'Validation failed', 'error');
-
-        return;
-      }
-
-      // Handle other API error responses
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        const errorMessage =
-          errorData.error || errorData.message || 'Failed to update class subject';
-        showSnackbar(errorMessage, 'error');
-      } else {
-        showSnackbar('Failed to update class subject', 'error');
-      }
-    } finally {
-      setLoadingUpdateSubject(false);
-    }
-  };
-
-  // Menu handlers
-  const handleOpenEditModal = (event, subject) => {
-    handleOpenEditClassSubjectModal(event, subject);
-  };
-
-  const handleOpenDeleteModal = () => {
+  const handleOpenDeleteModal = (subject) => {
+    setSelectedClassSubject(subject);
+    setDeleteClassSubjectError('');
     setOpenDeleteClassSubjectModal(true);
-    setOpenClassSubjectMenu(false);
   };
 
   const handleOpenSubjectGroupMenu = (event, group) => {
@@ -384,14 +291,73 @@ const ClassSubject = () => {
     setOpenSubjectGroupMenu(true);
   };
 
-  const handleCloseClassSubjectMenu = () => {
-    setClassSubjectAnchorEl(null);
-    setOpenClassSubjectMenu(false);
-  };
-
   const handleCloseSubjectGroupMenu = () => {
     setSubjectGroupAnchorEl(null);
     setOpenSubjectGroupMenu(false);
+  };
+
+  const handleConfirmDeleteClassSubject = async () => {
+    if (!selectedClassSubject) return;
+    setLoadingDeleteClassSubject(true);
+    setDeleteClassSubjectError('');
+    try {
+      const response = await deleteClassSubjectRecord(selectedClassSubject.class_subject_id);
+      if (response.status) {
+        showSnackbar('Subject removed from class successfully', 'success');
+        handleCloseDeleteClassSubjectModal();
+        fetchClassSubjectsData(selectedClass);
+        fetchStats();
+      } else {
+        // The specific reason (e.g. "students already registered") comes
+        // back under `error`, not `message` — `message` is always the
+        // generic fallback. Same convention as handleDeleteSubject above.
+        setDeleteClassSubjectError(
+          response.error || response.message || 'Failed to remove subject from class',
+        );
+      }
+    } catch (error) {
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        setDeleteClassSubjectError(
+          errorData.error || errorData.message || 'Failed to remove subject from class',
+        );
+      } else {
+        setDeleteClassSubjectError('Failed to remove subject from class');
+      }
+    } finally {
+      setLoadingDeleteClassSubject(false);
+    }
+  };
+
+  // Inline pass mark / unit editing directly in the table — updates local
+  // state as the admin types, persists on blur via the same upsert the Add/
+  // Edit modals use.
+  const handleInlineClassSubjectChange = (classSubjectId, field, value) => {
+    setClassSubjects((prev) =>
+      prev.map((s) => (s.class_subject_id === classSubjectId ? { ...s, [field]: value } : s)),
+    );
+  };
+
+  const handleInlineClassSubjectSave = async (subject) => {
+    try {
+      const response = await addOrUpdateClassSubject({
+        class_id: selectedClass,
+        programme_id: program,
+        subject_id: subject.subject_id,
+        pass_mark: subject.pass_mark,
+        unit: subject.unit,
+        status: subject.status,
+      });
+      if (response.status) {
+        fetchStats();
+      } else {
+        showSnackbar(response.message || 'Failed to update class subject', 'error');
+        fetchClassSubjectsData(selectedClass);
+      }
+    } catch (error) {
+      showSnackbar(error.response?.data?.message || 'Failed to update class subject', 'error');
+      fetchClassSubjectsData(selectedClass);
+    }
   };
 
   // Placeholder methods for modals that aren't fully implemented
@@ -620,11 +586,43 @@ const ClassSubject = () => {
                     ))
                   ) : classSubjects.length > 0 ? (
                     classSubjects.map((subject, i) => (
-                      <TableRow key={subject.id} hover>
+                      <TableRow key={subject.class_subject_id} hover>
                         <TableCell>{i + 1}</TableCell>
                         <TableCell>{subject.subject_name}</TableCell>
-                        <TableCell>{subject.pass_mark}</TableCell>
-                        <TableCell>{subject.unit}</TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            variant="standard"
+                            type="number"
+                            value={subject.pass_mark}
+                            onChange={(e) =>
+                              handleInlineClassSubjectChange(
+                                subject.class_subject_id,
+                                'pass_mark',
+                                e.target.value,
+                              )
+                            }
+                            onBlur={() => handleInlineClassSubjectSave(subject)}
+                            inputProps={{ min: 0, max: 100, style: { width: 48 } }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
+                            size="small"
+                            variant="standard"
+                            type="number"
+                            value={subject.unit}
+                            onChange={(e) =>
+                              handleInlineClassSubjectChange(
+                                subject.class_subject_id,
+                                'unit',
+                                e.target.value,
+                              )
+                            }
+                            onBlur={() => handleInlineClassSubjectSave(subject)}
+                            inputProps={{ min: 1, style: { width: 48 } }}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Chip
                             label={subject.status}
@@ -650,8 +648,12 @@ const ClassSubject = () => {
                           />
                         </TableCell>
                         <TableCell align="center">
-                          <IconButton size="small" onClick={(e) => handleOpenEditModal(e, subject)}>
-                            <MoreVertIcon size={18} />
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleOpenDeleteModal(subject)}
+                          >
+                            <IconTrash size={18} />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -674,22 +676,10 @@ const ClassSubject = () => {
         </ParentCard>
       </Box>
 
-      {/* Class Subject Action Menu */}
-      <Menu
-        id="class-subject-menu"
-        anchorEl={classSubjectAnchorEl}
-        open={openClassSubjectMenu}
-        onClose={handleCloseClassSubjectMenu}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <MenuItem onClick={() => handleOpenEditModal(null, selectedClassSubject)}>
-          <IconEdit size={18} style={{ marginRight: 8 }} />
-          Edit
-        </MenuItem>
-      </Menu>
-
-      {/* Subject Group Action Menu */}
+      {/* Subject Group Action Menu — group edit/delete isn't implemented yet
+          (no dialogs wired up), so these just close the menu rather than
+          reaching into class-subject state, which would delete/edit the
+          wrong record. */}
       <Menu
         id="subject-group-menu"
         anchorEl={subjectGroupAnchorEl}
@@ -698,11 +688,11 @@ const ClassSubject = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <MenuItem onClick={() => handleOpenSubjectGroupMenu(null, selectedSubjectGroup)}>
+        <MenuItem onClick={handleCloseSubjectGroupMenu}>
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={handleOpenDeleteModal} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleCloseSubjectGroupMenu} sx={{ color: 'error.main' }}>
           <IconTrash size={18} style={{ marginRight: 8 }} />
           Delete
         </MenuItem>
@@ -830,107 +820,43 @@ const ClassSubject = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Edit Class Subject Modal */}
+      {/* Delete Class Subject Modal */}
       <Dialog
-        open={openEditClassSubjectModal}
-        onClose={handleCloseEditClassSubjectModal}
-        maxWidth="sm"
+        open={openDeleteClassSubjectModal}
+        onClose={handleCloseDeleteClassSubjectModal}
+        maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Edit Class Subject</DialogTitle>
+        <DialogTitle>Remove Subject from Class</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth size="small" margin="normal">
-                  <InputLabel>Subject</InputLabel>
-                  <Select value={classSubjectFormData.subject_id} disabled label="Subject">
-                    <MenuItem value={classSubjectFormData.subject_id}>
-                      {/* Subject name will be loaded from available subjects */}
-                      {availableSubjectsForClass.find(
-                        (s) => s.id === classSubjectFormData.subject_id,
-                      )?.subject_name || 'Selected Subject'}
-                      {availableSubjectsForClass.find(
-                        (s) => s.id === classSubjectFormData.subject_id,
-                      )?.subject_code
-                        ? ` (${availableSubjectsForClass.find((s) => s.id === classSubjectFormData.subject_id)?.subject_code})`
-                        : ''}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Pass Mark"
-                  type="number"
-                  value={classSubjectFormData.pass_mark}
-                  onChange={(e) =>
-                    setClassSubjectFormData({
-                      ...classSubjectFormData,
-                      pass_mark: e.target.value,
-                    })
-                  }
-                  margin="normal"
-                  required
-                  error={!!fieldErrors.pass_mark}
-                  helperText={fieldErrors.pass_mark?.[0]}
-                  size="small"
-                  inputProps={{ min: 0, max: 100 }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Unit"
-                  type="number"
-                  value={classSubjectFormData.unit}
-                  onChange={(e) =>
-                    setClassSubjectFormData({
-                      ...classSubjectFormData,
-                      unit: e.target.value,
-                    })
-                  }
-                  margin="normal"
-                  required
-                  error={!!fieldErrors.unit}
-                  helperText={fieldErrors.unit?.[0]}
-                  size="small"
-                  inputProps={{ min: 1 }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth size="small" margin="normal" error={!!fieldErrors.status}>
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={classSubjectFormData.status}
-                    onChange={(e) =>
-                      setClassSubjectFormData({
-                        ...classSubjectFormData,
-                        status: e.target.value,
-                      })
-                    }
-                    label="Status"
-                  >                    <MenuItem value="compulsory">Compulsory</MenuItem>
-                    <MenuItem value="optional">Optional</MenuItem>
-                    <MenuItem value="trade">Trade</MenuItem>
-                  </Select>
-                  {fieldErrors.status && <FormHelperText>{fieldErrors.status?.[0]}</FormHelperText>}
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
+          {deleteClassSubjectError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {deleteClassSubjectError}
+            </Alert>
+          )}
+          <Typography variant="body2">
+            Are you sure you want to remove{' '}
+            <strong>{selectedClassSubject?.subject_name}</strong> from this class? This cannot be
+            undone.
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditClassSubjectModal} disabled={loadingUpdateSubject}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseDeleteClassSubjectModal}
+            disabled={loadingDeleteClassSubject}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUpdateClassSubject} disabled={loadingUpdateSubject} startIcon={loadingUpdateSubject ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            color="error"
+            onClick={handleConfirmDeleteClassSubject}
+            disabled={loadingDeleteClassSubject}
+            startIcon={loadingDeleteClassSubject ? <CircularProgress size={16} /> : null}
           >
-            {loadingUpdateSubject ? 'Updating...' : 'Update Subject'}
+            {loadingDeleteClassSubject ? 'Removing...' : 'Remove'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -941,6 +867,7 @@ const ClassSubject = () => {
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}

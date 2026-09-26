@@ -25,8 +25,13 @@ export const fetchBursarySessionTerms = async () => {
     return res.data;
 };
 
-export const fetchActiveCategories = async () => {
-    const res = await api.get('/bursary/settings/fetch_active_categories');
+export const fetchActiveCategories = async ({ sessionId, termId, payOption, payType } = {}) => {
+    const params = {};
+    if (sessionId) params.session_id = sessionId;
+    if (termId) params.term_id = termId;
+    if (payOption) params.pay_option = payOption;
+    if (payType) params.pay_type = payType;
+    const res = await api.get('/bursary/settings/fetch_active_categories', { params });
     return res.data;
 };
 

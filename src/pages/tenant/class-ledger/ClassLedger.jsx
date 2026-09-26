@@ -34,6 +34,8 @@ import {
   DialogActions,
   Skeleton,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
@@ -70,6 +72,7 @@ import {
 import useNotification from '@/hooks/useNotification';
 import StudentLedgerModal from './StudentLedgerModal';
 import LearnerWalletTransactionsModal from './LearnerWalletTransactionsModal';
+import StudentCategoryPlacementTab from './components/StudentCategoryPlacementTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -114,6 +117,8 @@ const ClassLedger = () => {
   const [bursarySessionTermId, setBursarySessionTermId] = useState(null);
 
   const notify = useNotification();
+
+  const [mainTab, setMainTab] = useState(0);
 
   const handleFilterChange = React.useCallback(async (key, val) => {
     if (key === 'programme') {
@@ -494,6 +499,22 @@ const ClassLedger = () => {
   return (
     <PageContainer title="Class Ledger">
       <Breadcrumb title="Class Ledger" items={BCrumb} />
+
+      <Box sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={mainTab}
+          onChange={(e, val) => setMainTab(val)}
+          sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600 } }}
+        >
+          <Tab label="Class Ledger" />
+          <Tab label="Student Category Placement" />
+        </Tabs>
+      </Box>
+
+      {mainTab === 1 && <StudentCategoryPlacementTab />}
+
+      {mainTab === 0 && (
+        <>
       <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, lg: 4 }}>
           <StatCard
@@ -727,6 +748,7 @@ const ClassLedger = () => {
               <TableRow>
                 <TableCell sx={thCell}>S/N</TableCell>
                 <TableCell sx={thCell}>Student Name</TableCell>
+                <TableCell sx={thCell}>Pay Category</TableCell>
                 <TableCell sx={thCell}>Total Compulsory Bill</TableCell>
                 <TableCell sx={thCell}>Total Optional Bill</TableCell>
                 <TableCell sx={thCell}>Total Payable</TableCell>
@@ -749,6 +771,9 @@ const ClassLedger = () => {
                         <Skeleton variant="circular" width={36} height={36} />
                         <Skeleton variant="text" width={140} height={20} />
                       </Box>
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={100} height={20} />
                     </TableCell>
                     <TableCell sx={tdCell}>
                       <Skeleton variant="text" width={90} height={20} />
@@ -798,6 +823,18 @@ const ClassLedger = () => {
                         </Box>
                       </TableCell>
                       <TableCell sx={tdCell}>
+                        {student.bursary_payment_category_name ? (
+                          <Chip
+                            label={student.bursary_payment_category_name}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell sx={tdCell}>
                         ₦
                         {(
                           student.total_compulsory ||
@@ -845,7 +882,7 @@ const ClassLedger = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Alert severity="info" sx={{ justifyContent: 'center' }}>
                       No students found for the selected class.
                     </Alert>
@@ -1001,6 +1038,8 @@ const ClassLedger = () => {
           onFetchDrilldown={handleFetchDrilldown}
         />
       </ParentCard>
+        </>
+      )}
 
       <StudentLedgerModal
         open={isLedgerModalOpen}

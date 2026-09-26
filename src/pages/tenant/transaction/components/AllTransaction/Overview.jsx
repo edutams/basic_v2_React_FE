@@ -16,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   InputAdornment,
   TextField,
@@ -25,13 +26,13 @@ import {
   useTheme,
   Tabs,
   Tab,
-  Link,
   Skeleton,
   Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
+import WalletAccountCell from '@/components/shared/WalletAccountCell';
 import { IconDotsVertical } from '@tabler/icons-react';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import FeeChart from './FeeChart';
@@ -53,8 +54,8 @@ const Overview = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   const [tableData, setTableData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [page, setPage] = useState(0); // zero-based for TablePagination
+  const [perPage, setPerPage] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -88,28 +89,32 @@ const Overview = () => {
       term_id: termId || null,
       search: search || null,
       status: activeTab > 0 ? statusTabs[activeTab] : null,
-      page,
-      per_page: 15,
+      page: page + 1, // API is 1-based
+      per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, sessionId, termId, search, activeTab, page],
+    [fromDate, toDate, sessionId, termId, search, activeTab, page, perPage],
   );
 
-  const loadTable = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchOnlineTransactions({ filters: buildFilters() });
-      if (res.success) {
-        setTableData(res.data);
-        setLastPage(res.last_page);
-        setTotalCount(res.total);
+  const loadTable = useCallback(
+    async (targetPage = page, targetPerPage = perPage) => {
+      setLoading(true);
+      try {
+        const res = await fetchOnlineTransactions({
+          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage }),
+        });
+        if (res.success) {
+          setTableData(res.data);
+          setTotalCount(res.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch transactions', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch transactions', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [buildFilters]);
+    },
+    [buildFilters],
+  );
 
   const loadAnalytics = useCallback(async () => {
     try {
@@ -150,7 +155,6 @@ const Overview = () => {
       .then((res) => setSessions(res.data || res || []))
       .catch(console.error);
 
-    loadTable();
     loadAnalytics();
   }, []);
 
@@ -165,15 +169,26 @@ const Overview = () => {
       .catch(console.error);
   }, [sessionId]);
 
+  useEffect(() => {
+    loadTable(page, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage, activeTab]);
+
   const handleFetch = () => {
-    setPage(1);
-    loadTable();
+    setPage(0);
+    loadTable(0, perPage);
     loadAnalytics();
   };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    setPage(1);
+    setPage(0);
+  };
+
+  const handleChangePage = (_e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setPerPage(parseInt(e.target.value, 10));
+    setPage(0);
   };
 
   const handlePrintReceipt = (row) => {
@@ -454,6 +469,7 @@ const Overview = () => {
                 <TableCell sx={thCell}>#</TableCell>
                 <TableCell sx={thCell} width={20}>Transaction ID</TableCell>
                 <TableCell sx={thCell}>Paid For</TableCell>
+                <TableCell sx={thCell}>Paid By</TableCell>
                 <TableCell sx={thCell}>Wallet Account</TableCell>
                 <TableCell sx={thCell}>Description</TableCell>
                 <TableCell sx={thCell}>Amount</TableCell>
@@ -478,6 +494,7 @@ const Overview = () => {
                       </Box>
                     </TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={130} height={20} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={80} height={20} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
@@ -487,14 +504,14 @@ const Overview = () => {
                 ))
               ) : tableData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                     <Alert severity="info" sx={{ justifyContent: 'center' }}>No transactions found.</Alert>
                   </TableCell>
                 </TableRow>
               ) : (
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
                       <TableCell sx={tdCell}>{row.order_id}</TableCell>
                       <TableCell sx={tdCell}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -507,7 +524,7 @@ const Overview = () => {
                           ></Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>
-                              {row.paid_by}
+                              {row.ward_name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                               {row.class}
@@ -515,17 +532,9 @@ const Overview = () => {
                           </Box>
                         </Box>
                       </TableCell>
+                      <TableCell sx={tdCell}>{row.payer_name}</TableCell>
                       <TableCell sx={tdCell}>
-                        <Link
-                          component="button"
-                          underline="hover"
-                          href={`/bursary/transactions/wallet_transactions?wallet_account_no=${encodeURIComponent(row.wallet_account_no)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ ml: 1, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
-                        >
-                          {row.wallet_account_no ?? 'N/A'}
-                        </Link>
+                        <WalletAccountCell row={row} />
                       </TableCell>
                       <TableCell sx={tdCell}>{row.description}</TableCell>
                       <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
@@ -570,21 +579,16 @@ const Overview = () => {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={perPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 15, 25, 50]}
+            />
           </TableContainer>
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            Showing {tableData.length} of {totalCount} transactions
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button size="small" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
-          </Box>
-        </Box>
 
         <Menu
           anchorEl={anchorEl}

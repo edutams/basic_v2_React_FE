@@ -15,10 +15,10 @@ import {
   Paper,
   CircularProgress,
   useTheme,
-  Link,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import StandardModal from '@/components/shared/StandardModal';
+import WalletAccountCell from '@/components/shared/WalletAccountCell';
 import { fetchRevenueAmountDetails } from '@/api/tenant/bursary/transactionApi';
 import tenantApi from '@/api/tenant/tenant_api';
 import dayjs from 'dayjs';
@@ -165,6 +165,7 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                 <TableRow>
                   <TableCell sx={thCell}>#</TableCell>
                   <TableCell sx={thCell}>Transaction ID</TableCell>
+                  <TableCell sx={thCell}>Paid For</TableCell>
                   <TableCell sx={thCell}>Paid By</TableCell>
                   <TableCell sx={thCell}>Wallet Account</TableCell>
                   <TableCell sx={thCell}>Payment Type</TableCell>
@@ -176,7 +177,7 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 4 }}>
                       No transactions found.
                     </TableCell>
                   </TableRow>
@@ -189,23 +190,15 @@ const RevenueTransactionsModal = ({ open, onClose, paymentId, revenueName }) => 
                       </TableCell>
                       <TableCell sx={tdCell}>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.paid_by}
+                          {row.ward_name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {row.class}
                         </Typography>
                       </TableCell>
+                      <TableCell sx={tdCell}>{row.payer_name}</TableCell>
                       <TableCell sx={tdCell}>
-                        <Link
-                          component="button"
-                          underline="hover"
-                          href={`/bursary/transactions/wallet_transactions?wallet_account_no=${encodeURIComponent(row.wallet_account_no)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ ml: 1, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
-                        >
-                          {row.wallet_account_no ?? 'N/A'}
-                        </Link>
+                        <WalletAccountCell row={row} />
                       </TableCell>
                       <TableCell sx={tdCell}>{row.payment_type}</TableCell>
                       <TableCell sx={tdCell}>{row.description}</TableCell>

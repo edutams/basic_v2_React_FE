@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   InputAdornment,
   TextField,
@@ -51,8 +52,8 @@ const Settlement = () => {
   const [chartType] = useState('bar');
 
   const [tableData, setTableData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [page, setPage] = useState(0); // zero-based for TablePagination
+  const [perPage, setPerPage] = useState(40);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -118,28 +119,32 @@ const Settlement = () => {
       from: fromDate || null,
       to: toDate || null,
       search: search || null,
-      page,
-      per_page: 40,
+      page: page + 1, // API is 1-based
+      per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, search, page],
+    [fromDate, toDate, search, page, perPage],
   );
 
-  const loadTable = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchSettlements({ filters: buildFilters() });
-      if (res.success) {
-        setTableData(res.data);
-        setLastPage(res.last_page);
-        setTotalCount(res.total);
+  const loadTable = useCallback(
+    async (targetPage = page, targetPerPage = perPage) => {
+      setLoading(true);
+      try {
+        const res = await fetchSettlements({
+          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage }),
+        });
+        if (res.success) {
+          setTableData(res.data);
+          setTotalCount(res.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch settlements', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch settlements', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [buildFilters]);
+    },
+    [buildFilters],
+  );
 
   const loadAnalytics = useCallback(async () => {
     try {
@@ -224,7 +229,6 @@ const Settlement = () => {
   }, [fromDate, toDate]);
 
   useEffect(() => {
-    loadTable();
     loadAnalytics();
     loadValues();
   }, []);
@@ -238,10 +242,21 @@ const Settlement = () => {
     loadValues();
   }, [period, periodValue, loadAnalytics]);
 
+  useEffect(() => {
+    loadTable(page, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage]);
+
   const handleFetch = () => {
-    setPage(1);
-    loadTable();
+    setPage(0);
+    loadTable(0, perPage);
     loadValues();
+  };
+
+  const handleChangePage = (_e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setPerPage(parseInt(e.target.value, 10));
+    setPage(0);
   };
 
   const handleDownloadCSV = async () => {
@@ -488,7 +503,7 @@ const Settlement = () => {
                 ) : (
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell sx={tdCell}>{(page - 1) * 40 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.account_number}</TableCell>
                       <TableCell sx={tdCell}>
@@ -529,22 +544,17 @@ const Settlement = () => {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={perPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[20, 40, 60, 100]}
+            />
           </TableContainer>
         )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            Showing {tableData.length} of {totalCount} settlements
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button size="small" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
-          </Box>
-        </Box>
 
         <Menu
           anchorEl={anchorEl}

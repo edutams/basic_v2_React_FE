@@ -58,6 +58,7 @@ import {
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAdmissionCodeFormat } from '@/api/tenant/admission/admissionApi';
+import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import ViewAdmissionModal from './ViewAdmissionModal';
 
 const statusColors = {
@@ -544,12 +545,14 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     }
 
     try {
-      const [programmesRes, codeFormatRes] = await Promise.all([
+      const [programmesRes, codeFormatRes, categoriesRes] = await Promise.all([
         fetchProgrammes(),
         fetchAdmissionCodeFormat(),
+        fetchActiveCategories(),
       ]);
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
       const hasCodeFormat = !!codeFormatRes?.data?.code_format;
+      const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
       setBatchModal({
         open: true,
@@ -557,9 +560,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         programmes,
         classes: [],
         classArms: [],
+        categories,
         selectedProgramme: '',
         selectedClass: '',
         selectedClassArm: '',
+        selectedPayCategory: '',
         rejectionReason: '',
         revokedReason: '',
         hasCodeFormat,
@@ -624,6 +629,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       selectedProgramme,
       selectedClass,
       selectedClassArm,
+      selectedPayCategory,
       rejectionReason,
       revokedReason,
       hasCodeFormat,
@@ -631,8 +637,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     } = batchModal;
 
     // Validation
-    if (action === 'admit' && (!selectedProgramme || !selectedClass || !selectedClassArm)) {
-      notify.warning('Please select programme, class, and class arm for admission');
+    if (
+      action === 'admit' &&
+      (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
+    ) {
+      notify.warning('Please select programme, class, class arm, and pay category for admission');
       return;
     }
 
@@ -659,6 +668,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         programme_id: selectedProgramme || null,
         class_id: selectedClass || null,
         class_arm_id: selectedClassArm || null,
+        bursary_payment_category_id: selectedPayCategory || null,
         rejection_reason: rejectionReason || null,
         revoked_reason: revokedReason || null,
       };
@@ -1211,6 +1221,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                             ({arm.student_count})
                           </Typography>
                         )}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>Pay Category *</InputLabel>
+                  <Select
+                    value={batchModal.selectedPayCategory}
+                    label="Pay Category *"
+                    onChange={(e) =>
+                      setBatchModal((prev) => ({ ...prev, selectedPayCategory: e.target.value }))
+                    }
+                  >
+                    <MenuItem value="">-- Select Pay Category --</MenuItem>
+                    {(batchModal.categories || []).map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {cat.name}
                       </MenuItem>
                     ))}
                   </Select>

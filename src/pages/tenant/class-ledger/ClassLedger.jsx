@@ -77,6 +77,7 @@ import StudentLedgerModal from './StudentLedgerModal';
 import LearnerWalletTransactionsModal from './LearnerWalletTransactionsModal';
 import StudentCategoryPlacementTab from './components/StudentCategoryPlacementTab';
 import ReassignPaymentModal from './components/ReassignPaymentModal';
+import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -109,6 +110,13 @@ const ClassLedger = () => {
 
   const [programme, setProgramme] = useState('');
   const [classLevel, setClassLevel] = useState('');
+
+  // Viewing a previous session/term's class ledger — empty means "use the
+  // school's current active term", same default as before this existed.
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
+  const [sessionId, setSessionId] = useState('');
+  const [termId, setTermId] = useState('');
 
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [search, setSearch] = useState('');
@@ -329,6 +337,8 @@ const ClassLedger = () => {
           class_arm_id: classLevel,
           payment_status: paymentStatusFilter,
           search: search,
+          session_id: sessionId || null,
+          term_id: termId || null,
           page: page + 1,
           per_page: rowsPerPage,
         },
@@ -363,6 +373,8 @@ const ClassLedger = () => {
           class_arm_id: classLevel,
           payment_status: paymentStatusFilter || null,
           search: search,
+          session_id: sessionId || null,
+          term_id: termId || null,
         },
       };
 
@@ -421,6 +433,23 @@ const ClassLedger = () => {
 
   useEffect(() => {
     loadProgrammes();
+    fetchSessions()
+      .then((res) => setSessions(res.data || res || []))
+      .catch((err) => console.error('Failed to fetch sessions', err));
+    // Terms aren't session-scoped (a fixed list — First/Second/Third
+    // Term), so this loads once, not per session.
+    fetchTerms()
+      .then((res) => setTerms(res.data || res || []))
+      .catch((err) => console.error('Failed to fetch terms', err));
+    // Pre-select the school's real current session + term, so the
+    // filters always show a concrete value instead of a vague "Current"
+    // placeholder — picking a different one is still just as available.
+    fetchActiveSessionTerm()
+      .then((res) => {
+        if (res?.data?.session_id) setSessionId(res.data.session_id);
+        if (res?.data?.term_id) setTermId(res.data.term_id);
+      })
+      .catch((err) => console.error('Failed to fetch active session term', err));
   }, []);
 
   const buildChartOptions = (categories) => ({
@@ -697,6 +726,46 @@ const ClassLedger = () => {
               {classes.map((c) => (
                 <MenuItem key={c.value} value={c.value}>
                   {c.label} ({c.class_arm_names})
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField
+              select
+              fullWidth
+              label="Session"
+              size="small"
+              value={sessionId}
+              onChange={(e) => {
+                setSessionId(e.target.value);
+                setTermId('');
+              }}
+            >
+              <MenuItem value="">Current</MenuItem>
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2 }}>
+            <TextField
+              select
+              fullWidth
+              label="Term"
+              size="small"
+              value={termId}
+              disabled={!sessionId}
+              onChange={(e) => setTermId(e.target.value)}
+            >
+              <MenuItem value="">Current</MenuItem>
+              {terms.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term_name}
                 </MenuItem>
               ))}
             </TextField>

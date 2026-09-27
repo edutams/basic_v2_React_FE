@@ -51,6 +51,7 @@ const CashPost = () => {
 
   const [targetSessionTermId, setTargetSessionTermId] = useState(null);
   const [paymentType, setPaymentType] = useState('CASH');
+  const [description, setDescription] = useState('');
 
   /* FILTER STATE */
   // const [selectedTermId, setSelectedTermId] = useState('');
@@ -149,6 +150,7 @@ const CashPost = () => {
       session_term_id: targetSessionTermId,
       invoice_id: invoiceId || null,
       payment_type: paymentType,
+      description: description.trim() || null,
       items: [...buildItems(compFees), ...buildItems(optFees)],
     };
 
@@ -775,6 +777,16 @@ const CashPost = () => {
               <MenuItem value="BANK_TELLER">Bank Teller</MenuItem>
             </Select>
           </FormControl>
+
+          <TextField
+            size="small"
+            label="Description (optional)"
+            placeholder="e.g. Paid at front desk, receipt #123"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            sx={{ minWidth: { xs: '100%', sm: 260 }, flex: 1 }}
+            inputProps={{ maxLength: 255 }}
+          />
 
           <Button
             variant="contained"

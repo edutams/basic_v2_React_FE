@@ -36,6 +36,7 @@ import {
   Alert,
   Tabs,
   Tab,
+  Tooltip,
 } from '@mui/material';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
@@ -57,6 +58,8 @@ import EditNoteOutlinedIcon from '@mui/icons-material/EditNoteOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOutlined';
 import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
+import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import {
   fetchClassAndArmsByProgramme,
   fetchProgrammes,
@@ -73,6 +76,7 @@ import useNotification from '@/hooks/useNotification';
 import StudentLedgerModal from './StudentLedgerModal';
 import LearnerWalletTransactionsModal from './LearnerWalletTransactionsModal';
 import StudentCategoryPlacementTab from './components/StudentCategoryPlacementTab';
+import ReassignPaymentModal from './components/ReassignPaymentModal';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary' }, { title: 'class ledger' }];
 
@@ -96,6 +100,9 @@ const ClassLedger = () => {
 
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [selectedUserIdForWallet, setSelectedUserIdForWallet] = useState(null);
+
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
+  const [reassignTarget, setReassignTarget] = useState(null);
 
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
@@ -813,9 +820,20 @@ const ClassLedger = () => {
                             <PersonOutlineIcon sx={{ fontSize: 20 }} />
                           </Avatar>
                           <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {student.full_name}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <Typography variant="body2" fontWeight={600}>
+                                {student.full_name}
+                              </Typography>
+                              {student.has_stuck_payment && (
+                                <Tooltip
+                                  title={`₦${Number(student.stuck_payment_total || 0).toLocaleString()} in unapplied payments — see "Reassign a Payment"`}
+                                >
+                                  <WarningAmberOutlinedIcon
+                                    sx={{ fontSize: 16, color: 'warning.main' }}
+                                  />
+                                </Tooltip>
+                              )}
+                            </Box>
                             <Typography variant="caption" color="text.secondary">
                               {student.student_number || '—'}
                             </Typography>
@@ -1002,6 +1020,19 @@ const ClassLedger = () => {
           </MenuItem>
 
           <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              if (activeRow) {
+                setReassignTarget({ userId: activeRow.user_id, fullName: activeRow.full_name });
+                setIsReassignModalOpen(true);
+              }
+            }}
+          >
+            <SwapHorizOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+            Reassign a Payment
+          </MenuItem>
+
+          <MenuItem
             disabled={!activeRow?.latest_bulk_order_id}
             onClick={() => {
               setAnchorEl(null);
@@ -1057,6 +1088,16 @@ const ClassLedger = () => {
           setSelectedUserIdForWallet(null);
         }}
         userId={selectedUserIdForWallet}
+      />
+
+      <ReassignPaymentModal
+        open={isReassignModalOpen}
+        target={reassignTarget}
+        onClose={() => {
+          setIsReassignModalOpen(false);
+          setReassignTarget(null);
+        }}
+        onSuccess={fetchClassLedgerData}
       />
     </PageContainer>
   );

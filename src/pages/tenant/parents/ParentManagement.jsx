@@ -13,7 +13,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TableFooter,
   TablePagination,
   Paper,
   IconButton,
@@ -54,6 +53,7 @@ import {
   IconLink,
   IconSquareToggle,
   IconTrash,
+  IconWallet,
 } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -65,6 +65,7 @@ import ParentModal from '@/components/tenant/parents/ParentModal';
 import UploadParentModal from '@/components/tenant/parents/UploadParentModal';
 import LinkWardModal from '@/components/tenant/parents/LinkWardModal';
 import ViewWardsModal from '@/components/tenant/parents/ViewWardsModal';
+import ParentWalletModal from '@/components/tenant/parents/ParentWalletModal';
 import StatCard from 'src/components/shared/StatCard';
 import { useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';
@@ -116,6 +117,10 @@ const ParentManagement = () => {
   const [viewWardsModalOpen, setViewWardsModalOpen] = useState(false);
   const [viewWardsGuardian, setViewWardsGuardian] = useState(null);
 
+  // wallet & transactions modal (read-only)
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [walletModalGuardian, setWalletModalGuardian] = useState(null);
+
   const handleApplySearch = () => {
     setSearch(searchInput.trim());
     setPage(0);
@@ -131,7 +136,7 @@ const ParentManagement = () => {
         ...(classId && { class_id: classId }),
       });
       setRows(res?.data?.data ?? []);
-      setTotal(res?.data?.total ?? 0);
+      setTotal(res?.data?.meta?.total ?? 0);
     } catch {
       notify.error('Failed to fetch parents');
     } finally {
@@ -233,6 +238,12 @@ const ParentManagement = () => {
   const handleOpenLinkWard = (row) => {
     setWardParent(row);
     setLinkWardModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleOpenWalletModal = (row) => {
+    setWalletModalGuardian(row);
+    setWalletModalOpen(true);
     handleMenuClose();
   };
 
@@ -563,6 +574,10 @@ const ParentManagement = () => {
                             <IconUser size={18} style={{ marginRight: 8 }} />
                             Login As Parent
                           </MenuItem>
+                          <MenuItem onClick={() => handleOpenWalletModal(row)}>
+                            <IconWallet size={18} style={{ marginRight: 8 }} />
+                            View Wallet & Transactions
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenEdit(row)}>
                             <IconEdit size={18} style={{ marginRight: 8 }} />
                             Edit
@@ -588,7 +603,7 @@ const ParentManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={6} align="center">
                       <Alert
                         severity="info"
                         sx={{
@@ -606,23 +621,19 @@ const ParentManagement = () => {
                   </TableRow>
                 )}
               </TableBody>
-
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                    count={total}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                  />
-                </TableRow>
-              </TableFooter>
             </Table>
+            <TablePagination
+              component="div"
+              rowsPerPageOptions={[5, 10, 25, 50, 100]}
+              count={total}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+            />
           </TableContainer>
         </Box>
       </ParentCard>
@@ -750,6 +761,12 @@ const ParentManagement = () => {
         open={viewWardsModalOpen}
         onClose={() => setViewWardsModalOpen(false)}
         guardian={viewWardsGuardian}
+      />
+
+      <ParentWalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        guardian={walletModalGuardian}
       />
     </PageContainer>
   );

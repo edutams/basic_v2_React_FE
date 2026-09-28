@@ -2,6 +2,7 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const guardianApi = {
   getWards: (id) => tenantApi.get(`/guardians/${id}/wards`),
+  getWalletOverview: (id) => tenantApi.get(`/guardians/${id}/wallet-overview`),
   syncWards: (id, wardIds) => tenantApi.post(`/guardians/${id}/wards`, { ward_ids: wardIds }),
   searchLearners: (params = {}) => tenantApi.get('/guardians/search-learners', { params }),
   getStats: () => tenantApi.get('/guardians/stats'),

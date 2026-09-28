@@ -14,6 +14,11 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -22,11 +27,16 @@ import {
   Remove as RemoveIcon,
   Lock as LockIcon,
   Edit as EditIcon,
+  SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { IconSchool, IconListCheck, IconLayoutGrid, IconTrendingUp } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
-import { getClassesWithDivisions, saveClasses } from '@/api/tenant/set-up/tenant-setup';
+import {
+  getClassesWithDivisions,
+  saveClasses,
+  updateProgramme,
+} from '@/api/tenant/set-up/tenant-setup';
 
 // A brand-tinted band for every section header — no color cycling, so the
 // page stays calm and consistent regardless of how many groups render, but
@@ -142,6 +152,23 @@ const ArmChip = ({ value, studentCount = 0, onRename, onRemove, disabled }) => {
   );
 };
 
+// A class's name, plus a visible edit icon (not just a click-to-edit
+// affordance a user has to discover) that opens the rename modal.
+const ClassNameField = ({ value, disabled, onEditClick }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 0 }}>
+    <Typography fontWeight={600} noWrap>
+      {value}
+    </Typography>
+    {!disabled && (
+      <Tooltip title="Rename class">
+        <IconButton size="small" onClick={onEditClick} sx={{ p: 0.25 }}>
+          <EditIcon sx={{ fontSize: 14 }} />
+        </IconButton>
+      </Tooltip>
+    )}
+  </Box>
+);
+
 const classPayload = (cls) => ({
   class_id: cls.id,
   programme_id: cls.programme_id,
@@ -165,6 +192,30 @@ const SetUpClassesTab = forwardRef(
       severity: 'success',
     });
 
+    // Renaming a class — also a modal now, and also just a local edit
+    // (like arm renames) that goes out with the group's own "Save changes"
+    // rather than saving on its own.
+    const [renamingClassKey, setRenamingClassKey] = useState(null);
+    const [classNameDraft, setClassNameDraft] = useState('');
+
+    // Renaming a programme — its own endpoint, saves immediately (a
+    // programme name is shared by every class shown under it, not one
+    // row's local edit).
+    const [renamingProgrammeId, setRenamingProgrammeId] = useState(null);
+    const [programmeNameDraft, setProgrammeNameDraft] = useState('');
+    const [savingProgrammeId, setSavingProgrammeId] = useState(null);
+
+    // Reassigning a class to a different programme — a modal, not a
+    // persistent dropdown on every row. A class with no students is just a
+    // local edit (like renaming a class) that goes out with the group's
+    // own "Save changes"; one with students saves immediately, gated by
+    // the fields below.
+    const [reassigningClassKey, setReassigningClassKey] = useState(null);
+    const [reassignProgrammeDraft, setReassignProgrammeDraft] = useState('');
+    const [reassignPassword, setReassignPassword] = useState('');
+    const [reassignError, setReassignError] = useState('');
+    const [reassigningSaving, setReassigningSaving] = useState(false);
+
     // Which group headers are collapsed — collapsed by default: none (all
     // expanded), matching the reference design.
     const [collapsedGroups, setCollapsedGroups] = useState(new Set());
@@ -183,16 +234,22 @@ const SetUpClassesTab = forwardRef(
                 programme_id: programme.id,
                 programme_code: programme.programme_code,
                 programme_name: programme.programme_name,
+                division_id: division.id,
                 division_name: division.division_name,
                 programme_class_id: cls.pivot?.id ?? null,
                 no_of_arms: cls.class_arms?.length || 0,
                 // { name, studentCount } instead of a plain string, so we
                 // know which arms already have learners and must not be
-                // removed.
+                // removed. studentCount is all-time (matches the DB's
+                // restrict-on-delete FK, which doesn't care which term a
+                // registration is from) — activeStudentCount is scoped to
+                // the current term only, for "does this actually affect
+                // anyone right now" warnings like a programme move.
                 class_arm_names:
                   cls.class_arms?.map((a) => ({
                     name: a.class_arm_names,
                     studentCount: a.student_registrations_count || 0,
+                    activeStudentCount: a.active_student_registrations_count || 0,
                   })) || [],
                 arms: cls.arms || [],
                 status: cls.status || 'active',
@@ -322,6 +379,189 @@ const SetUpClassesTab = forwardRef(
       );
     };
 
+    const renameClass = (uniqueKey, value) => {
+      setClasses((prev) =>
+        prev.map((cls) => (cls.unique_key === uniqueKey ? { ...cls, class_name: value } : cls)),
+      );
+    };
+
+    const startRenamingClass = (cls) => {
+      setRenamingClassKey(cls.unique_key);
+      setClassNameDraft(cls.class_name);
+    };
+
+    const cancelRenameClass = () => {
+      setRenamingClassKey(null);
+      setClassNameDraft('');
+    };
+
+    const confirmRenameClass = () => {
+      const trimmed = classNameDraft.trim();
+      if (trimmed) renameClass(renamingClassKey, trimmed);
+      cancelRenameClass();
+    };
+
+    const startRenamingProgramme = (programmeId, currentName) => {
+      setRenamingProgrammeId(programmeId);
+      setProgrammeNameDraft(currentName);
+    };
+
+    const cancelRenameProgramme = () => {
+      setRenamingProgrammeId(null);
+      setProgrammeNameDraft('');
+    };
+
+    const commitRenameProgramme = async () => {
+      const programmeId = renamingProgrammeId;
+      const trimmed = programmeNameDraft.trim();
+      const current = classes.find((c) => c.programme_id === programmeId)?.programme_name;
+
+      if (!trimmed || trimmed === current) {
+        cancelRenameProgramme();
+        return;
+      }
+
+      setSavingProgrammeId(programmeId);
+      try {
+        await updateProgramme(programmeId, trimmed);
+        setClasses((prev) =>
+          prev.map((c) => (c.programme_id === programmeId ? { ...c, programme_name: trimmed } : c)),
+        );
+        setOriginalClasses((prev) =>
+          prev.map((c) => (c.programme_id === programmeId ? { ...c, programme_name: trimmed } : c)),
+        );
+        setNotification({
+          open: true,
+          message: 'Programme renamed successfully!',
+          severity: 'success',
+        });
+      } catch (error) {
+        console.error('Failed to rename programme:', error);
+        setNotification({
+          open: true,
+          message: 'Failed to rename programme. Please try again.',
+          severity: 'error',
+        });
+      } finally {
+        setSavingProgrammeId(null);
+        cancelRenameProgramme();
+      }
+    };
+
+    // Moves a class to a different programme within the same division —
+    // its arms/status/name are unaffected, only which programme group it
+    // shows under changes.
+    const reassignProgramme = (uniqueKey, newProgrammeId, newProgrammeName, newProgrammeCode) => {
+      setClasses((prev) =>
+        prev.map((cls) =>
+          cls.unique_key === uniqueKey
+            ? {
+                ...cls,
+                programme_id: newProgrammeId,
+                programme_name: newProgrammeName,
+                programme_code: newProgrammeCode,
+              }
+            : cls,
+        ),
+      );
+    };
+
+    const startReassigningProgramme = (cls) => {
+      setReassigningClassKey(cls.unique_key);
+      setReassignProgrammeDraft(String(cls.programme_id));
+    };
+
+    const cancelReassignProgramme = () => {
+      setReassigningClassKey(null);
+      setReassignProgrammeDraft('');
+      setReassignPassword('');
+      setReassignError('');
+    };
+
+    const reassigningClassStudentCount = (() => {
+      const cls = classes.find((c) => c.unique_key === reassigningClassKey);
+      return (cls?.class_arm_names || []).reduce((sum, a) => sum + (a.activeStudentCount || 0), 0);
+    })();
+
+    // A class with no students yet is a harmless local edit, queued like a
+    // rename, saved with the group's own "Save changes". A class that
+    // already has students moves them too, so this saves immediately and
+    // requires the user's password — the server needs to gate it before
+    // anything moves, not after a batch of unrelated edits.
+    const confirmReassignProgramme = async () => {
+      const cls = classes.find((c) => c.unique_key === reassigningClassKey);
+      const division = cls ? programmesByDivisionId[cls.division_id] : null;
+      const target = division?.find((p) => p.id === Number(reassignProgrammeDraft));
+      if (!cls || !target) return;
+
+      if (reassigningClassStudentCount === 0) {
+        reassignProgramme(cls.unique_key, target.id, target.name, target.code);
+        cancelReassignProgramme();
+        return;
+      }
+
+      if (!reassignPassword) {
+        setReassignError('Enter your password to confirm this.');
+        return;
+      }
+
+      setReassigningSaving(true);
+      setReassignError('');
+      try {
+        const payload = {
+          ...classPayload(cls),
+          programme_id: target.id,
+          confirm_password: reassignPassword,
+        };
+        const res = await saveClasses([payload]);
+        if (res?.status) {
+          const updated = {
+            programme_id: target.id,
+            programme_name: target.name,
+            programme_code: target.code,
+          };
+          setClasses((prev) =>
+            prev.map((c) => (c.unique_key === cls.unique_key ? { ...c, ...updated } : c)),
+          );
+          setOriginalClasses((prev) =>
+            prev.map((c) => (c.unique_key === cls.unique_key ? { ...c, ...updated } : c)),
+          );
+          setNotification({
+            open: true,
+            message: `Moved ${cls.class_name} to ${target.name} successfully!`,
+            severity: 'success',
+          });
+          cancelReassignProgramme();
+        } else {
+          setReassignError(res?.message || 'Failed to move class.');
+        }
+      } catch (error) {
+        setReassignError(
+          error?.message || 'Incorrect password, or something went wrong. Please try again.',
+        );
+      } finally {
+        setReassigningSaving(false);
+      }
+    };
+
+    // Every distinct programme seen within each division — the choices
+    // offered when reassigning a class to a different programme, derived
+    // from data already loaded rather than a second request.
+    const programmesByDivisionId = useMemo(() => {
+      const map = {};
+      classes.forEach((c) => {
+        if (!map[c.division_id]) map[c.division_id] = new Map();
+        map[c.division_id].set(c.programme_id, {
+          id: c.programme_id,
+          name: c.programme_name,
+          code: c.programme_code,
+        });
+      });
+      return Object.fromEntries(
+        Object.entries(map).map(([divId, progMap]) => [divId, Array.from(progMap.values())]),
+      );
+    }, [classes]);
+
     // ── Group by division, splitting a division into one group per
     // programme only when it actually has more than one (e.g. Senior
     // Secondary — Science / — Humanity / ...); a division with a single
@@ -435,6 +675,8 @@ const SetUpClassesTab = forwardRef(
       return (
         orig.no_of_arms !== cls.no_of_arms ||
         orig.status !== cls.status ||
+        orig.class_name !== cls.class_name ||
+        orig.programme_id !== cls.programme_id ||
         JSON.stringify(origNames) !== JSON.stringify(names)
       );
     };
@@ -608,7 +850,9 @@ const SetUpClassesTab = forwardRef(
                   flexWrap: 'wrap',
                   cursor: 'pointer',
                   bgcolor: (theme) =>
-                    theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.16) : SECTION_HEADER_BG(theme),
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.primary.main, 0.16)
+                      : SECTION_HEADER_BG(theme),
                   borderBottom: '1px solid',
                   borderColor: (theme) => (theme.palette.mode === 'dark' ? 'divider' : '#aab1b9'),
                   borderLeft: '4px solid',
@@ -693,7 +937,9 @@ const SetUpClassesTab = forwardRef(
                       mb: 1,
                       borderRadius: 2,
                       bgcolor: (theme) =>
-                        theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.16) : SECTION_HEADER_BG(theme),
+                        theme.palette.mode === 'dark'
+                          ? alpha(theme.palette.primary.main, 0.16)
+                          : SECTION_HEADER_BG(theme),
                     }}
                   >
                     <Grid size={4}>
@@ -772,13 +1018,46 @@ const SetUpClassesTab = forwardRef(
                                 >
                                   {abbreviateProgramme(cls)}
                                 </Box>
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Typography fontWeight={600} noWrap>
-                                    {cls.class_name}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary" noWrap>
-                                    {cls.programme_code} – {cls.class_code}
-                                  </Typography>
+                                <Box sx={{ minWidth: 0, flex: 1 }}>
+                                  <ClassNameField
+                                    value={cls.class_name}
+                                    disabled={isInactive}
+                                    onEditClick={() => startRenamingClass(cls)}
+                                  />
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                    <Typography variant="caption" color="text.secondary" noWrap>
+                                      {cls.programme_name} – {cls.class_name}
+                                      {/* {cls.programme_code} – {cls.class_code} */}
+                                    </Typography>
+                                    {!isInactive && (
+                                      <Tooltip title={`Rename programme "${cls.programme_name}"`}>
+                                        <IconButton
+                                          size="small"
+                                          onClick={() =>
+                                            startRenamingProgramme(
+                                              cls.programme_id,
+                                              cls.programme_name,
+                                            )
+                                          }
+                                          sx={{ p: 0.25 }}
+                                        >
+                                          <EditIcon sx={{ fontSize: 14 }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                    {(programmesByDivisionId[cls.division_id]?.length || 0) > 1 && (
+                                      <Tooltip title="Move to a different programme">
+                                        <IconButton
+                                          size="small"
+                                          disabled={isInactive}
+                                          onClick={() => startReassigningProgramme(cls)}
+                                          sx={{ p: 0.25 }}
+                                        >
+                                          <SwapHorizIcon sx={{ fontSize: 14 }} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    )}
+                                  </Box>
                                 </Box>
                               </Box>
                             </Grid>
@@ -868,6 +1147,174 @@ const SetUpClassesTab = forwardRef(
             </Paper>
           );
         })}
+
+        <Dialog
+          open={renamingClassKey !== null}
+          onClose={cancelRenameClass}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700 }}>Rename Class</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              label="Class name"
+              value={classNameDraft}
+              onChange={(e) => setClassNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') confirmRenameClass();
+              }}
+              sx={{ mt: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1.5 }}>
+              This applies once you click "Save changes" for this section.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={cancelRenameClass}>Cancel</Button>
+            <Button
+              variant="contained"
+              onClick={confirmRenameClass}
+              disabled={!classNameDraft.trim()}
+            >
+              Rename
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={renamingProgrammeId !== null}
+          onClose={cancelRenameProgramme}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700 }}>Rename Programme</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              label="Programme name"
+              value={programmeNameDraft}
+              onChange={(e) => setProgrammeNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitRenameProgramme();
+              }}
+              disabled={savingProgrammeId !== null}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={cancelRenameProgramme} disabled={savingProgrammeId !== null}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={commitRenameProgramme}
+              disabled={savingProgrammeId !== null || !programmeNameDraft.trim()}
+            >
+              {savingProgrammeId !== null ? <CircularProgress size={18} color="inherit" /> : 'Save'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={reassigningClassKey !== null}
+          onClose={cancelReassignProgramme}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700 }}>Move to a Different Programme</DialogTitle>
+          <DialogContent>
+            {(() => {
+              const cls = classes.find((c) => c.unique_key === reassigningClassKey);
+              const options = cls ? programmesByDivisionId[cls.division_id] || [] : [];
+              return (
+                <>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    {cls?.class_name} is currently under <strong>{cls?.programme_name}</strong>.
+                  </Typography>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    label="Programme"
+                    value={reassignProgrammeDraft}
+                    onChange={(e) => setReassignProgrammeDraft(e.target.value)}
+                    disabled={reassigningSaving}
+                  >
+                    {options.map((p) => (
+                      <MenuItem key={p.id} value={String(p.id)}>
+                        {p.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  {reassigningClassStudentCount > 0 ? (
+                    <>
+                      <Alert
+                        severity="warning"
+                        variant="filled"
+                        sx={{ mt: 2, bgcolor: '#ed6c02', color: '#fff', fontWeight: 500 }}
+                      >
+                        This class has {reassigningClassStudentCount} enrolled student(s). Moving it
+                        will move all of them — and their arms — to the new programme too, right
+                        away. Enter your password to confirm.
+                      </Alert>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="password"
+                        label="Your password"
+                        value={reassignPassword}
+                        onChange={(e) => setReassignPassword(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmReassignProgramme();
+                        }}
+                        disabled={reassigningSaving}
+                        sx={{ mt: 2 }}
+                        autoFocus
+                      />
+                      {reassignError && (
+                        <Typography
+                          variant="caption"
+                          color="error.main"
+                          display="block"
+                          sx={{ mt: 1 }}
+                        >
+                          {reassignError}
+                        </Typography>
+                      )}
+                    </>
+                  ) : (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ mt: 1.5 }}
+                    >
+                      This applies once you click "Save changes" for this section.
+                    </Typography>
+                  )}
+                </>
+              );
+            })()}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={cancelReassignProgramme} disabled={reassigningSaving}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={confirmReassignProgramme}
+              disabled={reassigningSaving}
+            >
+              {reassigningSaving ? <CircularProgress size={18} color="inherit" /> : 'Move'}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Snackbar
           open={notification.open}

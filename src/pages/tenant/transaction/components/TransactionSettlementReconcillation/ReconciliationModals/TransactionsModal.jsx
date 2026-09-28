@@ -14,10 +14,10 @@ import {
   Paper,
   CircularProgress,
   useTheme,
-  Link,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import StandardModal from '@/components/shared/StandardModal';
+import WalletAccountCell from '@/components/shared/WalletAccountCell';
 import { fetchSettlementReconciliationDetails } from '@/api/tenant/bursary/transactionApi';
 import dayjs from 'dayjs';
 
@@ -150,7 +150,9 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
                 <TableRow>
                   <TableCell sx={thCell}>#</TableCell>
                   <TableCell sx={thCell}>Transaction ID</TableCell>
+                  <TableCell sx={thCell}>Paid For</TableCell>
                   <TableCell sx={thCell}>Paid By</TableCell>
+                  <TableCell sx={thCell}>Wallet Account</TableCell>
                   <TableCell sx={thCell}>Revenue</TableCell>
                   <TableCell sx={thCell}>Description</TableCell>
                   <TableCell sx={thCell}>Amount ₦</TableCell>
@@ -161,7 +163,7 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 3 }}>
+                    <TableCell colSpan={10} align="center" sx={{ ...tdCell, py: 3 }}>
                       No transactions found.
                     </TableCell>
                   </TableRow>
@@ -174,11 +176,15 @@ const TransactionsModal = ({ open, onClose, rowData }) => {
                       </TableCell>
                       <TableCell sx={tdCell}>
                         <Typography variant="body2" fontWeight={600}>
-                          {row.paid_by}
+                          {row.ward_name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {row.class}
                         </Typography>
+                      </TableCell>
+                      <TableCell sx={tdCell}>{row.payer_name}</TableCell>
+                      <TableCell sx={tdCell}>
+                        <WalletAccountCell row={row} />
                       </TableCell>
                       <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
                       <TableCell sx={tdCell}>{row.description}</TableCell>

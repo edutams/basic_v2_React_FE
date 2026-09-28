@@ -906,7 +906,7 @@ const Invoice = () => {
                             <TextField
                               size="small"
                               type="number"
-                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
                               disabled={!discountFieldEnabled}
                               value={fee.discount}
                               onChange={(e) =>
@@ -939,7 +939,7 @@ const Invoice = () => {
                             <TextField
                               size="small"
                               type="number"
-                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
                               disabled={!penaltyFieldEnabled}
                               value={fee.penalty}
                               onChange={(e) =>
@@ -1185,7 +1185,7 @@ const Invoice = () => {
                             <TextField
                               size="small"
                               type="number"
-                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
                               disabled={!discountFieldEnabled}
                               value={fee.discount}
                               onChange={(e) =>
@@ -1212,7 +1212,7 @@ const Invoice = () => {
                             <TextField
                               size="small"
                               type="number"
-                              sx={{ width: 64, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                              sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
                               disabled={!penaltyFieldEnabled}
                               value={fee.penalty}
                               onChange={(e) =>

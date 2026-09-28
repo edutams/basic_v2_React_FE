@@ -16,28 +16,11 @@ import {
   fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
+import {
+  displayScore, buildReportProp, gradeScaleFor, printNode,
+} from './reportCardUtils';
 
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
-
-const displayScore = (value) => {
-  if (value === null || value === undefined || value === '') return '-';
-  return value;
-};
-
-// Stored `ca` JSON may be an array (manual entry) or a keyed object
-// (combined Excel upload) — normalise both to an entity array per CA type.
-const normalizeCa = (ca) => {
-  if (!ca) return [];
-  if (Array.isArray(ca)) return ca;
-  if (typeof ca === 'object') return Object.values(ca);
-  return [];
-};
-
-const getEntityTotal = (entities) => {
-  if (!entities) return 0;
-  const list = Array.isArray(entities) ? entities : Object.values(entities);
-  return list.reduce((sum, e) => sum + Number(e?.score || 0), 0);
-};
 
 const ReportSheetTab = () => {
   const theme = useTheme();
@@ -277,120 +260,11 @@ const ReportSheetTab = () => {
     }
   };
 
-  // ── Build the report prop consumed by the result templates ──
-  const buildReportProp = (report) => {
-    if (!report) return null;
-    const caContent = report.mark_config?.ca_content || [];
-    const perCaNames = caContent.map((c) => c?.display_name || 'CA');
-
-    const subjects = (report.subjects || []).map((s) => {
-      const caArr = normalizeCa(s.ca);
-      const subject = { subject_name: s.subject_name };
-      caArr.forEach((c, idx) => {
-        const key = `ca${idx + 1}`;
-        subject[key] = getEntityTotal(c?.entities);
-        subject[`${key}_name`] = c?.display_name || perCaNames[idx] || `CA ${idx + 1}`;
-        subject[`${key}_max`] = Number(c?.max_score || 0);
-      });
-      subject.ca_total = s.ca_total;
-      subject.exam = s.exam_score;
-      subject.exam_max = Number(report.mark_config?.exam_max_score || 100);
-      subject.total = s.overall_total;
-      subject.highest = s.highest;
-      subject.lowest = s.lowest;
-      subject.class_average = s.class_average;
-      subject.position = s.position ? `${s.position}${ordinalSuffix(s.position)}` : '-';
-      subject.grade = s.grade || '-';
-      subject.remark = s.remark || '-';
-      return subject;
-    });
-
-    return {
-      subjects,
-      ca_names: perCaNames,
-      class_population: report.summary?.class_population ?? 0,
-      position: report.summary?.overall_position || '-',
-      total_score: report.summary?.total_score ?? 0,
-      average_score: report.summary?.average_score ?? 0,
-      arm_average: report.summary?.arm_average ?? 0,
-      passed_count: report.summary?.passed_count ?? 0,
-      failed_count: report.summary?.failed_count ?? 0,
-      affective: report.affective || {},
-      psychomotor: report.psychomotor || {},
-      teacherComment: '',
-      adminComment: '',
-      attendance: {
-        opened: report.attendance?.opened ?? 0,
-        present: report.attendance?.present ?? 0,
-        absent: report.attendance?.absent ?? 0,
-      },
-      term_dates: {
-        start_date: report.session_term?.start_date || null,
-        end_date: report.session_term?.end_date || null,
-      },
-      grade_settings: report.grade_settings || [],
-      pass_mark: report.pass_mark,
-      publish: report.result_publish,
-    };
-  };
-
-  const ordinalSuffix = (n) => {
-    const s = ['th', 'st', 'nd', 'rd'];
-    const v = n % 100;
-    return s[(v - 20) % 10] || s[v] || s[0];
-  };
-
-  // Grade scale for template key tables (from configured grade settings)
-  const gradeScaleFor = (report) => {
-    const gs = report?.grade_settings || [];
-    if (gs.length === 0) return [];
-    return gs.map((g) => ({
-      range: `${Number(g.min_score)} - ${Number(g.max_score)}`,
-      grade: g.grade,
-      remark: g.remark,
-    }));
-  };
-
   // ── Print ────────────────────────────────────────────────
   const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
+    if (!printNode(printRef.current, 'Print Dossier')) {
       showSnackbar('Pop-up blocked. Allow pop-ups to print the dossier.', 'warning');
-      return;
     }
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Print Dossier</title>
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Times New Roman', Times, serif; font-size: 14px; color: #000; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-            table { border-collapse: collapse; width: 100%; }
-            table, th, td { border: 1px solid #000; }
-            th, td { padding: 4px 8px; text-align: left; vertical-align: middle; }
-            th { font-weight: 700; }
-            img { max-width: 100%; height: auto; }
-            strong { font-weight: 700; }
-            u { text-decoration: underline; }
-            .tpl1-header-box, .tpl2-header-box { display: flex; flex-wrap: wrap; }
-            .tpl1-header-box > div, .tpl2-header-box > div { flex: 1 1 200px; }
-            .tpl1-main, .tpl2-main { display: flex; flex-wrap: wrap; }
-            .tpl1-cognitive, .tpl2-cognitive { flex: 3 1 0%; }
-            .tpl1-affective, .tpl2-right { flex: 1 1 0%; }
-            .tpl1-bottom-row, .tpl2-keys-row { display: flex; flex-wrap: wrap; }
-            .tpl1-bottom-row > div, .tpl2-keys-row > div { flex: 1 1 0%; }
-            @page { size: A4 portrait; margin: 10mm 10mm 10mm 10mm; }
-            @media print { body { margin: 0; } table { page-break-inside: auto; } tr { page-break-inside: avoid; } }
-          </style>
-        </head>
-        <body>${printContent.innerHTML}</body>
-      </html>
-    `);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 800);
   };
 
   // ── Dossier rendering ────────────────────────────────────
@@ -687,7 +561,7 @@ const ReportSheetTab = () => {
           <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
             <TableHead>
               <TableRow>
-                {['#', 'Student', 'Sex', 'Subjects', 'Average', 'Position', 'Status', 'Action'].map((h) => (
+                {['#', 'Student', 'Sex', 'Subjects', 'Average', 'Position',  'Action'].map((h) => (
                   <TableCell
                     key={h}
                     sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}
@@ -729,14 +603,14 @@ const ReportSheetTab = () => {
                   <TableCell align="center" sx={cellBorderSx}>
                     {s.average_score !== null && s.computed_position ? s.computed_position : '-'}
                   </TableCell>
-                  <TableCell align="center" sx={cellBorderSx}>
+                  {/* <TableCell align="center" sx={cellBorderSx}>
                     <Chip
                       size="small"
                       label={s.paid ? 'Paid' : 'Not Paid'}
                       color={s.paid ? 'success' : 'default'}
                       variant="outlined"
                     />
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell align="center" sx={cellBorderSx}>
                     <Tooltip title={s.has_result ? 'View dossier (report card)' : 'No scores uploaded yet for this student'}>
                       <span>

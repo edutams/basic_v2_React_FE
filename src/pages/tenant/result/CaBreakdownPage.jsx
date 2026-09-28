@@ -5,8 +5,8 @@ import CaBreakdownTab from './components/CaBreakdownTab';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Result Manager' }, { title: 'CA Breakdown' }];
 
 const CaBreakdownPage = () => (
-  <PageContainer title="CA Breakdown" description="View student CA score breakdown by subject">
-    <Breadcrumb title="CA Breakdown" subtitle="View CA scores across all subjects" items={BCrumb} />
+  <PageContainer title="CA Breakdown" description="Your continuous assessment score breakdown by subject">
+    <Breadcrumb title="CA Breakdown" subtitle="Your CA scores across all subjects" items={BCrumb} />
     <CaBreakdownTab />
   </PageContainer>
 );

@@ -16,6 +16,19 @@ const resultDossierApi = {
   // POST /result-dossier/student-report { student_registration_id }
   getStudentReport: (data) =>
     tenantApi.post('/result-dossier/student-report', data),
+
+  // The logged-in learner's own registrations (one row per session-term) +
+  // the one to open by default. Drives the term selector on the learner
+  // Report Card / CA Breakdown pages.
+  // GET /result-dossier/my-registration?session_term_id=
+  getMyRegistration: (params = {}) =>
+    tenantApi.get('/result-dossier/my-registration', { params }),
+
+  // Report card for the authenticated learner — no student id in the body;
+  // the auth token decides whose report is returned.
+  // POST /result-dossier/my-report { session_term_id? }
+  getMyReport: (data = {}) =>
+    tenantApi.post('/result-dossier/my-report', data),
 };
 
 export default resultDossierApi;

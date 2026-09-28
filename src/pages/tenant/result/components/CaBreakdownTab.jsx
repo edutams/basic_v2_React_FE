@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import { IconPrinter } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
@@ -53,7 +54,19 @@ const CaBreakdownTab = () => {
   const [selectedCaIndex, setSelectedCaIndex] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Self mode (a learner opening the page from the sidebar) — populated by
+  // the registration effect below; deep-linked pages never touch these.
+  const [myTerms, setMyTerms] = useState([]);
+  const [selfTermId, setSelfTermId] = useState('');
+  const [termsLoaded, setTermsLoaded] = useState(false);
+
+  // Deep links (admin dossier / score sheet) carry a student id in the query
+  // string. A learner arriving with none is resolved server-side from the
+  // auth token, and this term list drives their term selector.
   const hasIdentity = Boolean(studentRegistrationId || userId);
+  const isSelfMode = !hasIdentity;
+  const effectiveSessionTermId = isSelfMode ? selfTermId : sessionTermId;
+  const termsReady = !isSelfMode || (termsLoaded && Boolean(selfTermId));
 
   useEffect(() => {
     if (!document.getElementById(PRINT_STYLE_ID)) {
@@ -70,8 +83,42 @@ const CaBreakdownTab = () => {
       .catch(() => setSchoolInfo(null));
   }, []);
 
+  // Self mode: the learner's own registrations (for the term selector).
   useEffect(() => {
-    if (!hasIdentity) {
+    if (!isSelfMode) {
+      setTermsLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    resultDossierApi.getMyRegistration()
+      .then((res) => {
+        if (cancelled) return;
+        const body = res?.data;
+        if (body?.status) {
+          const regs = body.data?.registrations || [];
+          setMyTerms(regs);
+          setSelfTermId((prev) => {
+            const fallback = String(body.data?.default_session_term_id ?? '');
+            if (prev && regs.some((r) => String(r.session_term_id) === prev)) return prev;
+            return fallback;
+          });
+        } else {
+          setError(body?.message || 'Failed to load your registration.');
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Failed to load learner registration:', err);
+        setError(err?.response?.data?.message || 'Failed to load your registration.');
+      })
+      .finally(() => {
+        if (!cancelled) setTermsLoaded(true);
+      });
+    return () => { cancelled = true; };
+  }, [isSelfMode]);
+
+  useEffect(() => {
+    if (!termsReady) {
       setPayload(null);
       return;
     }
@@ -81,11 +128,12 @@ const CaBreakdownTab = () => {
       setError('');
       try {
         const body = {
-          session_term_id: sessionTermId ? Number(sessionTermId) : undefined,
+          session_term_id: effectiveSessionTermId ? Number(effectiveSessionTermId) : undefined,
           class_arm_id: classArmId ? Number(classArmId) : undefined,
         };
         if (studentRegistrationId) body.student_registration_id = Number(studentRegistrationId);
-        else body.user_id = userId;
+        else if (userId) body.user_id = userId;
+        // Self mode sends neither — the backend resolves the logged-in learner.
 
         const res = await scoreManagerApi.getCaBreakdown(body);
         const data = res?.data;
@@ -112,7 +160,9 @@ const CaBreakdownTab = () => {
     };
     load();
     return () => { cancelled = true; };
-  }, [hasIdentity, studentRegistrationId, userId, sessionTermId, classArmId]);
+  }, [
+    termsReady, effectiveSessionTermId, studentRegistrationId, userId, classArmId,
+  ]);
 
   const caOptions = payload?.ca_options || [];
   const student = payload?.user_details || null;
@@ -146,15 +196,30 @@ const CaBreakdownTab = () => {
 
   const handlePrint = () => window.print();
 
-  if (!hasIdentity) {
+  // ── Self mode: still resolving the learner's registration ──
+  if (isSelfMode && !termsLoaded) {
+    return (
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+        <Box sx={{ p: 6, textAlign: 'center' }}>
+          <CircularProgress size={36} />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Loading your registration...
+          </Typography>
+        </Box>
+      </Paper>
+    );
+  }
+
+  // ── Self mode: this account has never been registered ──────
+  if (isSelfMode && myTerms.length === 0 && !payload) {
     return (
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
         <Box sx={{ p: 5, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" fontWeight={600}>
-            Open a student&apos;s C.A Report from the Result Manager to view their breakdown.
+            {error || 'No student registration found for your account.'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            A student registration or user id is required.
+            Your Continuous Assessment sheet appears here once the school registers you for a term.
           </Typography>
         </Box>
       </Paper>
@@ -178,7 +243,13 @@ const CaBreakdownTab = () => {
     return (
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
         <Box sx={{ p: 4 }}>
-          <Alert severity="error">{error}</Alert>
+          <Alert severity="error" action={
+            <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          }>
+            {error}
+          </Alert>
         </Box>
       </Paper>
     );
@@ -266,6 +337,24 @@ const CaBreakdownTab = () => {
       {/* ── CA Type Filter (UI chrome — hidden when printing) ── */}
       <Box className="ca-no-print" sx={{ p: 2, borderBottom: caConfig ? 1 : 0, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
+          {isSelfMode && myTerms.length > 0 && (
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Session-Term</InputLabel>
+                <Select
+                  value={selfTermId}
+                  label="Session-Term"
+                  onChange={(e) => setSelfTermId(e.target.value)}
+                >
+                  {myTerms.map((t) => (
+                    <MenuItem key={t.session_term_id} value={String(t.session_term_id)}>
+                      {t.session_name} - {t.term_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, sm: 3 }}>
             <FormControl fullWidth size="small">
               <InputLabel>CA Type</InputLabel>

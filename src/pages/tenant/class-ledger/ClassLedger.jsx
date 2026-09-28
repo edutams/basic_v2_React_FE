@@ -61,6 +61,7 @@ import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import {
+  fetchActiveSessionTerm,
   fetchClassAndArmsByProgramme,
   fetchProgrammes,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -551,593 +552,601 @@ const ClassLedger = () => {
 
       {mainTab === 0 && (
         <>
-      <Grid container spacing={3} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <StatCard
-            title="Total Invoice(Compulsory Bill)"
-            value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
-            colorIndex={1}
-            loading={loadingAnalytics}
-            subStats={[
-              {
-                label: 'Total Paid',
-                value: `₦${(analyticsData?.total_comp_transaction || 0).toLocaleString()}`,
-              },
-              {
-                label: 'Balance',
-                value: `₦${(analyticsData?.total_comp_balance || 0).toLocaleString()}`,
-              },
-            ]}
-            onIconClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Compulsory Fees');
-              setChartType('bar');
-              setIsCompulsory(true);
-            }}
-            onClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Compulsory Fees');
-              setChartType('bar');
-              setIsCompulsory(true);
-            }}
-          />
-        </Grid>
+          <Grid container spacing={3} sx={{ mb: 2 }}>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <StatCard
+                title="Total Invoice(Compulsory Bill)"
+                value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
+                colorIndex={1}
+                loading={loadingAnalytics}
+                subStats={[
+                  {
+                    label: 'Total Paid',
+                    value: `₦${(analyticsData?.total_comp_transaction || 0).toLocaleString()}`,
+                  },
+                  {
+                    label: 'Balance',
+                    value: `₦${(analyticsData?.total_comp_balance || 0).toLocaleString()}`,
+                  },
+                ]}
+                onIconClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Compulsory Fees');
+                  setChartType('bar');
+                  setIsCompulsory(true);
+                }}
+                onClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Compulsory Fees');
+                  setChartType('bar');
+                  setIsCompulsory(true);
+                }}
+              />
+            </Grid>
 
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <StatCard
-            title="Total Invoice (Optional Bill)"
-            value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
-            colorIndex={2}
-            loading={loadingAnalytics}
-            subStats={[
-              {
-                label: 'Total Paid',
-                value: `₦${(analyticsData?.total_opt_transaction || 0).toLocaleString()}`,
-              },
-              {
-                label: 'Balance',
-                value: `₦${(analyticsData?.total_opt_balance || 0).toLocaleString()}`,
-              },
-            ]}
-            onIconClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Optional Fees');
-              setChartType('bar');
-              setIsOptional(true);
-            }}
-            onClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Optional Fees');
-              setChartType('bar');
-              setIsOptional(true);
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <StatCard
-            title="Total Payable"
-            value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
-            colorIndex={0}
-            loading={loadingAnalytics}
-            subStats={[
-              {
-                label: 'Total Paid',
-                value: `₦${(analyticsData?.total_transaction || 0).toLocaleString()}`,
-              },
-              {
-                label: 'Balance',
-                value: `₦${(analyticsData?.total_balance || 0).toLocaleString()}`,
-              },
-            ]}
-            onIconClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Total Payable');
-              setChartType('bar');
-              setIsPayable(true);
-            }}
-            onClick={() => {
-              setIsFeeModalOpen(true);
-              setChartTitle('Total Payable');
-              setChartType('bar');
-              setIsPayable(true);
-            }}
-          />
-        </Grid>
-      </Grid>
-      <ParentCard
-        sx={{
-          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
-          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
-        }}
-        title={
-          <Box
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <StatCard
+                title="Total Invoice (Optional Bill)"
+                value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
+                colorIndex={2}
+                loading={loadingAnalytics}
+                subStats={[
+                  {
+                    label: 'Total Paid',
+                    value: `₦${(analyticsData?.total_opt_transaction || 0).toLocaleString()}`,
+                  },
+                  {
+                    label: 'Balance',
+                    value: `₦${(analyticsData?.total_opt_balance || 0).toLocaleString()}`,
+                  },
+                ]}
+                onIconClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Optional Fees');
+                  setChartType('bar');
+                  setIsOptional(true);
+                }}
+                onClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Optional Fees');
+                  setChartType('bar');
+                  setIsOptional(true);
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <StatCard
+                title="Total Payable"
+                value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
+                colorIndex={0}
+                loading={loadingAnalytics}
+                subStats={[
+                  {
+                    label: 'Total Paid',
+                    value: `₦${(analyticsData?.total_transaction || 0).toLocaleString()}`,
+                  },
+                  {
+                    label: 'Balance',
+                    value: `₦${(analyticsData?.total_balance || 0).toLocaleString()}`,
+                  },
+                ]}
+                onIconClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Total Payable');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+                onClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Total Payable');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+              />
+            </Grid>
+          </Grid>
+          <ParentCard
             sx={{
-              display: 'flex',
-              alignItems: { xs: 'flex-start', md: 'center' },
-              flexDirection: { xs: 'column', md: 'row' },
-              justifyContent: 'space-between',
-              gap: 2,
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
+            title={
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: { xs: 'flex-start', md: 'center' },
+                  flexDirection: { xs: 'column', md: 'row' },
+                  justifyContent: 'space-between',
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h5"></Typography>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 1,
+                    flexWrap: 'wrap',
+                    width: { xs: '100%', md: 'auto' },
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<DownloadIcon />}
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
+                    onClick={handleDownloadExcel}
+                  >
+                    View In CSV Format
+                  </Button>
+
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<UploadIcon />}
+                    sx={{ width: { xs: '100%', sm: 'auto' } }}
+                    onClick={handlePrintPaymentList}
+                  >
+                    Print Payment List
+                  </Button>
+                </Box>
+              </Box>
+            }
           >
-            <Typography variant="h5"></Typography>
+            <Grid container spacing={3} sx={{ mb: 2, mt: 0 }} alignItems="center">
+              <Grid size={{ xs: 12, md: 3 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Programme"
+                  size="small"
+                  value={programme}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProgramme(val);
+                    handleFilterChange('programme', val);
+                  }}
+                >
+                  {programmes.map((p) => (
+                    <MenuItem key={p.value} value={p.value}>
+                      {p.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
 
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 1,
-                flexWrap: 'wrap',
-                width: { xs: '100%', md: 'auto' },
-              }}
-            >
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<DownloadIcon />}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-                onClick={handleDownloadExcel}
-              >
-                View In CSV Format
-              </Button>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Class"
+                  size="small"
+                  value={classLevel}
+                  onChange={(e) => setClassLevel(e.target.value)}
+                >
+                  {classes.map((c) => (
+                    <MenuItem key={c.value} value={c.value}>
+                      {c.label} ({c.class_arm_names})
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
 
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<UploadIcon />}
-                sx={{ width: { xs: '100%', sm: 'auto' } }}
-                onClick={handlePrintPaymentList}
-              >
-                Print Payment List
-              </Button>
-            </Box>
-          </Box>
-        }
-      >
-        <Grid container spacing={3} sx={{ mb: 2, mt: 0 }} alignItems="center">
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              select
-              fullWidth
-              label="Programme"
-              size="small"
-              value={programme}
-              onChange={(e) => {
-                const val = e.target.value;
-                setProgramme(val);
-                handleFilterChange('programme', val);
-              }}
-            >
-              {programmes.map((p) => (
-                <MenuItem key={p.value} value={p.value}>
-                  {p.label}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Session"
+                  size="small"
+                  value={sessionId}
+                  onChange={(e) => {
+                    setSessionId(e.target.value);
+                    setTermId('');
+                  }}
+                >
+                  <MenuItem value="">Current</MenuItem>
+                  {sessions.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.session_name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 2 }}>
-            <TextField
-              select
-              fullWidth
-              label="Class"
-              size="small"
-              value={classLevel}
-              onChange={(e) => setClassLevel(e.target.value)}
-            >
-              {classes.map((c) => (
-                <MenuItem key={c.value} value={c.value}>
-                  {c.label} ({c.class_arm_names})
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Term"
+                  size="small"
+                  value={termId}
+                  disabled={!sessionId}
+                  onChange={(e) => setTermId(e.target.value)}
+                >
+                  <MenuItem value="">Current</MenuItem>
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 2 }}>
-            <TextField
-              select
-              fullWidth
-              label="Session"
-              size="small"
-              value={sessionId}
-              onChange={(e) => {
-                setSessionId(e.target.value);
-                setTermId('');
-              }}
-            >
-              <MenuItem value="">Current</MenuItem>
-              {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.session_name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+              <Grid size={{ xs: 12, md: 2.5 }}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Payment Status"
+                  size="small"
+                  value={paymentStatusFilter}
+                  onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                >
+                  <MenuItem value="">All Students</MenuItem>
+                  <MenuItem value="cleared">Payment List (Cleared)</MenuItem>
+                  <MenuItem value="owing">Debtor's List (Owing)</MenuItem>
+                </TextField>
+              </Grid>
 
-          <Grid size={{ xs: 12, md: 2 }}>
-            <TextField
-              select
-              fullWidth
-              label="Term"
-              size="small"
-              value={termId}
-              disabled={!sessionId}
-              onChange={(e) => setTermId(e.target.value)}
-            >
-              <MenuItem value="">Current</MenuItem>
-              {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.term_name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 2.5 }}>
-            <TextField
-              select
-              fullWidth
-              label="Payment Status"
-              size="small"
-              value={paymentStatusFilter}
-              onChange={(e) => setPaymentStatusFilter(e.target.value)}
-            >
-              <MenuItem value="">All Students</MenuItem>
-              <MenuItem value="cleared">Payment List (Cleared)</MenuItem>
-              <MenuItem value="owing">Debtor's List (Owing)</MenuItem>
-            </TextField>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 3.5 }}>
-            <TextField
-              placeholder="Search by name"
-              size="small"
-              fullWidth
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 1 }}>
-            <Button
-              variant="contained"
-              size="small"
-              fullWidth
-              onClick={fetchClassLedgerData}
-              disabled={!programme || !classLevel}
-            >
-              Fetch
-            </Button>
-          </Grid>
-        </Grid>
-
-        <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={thCell}>S/N</TableCell>
-                <TableCell sx={thCell}>Student Name</TableCell>
-                <TableCell sx={thCell}>Pay Category</TableCell>
-                <TableCell sx={thCell}>Total Compulsory Bill</TableCell>
-                <TableCell sx={thCell}>Total Optional Bill</TableCell>
-                <TableCell sx={thCell}>Total Payable</TableCell>
-                <TableCell sx={thCell}>Total Paid</TableCell>
-                <TableCell sx={thCell}>Penalty</TableCell>
-                <TableCell sx={thCell}>Discount</TableCell>
-                <TableCell sx={thCell}>Balance</TableCell>
-                <TableCell sx={thCell}>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loadingTable ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Skeleton variant="circular" width={36} height={36} />
-                        <Skeleton variant="text" width={140} height={20} />
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={100} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={90} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={90} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={90} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={90} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={60} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={60} height={20} />
-                    </TableCell>
-                    <TableCell sx={tdCell}>
-                      <Skeleton variant="text" width={90} height={20} />
-                    </TableCell>
-                    <TableCell align="center" sx={tdCell}>
-                      <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : ledgerData.length > 0 ? (
-                ledgerData.map((student, index) => {
-                  return (
-                    <TableRow key={student.user_id || index} hover>
-                      {/* <TableCell>{index + 1}</TableCell> */}
-                      <TableCell sx={tdCell}>{(meta?.from || 0) + index}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar src={student.avatar} sx={{ width: 36, height: 36 }}>
-                            <PersonOutlineIcon sx={{ fontSize: 20 }} />
-                          </Avatar>
-                          <Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <Typography variant="body2" fontWeight={600}>
-                                {student.full_name}
-                              </Typography>
-                              {student.has_stuck_payment && (
-                                <Tooltip
-                                  title={`₦${Number(student.stuck_payment_total || 0).toLocaleString()} in unapplied payments — see "Reassign a Payment"`}
-                                >
-                                  <WarningAmberOutlinedIcon
-                                    sx={{ fontSize: 16, color: 'warning.main' }}
-                                  />
-                                </Tooltip>
-                              )}
-                            </Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {student.student_number || '—'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        {student.bursary_payment_category_name ? (
-                          <Chip
-                            label={student.bursary_payment_category_name}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
-                        ) : (
-                          '—'
-                        )}
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        ₦
-                        {(
-                          student.total_compulsory ||
-                          student.total_compulsorys ||
-                          0
-                        ).toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        ₦{(student.total_optional || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        ₦{(student.total_payable || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        ₦{(student.total_paid || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        ₦{(student.total_penalty || 0).toLocaleString()}
-                      </TableCell>{' '}
-                      <TableCell sx={tdCell}>
-                        ₦{(student.total_discount || 0).toLocaleString()}
-                      </TableCell>{' '}
-                      <TableCell
-                        sx={{
-                          ...tdCell,
-                          color: (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
-                          fontWeight: 600,
-                        }}
-                      >
-                        ₦{(student.total_balance || 0).toLocaleString()}
-                      </TableCell>
-                      <TableCell align="right" sx={tdCell}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            setAnchorEl(e.currentTarget);
-                            setActiveRow(student);
-                          }}
-                        >
-                          <IconDotsVertical size={18} />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
-                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                      No students found for the selected class.
-                    </Alert>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-
-            <TableFooter>
-              <TableRow>
-                <TablePagination
-                  rowsPerPageOptions={[10, 20, 30, 50]}
-                  count={meta?.total || 0}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={(_, newPage) => setPage(newPage)}
-                  onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
+              <Grid size={{ xs: 12, md: 3.5 }}>
+                <TextField
+                  placeholder="Search by name"
+                  size="small"
+                  fullWidth
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 />
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </TableContainer>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-          PaperProps={{ sx: { borderRadius: 2, minWidth: 190 } }}
-        >
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              setSelectedStudentForLedger(activeRow);
-              setIsLedgerModalOpen(true);
-            }}
-          >
-            <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Student Ledger
-          </MenuItem>
+              </Grid>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                const sUserId = activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
-                window.open(
-                  `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
-                  '_blank',
-                );
-              }
-            }}
-          >
-            <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Pay for Student
-          </MenuItem>
+              <Grid size={{ xs: 12, md: 1 }}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  fullWidth
+                  onClick={fetchClassLedgerData}
+                  disabled={!programme || !classLevel}
+                >
+                  Fetch
+                </Button>
+              </Grid>
+            </Grid>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                window.open(
-                  `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`,
-                  '_blank',
-                );
-              }
-            }}
-          >
-            <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Update Invoice
-          </MenuItem>
+            <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={thCell}>S/N</TableCell>
+                    <TableCell sx={thCell}>Student Name</TableCell>
+                    <TableCell sx={thCell}>Pay Category</TableCell>
+                    <TableCell sx={thCell}>Total Compulsory Bill</TableCell>
+                    <TableCell sx={thCell}>Total Optional Bill</TableCell>
+                    <TableCell sx={thCell}>Total Payable</TableCell>
+                    <TableCell sx={thCell}>Total Paid</TableCell>
+                    <TableCell sx={thCell}>Penalty</TableCell>
+                    <TableCell sx={thCell}>Discount</TableCell>
+                    <TableCell sx={thCell}>Balance</TableCell>
+                    <TableCell sx={thCell}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loadingTable ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Skeleton variant="circular" width={36} height={36} />
+                            <Skeleton variant="text" width={140} height={20} />
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={100} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={60} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={60} height={20} />
+                        </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell align="center" sx={tdCell}>
+                          <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : ledgerData.length > 0 ? (
+                    ledgerData.map((student, index) => {
+                      return (
+                        <TableRow key={student.user_id || index} hover>
+                          {/* <TableCell>{index + 1}</TableCell> */}
+                          <TableCell sx={tdCell}>{(meta?.from || 0) + index}</TableCell>
+                          <TableCell sx={tdCell}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Avatar src={student.avatar} sx={{ width: 36, height: 36 }}>
+                                <PersonOutlineIcon sx={{ fontSize: 20 }} />
+                              </Avatar>
+                              <Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {student.full_name}
+                                  </Typography>
+                                  {student.has_stuck_payment && (
+                                    <Tooltip
+                                      title={`₦${Number(student.stuck_payment_total || 0).toLocaleString()} in unapplied payments — see "Reassign a Payment"`}
+                                    >
+                                      <WarningAmberOutlinedIcon
+                                        sx={{ fontSize: 16, color: 'warning.main' }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  {student.student_number || '—'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            {student.bursary_payment_category_name ? (
+                              <Chip
+                                label={student.bursary_payment_category_name}
+                                size="small"
+                                color="primary"
+                                variant="outlined"
+                              />
+                            ) : (
+                              '—'
+                            )}
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            ₦
+                            {(
+                              student.total_compulsory ||
+                              student.total_compulsorys ||
+                              0
+                            ).toLocaleString()}
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            ₦{(student.total_optional || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            ₦{(student.total_payable || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            ₦{(student.total_paid || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            ₦{(student.total_penalty || 0).toLocaleString()}
+                          </TableCell>{' '}
+                          <TableCell sx={tdCell}>
+                            ₦{(student.total_discount || 0).toLocaleString()}
+                          </TableCell>{' '}
+                          <TableCell
+                            sx={{
+                              ...tdCell,
+                              color:
+                                (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
+                              fontWeight: 600,
+                            }}
+                          >
+                            ₦{(student.total_balance || 0).toLocaleString()}
+                          </TableCell>
+                          <TableCell align="right" sx={tdCell}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setAnchorEl(e.currentTarget);
+                                setActiveRow(student);
+                              }}
+                            >
+                              <IconDotsVertical size={18} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                          No students found for the selected class.
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                const selectedClassObj = classes.find((c) => c.value === classLevel);
-                const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
-                window.open(
-                  `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
-                  '_blank',
-                );
-              }
-            }}
-          >
-            <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            View Invoice
-          </MenuItem>
+                <TableFooter>
+                  <TableRow>
+                    <TablePagination
+                      rowsPerPageOptions={[10, 20, 30, 50]}
+                      count={meta?.total || 0}
+                      rowsPerPage={rowsPerPage}
+                      page={page}
+                      onPageChange={(_, newPage) => setPage(newPage)}
+                      onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                      }}
+                    />
+                  </TableRow>
+                </TableFooter>
+              </Table>
+            </TableContainer>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+              PaperProps={{ sx: { borderRadius: 2, minWidth: 190 } }}
+            >
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  setSelectedStudentForLedger(activeRow);
+                  setIsLedgerModalOpen(true);
+                }}
+              >
+                <ReceiptLongOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                Student Ledger
+              </MenuItem>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                window.open(
-                  `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`,
-                  '_blank',
-                );
-              }
-            }}
-          >
-            <CurrencyExchangeOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Cash Posting
-          </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    const sUserId =
+                      activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
+                    window.open(
+                      `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
+                      '_blank',
+                    );
+                  }
+                }}
+              >
+                <PaymentsOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                Pay for Student
+              </MenuItem>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                setSelectedUserIdForWallet(activeRow.user_id);
-                setIsWalletModalOpen(true);
-              }
-            }}
-          >
-            <AccountBalanceWalletOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Wallet Transaction
-          </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    window.open(
+                      `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`,
+                      '_blank',
+                    );
+                  }
+                }}
+              >
+                <EditNoteOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                Update Invoice
+              </MenuItem>
 
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow) {
-                setReassignTarget({ userId: activeRow.user_id, fullName: activeRow.full_name });
-                setIsReassignModalOpen(true);
-              }
-            }}
-          >
-            <SwapHorizOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            Reassign a Payment
-          </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    const selectedClassObj = classes.find((c) => c.value === classLevel);
+                    const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
+                    window.open(
+                      `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
+                      '_blank',
+                    );
+                  }
+                }}
+              >
+                <VisibilityOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                View Invoice
+              </MenuItem>
 
-          <MenuItem
-            disabled={!activeRow?.latest_bulk_order_id}
-            onClick={() => {
-              setAnchorEl(null);
-              if (activeRow?.latest_bulk_order_id) {
-                const params = new URLSearchParams({
-                  bulk_order_id: activeRow.latest_bulk_order_id,
-                  user_id: activeRow.user_id,
-                  session_term_id: bursarySessionTermId,
-                });
-                window.open(`/bursary/transactions/print_receipt?${params.toString()}`, '_blank');
-              }
-            }}
-          >
-            <ReceiptOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-            View Receipt
-          </MenuItem>
-        </Menu>
-        <FeeChart
-          open={isFeeModalOpen}
-          onClose={() => {
-            setIsFeeModalOpen(false);
-            setIsCompulsory(false);
-            setIsOptional(false);
-            setIsPayable(false);
-          }}
-          title={chartTitle}
-          chartType={chartType}
-          chartOptions={buildChartOptions([selectedClassName])}
-          isPayable={isPayable}
-          isOptional={isOptional}
-          isCompulsory={isCompulsory}
-          analyticsData={analyticsData}
-          className={selectedClassName}
-          onFetchDrilldown={handleFetchDrilldown}
-        />
-      </ParentCard>
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    window.open(
+                      `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`,
+                      '_blank',
+                    );
+                  }
+                }}
+              >
+                <CurrencyExchangeOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                Cash Posting
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    setSelectedUserIdForWallet(activeRow.user_id);
+                    setIsWalletModalOpen(true);
+                  }
+                }}
+              >
+                <AccountBalanceWalletOutlinedIcon
+                  fontSize="small"
+                  sx={{ color: '#6b7280', mr: 1 }}
+                />
+                Wallet Transaction
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow) {
+                    setReassignTarget({ userId: activeRow.user_id, fullName: activeRow.full_name });
+                    setIsReassignModalOpen(true);
+                  }
+                }}
+              >
+                <SwapHorizOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                Reassign a Payment
+              </MenuItem>
+
+              <MenuItem
+                disabled={!activeRow?.latest_bulk_order_id}
+                onClick={() => {
+                  setAnchorEl(null);
+                  if (activeRow?.latest_bulk_order_id) {
+                    const params = new URLSearchParams({
+                      bulk_order_id: activeRow.latest_bulk_order_id,
+                      user_id: activeRow.user_id,
+                      session_term_id: bursarySessionTermId,
+                    });
+                    window.open(
+                      `/bursary/transactions/print_receipt?${params.toString()}`,
+                      '_blank',
+                    );
+                  }
+                }}
+              >
+                <ReceiptOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
+                View Receipt
+              </MenuItem>
+            </Menu>
+            <FeeChart
+              open={isFeeModalOpen}
+              onClose={() => {
+                setIsFeeModalOpen(false);
+                setIsCompulsory(false);
+                setIsOptional(false);
+                setIsPayable(false);
+              }}
+              title={chartTitle}
+              chartType={chartType}
+              chartOptions={buildChartOptions([selectedClassName])}
+              isPayable={isPayable}
+              isOptional={isOptional}
+              isCompulsory={isCompulsory}
+              analyticsData={analyticsData}
+              className={selectedClassName}
+              onFetchDrilldown={handleFetchDrilldown}
+            />
+          </ParentCard>
         </>
       )}
 

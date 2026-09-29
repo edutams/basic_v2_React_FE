@@ -340,7 +340,9 @@ const ResultSetupTab = () => {
                   onClick={async () => {
                     setSyncingConfig(true);
                     try {
-                      const res = await resultSetupApi.syncConfig();
+                      // Sync the SELECTED term (active or not) — the backend
+                      // copies from the nearest term created before it.
+                      const res = await resultSetupApi.syncConfig(currentSessionTermId);
                       if (res.data.status) {
                         showSnackbar(res.data.message);
                         // Re-pull the grade/mark config so copied values show immediately.

@@ -1259,9 +1259,11 @@ const SetUpClassesTab = forwardRef(
                         variant="filled"
                         sx={{ mt: 2, bgcolor: '#ed6c02', color: '#fff', fontWeight: 500 }}
                       >
-                        This class has {reassigningClassStudentCount} enrolled student(s). Moving it
-                        will move all of them — and their arms — to the new programme too, right
-                        away. Enter your password to confirm.
+                        This class has {reassigningClassStudentCount} student(s) currently enrolled.
+                        Their own registration records won't change, but results, promotion, and
+                        messaging features that look up "which programme is this class under" will
+                        start using the new programme for them immediately. Enter your password to
+                        confirm.
                       </Alert>
                       <TextField
                         fullWidth

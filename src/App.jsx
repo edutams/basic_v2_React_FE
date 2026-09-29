@@ -5,6 +5,7 @@ import RTL from './layouts/landlord/shared/customizer/RTL';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes/Router';
+import { ResultTemplateProvider } from '@/context/ResultTemplateContext';
 
 function App() {
   const theme = ThemeSettings();
@@ -14,7 +15,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <RTL direction={activeDir}>
         <CssBaseline />
-        <RouterProvider router={router} />
+        <ResultTemplateProvider>
+          <RouterProvider router={router} />
+        </ResultTemplateProvider>
       </RTL>
     </ThemeProvider>
   );

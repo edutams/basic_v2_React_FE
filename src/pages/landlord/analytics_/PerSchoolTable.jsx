@@ -14,7 +14,7 @@ import {
   TableFooter,
   TablePagination,
   Paper,
-  CircularProgress,
+  Skeleton,
   Chip,
   Stack,
   Alert,
@@ -159,7 +159,7 @@ const PerSchoolTable = () => {
         </TextField>
       </Stack>
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto' }}>
         <Table size="small">
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
@@ -189,11 +189,15 @@ const PerSchoolTable = () => {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={28} />
-                </TableCell>
-              </TableRow>
+              [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(10)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" width={j === 1 ? 120 : 60} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 3 }}>

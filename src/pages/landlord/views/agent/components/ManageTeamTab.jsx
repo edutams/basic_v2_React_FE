@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Typography,
@@ -24,8 +24,9 @@ import {
   IconButton,
   Menu,
   Checkbox,
-  CircularProgress,
+  Skeleton,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { IconDotsVertical, IconEdit, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
@@ -47,13 +48,18 @@ const PhoneMaskCustom = React.forwardRef(function PhoneMaskCustom(props, ref) {
   );
 });
 
-const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
+const ManageTeamTab = forwardRef(function ManageTeamTab(
+  { accessLevel = 1, isViewingProfile = false, hideCard = false, hideAddButton = false },
+  ref,
+) {
   const theme = useTheme();
   const isLevelOne = accessLevel === 1;
   const notify = useNotification();
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openPermissionModal, setOpenPermissionModal] = useState(false);
@@ -118,6 +124,11 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
       }
     }
   };
+
+  // Exposed so a parent (e.g. the tab-bar row in ViewAgent.jsx) can trigger
+  // "Add Team Member" from outside, instead of this component always
+  // rendering its own trigger button inline.
+  useImperativeHandle(ref, () => ({ openAddModal: handleOpenAddModal }));
 
   const handleActionClick = (e, member) => {
     setAnchorEl(e.currentTarget);
@@ -279,42 +290,21 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
     }
   };
 
-  return (
-    <Box title="Manage Team">
-      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              bgcolor: '#2ca87f',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <Typography variant="body2" fontWeight="bold">
-              T
-            </Typography>
-          </Box>
-          <Typography variant="h5">Manage Team</Typography>
-        </Stack>
-        {!(accessLevel === 1 && isViewingProfile) && (
-          <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
-            Add Team Member
-          </Button>
-        )}
-      </Stack>
+  const headerContent = (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
+      {!hideAddButton && !(accessLevel === 1 && isViewingProfile) && (
+        <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+          Add Team Member
+        </Button>
+      )}
+    </Box>
+  );
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={6}>
-          <CircularProgress size={32} />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
-          <Table>
+  const content = (
+    <>
+
+      <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
+          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
             <TableHead>
               <TableRow>
                 <TableCell
@@ -331,7 +321,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
                   <TableCell
                     sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
                   >
-                    Organization
+                    Agent
                   </TableCell>
                 )}
                 <TableCell
@@ -352,7 +342,17 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {members.length === 0 ? (
+              {loading ? (
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(isLevelOne ? 6 : 5)].map((_, j) => (
+                      <TableCell key={j} sx={{ py: 1.5 }}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : members.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 3 }}>
                     <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
@@ -361,7 +361,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
                   </TableCell>
                 </TableRow>
               ) : (
-                members.map((row, index) => {
+                members.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
                   const initials = (row.full_name || 'NA')
                     .split(' ')
                     .slice(0, 2)
@@ -372,7 +372,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
                     <TableRow key={row.id} hover>
                       <TableCell sx={{ py: 1.5 }}>
                         <Typography color="textSecondary" variant="body2" fontWeight={400}>
-                          {index + 1}
+                          {page * rowsPerPage + index + 1}
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ py: 1.5 }}>
@@ -542,8 +542,21 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
               )}
             </TableBody>
           </Table>
+          {members.length > 0 && (
+            <TablePagination
+              component="div"
+              count={members.length}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+            />
+          )}
         </TableContainer>
-      )}
 
       <Menu
         anchorEl={anchorEl}
@@ -671,7 +684,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Add Member'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Add Member'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -801,7 +814,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Save Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Save Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -852,7 +865,7 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Update Changes'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Changes'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -878,12 +891,31 @@ const ManageTeamTab = ({ accessLevel = 1, isViewingProfile = false }) => {
             Cancel
           </Button>
           <Button variant="contained" size="small" color='inherit' onClick={handleRemoveMember} disabled={submitting}>
-            {submitting ? <CircularProgress size={24} color="inherit" /> : 'Remove'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Remove'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
-};
+
+  if (hideCard) {
+    return (
+      <Box>
+        {headerContent}
+        <Box sx={{ mt: 2 }}>
+          {content}
+        </Box>
+      </Box>
+    );
+  }
+
+  return (
+    <ParentCard title={headerContent}
+              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
+    >
+      {content}
+    </ParentCard>
+  );
+});
 
 export default ManageTeamTab;

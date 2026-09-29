@@ -7,12 +7,13 @@ import {
   MenuItem,
   Stack,
   Alert,
-  CircularProgress,
+  Skeleton,
   Divider,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
+import { fetchSkoolPayBanks } from '@/api/landlord/bank-service/bankService';
 
 const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
   const [gateways, setGateways] = useState([]);
@@ -53,7 +54,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
         currency: '₦',
       });
     }
-  }, [open]);
+  }, [open, school?.organization_id]);
 
   const loadGateways = async () => {
     setGatewaysLoading(true);
@@ -70,8 +71,17 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
   const loadBanks = async () => {
     setBanksLoading(true);
     try {
-      const res = await fetchSkoolPayBanks();
-      setBanks(res.data?.result || []);
+      // The organization to check for a configured bank service is the one
+      // that owns THIS school (school.organization_id) — not the logged-in
+      // landlord user's own organization, which a super/L1 admin browsing
+      // another agent's schools would get wrong.
+      const res = await fetchSkoolPayBanks(school?.organization_id);
+      // The SkoolPay bank list response has duplicate entries sharing the
+      // same bank_code — deduped here, same as ManageGateway.jsx.
+      const uniqueBanks = Array.from(
+        new Map((res.data?.result || []).map((b) => [b.bank_code, b])).values(),
+      );
+      setBanks(uniqueBanks);
     } catch {
       // silently fail
     } finally {
@@ -149,7 +159,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
           <MenuItem value="">-- choose --</MenuItem>
           {gatewaysLoading ? (
             <MenuItem disabled>
-              <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+              <Skeleton variant="text" width={120} />
             </MenuItem>
           ) : (
             gateways.map((g) => (
@@ -229,14 +239,14 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
               disabled={banksLoading}
             >
               <MenuItem value="">-- Choose Bank --</MenuItem>
-              {banksLoading ? (
-                <MenuItem disabled>
-                  <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                </MenuItem>
-              ) : (
-                banks.map((bank, i) => (
-                  <MenuItem key={i} value={`${bank.bankCode}, ${bank.bankName}`}>
-                    {bank.bankName}
+          {banksLoading ? (
+            <MenuItem disabled>
+              <Skeleton variant="text" width={120} />
+            </MenuItem>
+          ) : (
+                banks.map((bank) => (
+                  <MenuItem key={bank.bank_code} value={`${bank.bank_code}, ${bank.bank_name}`}>
+                    {bank.bank_name}
                   </MenuItem>
                 ))
               )}
@@ -265,7 +275,7 @@ const ManageSchoolGateway = ({ open, onClose, school, onSave }) => {
             onChange={handleChange('currency')}
           >
             <MenuItem value="₦">₦</MenuItem>
-            <MenuItem value="USD">USD</MenuItem>
+            {/* <MenuItem value="USD">USD</MenuItem> */}
           </TextField>
         )}
 

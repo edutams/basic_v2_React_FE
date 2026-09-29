@@ -12,7 +12,7 @@ import {
   TextField,
   InputAdornment,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   TablePagination,
   Dialog,
@@ -523,7 +523,7 @@ const ActivityLog = () => {
             data-tour="activity-log-header"
           >
             <Typography variant="h5" fontWeight={700}>
-              System Activity Logs
+              {/* System Activity Logs */}
             </Typography>
             <ShowTourGuideButton />
           </Box>
@@ -567,8 +567,8 @@ const ActivityLog = () => {
                     const rawRoleName = typeof role === 'string' ? role : (role.name || role.title || role.id);
                     const displayLabel = rawRoleName
                       ? String(rawRoleName)
-                          .replace(/[_-]/g, ' ')
-                          .replace(/\b\w/g, (char) => char.toUpperCase())
+                        .replace(/[_-]/g, ' ')
+                        .replace(/\b\w/g, (char) => char.toUpperCase())
                       : '';
                     return (
                       <MenuItem key={role.id || rawRoleName} value={rawRoleName}>
@@ -636,7 +636,6 @@ const ActivityLog = () => {
                 color="primary"
                 size="small"
                 type="submit"
-                sx={{ px: 2.5, py: 0.8, textTransform: 'none', fontWeight: 600, height: 38 }}
               >
                 Search
               </Button>
@@ -657,24 +656,26 @@ const ActivityLog = () => {
 
           {/* Activity Logs Table */}
           {loading ? (
-            <Box display="flex" justifyContent="center" py={5}>
-              <CircularProgress size={32} />
+            <Box sx={{ py: 2 }}>
+              {[...Array(8)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+              ))}
             </Box>
           ) : error ? (
             <Alert severity="error">{error}</Alert>
           ) : (
             <>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: 1000 }}>
+                <Table size="small" stickyHeader sx={{ minWidth: 1000 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>S/N</TableCell>
-                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 1.5 }}>Activity</TableCell>
-                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Module</TableCell>
-                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Action</TableCell>
-                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 1.5 }}>Date & Time</TableCell>
-                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 1.5 }}>Severity</TableCell>
-                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 1.5 }}>
+                      <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 0.5 }}>S/N</TableCell>
+                      <TableCell sx={{ minWidth: 250, fontWeight: 700, py: 0.5 }}>Activity</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 0.5 }}>Module</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 0.5 }}>Action</TableCell>
+                      <TableCell sx={{ minWidth: 150, fontWeight: 700, py: 0.5 }}>Date & Time</TableCell>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 700, py: 0.5 }}>Severity</TableCell>
+                      <TableCell align="center" sx={{ width: 60, minWidth: 60, fontWeight: 700, py: 0.5 }}>
                         Action
                       </TableCell>
                     </TableRow>
@@ -720,10 +721,10 @@ const ActivityLog = () => {
 
                         return (
                           <TableRow key={log.id || idx} hover>
-                            <TableCell sx={{ py: 1.8 }}>{idx + 1 + page * rowsPerPage}</TableCell>
+                            <TableCell sx={{ py: 0.5 }}>{idx + 1 + page * rowsPerPage}</TableCell>
 
                             {/* Activity Description with User Avatar */}
-                            <TableCell sx={{ py: 1.8, minWidth: 260, maxWidth: 380 }}>
+                            <TableCell sx={{ py: 0.5, minWidth: 260, maxWidth: 380 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Avatar
                                   src={causerAvatar}
@@ -785,7 +786,7 @@ const ActivityLog = () => {
                             </TableCell>
 
                             {/* Module Name + Icon */}
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 {getModuleIcon(moduleName)}
                                 <Typography variant="body2" fontWeight={600} color="text.primary">
@@ -795,12 +796,12 @@ const ActivityLog = () => {
                             </TableCell>
 
                             {/* Action Badge Chip */}
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.5 }}>
                               {getActionChip(actionName)}
                             </TableCell>
 
                             {/* Date & Time */}
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.5 }}>
                               <Typography variant="caption" fontWeight={600} color="text.primary" display="block">
                                 {formattedDate}
                               </Typography>
@@ -810,12 +811,12 @@ const ActivityLog = () => {
                             </TableCell>
 
                             {/* Severity Chip */}
-                            <TableCell sx={{ py: 1.8 }}>
+                            <TableCell sx={{ py: 0.5 }}>
                               {getSeverityChip(severityName)}
                             </TableCell>
 
                             {/* 3-Dots Action Menu */}
-                            <TableCell align="center" sx={{ py: 1.8 }} data-tour="activity-log-action">
+                            <TableCell align="center" sx={{ py: 0.5 }} data-tour="activity-log-action">
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, log)}>
                                 <IconDotsVertical size={18} color="#6B7280" />
                               </IconButton>
@@ -845,9 +846,11 @@ const ActivityLog = () => {
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={() => { handleOpenModal(menuLog); handleMenuClose(); }}>
+          <IconListCheck size={16} style={{ marginRight: 8 }} />
           View Activity Details
         </MenuItem>
         <MenuItem onClick={() => { handleDownloadPdf(); handleMenuClose(); }}>
+          <IconDownload size={16} style={{ marginRight: 8 }} />
           Download Report PDF
         </MenuItem>
       </Menu>

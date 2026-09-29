@@ -43,13 +43,20 @@ const aclApi = {
         return response.data;
     },
 
+    revokeSchoolRolePermissions: async (roleId, permissions) => {
+        const response = await tenantApi.post(`/censis/acl/roles/${roleId}/permissions/revoke`, {
+            permissions,
+        });
+        return response.data;
+    },
+
     getSchoolAllPermissions: async () => {
         const response = await tenantApi.get('/censis/acl/roles/permissions/all');
         return response.data;
     },
 
     getSchoolUsers: async (params) => {
-        const response = await tenantApi.get('/censis/acl/assignments/users/list', { params });
+        const response = await tenantApi.post('/censis/acl/assignments/users/list', params);
         return response.data;
     },
 
@@ -70,7 +77,7 @@ const aclApi = {
     },
 
     getSchoolRolesList: async (params) => {
-        const response = await tenantApi.get('/censis/acl/assignments/roles/list', { params });
+        const response = await tenantApi.post('/censis/acl/assignments/roles/list', params);
         return response.data;
     },
 

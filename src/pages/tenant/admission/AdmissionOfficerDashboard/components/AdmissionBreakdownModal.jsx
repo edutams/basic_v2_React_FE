@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,11 +7,9 @@ import {
   Button,
   Box,
   Typography,
-  Avatar,
   Chip,
   TextField,
   InputAdornment,
-  MenuItem,
   TableContainer,
   Table,
   TableHead,
@@ -26,7 +24,6 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 // Fallback titles used until the backend returns a `title` for the payload —
 // keeps the dialog header meaningful for every admission card type.
@@ -35,6 +32,7 @@ const TITLES = {
   batches: 'Total Batches Created',
   admitted: 'Total Admitted',
   accepted: 'Total Accepted',
+  pending_review: 'Pending Review',
   pre_application_fees: 'Pre-Application Fees',
   post_application_fees: 'Post-Application Fees',
   total_fees: 'Total Fees Collected',
@@ -67,24 +65,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [sessionTermId, setSessionTermId] = useState(sessionTerm || '');
-  const searchTimer = useRef(null);
-
-  // Load session terms once (for the dropdown).
-  useEffect(() => {
-    let mounted = true;
-    fetchSessionTerms()
-      .then((res) => {
-        if (mounted && res?.status) setSessionTerms(res.data || []);
-      })
-      .catch((err) => console.error('Failed to fetch session terms:', err));
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const fetchBreakdown = (p = 0, rpp = rowsPerPage, termId = sessionTermId, term = search) => {
+  const fetchBreakdown = (p = 0, rpp = rowsPerPage, term = search) => {
     if (!open || !type) return;
 
     let cancelled = false;
@@ -97,7 +78,7 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
           page: p + 1,
           per_page: rpp,
           search: term || undefined,
-          session_term_id: termId || undefined,
+          session_term_id: sessionTerm || undefined,
         },
       })
       .then((res) => {
@@ -116,47 +97,36 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
     };
   };
 
-  // Reset page + filters and refetch whenever the modal opens or the type
-  // changes. Defaults the session term to the dashboard's current selection.
+  // Auto-fetch on open/type change; reset filters.
   useEffect(() => {
     if (!open || !type) return;
     setPage(0);
     setSearch('');
     setSearchInput('');
-    setSessionTermId(sessionTerm || '');
-    return fetchBreakdown(0, rowsPerPage, sessionTerm || '', '');
+    return fetchBreakdown(0, rowsPerPage, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, type, sessionTerm]);
 
   const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchInput(value);
-
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => {
-      setSearch(value);
-      setPage(0);
-      fetchBreakdown(0, rowsPerPage, sessionTermId, value);
-    }, 400);
+    setSearchInput(e.target.value);
   };
 
-  const handleTermChange = (e) => {
-    const value = e.target.value;
-    setSessionTermId(value);
+  const handleFetch = () => {
+    setSearch(searchInput);
     setPage(0);
-    fetchBreakdown(0, rowsPerPage, value, search);
+    fetchBreakdown(0, rowsPerPage, searchInput);
   };
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
-    fetchBreakdown(newPage, rowsPerPage, sessionTermId, search);
+    fetchBreakdown(newPage, rowsPerPage, search);
   };
 
   const handleChangeRowsPerPage = (e) => {
     const rpp = parseInt(e.target.value, 10);
     setRowsPerPage(rpp);
     setPage(0);
-    fetchBreakdown(0, rpp, sessionTermId, search);
+    fetchBreakdown(0, rpp, search);
   };
 
   const rows = data?.rows || [];
@@ -166,12 +136,23 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   // ── Per-type column definition ────────────────────────────────────
   const columnsFor = () => {
     switch (type) {
-      case 'applicants':
       case 'admitted':
       case 'accepted':
         return [
-          { key: 'form_number', label: 'Form No.' },
-          { key: 'class', label: 'Class' },
+          { key: 'form_number', label: 'Form No.', badge: true },
+          { key: 'name', label: 'Name' },
+          { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
+          { key: 'gender', label: 'Gender' },
+          { key: 'status', label: 'Status' },
+        ];
+      case 'applicants':
+      case 'pending_review':
+        return [
+          { key: 'form_number', label: 'Form No.', badge: true },
+          { key: 'name', label: 'Name' },
+          { key: 'intending_class', label: 'Intending Class' },
+          { key: 'admitted_class', label: 'Admitted Class', concat: 'admitted_arm' },
           { key: 'gender', label: 'Gender' },
           { key: 'status', label: 'Status' },
         ];
@@ -207,7 +188,11 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   const columns = columnsFor();
 
   const formatValue = (row, col) => {
-    const v = row[col.key];
+    let v = row[col.key];
+    if (col.concat) {
+      const extra = row[col.concat];
+      v = [v, extra].filter(Boolean).join(' ');
+    }
     if (col.currency) return `₦${Number(v || 0).toLocaleString('en-NG')}`;
     if (col.percent) return `${Number(v || 0).toFixed(1)}%`;
     if (col.numeric) return Number(v || 0).toLocaleString();
@@ -215,9 +200,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
   };
 
   const isStatusChip = (col) => col.key === 'status';
-
-  // Row label — fee rows are keyed by class; applicant/batch rows by name/batch.
-  const rowName = (row) => row.name || row.class || row.batch_name || '—';
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -231,13 +213,14 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
         />
       </DialogTitle>
 
-      {/* Search + session term filter */}
+      {/* Search + Fetch */}
       <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
           placeholder="Search…"
           value={searchInput}
           onChange={handleSearchChange}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleFetch(); }}
           sx={{ flex: '1 1 220px', maxWidth: 320 }}
           InputProps={{
             startAdornment: (
@@ -247,23 +230,13 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
             ),
           }}
         />
-        <TextField
-          select
-          size="small"
-          label="Session Term"
-          value={sessionTermId}
-          onChange={handleTermChange}
-          sx={{ flex: '1 1 200px', maxWidth: 260 }}
+        <Button
+          variant="contained"
+          disableRipple
+          onClick={handleFetch}
         >
-          <MenuItem value="">
-            <em>All session terms</em>
-          </MenuItem>
-          {sessionTerms.map((st) => (
-            <MenuItem key={st.id} value={String(st.id)}>
-              {st.session?.sesname} — {st.display_term?.display_name}
-            </MenuItem>
-          ))}
-        </TextField>
+          Fetch
+        </Button>
       </Box>
 
       <DialogContent dividers>
@@ -281,7 +254,6 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
               <TableHead>
                 <TableRow>
                   <TableCell>#</TableCell>
-                  <TableCell>Name</TableCell>
                   {columns.map((col) => (
                     <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
                       {col.label}
@@ -293,46 +265,33 @@ const AdmissionBreakdownModal = ({ open, type, onClose, sessionTerm }) => {
                 {rows.map((row, i) => (
                   <TableRow key={row.user_id || row.form_number || row.batch_name || row.id || i}>
                     <TableCell sx={{ color: 'text.secondary' }}>{page * rowsPerPage + i + 1}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar
-                          src={row.avatar || ''}
-                          alt={rowName(row)}
-                          sx={{ width: 34, height: 34, fontSize: 14, bgcolor: isDark ? theme.palette.grey[700] : theme.palette.grey[300] }}
-                        >
-                          {rowName(row).charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
-                            {rowName(row)}
-                          </Typography>
-                          {row.email && (
-                            <Typography variant="caption" color="text.secondary">
-                              {row.email}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
                     {columns.map((col) => (
                       <TableCell key={col.key} align={col.numeric ? 'right' : 'left'}>
-                        {isStatusChip(col) ? (
+                        {col.badge ? (
                           <Chip
                             label={formatValue(row, col)}
                             size="small"
-                            color={
-                              String(row[col.key]).toLowerCase() === 'active' ||
-                              String(row[col.key]).toLowerCase() === 'admitted' ||
-                              String(row[col.key]).toLowerCase() === 'accepted' ||
-                              String(row[col.key]).toLowerCase() === 'open' ||
-                              String(row[col.key]).toLowerCase() === 'graded'
-                                ? 'success'
-                                : String(row[col.key]).toLowerCase() === 'pending' ||
-                                    String(row[col.key]).toLowerCase() === 'scheduled'
-                                  ? 'warning'
-                                  : 'default'
-                            }
+                            color="primary"
                             sx={{ fontSize: 10, height: 20, fontWeight: 700 }}
+                          />
+                        ) : isStatusChip(col) ? (
+                          <Chip
+                            label={formatValue(row, col)}
+                            size="small"
+                            sx={{
+                              fontSize: 10,
+                              height: 20,
+                              fontWeight: 700,
+                              // Solid hex tokens instead of MUI's color="warning" —
+                              // this theme's warning.main is a pale gold that,
+                              // combined with the white contrastText a filled
+                              // Chip uses, renders as near-illegible white-on-gold.
+                              ...(['active', 'admitted', 'accepted', 'open', 'graded'].includes(String(row[col.key]).toLowerCase())
+                                ? { bgcolor: '#dcfce7', color: '#16a34a' }
+                                : ['pending', 'scheduled'].includes(String(row[col.key]).toLowerCase())
+                                  ? { bgcolor: '#fef3c7', color: '#d97706' }
+                                  : { bgcolor: '#f1f5f9', color: '#64748b' }),
+                            }}
                           />
                         ) : (
                           formatValue(row, col)

@@ -5,24 +5,28 @@ import SchoolsView from './SchoolsView';
 import PermissionManager from './PermissionManager';
 import SetCommissionModal from './SetCommission';
 import ManageReferralModal from './ManageReferral';
-import ManageGateway from './ManageGateway';
 import ChangeColorScheme from './ChangeColorScheme';
 import { createAgentValidationSchema } from '../validation/agentValidationSchema';
 import PropTypes from 'prop-types';
 import agentApi from '@/api/landlord/organizations/agent';
+import { updateCommission } from '@/api/landlord/commission/commissionApi';
 import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import ReusableModal from '@/components/shared/ReusableModal';
 import ManageBankService from './ManageBankService';
+// Gateway management is a per-school concept (tenant_gateways.tenant_id),
+// not per-agent — kept for reference but disabled at the agent level.
+// See Agent.jsx's ActionMenuCell for the corresponding commented-out menu item.
+// import ManageGateway from './ManageGateway';
 
 const getModalConfig = (actionType) => {
   const configs = {
     create: {
-      title: 'Create Organization',
+      title: 'Create Agent',
       size: 'extraLarge',
     },
     update: {
-      title: 'Update Organization',
+      title: 'Update Agent',
       size: 'extraLarge',
     },
     viewSchools: {
@@ -180,12 +184,12 @@ const AgentModal = ({
 
         if (response.status === true) {
           handleRefresh(response.data);
-          notify.success('Organization updated successfully!');
+          notify.success('Agent updated successfully!');
           resetForm();
           onClose();
         } else {
           console.error('Update returned invalid response', response);
-          notify.error('Failed to update organization.');
+          notify.error('Failed to update agent.');
         }
       } catch (error) {
         console.error('Agent update failed:', error);
@@ -243,7 +247,7 @@ const AgentModal = ({
         if (response.status === true) {
           const newAgent = response.data;
           handleRefresh(newAgent);
-          notify.success('Organization created successfully!');
+          notify.success('Agent created successfully!');
           resetForm();
           onClose();
         } else {
@@ -296,16 +300,48 @@ const AgentModal = ({
       const response = await agentApi.deleteOrganization(selectedAgent?.id || selectedAgent?.s_n);
       if (response.status) {
         handleRefresh(response.data);
-        notify.success('Organization deleted successfully!');
+        notify.success('Agent deleted successfully!');
         onClose();
       } else {
-        notify.error('Failed to delete organization');
+        notify.error('Failed to delete agent');
       }
     } catch (error) {
       console.error('Delete organization failed:', error);
-      notify.error('Failed to delete organization');
+      notify.error('Failed to delete agent');
     }
   }, [selectedAgent, handleRefresh, notify, onClose]);
+
+  // SetCommissionModal's own onSave passes back {...selectedAgent,
+  // commission_percentage}. This previously reused handleUpdate (the
+  // generic "update agent profile" flow), which built its payload from
+  // AgentForm's own field names (organizationName/organizationDomain/...)
+  // — none of which exist on this data, and which never even read
+  // commission_percentage — so it silently sent the wrong request to the
+  // wrong endpoint and never actually persisted a commission change. This
+  // calls the dedicated commission endpoint instead.
+  const handleSetCommissionSave = useCallback(
+    async (values) => {
+      setLoading(true);
+      try {
+        const agentId = selectedAgent?.id || selectedAgent?.s_n;
+        const response = await updateCommission(agentId, values.commission_percentage);
+
+        if (response.status) {
+          handleRefresh(response.data);
+          notify.success(response.message || 'Commission updated successfully.');
+          onClose();
+        } else {
+          notify.error(response.message || 'Failed to update commission.');
+        }
+      } catch (error) {
+        console.error('Commission update failed:', error);
+        notify.error(error?.response?.data?.message || 'Failed to update commission.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedAgent, handleRefresh, notify, onClose],
+  );
 
   const handleAddTeamMember = useCallback(
     async (values) => {
@@ -343,16 +379,16 @@ const AgentModal = ({
         return (
           <Box p={3}>
             <Typography variant="h6" gutterBottom>
-              Delete Organization
+              Delete Agent
             </Typography>
             <Typography variant="body1" color="textSecondary" gutterBottom>
-              Are you sure you want to delete this organization?
+              Are you sure you want to delete this agent?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
               <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
               <Button size="small" color="error" onClick={handleDeleteOrganization} disabled={loading}>
                 {loading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
-                Delete Organization
+                Delete Agent
               </Button>
             </Box>
           </Box>
@@ -361,7 +397,7 @@ const AgentModal = ({
         <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
           <DialogTitle>Confirm Delete</DialogTitle>
           <DialogContent>
-            <Typography>Are you sure you want to delete this organization?</Typography>
+            <Typography>Are you sure you want to delete this agent?</Typography>
           </DialogContent>
           <DialogActions>
             <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
@@ -384,8 +420,8 @@ const AgentModal = ({
         return (
           <SetCommissionModal
             selectedAgent={selectedAgent}
-            onSave={handleUpdate}
-            onClose={handleClose}
+            onSave={handleSetCommissionSave}
+            onClose={onClose}
             loading={loading}
           />
         );
@@ -399,14 +435,14 @@ const AgentModal = ({
           />
         );
 
-      case 'manageGateway':
-        return (
-          <ManageGateway
-            selectedAgent={selectedAgent}
-            onSave={handleUpdate}
-            onClose={handleClose}
-          />
-        );
+      // case 'manageGateway':
+      //   return (
+      //     <ManageGateway
+      //       selectedAgent={selectedAgent}
+      //       onSave={handleUpdate}
+      //       onClose={handleClose}
+      //     />
+      //   );
 
       case 'manageBankService':
         return (

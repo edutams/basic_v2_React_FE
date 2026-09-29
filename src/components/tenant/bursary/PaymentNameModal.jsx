@@ -15,12 +15,12 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import { fetchSkoolPayBanks } from '@/api/tenant/bursary/paymentNameApi';
 import { fetchGatewayChargeBearer } from '@/api/tenant/bursary/bursarySettingsApi';
 
-const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
+const PaymentNameModal = ({ open, onClose, onSave, paymentName, defaultPayOption, defaultPayType }) => {
   const [formData, setFormData] = useState({
     name: '',
     pay_type: 'bursary',
     pay_option: 'compulsory',
-    application_stage: 'pre-application',
+    application_stage: null,
     bank: '',
     account_number: '',
     fee_bearer: 'school',
@@ -49,11 +49,15 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
           status: paymentName.status || 'active',
         });
       } else {
+        // Preselect whatever payment type the caller is already looking at
+        // (e.g. the Admission Payments tab), so the admin doesn't have to
+        // re-pick it every time they hit "Add New" from within that tab.
+        const initialPayType = defaultPayType || 'bursary';
         setFormData({
           name: '',
-          pay_type: 'bursary',
-          pay_option: 'compulsory',
-          application_stage: 'pre-application',
+          pay_type: initialPayType,
+          pay_option: defaultPayOption || 'compulsory',
+          application_stage: initialPayType === 'admission' ? 'pre-application' : null,
           bank: '',
           account_number: '',
           fee_bearer: 'client',
@@ -117,7 +121,14 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await onSave(formData);
+      // application_stage only ever means something for an admission-type
+      // payment name — the field is hidden for bursary, but formData still
+      // carries whatever it was last set to, so it must be cleared here
+      // regardless of how it got that way.
+      await onSave({
+        ...formData,
+        application_stage: formData.pay_type === 'admission' ? formData.application_stage : null,
+      });
     } finally {
       setLoading(false);
     }
@@ -156,9 +167,22 @@ const PaymentNameModal = ({ open, onClose, onSave, paymentName }) => {
               onChange={(e) => {
                 const newPayType = e.target.value;
                 handleChange('pay_type')(e);
-                // Auto-set pay_option to compulsory when admission is selected
                 if (newPayType === 'admission') {
-                  setFormData((prev) => ({ ...prev, pay_type: newPayType, pay_option: 'compulsory' }));
+                  // Auto-set pay_option to compulsory when admission is
+                  // selected, and give application_stage a real default —
+                  // it's a controlled <TextField select>, so it can't be
+                  // left null once its field becomes visible.
+                  setFormData((prev) => ({
+                    ...prev,
+                    pay_type: newPayType,
+                    pay_option: 'compulsory',
+                    application_stage: prev.application_stage || 'pre-application',
+                  }));
+                } else {
+                  // application_stage is only meaningful for admission — clear
+                  // it now rather than leaving a stale value sitting hidden
+                  // in state until submit time.
+                  setFormData((prev) => ({ ...prev, pay_type: newPayType, application_stage: null }));
                 }
               }}
               helperText={
@@ -316,6 +340,8 @@ PaymentNameModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   paymentName: PropTypes.object,
+  defaultPayOption: PropTypes.string,
+  defaultPayType: PropTypes.string,
 };
 
 export default PaymentNameModal;

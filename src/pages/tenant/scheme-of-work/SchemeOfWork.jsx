@@ -33,9 +33,11 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Skeleton,
   Chip,
   useTheme,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
@@ -81,7 +83,12 @@ const SchemeOfWork = () => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState({});
-  const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
+  const [analytics, setAnalytics] = useState({
+    total_topics: 0,
+    total_subtopics: 0,
+    total_lesson_content: 0,
+    total_video_content: 0,
+  });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
@@ -192,13 +199,15 @@ const SchemeOfWork = () => {
       }
     } else if (key === 'classLevel') {
       try {
-        const subjectsRes = await fetchSubjectsByClass(val);
+        // A class can now have a different curriculum per programme, so
+        // the currently selected Programme narrows which one applies here.
+        const subjectsRes = await fetchSubjectsByClass(val, programme);
         setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
       } catch (error) {
         console.error('Failed to fetch subjects', error);
       }
     }
-  }, []);
+  }, [programme]);
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -236,14 +245,24 @@ const SchemeOfWork = () => {
   };
 
   const paginatedRows = useMemo(() => {
-    let flattened = [];
+    let filtered = [];
     Object.keys(rows).forEach((weekName) => {
       rows[weekName].forEach((row) => {
-        flattened.push({ ...row, week: weekName });
+        filtered.push({ ...row, week: weekName });
       });
     });
-    return flattened;
-  }, [rows]);
+
+    if (activeFilters.search) {
+      filtered = filtered.filter(
+        (r) =>
+          r.topic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()) ||
+          r.subtopic_name?.toLowerCase().includes(activeFilters.search.toLowerCase()),
+      );
+    }
+
+    const start = page * rowsPerPage;
+    return filtered.slice(start, start + rowsPerPage);
+  }, [rows, page, rowsPerPage, activeFilters]);
 
   const handleMenuOpen = (event, row, type) => {
     setAnchorEl(event.currentTarget);
@@ -582,13 +601,13 @@ const SchemeOfWork = () => {
     },
     {
       title: 'Lesson Content',
-      value: '0',
+      value: analytics.total_lesson_content,
       icon: IconFileDescription,
       color: 'primary',
     },
     {
       title: 'Video Content',
-      value: '0',
+      value: analytics.total_video_content,
       icon: IconVideo,
       color: 'primary',
     },
@@ -603,7 +622,7 @@ const SchemeOfWork = () => {
       <Breadcrumb title="Scheme Of Work" items={BCrumb} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 1 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard
@@ -676,7 +695,7 @@ const SchemeOfWork = () => {
             sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
           >
             {terms.map((term) => (
-              <Tab key={term.id} label={term.display_name} value={term.id} />
+              <Tab key={term.id} label={term.term_name} value={term.id} />
             ))}
           </Tabs>
         </Box>
@@ -794,7 +813,19 @@ const SchemeOfWork = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.length > 0 ? (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={40} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={120} height={20} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={140} height={20} /></TableCell>
+                    <TableCell sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="text" width={180} height={20} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={20} height={20} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={20} height={20} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const isFirstInWeek = idx === 0 || row.week !== paginatedRows[idx - 1].week;
                   const isFirstInTopic =
@@ -958,19 +989,31 @@ const SchemeOfWork = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    {loading ? (
-                      <CircularProgress size={24} />
-                    ) : (
-                      <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                        No records found. Select filters to begin.
-                      </Alert>
-                    )}
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                      No records found. Select filters to begin.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2, borderTop: '1px solid #eee' }}>
+          <TablePagination
+            component="div"
+            count={Object.values(rows).flat().length}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50]}
+            sx={{ border: 'none' }}
+          />
+        </Box>
       </Card>
 
       {/* Filter Drawer */}
@@ -1333,7 +1376,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -1431,7 +1474,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -1581,7 +1624,7 @@ const SchemeOfWork = () => {
               >
                 {terms.map((t) => (
                   <MenuItem key={t.id} value={t.id}>
-                    {t.display_name}
+                    {t.term_name}
                   </MenuItem>
                 ))}
               </TextField>

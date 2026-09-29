@@ -16,14 +16,18 @@ import {
   MenuItem,
   TableFooter,
   TablePagination,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Link,
   Alert,
+  Button,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { IconDotsVertical, IconEye, IconEdit } from '@tabler/icons-react';
+import SearchIcon from '@mui/icons-material/Search';
+import { IconDotsVertical, IconRefresh, IconUserPlus } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
 import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
@@ -36,16 +40,19 @@ const ApplicationReview = ({
   setPage,
   rowsPerPage,
   setRowsPerPage,
-  nameValue,
-  activeFilters,
+  filters,
+  onApplyFilters,
+  setOpenAddModal,
+  can,
   onReview,
   onEdit,
 }) => {
-  const { can } = usePermissions();
+  const { can: canPerm } = usePermissions();
 
   const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
+  const [draft, setDraft] = useState(filters);
 
   const thSx = {
     fontWeight: 700,
@@ -56,48 +63,172 @@ const ApplicationReview = ({
     py: 1.5,
   };
 
-  const filter = (arr) => {
-    let result = arr;
-    if (nameValue) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-      );
-    }
-    if (activeFilters.name) {
-      result = result.filter((r) =>
-        (r.tenant_name || r.institutionName || '')
-          .toLowerCase()
-          .includes(activeFilters.name.toLowerCase()),
-      );
-    }
-    if (activeFilters.status) {
-      result = result.filter((r) => r.status === activeFilters.status);
-    }
-    if (activeFilters.date_from) {
-      result = result.filter((r) => r.created_at && r.created_at >= activeFilters.date_from);
-    }
-    if (activeFilters.date_to) {
-      result = result.filter((r) => r.created_at && r.created_at <= activeFilters.date_to);
-    }
-    return result;
+  const handleFetch = () => {
+    onApplyFilters(draft);
+    setPage(0);
   };
+  const handleReset = () => {
+    const empty = { search: '', status: '', date_from: '', date_to: '' };
+    setDraft(empty);
+    onApplyFilters(empty);
+    setPage(0);
+  };
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const filtered = filter(prospectList);
+  // `prospectList` is already exactly what the backend returned for the
+  // current filters — no client-side re-filtering here, only client-side
+  // paging over that already-scoped list.
 
   if (prospectLoading) {
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
-      </Box>
+      <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
+        <Table>
+          <TableHead sx={{ bgcolor: '#fafafa' }}>
+            <TableRow>
+              <TableCell sx={thSx}>#</TableCell>
+              <TableCell sx={thSx}>School</TableCell>
+              <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
+              <TableCell sx={thSx}>Organisation</TableCell>
+              <TableCell sx={thSx}>Submitted</TableCell>
+              <TableCell sx={thSx}>Status</TableCell>
+              <TableCell sx={thSx} align="right">Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <TableRow key={i}>
+                <TableCell><Skeleton variant="text" width={20} height={20} /></TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={140} height={18} />
+                      <Skeleton variant="text" width={100} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={110} height={14} />
+                      <Skeleton variant="text" width={130} height={14} />
+                      <Skeleton variant="text" width={90} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="circular" width={44} height={44} />
+                    <Box>
+                      <Skeleton variant="text" width={120} height={14} />
+                      <Skeleton variant="text" width={100} height={14} />
+                    </Box>
+                  </Stack>
+                </TableCell>
+                <TableCell><Skeleton variant="text" width={90} height={14} /></TableCell>
+                <TableCell><Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: '12px' }} /></TableCell>
+                <TableCell align="right"><Skeleton variant="circular" width={28} height={28} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
   }
 
   return (
     <>
       <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
-        <Table>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1.5,
+            px: 2,
+            py: 1.5,
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap" flexGrow={1}>
+            <TextField
+              placeholder="Search by school name…"
+              size="small"
+              value={draft.search}
+              onChange={(e) => setDraft((p) => ({ ...p, search: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleFetch();
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ flexGrow: 1, minWidth: 280 }}
+            />
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={draft.status}
+              onChange={(e) => setDraft((p) => ({ ...p, status: e.target.value }))}
+              sx={{ minWidth: 130 }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
+            </TextField>
+            <TextField
+              type="date"
+              size="small"
+              label="From"
+              value={draft.date_from}
+              onChange={(e) => setDraft((p) => ({ ...p, date_from: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              type="date"
+              size="small"
+              label="To"
+              value={draft.date_to}
+              onChange={(e) => setDraft((p) => ({ ...p, date_to: e.target.value }))}
+              InputLabelProps={{ shrink: true }}
+            />
+            <Button variant="contained" size="small" startIcon={<IconRefresh size={16} />} onClick={handleFetch}>
+              Fetch
+            </Button>
+            {hasActiveFilters && (
+              <Button size="small" onClick={handleReset}>
+                Reset
+              </Button>
+            )}
+          </Box>
+
+          {canPerm('landlord.school.create') && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconUserPlus />}
+              onClick={() => setOpenAddModal(true)}
+              sx={{
+                textTransform: 'none',
+                borderRadius: 2,
+                px: 3,
+              }}
+            >
+              Add New School
+            </Button>
+          )}
+        </Box>
+        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
           <TableHead sx={{ bgcolor: '#fafafa' }}>
             <TableRow>
               <TableCell sx={thSx}>#</TableCell>
@@ -112,8 +243,8 @@ const ApplicationReview = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginate(filtered).length > 0 ? (
-              paginate(filtered).map((row, i) => {
+            {paginate(prospectList).length > 0 ? (
+              paginate(prospectList).map((row, i) => {
                 const spa = getSpaContact(row);
                 const agent = row.agent;
                 const domainHost = agent?.organization_domain
@@ -231,7 +362,7 @@ const ApplicationReview = ({
             <TableRow>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
-                count={filtered.length}
+                count={prospectList.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={(_, p) => setPage(p)}

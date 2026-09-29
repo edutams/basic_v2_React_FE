@@ -8,12 +8,11 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Paper,
   TextField,
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   Avatar,
@@ -28,7 +27,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  LinearProgress,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -391,7 +389,7 @@ const SchoolRoleBasedAccess = () => {
 
   return (
     <Box>
-      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
@@ -401,6 +399,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconUserCheck}
               colorIndex={0}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -412,6 +413,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconLock}
               colorIndex={1}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -423,6 +427,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconUsers}
               colorIndex={2}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -434,6 +441,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconKey}
               colorIndex={3}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
 
@@ -445,6 +455,9 @@ const SchoolRoleBasedAccess = () => {
               icon={IconRefresh}
               colorIndex={4}
               loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
             />
           </Grid>
         </Grid>
@@ -452,7 +465,15 @@ const SchoolRoleBasedAccess = () => {
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
-          <ParentCard title="Access Distribution by Role" sx={{ width: '100%', height: '100%' }}>
+          <ParentCard
+            title="Access Distribution by Role"
+            sx={{
+              width: '100%',
+              height: '100%',
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
             <Box
               sx={{
                 py: 1,
@@ -475,7 +496,7 @@ const SchoolRoleBasedAccess = () => {
                   }}
                 >
                   {statsLoading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}
@@ -546,10 +567,9 @@ const SchoolRoleBasedAccess = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
+          <ParentCard
             elevation={0}
             sx={{
-              p: 2.5,
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
@@ -558,6 +578,7 @@ const SchoolRoleBasedAccess = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
             <Box>
@@ -668,7 +689,7 @@ const SchoolRoleBasedAccess = () => {
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
-                <Table sx={{ minWidth: 1120 }} stickyHeader>
+                <Table size="small" sx={{ minWidth: 1120 }} stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
@@ -701,11 +722,23 @@ const SchoolRoleBasedAccess = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={36} height={36} />
+                              <Skeleton variant="text" width={140} height={20} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width="85%" height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={40} height={24} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
                     ) : displayRoles.length > 0 ? (
                       displayRoles.map((row, index) => {
                         const roleNameStr = row.role || row.name || '';
@@ -900,7 +933,7 @@ const SchoolRoleBasedAccess = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 
@@ -944,6 +977,7 @@ const SchoolRoleBasedAccess = () => {
         open={permissionModalOpen}
         onClose={() => setPermissionModalOpen(false)}
         role={selectedRole}
+        onPermissionRemoved={fetchRoles}
       />
 
       <SchoolRoleUsersModal

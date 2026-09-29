@@ -194,7 +194,7 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
     const cls = classes.find((c) => String(c.id) === String(targetClass));
     const arm = arms.find((a) => String(a.id) === String(targetArm));
     const className = cls?.class_name || cls?.name || '';
-    const armName = arm?.arm_names || arm?.name || '';
+    const armName = arm?.class_arm_names || arm?.name || '';
     return className && armName ? `${className} (${armName})` : armName || className || '';
   })();
 
@@ -209,7 +209,8 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
         <Stack spacing={2.5}>
           <Alert severity="info" sx={{ '& .MuiAlert-message': { width: '100%' } }}>
             <Typography variant="body2">
-              Search for unassigned or withdrawn students below, select the learners, and choose the target class and arm to enroll them.
+              Search for unassigned or withdrawn students below, select the learners, and choose the
+              target class and arm to enroll them.
             </Typography>
           </Alert>
 
@@ -298,10 +299,7 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
                         sx={{ cursor: 'pointer' }}
                       >
                         <TableCell padding="checkbox">
-                          <Checkbox
-                            checked={selectedIds.includes(student.user_id)}
-                            size="small"
-                          />
+                          <Checkbox checked={selectedIds.includes(student.user_id)} size="small" />
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -395,7 +393,8 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
               <Divider />
               <Box>
                 <Typography variant="subtitle2" fontWeight={700} gutterBottom>
-                  Assign To Class & Arm ({selectedIds.length} student{selectedIds.length > 1 ? 's' : ''} selected)
+                  Assign To Class & Arm ({selectedIds.length} student
+                  {selectedIds.length > 1 ? 's' : ''} selected)
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 4 }}>
@@ -442,7 +441,7 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
                       >
                         {arms.map((a) => (
                           <MenuItem key={a.id} value={a.id}>
-                            {a.arm_names || a.name}
+                            {a.class_arm_names || a.name}
                           </MenuItem>
                         ))}
                       </Select>
@@ -453,7 +452,8 @@ const AddToClassModal = ({ open, onClose, onSuccess }) => {
                 {selectedArmLabel && (
                   <Alert severity="success" sx={{ mt: 1.5, py: 0.5 }}>
                     <Typography variant="body2">
-                      {selectedIds.length} learner{selectedIds.length > 1 ? 's' : ''} will be added to: <strong>{selectedArmLabel}</strong>
+                      {selectedIds.length} learner{selectedIds.length > 1 ? 's' : ''} will be added
+                      to: <strong>{selectedArmLabel}</strong>
                     </Typography>
                   </Alert>
                 )}

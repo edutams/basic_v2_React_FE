@@ -1,21 +1,6 @@
 import { useState } from 'react';
 
-import {
-  IconButton,
-  Box,
-  AppBar,
-  useMediaQuery,
-  Toolbar,
-  styled,
-  Stack,
-  Divider,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from '@mui/material';
+import { IconButton, Box, AppBar, useMediaQuery, Toolbar, styled, Stack } from '@mui/material';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { IconCategory2, IconMenu2, IconMoon, IconSun, IconX } from '@tabler/icons-react';
@@ -31,7 +16,6 @@ import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import api from '../../../../api/landlord/landlord_api';
 import axios from 'axios';
-import { AuthContext } from '../../../../context/AgentContext/auth';
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
@@ -92,13 +76,6 @@ const Header = () => {
   }));
 
   const [isVisible, setIsVisible] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const { isImpersonating, stopImpersonation, user } = useContext(AuthContext);
-
-  const handleStopImpersonation = async () => {
-    setConfirmOpen(false);
-    await stopImpersonation(); // existing function handles the rest
-  };
 
   return (
     <AppBarStyled
@@ -149,42 +126,6 @@ const Header = () => {
           </>
         ) : null}
         {lgUp ? <>{/* <Navigation /> */}</> : null}
-
-        {isImpersonating && (
-          <Box
-            sx={{
-              px: { xs: 1, sm: 2 },
-              py: 0.5,
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: { xs: 0.5, sm: 1 },
-              ml: { xs: 1, sm: 2 },
-              maxWidth: { xs: '160px', sm: 'none' },
-              overflow: 'hidden',
-            }}
-          >
-            <Typography
-              variant="body2"
-              sx={{
-                display: { xs: 'none', sm: 'block' },
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Logged in as Agent
-            </Typography>
-            <Button variant="contained" size="small" onClick={() => setConfirmOpen(true)}
-              sx={{
-                whiteSpace: 'nowrap',
-                fontSize: { xs: '10px', sm: '13px' },
-                px: { xs: 0.75, sm: 1.5 },
-                minWidth: 'unset',
-              }}
-            >
-              {lgUp ? 'Return to my account' : 'Exit'}
-            </Button>
-          </Box>
-        )}
 
         <Box flexGrow={1} />
         <Stack direction="row" gap={1} alignItems="center">
@@ -242,26 +183,6 @@ const Header = () => {
           )}
         </Stack>
       </ToolbarStyled>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>Return to your account?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            You are currently impersonating{' '}
-            <strong>{user?.organization?.organization_name || 'this agent'}</strong>. Returning will
-            restore your admin session.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setConfirmOpen(false)}>
-            Cancel
-          </Button>
-          <Button size="small" onClick={handleStopImpersonation} sx={{ bgcolor: '#593196', color: '#ffffff', '&:hover': { bgcolor: '#4a2880' } }}>
-            Yes, return to my account
-          </Button>
-        </DialogActions>
-      </Dialog>
     </AppBarStyled>
   );
 };

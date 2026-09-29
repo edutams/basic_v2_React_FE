@@ -1,8 +1,9 @@
 import React, { lazy, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import LandlordProtectedRoute from '@/components/protectedroutes/LandlordProtectedRoute';
 import { useAuth } from '@/hooks/useAuth';
+import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary';
 
 /* ***Layouts**** */
 const FullLayout = Loadable(lazy(() => import('@/layouts/landlord/FullLayout')));
@@ -103,6 +104,16 @@ const DashboardRouteWrapper = () => {
   return <Error message="You are not authorized to be in this app" />;
 };
 
+// Backward-compat for any old /agent/* bookmark or hardcoded link now that
+// feature routes live at their bare paths (this whole app is the agent
+// portal — see the /dashboard route below for the same reasoning).
+const AgentPrefixRedirect = () => {
+  const location = useLocation();
+  const stripped = location.pathname.replace(/^\/agent/, '');
+  const target = stripped === '' || stripped === '/' ? '/dashboard' : stripped;
+  return <Navigate to={target + location.search} replace />;
+};
+
 const AgentRoutes = [
   // Root — redirect to login
   {
@@ -110,16 +121,31 @@ const AgentRoutes = [
     element: <Navigate to="/agent/login" replace />,
   },
 
-  // Protected agent app routes — all under /agent/*
+  // Shared layout route — FullLayout (sidebar/header/footer) is declared
+  // ONCE here and every page below is nested as its child, instead of each
+  // page re-wrapping its own <FullLayout/> at the top level. Previously,
+  // navigating between e.g. /dashboard and /organization matched two
+  // disjoint top-level route branches, so react-router unmounted and
+  // remounted the entire layout (sidebar included) on every navigation —
+  // that full-subtree teardown/rebuild was the "flickers like a page
+  // reload" bug. Nesting under one layout route means only the <Outlet/>
+  // content swaps; FullLayout/Sidebar stay mounted, matching how
+  // TenantRoutes.jsx's SchoolLayout already works. This layout route is
+  // pathless (no `path` key) so each child below still matches its own
+  // bare absolute-feeling path (`dashboard`, `gateway`, `view/:id`, …)
+  // exactly as before — only the leading `/` is dropped since nested paths
+  // are given relative to their parent.
   {
-    path: '/agent',
     element: (
       <LandlordProtectedRoute>
         <FullLayout />
       </LandlordProtectedRoute>
     ),
     children: [
-      { index: true, element: <DashboardRouteWrapper /> },
+      // Dashboard — lives at the bare /dashboard URL rather than nested
+      // under /agent: this whole app already is the agent portal, so
+      // /agent in the dashboard's own URL was redundant (mirrors how
+      // TenantRoutes.jsx never prefixes its own routes with /tenant).
       {
         path: 'dashboard',
         element: (
@@ -128,6 +154,12 @@ const AgentRoutes = [
           </LandlordProtectedRoute>
         ),
       },
+
+      // Protected agent app routes — each lives at its own bare path (this
+      // whole app is the agent portal, so /agent in every route was
+      // redundant — same reasoning as /dashboard above). Old /agent/*
+      // links still work via the AgentPrefixRedirect catch-all further
+      // down.
       {
         path: 'analytics_',
         element: (
@@ -258,9 +290,12 @@ const AgentRoutes = [
           </LandlordProtectedRoute>
         ),
       },
-      { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
+
+  // Backward-compat: any old bookmarked /agent/* URL redirects to its new
+  // bare path above.
+  { path: '/agent/*', element: <AgentPrefixRedirect /> },
 
   // Auth routes — blank layout, no FrontendPages wrapper
   {
@@ -275,6 +310,6 @@ const AgentRoutes = [
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },
-];
+].map((route) => ({ errorElement: <RouteErrorBoundary />, ...route }));
 
 export default AgentRoutes;

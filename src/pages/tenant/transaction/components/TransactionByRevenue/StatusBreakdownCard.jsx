@@ -22,7 +22,7 @@ const StatusBreakdownCard = ({
           letterSpacing: 2,
           fontWeight: 700,
           color: '#6B7280',
-          mb: 3,
+          mb: 1.5,
         }}
       >
         REVENUE STATUS
@@ -30,7 +30,7 @@ const StatusBreakdownCard = ({
 
       {/* Main Distribution Items */}
       {items.map((item, index) => (
-        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 4 : 4.5 }}>
+        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 0 : 2 }}>
           <Box
             sx={{
               display: 'flex',
@@ -88,12 +88,12 @@ const StatusBreakdownCard = ({
 
           {/* Divider between items */}
           {index !== items.length - 1 && (
-            <Divider sx={{ mt: 3.5, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
+            <Divider sx={{ mt: 2, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
           )}
         </Box>
       ))}
 
-      <Divider sx={{ my: 4 }} />
+      <Divider sx={{ my: 2 }} />
 
       {/* Min & Max Revenue */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 4 }}>

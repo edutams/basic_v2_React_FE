@@ -25,8 +25,13 @@ export const fetchBursarySessionTerms = async () => {
     return res.data;
 };
 
-export const fetchActiveCategories = async () => {
-    const res = await api.get('/bursary/settings/fetch_active_categories');
+export const fetchActiveCategories = async ({ sessionId, termId, payOption, payType } = {}) => {
+    const params = {};
+    if (sessionId) params.session_id = sessionId;
+    if (termId) params.term_id = termId;
+    if (payOption) params.pay_option = payOption;
+    if (payType) params.pay_type = payType;
+    const res = await api.get('/bursary/settings/fetch_active_categories', { params });
     return res.data;
 };
 
@@ -104,11 +109,12 @@ export const deletePaymentSchedulesByPaymentName = async (paymentNameId) => {
 };
 
 
-export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId } = {}) => {
+export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categoryId, search } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
     if (classId) params.class_id = classId;
     if (categoryId) params.category_id = categoryId;
+    if (search) params.search = search;
     const res = await api.get('/bursary/payment_schedule/generate_invoice_data', { params });
     return res.data;
 };

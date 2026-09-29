@@ -5,7 +5,7 @@ import {
   ToggleButtonGroup,
   MenuItem,
   TextField,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import {
   AreaChart,
@@ -72,8 +72,9 @@ const SchoolGrowthChart = ({ data, loading, params, onParamChange }) => {
       </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={8}>
-          <CircularProgress />
+        <Box sx={{ py: 2 }}>
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: 1, mb: 4 }} />
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: 1 }} />
         </Box>
       ) : (
         <>

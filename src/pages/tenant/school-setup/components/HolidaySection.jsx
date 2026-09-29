@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Typography,
@@ -27,12 +27,23 @@ import {
   Grid,
   Stack,
   useTheme,
+  Skeleton,
 } from '@mui/material';
-import { IconCalendar, IconCalendarX, IconClock, IconPlus, IconTrash, IconDotsVertical } from '@tabler/icons-react';
+import {
+  IconCalendar,
+  IconCalendarX,
+  IconClock,
+  IconPlus,
+  IconTrash,
+  IconDotsVertical,
+} from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
-import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent, useAclTour } from '@/context/AclTourContext';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchTenantSessions,
+  fetchSessionTerms,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchHolidays,
   createHolidays,
@@ -40,7 +51,27 @@ import {
   fetchHolidayStatistics,
 } from '@/api/tenant/holidays/holidayApi';
 import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
-import { getStatCardColor } from '@/utils/statCardColors';
+
+// Local-safe "YYYY-MM-DD" formatter — new Date('2026-08-31') parses as UTC
+// midnight, which can shift a day off in some timezones when re-formatted;
+// this reads the components directly instead.
+const formatIsoDate = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
 
 const emptyRow = () => ({ name: '', start_date: '', end_date: '' });
 
@@ -92,53 +123,41 @@ const holidayTourSteps = [
   },
 ];
 
-const heroAccent = (colorIndex, isDark, theme) =>
-  getStatCardColor(null, colorIndex, isDark, theme).accentColor;
+const heroAccent = (colorIndex) => schemeMap[colorIndex].color;
 
-const heroIconBadgeSx = (colorIndex, isDark, theme) => {
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  return {
-    width: 32,
-    height: 32,
-    borderRadius: '10px',
-    background: colors.iconBg,
-    color: colors.iconColor,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    boxShadow: isDark ? '0 4px 12px rgba(0,0,0,.3)' : `0 6px 18px -2px ${colors.iconGlow}`,
-  };
-};
+const heroIconBadgeSx = (colorIndex) => ({
+  width: 32,
+  height: 32,
+  borderRadius: '10px',
+  background: schemeMap[colorIndex].bg,
+  color: schemeMap[colorIndex].color,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  boxShadow: `0 4px 12px rgba(0,0,0,0.08)`,
+});
 
-const heroCardSx = (colorIndex, isDark, theme) => {
-  const colors = getStatCardColor(null, colorIndex, isDark, theme);
-  return {
-    p: 2,
-    borderRadius: '16px',
-    height: '100%',
-    minHeight: 70,
-    width: '100%',
-    position: 'relative',
-    overflow: 'hidden',
-    background: isDark ? theme.palette.background.paper : colors.cardBg,
-    border: isDark ? '1px solid rgba(255,255,255,0.12)' : `1px solid ${colors.accentColor}`,
-    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  };
-};
-
-const HolidaySection = ({ refreshKey }) => (
+// forwardRef exposes { startTour } so the page-level "Show Tour Guide
+// Again" button (rendered outside this component's own AclTourProvider —
+// see CalendarPage.jsx) can actually replay it. No auto-play: the tour used
+// to fire on every mount (i.e. every time this tab was clicked), which is
+// exactly what that button already exists to let the user do on demand.
+const HolidaySection = forwardRef(({ refreshKey }, ref) => (
   <AclTourProvider steps={holidayTourSteps}>
-    <HolidaySectionInner refreshKey={refreshKey} />
+    <HolidaySectionInner refreshKey={refreshKey} tourRef={ref} />
   </AclTourProvider>
-);
+));
 
-const HolidaySectionInner = ({ refreshKey }) => {
+const HolidaySectionInner = ({ refreshKey, tourRef }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [sessions, setSessions] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState('');
+  // The session-term actually running the school right now (getActiveSessionTerm()
+  // on the backend) — used only to pick sensible defaults below; the filters
+  // themselves can still browse to any session/term.
+  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedTermId, setSelectedTermId] = useState('');
   const [selectedTermLabel, setSelectedTermLabel] = useState('');
@@ -157,6 +176,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
   // Delete confirm
   const [confirmDelete, setConfirmDelete] = useState({ open: false, id: null });
   const [statistics, setStatistics] = useState(null);
+  const [statisticsLoading, setStatisticsLoading] = useState(true);
 
   // Calendar date range for the selected term (min/max for date inputs)
   const [termDateRange, setTermDateRange] = useState(null); // { start_date, end_date }
@@ -180,27 +200,28 @@ const HolidaySectionInner = ({ refreshKey }) => {
   };
 
   const { startTour } = useAclTour();
-  const tourStartedRef = useRef(false);
+  useImperativeHandle(tourRef, () => ({ startTour }), [startTour]);
 
-  // Auto-play the tour every time this tab mounts, once the statistics (tour targets) are loaded
-  useEffect(() => {
-    if (!statistics || tourStartedRef.current) return;
-    tourStartedRef.current = true;
-    const timer = setTimeout(() => {
-      startTour();
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [statistics, startTour]);
-
-  // Load sessions on mount and when refreshKey changes
+  // Load every session (the filter can browse any of them) on mount and when
+  // refreshKey changes, and separately resolve which session-term is actually
+  // running the school right now — that's what decides the *default*
+  // selection, not which Session row happens to be flagged active (that flag
+  // is independent and can lag behind, see SessionManagementController).
   useEffect(() => {
     const loadSessions = async () => {
       try {
         setLoading(true);
-        const res = await fetchCurrentSession();
-        if (res.status && res.data.length > 0) {
-          setSessions(res.data);
-          setSelectedSessionId(res.data[0].id);
+        const [sessionsRes, activeRes] = await Promise.all([
+          fetchTenantSessions({ page: 1, per_page: 1000 }),
+          fetchActiveTenantSessionTerm(),
+        ]);
+
+        const activeTerm = activeRes.status ? activeRes.data : null;
+        setActiveSessionTermId(activeTerm?.id ?? null);
+
+        if (sessionsRes.status && sessionsRes.data.length > 0) {
+          setSessions(sessionsRes.data);
+          setSelectedSessionId(activeTerm?.session_id ?? sessionsRes.data[0].id);
         }
       } catch {
         showSnackbar('Failed to load sessions', 'error');
@@ -218,11 +239,13 @@ const HolidaySectionInner = ({ refreshKey }) => {
       try {
         const res = await fetchSessionTerms(selectedSessionId);
         if (res.status) {
-          const subscribed = res.data.filter((t) => t.is_subscribed === 'yes');
-          setSessionTerms(subscribed);
-          if (subscribed.length > 0) {
-            setSelectedTermId(subscribed[0].session_term_id);
-            setSelectedTermLabel(subscribed[0].display_name || subscribed[0].term_name);
+          const terms = res.data;
+          setSessionTerms(terms);
+          if (terms.length > 0) {
+            const defaultTerm =
+              terms.find((t) => t.session_term_id === activeSessionTermId) || terms[0];
+            setSelectedTermId(defaultTerm.session_term_id);
+            setSelectedTermLabel(defaultTerm.display_name || defaultTerm.term_name);
           } else {
             setSelectedTermId('');
             setSelectedTermLabel('');
@@ -234,7 +257,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
       }
     };
     loadTerms();
-  }, [selectedSessionId, refreshKey]);
+  }, [selectedSessionId, activeSessionTermId, refreshKey]);
 
   // Load holidays when term changes
   useEffect(() => {
@@ -262,6 +285,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
   };
 
   const loadHolidayStatistics = async (termId) => {
+    setStatisticsLoading(true);
     try {
       const res = await fetchHolidayStatistics(termId);
 
@@ -270,6 +294,8 @@ const HolidaySectionInner = ({ refreshKey }) => {
       }
     } catch {
       showSnackbar('Failed to load holiday statistics', 'error');
+    } finally {
+      setStatisticsLoading(false);
     }
   };
 
@@ -399,7 +425,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
   const paginatedHolidays = holidays.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // Get session label for modal title
-  const sessionLabel = sessions.find((s) => s.id === selectedSessionId)?.sesname || '';
+  const sessionLabel = sessions.find((s) => s.id === selectedSessionId)?.session_name || '';
 
   // Percentages used by the analytics cards
   const utilizationPercentage = statistics?.holiday_percentage || 0;
@@ -410,23 +436,40 @@ const HolidaySectionInner = ({ refreshKey }) => {
 
   return (
     <>
-      {statistics && (
-        <Box sx={{ mb: 3 }}>
-          <Box display="flex" justifyContent="flex-end" alignItems="center" mb={1}>
-            <ShowTourGuideButton data-tour="holiday-analytics" />
-          </Box>
-          <Grid container spacing={3}>
+        <Box sx={{ mb: 2 }}>
+          <Grid container spacing={2}>
             {/* Card 1: Total School Days */}
             <Grid size={{ xs: 12, sm: 6, lg: 3 }} data-tour="holiday-total-days">
-              <Paper elevation={0} sx={heroCardSx(0, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    mb={1.5}
+                  >
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Total School Days
                     </Typography>
-                    <Box sx={heroIconBadgeSx(0, isDark, theme)}>
-                      <IconCalendar size={20} />
-                    </Box>
+                    {statisticsLoading ? (
+                      <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                    ) : (
+                      <Box sx={heroIconBadgeSx(0)}>
+                        <IconCalendar size={20} />
+                      </Box>
+                    )}
                   </Stack>
                   <Box
                     sx={{
@@ -437,6 +480,9 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       mt: 1,
                     }}
                   >
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={60} height={48} />
+                    ) : (
                     <Typography
                       variant="h2"
                       fontWeight={900}
@@ -444,11 +490,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       sx={{
                         lineHeight: 1,
                         fontSize: { xs: 26, md: 32 },
-                        color: isDark ? '#fff' : heroAccent(0, isDark, theme),
+                        color: heroAccent(0),
                       }}
                     >
-                      {statistics.total_school_days}
+                      {statistics?.total_school_days ?? 0}
                     </Typography>
+                    )}
                   </Box>
                 </Box>
               </Paper>
@@ -456,7 +503,19 @@ const HolidaySectionInner = ({ refreshKey }) => {
 
             {/* Card 2: Holiday Utilization */}
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} data-tour="holiday-utilization">
-              <Paper elevation={0} sx={heroCardSx(1, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Box
                   sx={{
                     zIndex: 1,
@@ -470,15 +529,32 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     <Typography variant="h6" fontWeight={700} color="text.primary">
                       Holiday Utilization
                     </Typography>
-                    <Box sx={heroIconBadgeSx(1, isDark, theme)}>
-                      <IconClock size={20} />
-                    </Box>
+                    {statisticsLoading ? (
+                      <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                    ) : (
+                      <Box sx={heroIconBadgeSx(1)}>
+                        <IconClock size={20} />
+                      </Box>
+                    )}
                   </Stack>
+                  {statisticsLoading ? (
+                    <>
+                      <Skeleton variant="rounded" width="100%" height={5} sx={{ borderRadius: 4, mb: 1 }} />
+                      <Skeleton variant="text" width="60%" height={16} />
+                    </>
+                  ) : (
+                  <>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <LinearProgress
                       variant="determinate"
                       value={Math.min(utilizationPercentage || 0, 100)}
-                      color={utilizationPercentage > 80 ? 'error' : utilizationPercentage > 50 ? 'warning' : 'primary'}
+                      color={
+                        utilizationPercentage > 80
+                          ? 'error'
+                          : utilizationPercentage > 50
+                            ? 'warning'
+                            : 'primary'
+                      }
                       sx={{
                         flex: 1,
                         height: 5,
@@ -490,7 +566,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       variant="h4"
                       fontWeight={800}
                       sx={{
-                        color: utilizationPercentage > 80 ? 'error.main' : utilizationPercentage > 50 ? 'warning.main' : 'primary.main',
+                        color:
+                          utilizationPercentage > 80
+                            ? 'error.main'
+                            : utilizationPercentage > 50
+                              ? 'warning.main'
+                              : 'primary.main',
                         flexShrink: 0,
                       }}
                     >
@@ -498,27 +579,46 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     </Typography>
                   </Stack>
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
-                    {statistics.holiday_days_allocated} of {statistics.total_school_days} days allocated
+                    {statistics?.holiday_days_allocated ?? 0} of {statistics?.total_school_days ?? 0} days
+                    allocated
                   </Typography>
+                  </>
+                  )}
                 </Box>
               </Paper>
             </Grid>
 
             {/* Card 3: Holiday Summary */}
             <Grid size={{ xs: 12, lg: 5 }} data-tour="holiday-summary">
-              <Paper elevation={0} sx={heroCardSx(2, isDark, theme)}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  borderRadius: '14px',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  height: '100%',
+                  minHeight: 70,
+                  width: '100%',
+                }}
+              >
                 <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1.5}>
                   <Typography variant="h6" fontWeight={700} color="text.primary">
                     Holiday Summary
                   </Typography>
-                  <Box sx={heroIconBadgeSx(2, isDark, theme)}>
-                    <IconCalendarX size={20} />
-                  </Box>
+                  {statisticsLoading ? (
+                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '10px' }} />
+                  ) : (
+                    <Box sx={heroIconBadgeSx(2)}>
+                      <IconCalendarX size={20} />
+                    </Box>
+                  )}
                 </Stack>
                 <Box
                   sx={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(3, 1fr)' },
                     gap: 2,
                   }}
                 >
@@ -532,13 +632,17 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     >
                       Holiday Count
                     </Typography>
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={30} height={32} />
+                    ) : (
                     <Typography
                       variant="h4"
                       fontWeight={800}
-                      sx={{ color: isDark ? '#fff' : heroAccent(2, isDark, theme) }}
+                      sx={{ color: heroAccent(2) }}
                     >
-                      {statistics.holiday_count}
+                      {statistics?.holiday_count ?? 0}
                     </Typography>
+                    )}
                   </Box>
                   {/* Days Used with progress bar */}
                   <Box data-tour="holiday-analytics">
@@ -550,11 +654,24 @@ const HolidaySectionInner = ({ refreshKey }) => {
                     >
                       Days Used
                     </Typography>
+                    {statisticsLoading ? (
+                      <>
+                        <Skeleton variant="rounded" width="100%" height={5} sx={{ borderRadius: 4, mt: 0.75, mb: 0.5 }} />
+                        <Skeleton variant="text" width="70%" height={16} />
+                      </>
+                    ) : (
+                    <>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.75 }}>
                       <LinearProgress
                         variant="determinate"
                         value={Math.min(daysUsedPercentage || 0, 100)}
-                        color={daysUsedPercentage > 80 ? 'error' : daysUsedPercentage > 50 ? 'warning' : 'primary'}
+                        color={
+                          daysUsedPercentage > 80
+                            ? 'error'
+                            : daysUsedPercentage > 50
+                              ? 'warning'
+                              : 'primary'
+                        }
                         sx={{
                           flex: 1,
                           height: 5,
@@ -566,7 +683,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
                         variant="h6"
                         fontWeight={800}
                         sx={{
-                          color: daysUsedPercentage > 80 ? 'error.main' : daysUsedPercentage > 50 ? 'warning.main' : 'primary.main',
+                          color:
+                            daysUsedPercentage > 80
+                              ? 'error.main'
+                              : daysUsedPercentage > 50
+                                ? 'warning.main'
+                                : 'primary.main',
                           flexShrink: 0,
                         }}
                       >
@@ -579,7 +701,36 @@ const HolidaySectionInner = ({ refreshKey }) => {
                       display="block"
                       sx={{ mt: 0.5 }}
                     >
-                      {statistics.holiday_days_used} of {statistics.holiday_days_allocated} days used
+                      {statistics?.holiday_days_used ?? 0} of {statistics?.holiday_days_allocated ?? 0} days
+                      used
+                    </Typography>
+                    </>
+                    )}
+                  </Box>
+                  {/* Upcoming holiday days still ahead in the term */}
+                  <Box data-tour="holiday-analytics">
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ textTransform: 'uppercase', letterSpacing: 0.4, fontWeight: 600 }}
+                    >
+                      Upcoming
+                    </Typography>
+                    {statisticsLoading ? (
+                      <Skeleton variant="text" width={30} height={32} />
+                    ) : (
+                    <Typography variant="h4" fontWeight={800} sx={{ color: heroAccent(2) }}>
+                      {statistics?.upcoming_holiday_days ?? 0}
+                    </Typography>
+                    )}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ mt: 0.5 }}
+                    >
+                      holiday days still ahead
                     </Typography>
                   </Box>
                 </Box>
@@ -587,12 +738,18 @@ const HolidaySectionInner = ({ refreshKey }) => {
             </Grid>
           </Grid>
         </Box>
-      )}
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h5">Holidays</Typography>
-            <Button variant="contained" size="small" startIcon={<IconPlus />}
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconPlus />}
               onClick={handleOpenModal}
               disabled={!selectedTermId}
               data-tour="holiday-create"
@@ -614,7 +771,7 @@ const HolidaySectionInner = ({ refreshKey }) => {
           >
             {sessions.map((s) => (
               <MenuItem key={s.id} value={s.id}>
-                {s.sesname}
+                {s.session_name}
               </MenuItem>
             ))}
           </TextField>
@@ -635,16 +792,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
           </TextField>
         </Box>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" sx={{ py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : !selectedTermId ? (
+        {!selectedTermId ? (
           <Alert severity="info">Select a session and term to view holidays.</Alert>
         ) : (
           <Box>
             <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+              <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -657,12 +810,22 @@ const HolidaySectionInner = ({ refreshKey }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedHolidays.length === 0 ? (
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={160} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                        <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                        <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : paginatedHolidays.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                        <Typography color="textSecondary">
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No holidays found for this term.
-                        </Typography>
+                        </Alert>
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -728,8 +891,9 @@ const HolidaySectionInner = ({ refreshKey }) => {
           <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {termDateRange ? (
               <Alert severity="info" sx={{ py: 0.5 }}>
-                Dates must be within the term calendar: <strong>{termDateRange.start_date}</strong>{' '}
-                → <strong>{termDateRange.end_date}</strong>
+                Dates must be within the term calendar:{' '}
+                <strong>{formatIsoDate(termDateRange.start_date)}</strong>{' '}
+                → <strong>{formatIsoDate(termDateRange.end_date)}</strong>
               </Alert>
             ) : (
               <Alert severity="warning" sx={{ py: 0.5 }}>
@@ -737,7 +901,12 @@ const HolidaySectionInner = ({ refreshKey }) => {
               </Alert>
             )}
             <Box display="flex" justifyContent="flex-end">
-              <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={handleAddRow}>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconPlus />}
+                onClick={handleAddRow}
+              >
                 Add More
               </Button>
             </Box>
@@ -828,7 +997,13 @@ const HolidaySectionInner = ({ refreshKey }) => {
           <Typography>Are you sure you want to delete this holiday?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setConfirmDelete({ open: false, id: null })}>Cancel</Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setConfirmDelete({ open: false, id: null })}
+          >
+            Cancel
+          </Button>
           <Button size="small" color="error" onClick={handleConfirmDelete}>
             Delete
           </Button>

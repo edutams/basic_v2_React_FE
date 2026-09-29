@@ -16,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   InputAdornment,
   TextField,
@@ -25,11 +26,13 @@ import {
   useTheme,
   Tabs,
   Tab,
-  Link,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
+import WalletAccountCell from '@/components/shared/WalletAccountCell';
 import { IconDotsVertical } from '@tabler/icons-react';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import FeeChart from './FeeChart';
@@ -51,8 +54,8 @@ const Overview = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   const [tableData, setTableData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [page, setPage] = useState(0); // zero-based for TablePagination
+  const [perPage, setPerPage] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -86,28 +89,32 @@ const Overview = () => {
       term_id: termId || null,
       search: search || null,
       status: activeTab > 0 ? statusTabs[activeTab] : null,
-      page,
-      per_page: 15,
+      page: page + 1, // API is 1-based
+      per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, sessionId, termId, search, activeTab, page],
+    [fromDate, toDate, sessionId, termId, search, activeTab, page, perPage],
   );
 
-  const loadTable = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetchOnlineTransactions({ filters: buildFilters() });
-      if (res.success) {
-        setTableData(res.data);
-        setLastPage(res.last_page);
-        setTotalCount(res.total);
+  const loadTable = useCallback(
+    async (targetPage = page, targetPerPage = perPage) => {
+      setLoading(true);
+      try {
+        const res = await fetchOnlineTransactions({
+          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage }),
+        });
+        if (res.success) {
+          setTableData(res.data);
+          setTotalCount(res.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch transactions', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch transactions', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [buildFilters]);
+    },
+    [buildFilters],
+  );
 
   const loadAnalytics = useCallback(async () => {
     try {
@@ -148,7 +155,6 @@ const Overview = () => {
       .then((res) => setSessions(res.data || res || []))
       .catch(console.error);
 
-    loadTable();
     loadAnalytics();
   }, []);
 
@@ -163,15 +169,26 @@ const Overview = () => {
       .catch(console.error);
   }, [sessionId]);
 
+  useEffect(() => {
+    loadTable(page, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage, activeTab]);
+
   const handleFetch = () => {
-    setPage(1);
-    loadTable();
+    setPage(0);
+    loadTable(0, perPage);
     loadAnalytics();
   };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    setPage(1);
+    setPage(0);
+  };
+
+  const handleChangePage = (_e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setPerPage(parseInt(e.target.value, 10));
+    setPage(0);
   };
 
   const handlePrintReceipt = (row) => {
@@ -242,6 +259,10 @@ const Overview = () => {
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const buildChartOptions = (categories) => ({
     chart: {
       type: chartType,
@@ -304,6 +325,10 @@ const Overview = () => {
         onPeriodValueChange={(v) => setPeriodValue(v)}
       />
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -327,7 +352,7 @@ const Overview = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
+        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField
               fullWidth
@@ -361,7 +386,7 @@ const Overview = () => {
                 <MenuItem value="">-- All session --</MenuItem>
                 {sessions.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.sesname}
+                    {s.session_name}
                   </MenuItem>
                 ))}
               </Select>
@@ -413,7 +438,7 @@ const Overview = () => {
 
         <Box
           sx={{
-            mb: 3,
+            mb: 2,
             borderBottom: 1,
             borderColor: 'divider',
             overflowX: 'auto',
@@ -432,44 +457,63 @@ const Overview = () => {
           </Tabs>
         </Box>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" py={6}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
-            <Table>
-              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
-                <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell width={20}>Transaction ID</TableCell>
-                  <TableCell>Paid For</TableCell>
-                  <TableCell>Wallet Account</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                      No transactions found.
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          variant="outlined"
+          sx={{ borderRadius: 2 }}
+        >
+          <Table size="small">
+            <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
+              <TableRow>
+                <TableCell sx={thCell}>#</TableCell>
+                <TableCell sx={thCell} width={20}>Transaction ID</TableCell>
+                <TableCell sx={thCell}>Paid For</TableCell>
+                <TableCell sx={thCell}>Paid By</TableCell>
+                <TableCell sx={thCell}>Wallet Account</TableCell>
+                <TableCell sx={thCell}>Description</TableCell>
+                <TableCell sx={thCell}>Amount</TableCell>
+                <TableCell sx={thCell}>Date</TableCell>
+                <TableCell sx={thCell}>Status</TableCell>
+                <TableCell sx={thCell} align="right">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Skeleton variant="circular" width={36} height={36} />
+                        <Box>
+                          <Skeleton variant="text" width={120} height={20} />
+                          <Skeleton variant="text" width={70} height={16} />
+                        </Box>
+                      </Box>
                     </TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={130} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={80} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                    <TableCell align="right" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
                   </TableRow>
-                ) : (
+                ))
+              ) : tableData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>No transactions found.</Alert>
+                  </TableCell>
+                </TableRow>
+              ) : (
                   tableData.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.order_id}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.order_id}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Avatar
                             sx={{ width: 36, height: 36 }}
@@ -480,7 +524,7 @@ const Overview = () => {
                           ></Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>
-                              {row.paid_by}
+                              {row.ward_name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
                               {row.class}
@@ -488,22 +532,14 @@ const Overview = () => {
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell>
-                        <Link
-                          component="button"
-                          underline="hover"
-                          href={`/bursary/transactions/wallet_transactions?wallet_account_no=${encodeURIComponent(row.wallet_account_no)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ ml: 1, cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
-                        >
-                          {row.wallet_account_no ?? 'N/A'}
-                        </Link>
+                      <TableCell sx={tdCell}>{row.payer_name}</TableCell>
+                      <TableCell sx={tdCell}>
+                        <WalletAccountCell row={row} />
                       </TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell>{format(row.amount)}</TableCell>
-                      <TableCell>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{row.description}</TableCell>
+                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                      <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Chip
                           size="small"
                           label={
@@ -522,7 +558,7 @@ const Overview = () => {
                           }
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={tdCell}>
                         <IconButton
                           size="small"
                           disabled={checkingStatusId === row.id}
@@ -543,22 +579,16 @@ const Overview = () => {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={perPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 15, 25, 50]}
+            />
           </TableContainer>
-        )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Showing {tableData.length} of {totalCount} transactions
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button size="small" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
-          </Box>
-        </Box>
 
         <Menu
           anchorEl={anchorEl}

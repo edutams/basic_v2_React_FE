@@ -1,192 +1,130 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Card, Typography } from '@mui/material';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { Box, Button, Snackbar, Alert, useTheme } from '@mui/material';
 
 const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
+
+  const comingSoon = (title) => () => setSnackbar({ open: true, message: `${title} — Page under development` });
 
   const actions = [
     {
-      icon: AccountBalanceWalletOutlinedIcon,
+      id: 'pay_fees',
       iconColor: '#16a34a',
       iconBg: '#dcfce7',
       title: 'Pay School Fees',
-      subtitle: 'Pay for one or more wards',
       onClick: () => navigate('/pay-school-fees'),
     },
     {
-      icon: PersonAddOutlinedIcon,
+      id: 'apply_admission',
       iconColor: '#7c3aed',
       iconBg: '#f3e8ff',
       title: 'Apply for Admission',
-      subtitle: 'Start a new admission',
       onClick: () => (onApplyAdmission ? onApplyAdmission() : navigate('/admission/new-application')),
     },
     {
-      icon: ChatBubbleOutlineOutlinedIcon,
+      id: 'message_teacher',
       iconColor: '#2563eb',
       iconBg: '#dbeafe',
       title: 'Message Teacher',
-      subtitle: 'Chat with teachers/admin',
-      onClick: () => navigate('/school-calendar'),
+      // No messaging feature exists yet — this used to navigate to
+      // /school-calendar, an unrelated page.
+      onClick: comingSoon('Message Teacher'),
     },
     {
-      icon: FileDownloadOutlinedIcon,
+      id: 'download_reports',
       iconColor: '#ea580c',
       iconBg: '#ffedd5',
       title: 'Download Reports',
-      subtitle: 'Get ward reports',
-      onClick: () => navigate('/dashboard'),
+      // Used to navigate to /dashboard (itself) — a no-op that downloaded
+      // nothing. No parent-facing reports page exists yet.
+      onClick: comingSoon('Download Reports'),
     },
     {
-      icon: ReceiptLongOutlinedIcon,
+      id: 'payment_history',
       iconColor: '#0284c7',
       iconBg: '#e0f2fe',
       title: 'View Payment History',
-      subtitle: 'See all payments made',
       onClick: () => navigate('/pay-school-fees'),
     },
     {
-      icon: NotificationsActiveOutlinedIcon,
+      id: 'attendance_overview',
       iconColor: '#e11d48',
       iconBg: '#ffe4e6',
       title: 'Attendance Overview',
-      subtitle: 'Check attendance summary',
-      onClick: () => navigate('/dashboard'),
+      // Used to navigate to /dashboard (itself) — same no-op issue.
+      onClick: comingSoon('Attendance Overview'),
     },
   ];
 
-  // The admission action only shows when the batches endpoint reports an open batch.
   const visibleActions = hasOpenBatches
     ? actions
     : actions.filter((a) => a.title !== 'Apply for Admission');
 
   return (
-    <Box mb={2.5} height="100%">
-      {/* White wrapper card around title + action grid */}
+    <Box>
       <Box
         sx={{
-          height: '100%',
-          bgcolor: '#ffffff',
-          border: '1px solid #e2e8f0',
+          bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
           borderRadius: '14px',
-          px: 1.2,
-          py: 0.2,
-          boxShadow: '0 4px 20px rgba(15, 23, 42, 0.08)',
+          px: 1.25,
+          py: 0.75,
+          boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
         }}
       >
-        <Typography sx={{ fontWeight: 800, fontSize: 16, color: '#1e293b', mb: 1.25, letterSpacing: -0.3 }}>
-          Quick Actions
-        </Typography>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(1, 1fr)',
-              sm: 'repeat(3, 1fr)',
-              md: 'repeat(3, 1fr)',
-            },
-            gap: 1.25,
-          }}
-        >
-        {visibleActions.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Card
-              key={item.title}
-              elevation={0}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {visibleActions.map((item) => (
+            <Button
+              key={item.id}
+              variant="outlined"
+              disableElevation
               onClick={item.onClick}
               sx={{
-                p: 1.25,
-                borderRadius: '10px',
-                bgcolor: '#ffffff',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.08)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1.25,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
+                borderRadius: '8px',
+                px: 1.6,
+                py: 0.65,
+                fontSize: '10px',
+                fontWeight: 700,
+                textTransform: 'none',
+                bgcolor: 'transparent',
+                color: item.iconColor,
+                borderColor: item.iconColor,
+                transition: 'all 0.18s ease',
                 '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 24px rgba(15, 23, 42, 0.12)',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.06)' : `${item.iconColor}0D`,
                   borderColor: item.iconColor,
-                  '& .action-arrow': {
-                    color: item.iconColor,
-                    transform: 'translateX(3px)',
-                  },
+                  color: item.iconColor,
+                  transform: 'translateY(-1px)',
                 },
               }}
             >
-              <Box
-                sx={{
-                  width: 34,
-                  height: 34,
-                  minWidth: 34,
-                  borderRadius: '8px',
-                  bgcolor: item.iconBg,
-                  color: item.iconColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Icon sx={{ fontSize: 17 }} />
-              </Box>
-
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: 11.5,
-                    color: '#0f172a',
-                    lineHeight: 1.2,
-                    mb: 0.25,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {item.title}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: 9.5,
-                    color: '#64748b',
-                    lineHeight: 1.2,
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
-                  {item.subtitle}
-                </Typography>
-              </Box>
-
-              <ArrowForwardIcon
-                className="action-arrow"
-                sx={{
-                  fontSize: 14,
-                  color: '#94a3b8',
-                  flexShrink: 0,
-                  transition: 'all 0.2s ease',
-                }}
-              />
-            </Card>
-          );
-        })}
+              {item.title}
+            </Button>
+          ))}
         </Box>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ open: false, message: '' })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ open: false, message: '' })}
+          severity="info"
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

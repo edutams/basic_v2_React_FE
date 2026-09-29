@@ -39,6 +39,15 @@ export const fetchClassAssignments = async (sessionId, termId) => {
   return response.data;
 };
 
+// Fetch curriculum-setup completeness stats (defaults to the active term
+// when session/term are omitted)
+export const fetchCurriculumSetupStats = async (sessionId = null, termId = null) => {
+  const response = await api.get('/curriculum/setup-stats', {
+    params: sessionId && termId ? { session_id: sessionId, term_id: termId } : {},
+  });
+  return response.data;
+};
+
 // Save class-curriculum assignments
 export const saveClassAssignments = async (sessionId, termId, assignments) => {
   const response = await api.post('/curriculum/class-assignments', {
@@ -49,9 +58,12 @@ export const saveClassAssignments = async (sessionId, termId, assignments) => {
   return response.data;
 };
 
-// Fetch sessions
+// Fetch sessions (this tenant's own onboarded sessions, for session pickers).
+// The landlord's session catalog (fetchLandlordSessions in sessionTermApi.js)
+// is only ever used to onboard a new session into this tenant — every other
+// picker/filter in the app reads the tenant's own sessions.
 export const fetchSessions = async () => {
-  const response = await api.get('/curriculum/sessions/list');
+  const response = await api.get('/sessions', { params: { per_page: 100 } });
   return response.data;
 };
 
@@ -67,10 +79,9 @@ export const fetchActiveSessionTerm = async () => {
   return response.data;
 };
 
-// Fetch terms
-export const fetchTerms = async (sessionId = null) => {
-  const params = sessionId ? { session_id: sessionId } : {};
-  const response = await api.get('/curriculum/terms/list', { params });
+// Fetch terms (this tenant's own terms — a term isn't session-scoped, so sessionId is unused)
+export const fetchTerms = async () => {
+  const response = await api.get('/terms');
   return response.data;
 };
 
@@ -94,9 +105,12 @@ export const fetchSubjectsByProgramme = async (programmeId, curriculumId = null)
   return response.data;
 };
 
-// Fetch subjects by class
-export const fetchSubjectsByClass = async (classId) => {
-  const response = await api.get(`/curriculum/subjects/by-class/${classId}`);
+// Fetch subjects by class, optionally narrowed to one programme (a class
+// can now have a different curriculum per programme)
+export const fetchSubjectsByClass = async (classId, programmeId = null) => {
+  const response = await api.get(`/curriculum/subjects/by-class/${classId}`, {
+    params: programmeId ? { programme_id: programmeId } : undefined,
+  });
   return response.data;
 };
 
@@ -124,15 +138,25 @@ export const fetchClassSubjects = async (classId) => {
   return response.data;
 };
 
-// Fetch available subjects to add to a class (from its assigned curriculum)
-export const fetchAvailableSubjectsForClass = async (classId) => {
-  const response = await api.get(`/curriculum/class-subjects/${classId}/available`);
+// Fetch available subjects to add to a class (from its assigned curriculum).
+// programmeId matters when the same class_id is shared across programmes —
+// each programme can carry its own separate curriculum assignment.
+export const fetchAvailableSubjectsForClass = async (classId, programmeId = null) => {
+  const response = await api.get(`/curriculum/class-subjects/${classId}/available`, {
+    params: programmeId ? { programme_id: programmeId } : {},
+  });
   return response.data;
 };
 
 // Add or update a class subject
 export const addOrUpdateClassSubject = async (data) => {
   const response = await api.post('/curriculum/class-subjects', data);
+  return response.data;
+};
+
+// Remove a subject from a class's roster
+export const deleteClassSubjectRecord = async (id) => {
+  const response = await api.delete(`/curriculum/class-subjects/${id}`);
   return response.data;
 };
 
@@ -217,16 +241,16 @@ export const importSelectedCurriculums = async (importData) => {
   return response.data;
 };
 
-// Fetch session terms
+// Fetch session terms (the full list across all sessions, for dropdowns)
 export const fetchSessionTerms = async () => {
-  const response = await api.get('/curriculum/get-subscribed-session-terms');
-  return response.data;
+  const response = await api.get('/session-terms', { params: { per_page: 100 } });
+  return { ...response.data, data: response.data.data ?? [] };
 };
 
-// Fetch session terms for a specific session ID
-export const fetchSessionTermsBySession = async (sessionId) => {
-  const response = await api.get(
-    `/curriculum/get-subscribed-session-terms-by-session/${sessionId}`,
-  );
-  return response.data;
+// Fetch session terms for a specific session ID. activeOnly=false returns
+// every term in that session regardless of each term's own active/inactive
+// status (still scoped to just this one session, not every session ever).
+export const fetchSessionTermsBySession = async (sessionId, activeOnly = true) => {
+  const response = await api.get('/session-terms', { params: { session_id: sessionId, active_only: activeOnly, per_page: 100 } });
+  return { ...response.data, data: response.data.data ?? [] };
 };

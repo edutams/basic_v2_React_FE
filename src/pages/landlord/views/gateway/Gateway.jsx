@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box } from '@mui/material';
+import { IconListNumbers, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import GatewayTable from '@/pages/landlord/gateway/components/GatewayTable';
 import GatewayModal from '@/pages/landlord/gateway/components/GatewayModal';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import MiniStat from '@/components/shared/stats/MiniStat';
 import PropTypes from 'prop-types';
 import { useNotification } from '@/hooks/useNotification';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
@@ -18,6 +20,27 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [gatewayToDelete, setGatewayToDelete] = useState(null);
   const notify = useNotification();
+
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const res = await gatewayApi.getStats();
+      if (res.data.success) {
+        setStats(res.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch gateway stats', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleGatewayAction = (action, gateway = null) => {
     setActionType(action);
@@ -40,6 +63,7 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
         const res = await gatewayApi.delete(gatewayToDelete.id);
         onGatewayUpdate(gatewayToDelete, 'delete');
         notify.success(res.data?.message || 'Gateway deleted successfully');
+        fetchStats();
       } catch (error) {
         notify.error(error.response?.data?.message || 'Failed to delete gateway');
       }
@@ -56,13 +80,33 @@ const GatewayManagement = ({ gateways = [], onGatewayUpdate, isLoading = false }
     } else if (operation === 'update') {
       notify.success(response?.message || 'Gateway updated successfully');
     }
+    fetchStats();
   };
 
   return (
     <PageContainer title="Gateways" description="Manage payment gateways">
       <Breadcrumb title="Gateways" items={BCrumb} />
 
-      <Box sx={{ mt: 2 }}>
+      {/* Page-level live stats */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+        <MiniStat label="Total Gateways" value={stats.total} loading={statsLoading} icon={IconListNumbers} />
+        <MiniStat
+          label="Active"
+          value={stats.active}
+          loading={statsLoading}
+          color="success.main"
+          icon={IconCircleCheck}
+        />
+        <MiniStat
+          label="Inactive"
+          value={stats.inactive}
+          loading={statsLoading}
+          color="error.main"
+          icon={IconCircleX}
+        />
+      </Box>
+
+      <Box>
         <GatewayTable
           gateways={gateways}
           onGatewayAction={handleGatewayAction}

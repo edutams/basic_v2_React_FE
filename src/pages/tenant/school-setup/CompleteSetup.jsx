@@ -22,6 +22,10 @@ const keyframes = {
     from: { opacity: 0 },
     to: { opacity: 1 },
   },
+  '@keyframes pulse': {
+    '0%, 100%': { opacity: 1 },
+    '50%': { opacity: 0.35 },
+  },
 };
 
 const anim = (name, duration = '0.6s', delay = '0s') =>
@@ -157,7 +161,38 @@ const CompleteSetup = () => {
             </Button>
           )}
 
-          <Button variant="contained" size="small" onClick={handleContinue} sx={{ bgcolor: '#fff', color: 'primary.main', fontWeight: 700, px: 4, py: 1.25, borderRadius: '10px !important', }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleContinue}
+            disabled={!isApproved}
+            sx={{
+              bgcolor: '#fff',
+              color: 'primary.main',
+              fontWeight: 700,
+              px: 4,
+              py: 1.25,
+              borderRadius: '10px !important',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              '&.Mui-disabled': {
+                bgcolor: 'rgba(255,255,255,0.75)',
+                color: 'primary.main',
+              },
+            }}
+          >
+            {!isApproved && (
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50% !important',
+                  bgcolor: 'primary.main',
+                  animation: 'pulse 1.6s ease-in-out infinite',
+                }}
+              />
+            )}
             {isApproved ? 'Continue to Dashboard' : 'Waiting for Approval'}
           </Button>
         </Box>
@@ -188,8 +223,11 @@ const CompleteSetup = () => {
               A support agent will review your configuration to ensure everything is in order and
               will contact you shortly.
             </Typography>
-            <Typography sx={{ fontSize: 18, lineHeight: 1.7 }}>
+            <Typography sx={{ fontSize: 18, lineHeight: 1.7, mb: 3 }}>
               Thank you for choosing <strong>EduTAMS</strong>.
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: 'text.secondary' }}>
+              This page updates automatically once you're approved — no need to refresh.
             </Typography>
           </>
         )}

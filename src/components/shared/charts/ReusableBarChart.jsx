@@ -82,11 +82,20 @@ const ReusableBarChart = ({
     },
   };
 
+  const chart = <Chart options={options} series={series} type="bar" height={height} width="100%" />;
+
+  // DashboardCard's CardContent carries a fixed 30px padding meant for a
+  // titled dashboard widget — every caller here embeds the chart inline
+  // under its own heading instead, so that padding just reads as dead
+  // space pushing the plot area away from the text above it. Only reach
+  // for DashboardCard's title/subtitle layout when actually given one.
+  if (!title && !subtitle) {
+    return <Box>{chart}</Box>;
+  }
+
   return (
     <DashboardCard title={title} subtitle={subtitle}>
-      <Box>
-        <Chart options={options} series={series} type="bar" height={height} width="100%" />
-      </Box>
+      <Box>{chart}</Box>
     </DashboardCard>
   );
 };

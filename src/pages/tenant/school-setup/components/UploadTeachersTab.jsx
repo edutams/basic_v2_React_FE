@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
+  Grid,
   Table,
   TableBody,
   TableCell,
@@ -14,6 +15,7 @@ import {
   MenuItem,
   Typography,
   CircularProgress,
+  Skeleton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -29,10 +31,11 @@ import {
   Download as DownloadIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { IconEdit, IconTrash, IconUsers, IconChalkboard, IconBriefcase, IconUserCheck } from '@tabler/icons-react';
 import ArrowHint from '@/components/shared/ArrowHint';
 import AddTeacherModal from './AddTeacherModal';
 import UploadTeacherModal from '@/components/tenant/staff/UploadTeacherModal';
+import StatCard from '@/components/shared/StatCard';
 import {
   getAllStaff,
   createStaff,
@@ -58,6 +61,14 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [teachers, setTeachers] = useState([]);
   const [teachersLoading, setTeachersLoading] = useState(false);
+  // Distinct from teachersLoading, which also fires on every search
+  // keystroke — the stat cards shouldn't skeleton-flash while typing, only
+  // while the very first fetch is in flight.
+  const [initialLoading, setInitialLoading] = useState(true);
+  // Distinct from the shared `isLoading` below (also used by delete and the
+  // add/edit modal's save) so the Download button doesn't show
+  // "Downloading..." while some unrelated action is actually in flight.
+  const [downloadingTemplate, setDownloadingTemplate] = useState(false);
   const [error, setError] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, teacher: null });
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -97,7 +108,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
 
   const handleDownloadTemplate = async () => {
     try {
-      setIsLoading(true);
+      setDownloadingTemplate(true);
       await downloadTeacherTemplate();
       setNotification({
         open: true,
@@ -111,7 +122,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         severity: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setDownloadingTemplate(false);
     }
   };
 
@@ -126,31 +137,57 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
     return message;
   };
 
-  const fetchTeachers = async (pageNum = 0, perPage = 10, search = '') => {
+  const fetchTeachers = async (search = '') => {
     setTeachersLoading(true);
     setError(null);
     try {
-      const response = await getAllStaff({ page: pageNum + 1, per_page: perPage, search });
-      const transformedTeachers = (response.data || []).map((teacher) => ({
-        id: teacher.id,
-        staff_id: teacher.staff_id || teacher.user?.user_id,
-        surname: teacher.user?.lname || '',
-        first_name: teacher.user?.fname || '',
-        phone: teacher.user?.phone || '',
-        gender: teacher.user?.sex || '',
-        email: teacher.user?.email || '',
-        arm: teacher.classArm?.arm_name || teacher.staff_type || 'General',
-        user_id: teacher.user_id,
-        class_arm_id: teacher.class_arm_id,
-        class_id: teacher.class_id || '',
-        staff_type: teacher.staff_type || 'teaching',
-      }));
+      const response = await getAllStaff({
+        search,
+        onboarding: true,
+      });
+      const transformedTeachers = (response.data || []).map((teacher) => {
+        // The staff record's primary key IS `user_id` — there is no separate
+        // top-level `id` field in the API response. Using teacher.id here
+        // (undefined for every row) broke React's per-row identity: every
+        // row's key and every row's menu-open check collapsed to the same
+        // `undefined === undefined`, so clicking Edit on one row could act
+        // on a different row's data.
+        //
+        // Relation keys come back snake_case (class_teachers, class_arm,
+        // programme_class), matching the JSON column names, not the PHP
+        // relation method names (classTeachers, classArm, programmeClass).
+        const classAssignment = teacher.class_teachers?.[0] || null;
+        const classArm = classAssignment?.class_arm || null;
+        const armLabel = classArm?.class_arm_names
+          ? typeof classArm.class_arm_names === 'string'
+            ? classArm.class_arm_names
+            : classArm.class_arm_names[0]
+          : null;
+
+        return {
+          id: teacher.user_id,
+          staff_id: teacher.user?.user_id || '',
+          surname: teacher.user?.lname || '',
+          first_name: teacher.user?.fname || '',
+          middle_name: teacher.user?.mname || '',
+          phone: teacher.user?.phone || '',
+          gender: teacher.user?.sex || '',
+          email: teacher.user?.email || '',
+          arm: armLabel || teacher.staff_type || 'General',
+          user_id: teacher.user_id,
+          class_arm_id: classAssignment?.class_arm_id || '',
+          class_id:
+            classArm?.programme_class?.class_id || classArm?.programme_class?.class?.id || '',
+          staff_type: teacher.staff_type || 'teaching',
+        };
+      });
       setTeachers(transformedTeachers);
       onTeacherAdded?.();
     } catch (err) {
       setError(err.message || 'Failed to fetch teachers');
     } finally {
       setTeachersLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -193,7 +230,7 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           : teacher.staff_type === 'teaching'
             ? 'Teaching'
             : teacher.staff_type,
-      middle_name: teacher.user?.mname || '',
+      middle_name: teacher.middle_name || '',
     };
     setSelectedTeacher({ ...teacher, initialValues });
     setModalMode('edit');
@@ -224,29 +261,21 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
     }
   };
 
-  const filteredTeachers = useMemo(
-    () =>
-      teachers.filter(
-        (t) =>
-          t.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.staff_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          t.email?.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
-    [teachers, searchTerm],
-  );
-
-  const paginatedTeachers = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredTeachers.slice(start, start + rowsPerPage);
-  }, [filteredTeachers, page, rowsPerPage]);
-
   const handleSearch = (event) => {
     const value = event.target.value;
     setSearchTerm(value);
     setPage(0);
     fetchTeachers(0, rowsPerPage, value);
   };
+
+  // Stat-card row — at-a-glance intelligence for this stage, same reusable
+  // StatCard used elsewhere (handles its own skeleton via `loading`).
+  const stats = useMemo(() => {
+    const teaching = teachers.filter((t) => t.staff_type === 'teaching').length;
+    const nonTeaching = teachers.filter((t) => t.staff_type === 'non-teaching').length;
+    const classTeachers = teachers.filter((t) => !!t.class_arm_id).length;
+    return { total: teachers.length, teaching, nonTeaching, classTeachers };
+  }, [teachers]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -280,13 +309,35 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         />
 
         <Box sx={{ display: 'flex', gap: 1.5, position: 'relative' }}>
-          <Button variant="contained" size="small" startIcon={<DownloadIcon />} onClick={handleDownloadTemplate}>
-            Download Template
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={
+              downloadingTemplate ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : (
+                <DownloadIcon />
+              )
+            }
+            disabled={downloadingTemplate}
+            onClick={handleDownloadTemplate}
+          >
+            {downloadingTemplate ? 'Downloading...' : 'Download Template'}
           </Button>
-          <Button variant="contained" size="small" startIcon={<UploadIcon />} onClick={() => setUploadModalOpen(true)}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={() => setUploadModalOpen(true)}
+          >
             Upload
           </Button>
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAddNewTeacher}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={handleAddNewTeacher}
+          >
             Add New Teacher
           </Button>
 
@@ -318,6 +369,49 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
         </Box>
       </Box>
 
+      <Grid container spacing={1.5} sx={{ px: 2, pb: 2, flexShrink: 0 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.total}
+            label="Total Staff"
+            icon={IconUsers}
+            colorIndex={0}
+            loading={initialLoading}
+            tooltip="Every staff member added so far."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.teaching}
+            label="Teaching Staff"
+            icon={IconChalkboard}
+            colorIndex={1}
+            loading={initialLoading}
+            tooltip="Staff marked as teaching."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.nonTeaching}
+            label="Non-Teaching Staff"
+            icon={IconBriefcase}
+            colorIndex={2}
+            loading={initialLoading}
+            tooltip="Staff marked as non-teaching."
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            count={stats.classTeachers}
+            label="Class Teachers Assigned"
+            icon={IconUserCheck}
+            colorIndex={3}
+            loading={initialLoading}
+            tooltip="Teachers already assigned as a class arm's class teacher."
+          />
+        </Grid>
+      </Grid>
+
       <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
         <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%' }}>
           <TableHead>
@@ -333,7 +427,9 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
               <TableCell sx={{ fontWeight: 600, width: '15%', bgcolor: '#fff' }}>Phone</TableCell>
               <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>Gender</TableCell>
               <TableCell sx={{ fontWeight: 600, width: '18%', bgcolor: '#fff' }}>Email</TableCell>
-              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 600, width: '10%', bgcolor: '#fff' }}>
+                Staff Type/Class Arm
+              </TableCell>
               <TableCell align="center" sx={{ width: '5%', bgcolor: '#fff' }}>
                 Actions
               </TableCell>
@@ -341,13 +437,17 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           </TableHead>
           <TableBody>
             {teachersLoading ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
-            ) : paginatedTeachers.length > 0 ? (
-              paginatedTeachers.map((teacher, index) => (
+              Array.from({ length: 6 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 9 }).map((__, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : teachers.length > 0 ? (
+              teachers.map((teacher, index) => (
                 <TableRow key={teacher.id} hover>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>{teacher.staff_id}</TableCell>
@@ -355,7 +455,16 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
                   <TableCell>{teacher.first_name}</TableCell>
                   <TableCell>{teacher.phone}</TableCell>
                   <TableCell>{teacher.gender}</TableCell>
-                  <TableCell sx={{ color: 'primary.main' }}>{teacher.email}</TableCell>
+                  <TableCell
+                    title={teacher.email}
+                    sx={{
+                      color: 'primary.main',
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {teacher.email}
+                  </TableCell>
                   <TableCell>{teacher.arm}</TableCell>
                   <TableCell align="center">
                     <IconButton onClick={(e) => handleMenuOpen(e, teacher)}>
@@ -475,7 +584,9 @@ const UploadTeachersTab = ({ onTeacherAdded, onReadyChange }) => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleConfirmClose}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleConfirmClose}>
+            Cancel
+          </Button>
           <Button size="small" color="error" onClick={handleDeleteTeacher}>
             Yes, Delete
           </Button>

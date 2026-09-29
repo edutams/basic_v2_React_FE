@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
+  Grid,
   Typography,
   Button,
   Table,
@@ -27,11 +28,22 @@ import {
   CircularProgress,
   Checkbox,
   FormControlLabel,
+  Skeleton,
+  Divider,
+  Link,
 } from '@mui/material';
 import { CURRICULUM_TOUR_KEYS } from '../constants/tourKeys';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconBooks,
+  IconSchool,
+  IconStack2,
+  IconAlertCircle,
+} from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
+import StatCard from '@/components/shared/StatCard';
 import {
   fetchCurriculums,
   createCurriculum,
@@ -44,15 +56,45 @@ import {
   fetchAgentCurriculums,
   fetchCurriculumSubjects,
   importSelectedCurriculums,
+  fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
-const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
+const SubjectBox = ({
+  curriculum,
+  subjects,
+  selectedSubjectIds = [],
+  onToggleSubject,
+  onToggleAll,
+  onViewSchemes,
+}) => {
+  const allSelected = subjects.length > 0 && selectedSubjectIds.length === subjects.length;
+  const someSelected = selectedSubjectIds.length > 0 && !allSelected;
+
   return (
     <Paper sx={{ mb: 2, p: 2 }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
         <Typography variant="subtitle2" fontWeight="bold">
           {curriculum.curriculum_name}
         </Typography>
+        {subjects.length > 0 && (
+          <FormControlLabel
+            sx={{ mr: 0 }}
+            control={
+              <Checkbox
+                size="small"
+                checked={allSelected}
+                indeterminate={someSelected}
+                onChange={(e) => onToggleAll(curriculum.id, e.target.checked)}
+              />
+            }
+            label={
+              <Typography variant="caption" color="text.secondary">
+                {selectedSubjectIds.length}/{subjects.length} selected
+              </Typography>
+            }
+          />
+        )}
       </Box>
       <Box sx={{ maxHeight: 200, overflowY: 'auto' }}>
         {subjects.length === 0 ? (
@@ -82,17 +124,39 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
                   borderRadius: 1,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  {subject.subject_name}
-                </Typography>
+                <FormControlLabel
+                  sx={{ flex: 1, minWidth: 0, mr: 1 }}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={selectedSubjectIds.includes(subject.id)}
+                      onChange={(e) => onToggleSubject(curriculum.id, subject.id, e.target.checked)}
+                    />
+                  }
+                  label={
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+                        {subject.subject_name}
+                      </Typography>
+                      {subject.agent_programme_name && (
+                        <Typography variant="caption" color="text.secondary" noWrap display="block">
+                          {subject.agent_programme_name}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                />
 
-                <Box display="flex" alignItems="center" gap={1}>
+                <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
                   <Chip
                     label={`${subject.schemes ? Object.keys(subject.schemes).length : 0} Schemes`}
                     size="small"
                     color="primary"
                   />
-                  <Button variant="contained" size="small" onClick={() => onViewSchemes(subject)}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => onViewSchemes(subject)}
                     disabled={!subject.schemes || Object.keys(subject.schemes).length === 0}
                   >
                     View
@@ -108,6 +172,28 @@ const SubjectBox = ({ curriculum, subjects, onViewSchemes }) => {
 };
 
 const CurriculumSetup = () => {
+  // ── Completeness stats (this tab's own header cards) ─────────────────
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
   // Internal state
   const [curriculums, setCurriculums] = useState([]);
   const [loadingCurriculums, setLoadingCurriculums] = useState(false);
@@ -134,10 +220,16 @@ const CurriculumSetup = () => {
   const [agentCurriculums, setAgentCurriculums] = useState([]);
   const [selectedCurriculums, setSelectedCurriculums] = useState([]);
   const [curriculumSubjects, setCurriculumSubjects] = useState({});
+  // Which subjects within each selected curriculum are actually staged for
+  // import — { [curriculumId]: number[] }. Defaults to "all" the moment a
+  // curriculum's subjects finish loading (the convenient default), while
+  // still letting the user narrow it down before confirming.
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState({});
   const [loadingAgentCurriculums, setLoadingAgentCurriculums] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [openImportConfirmModal, setOpenImportConfirmModal] = useState(false);
   const [loadingImport, setLoadingImport] = useState(false);
+  const [importResult, setImportResult] = useState(null);
   const [selectedCurriculum, setSelectedCurriculum] = useState(null);
   const [viewSchemesSubject, setViewSchemesSubject] = useState(null);
   const [curriculumAnchorEl, setCurriculumAnchorEl] = useState(null);
@@ -201,13 +293,23 @@ const CurriculumSetup = () => {
   const loadSessionsAndTerms = async () => {
     setLoadingSessions(true);
     try {
-      const sessionsRes = await fetchSessions();
+      // getActiveSessionTerm() on the backend, not Session.is_current — that
+      // flag is independent and can point at a different session than
+      // what's actually running (see
+      // SessionManagementController::toggleSessionStatus).
+      const [sessionsRes, activeRes] = await Promise.all([
+        fetchSessions(),
+        fetchActiveTenantSessionTerm(),
+      ]);
+      const activeSessionTerm = activeRes?.status ? activeRes.data : null;
 
       if (sessionsRes.status) {
         setSessions(sessionsRes.data);
         if (sessionsRes.data.length > 0) {
           const currentSession =
-            sessionsRes.data.find((s) => s.is_current === 'yes') || sessionsRes.data[0];
+            (activeSessionTerm &&
+              sessionsRes.data.find((s) => s.id === activeSessionTerm.session_id)) ||
+            sessionsRes.data[0];
           setSelectedSession(currentSession.id);
 
           // Load terms for the initial session
@@ -216,7 +318,12 @@ const CurriculumSetup = () => {
           if (termsRes.status) {
             setTerms(termsRes.data);
             if (termsRes.data.length > 0) {
-              setSelectedTerm(termsRes.data[0].id);
+              const defaultTerm =
+                (activeSessionTerm &&
+                  activeSessionTerm.session_id === currentSession.id &&
+                  termsRes.data.find((t) => t.id === activeSessionTerm.term_id)) ||
+                termsRes.data[0];
+              setSelectedTerm(defaultTerm.id);
             }
           }
           setLoadingTerms(false);
@@ -263,9 +370,13 @@ const CurriculumSetup = () => {
     }
   };
 
-  const handleClassCurriculumChange = (classId, curriculumId) => {
+  // One row per (class, programme) — different programmes of the same
+  // class (e.g. "Senior Secondary 1" Science vs Business) can each follow a
+  // different curriculum now, so rows are matched by their synthetic
+  // `${class_id}_${programme_id}` id, not by class_id alone.
+  const handleClassCurriculumChange = (rowId, curriculumId) => {
     const updated = classData.map((cls) =>
-      cls.id === classId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
+      cls.id === rowId ? { ...cls, assigned_curriculum_id: curriculumId } : cls,
     );
     setClassData(updated);
   };
@@ -279,7 +390,8 @@ const CurriculumSetup = () => {
     const assignments = classData
       .filter((cls) => cls.assigned_curriculum_id)
       .map((cls) => ({
-        class_id: cls.id,
+        class_id: cls.class_id,
+        programme_id: cls.programme_id,
         curriculum_id: cls.assigned_curriculum_id,
       }));
 
@@ -293,6 +405,7 @@ const CurriculumSetup = () => {
       const response = await saveClassAssignments(selectedSession, selectedTerm, assignments);
       if (response.status) {
         showSnackbar('Assignments saved successfully', 'success');
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to save assignments';
@@ -333,6 +446,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum created successfully', 'success');
         handleCloseCreateModal();
         fetchCurriculumsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -364,6 +478,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum updated successfully', 'success');
         handleCloseEditModal();
         fetchCurriculumsData();
+        fetchStats();
       }
     } catch (error) {
       if (error.response?.status === 422) {
@@ -392,6 +507,7 @@ const CurriculumSetup = () => {
         showSnackbar('Curriculum deleted successfully', 'success');
         handleCloseDeleteModal();
         fetchCurriculumsData();
+        fetchStats();
       } else {
         // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to delete curriculum';
@@ -413,6 +529,10 @@ const CurriculumSetup = () => {
 
   const handleOpenImportModal = () => {
     setOpenImportModal(true);
+    setSelectedCurriculums([]);
+    setCurriculumSubjects({});
+    setSelectedSubjectIds({});
+    setImportResult(null);
     loadAgentCurriculums();
   };
 
@@ -457,10 +577,11 @@ const CurriculumSetup = () => {
           ...prev,
           [curriculumId]: response.data,
         }));
-        // Initialize selected subjects for this curriculum
-        setSelectedSubjects((prev) => ({
+        // Default to "all subjects selected" — the most convenient scope —
+        // while still letting the user uncheck individual ones below.
+        setSelectedSubjectIds((prev) => ({
           ...prev,
-          [curriculumId]: [],
+          [curriculumId]: response.data.map((s) => s.id),
         }));
       }
     } catch (error) {
@@ -468,6 +589,26 @@ const CurriculumSetup = () => {
     } finally {
       setLoadingSubjects(false);
     }
+  };
+
+  const handleToggleSubject = (curriculumId, subjectId, checked) => {
+    setSelectedSubjectIds((prev) => {
+      const current = prev[curriculumId] || [];
+      return {
+        ...prev,
+        [curriculumId]: checked
+          ? [...current, subjectId]
+          : current.filter((id) => id !== subjectId),
+      };
+    });
+  };
+
+  const handleToggleAllSubjects = (curriculumId, checked) => {
+    const allIds = (curriculumSubjects[curriculumId] || []).map((s) => s.id);
+    setSelectedSubjectIds((prev) => ({
+      ...prev,
+      [curriculumId]: checked ? allIds : [],
+    }));
   };
 
   const handleCurriculumSelect = (curriculumId, checked) => {
@@ -514,7 +655,7 @@ const CurriculumSetup = () => {
       return;
     }
 
-    // Show confirmation dialog
+    setImportResult(null);
     setOpenImportConfirmModal(true);
   };
 
@@ -522,18 +663,20 @@ const CurriculumSetup = () => {
     setLoadingImport(true);
     const importData = selectedCurriculums.map((curriculumId) => ({
       curriculum_id: curriculumId,
-      subject_ids: (curriculumSubjects[curriculumId] || []).map((s) => s.id),
+      subject_ids: selectedSubjectIds[curriculumId] || [],
     }));
 
     try {
       const response = await importSelectedCurriculums(importData);
       if (response.status) {
-        showSnackbar('Curriculums imported successfully', 'success');
-        setOpenImportConfirmModal(false);
-        handleCloseImportModal();
+        // Show the real breakdown instead of a generic toast — nothing is
+        // ever overwritten by this import (existing curriculum/subjects are
+        // left untouched), so "already present" isn't an error, just a
+        // no-op worth being honest about.
+        setImportResult(response.data);
         fetchCurriculumsData();
+        fetchStats();
       } else {
-        // Display the detailed error message from the backend
         const errorMessage = response.error || response.message || 'Failed to import curriculums';
         showSnackbar(errorMessage, 'error');
       }
@@ -551,6 +694,11 @@ const CurriculumSetup = () => {
     }
   };
 
+  const handleDoneImport = () => {
+    setOpenImportConfirmModal(false);
+    handleCloseImportModal();
+  };
+
   // Effects
   useEffect(() => {
     fetchCurriculumsData();
@@ -565,6 +713,61 @@ const CurriculumSetup = () => {
   }, [selectedSession, selectedTerm]);
   return (
     <>
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconBooks}
+            count={stats?.total_curricula ?? 0}
+            label="Active Curricula"
+            colorIndex={1}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconStack2}
+            count={stats?.total_classes ?? 0}
+            label="Total Classes"
+            colorIndex={0}
+            loading={statsLoading}
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconSchool}
+            count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
+            label="Classes With Curriculum"
+            subtitle={
+              stats?.total_class_programme_slots > 0
+                ? `${stats.class_programme_slots_assigned}/${stats.total_class_programme_slots} class–programme slots assigned`
+                : stats?.classes_without_curriculum > 0
+                  ? `${stats.classes_without_curriculum} still need one`
+                  : 'All classes covered'
+            }
+            colorIndex={2}
+            loading={statsLoading}
+            tooltip="A class with several programmes (e.g. SS1) counts as covered here once at least one of its programmes has a curriculum assigned — the class–programme slot count below breaks that down further, since that's the actual assignable unit."
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatCard
+            icon={IconAlertCircle}
+            count={stats?.curricula_never_assigned ?? 0}
+            label="Curricula Never Assigned"
+            subtitle={
+              stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
+            }
+            colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
+            loading={statsLoading}
+            tooltip="A curriculum that has never been assigned to a single class in any term — likely worth reviewing or removing."
+            sx={{ height: '100%' }}
+          />
+        </Grid>
+      </Grid>
+
       <Box
         sx={{
           display: 'flex',
@@ -574,8 +777,15 @@ const CurriculumSetup = () => {
         }}
       >
         {/* LEFT - Curriculum Table */}
-        <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }} data-tour="curriculum-setup-panel">
+        <Box
+          sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}
+          data-tour="curriculum-setup-panel"
+        >
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
+            }}
             title={
               <Box
                 display="flex"
@@ -586,10 +796,20 @@ const CurriculumSetup = () => {
               >
                 <Typography variant="h5">Curriculum</Typography>
                 <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN} variant="contained" size="small" onClick={handleOpenImportModal}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.IMPORT_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleOpenImportModal}
+                  >
                     Import
                   </Button>
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN} variant="contained" size="small" onClick={handleOpenCreateModal}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.CREATE_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleOpenCreateModal}
+                  >
                     Create Curriculum
                   </Button>
                 </Box>
@@ -598,33 +818,60 @@ const CurriculumSetup = () => {
           >
             <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
-                <Table stickyHeader sx={{ tableLayout: 'fixed', minWidth: 400 }}>
+                <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', minWidth: 400 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
+                      <TableCell sx={{ fontWeight: 700, width: '10%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '37%', py: 1.5 }}>
-                        Curriculum Name
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '20%', py: 1.5 }}>
-                        Imported
-                      </TableCell>
-                      <TableCell data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER} align="center" sx={{ fontWeight: 700, width: '8%', py: 1.5 }}>
+                      <TableCell sx={{ fontWeight: 700, width: '37%' }}>Curriculum Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '20%' }}>Imported</TableCell>
+                      <TableCell
+                        data-tour={CURRICULUM_TOUR_KEYS.ACTION_HEADER}
+                        align="center"
+                        sx={{ fontWeight: 700, width: '8%', py: 1.5 }}
+                      >
                         Actions
                       </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {loadingCurriculums ? (
-                      <TableRow>
-                        <TableCell colSpan={5} align="center">
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <Skeleton variant="text" width={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={140} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rounded"
+                              width={60}
+                              height={22}
+                              sx={{ borderRadius: '12px' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rounded"
+                              width={50}
+                              height={22}
+                              sx={{ borderRadius: '12px' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Skeleton
+                              variant="circular"
+                              width={28}
+                              height={28}
+                              sx={{ mx: 'auto' }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : curriculums.length > 0 ? (
                       curriculums.map((item, i) => (
                         <TableRow key={item.id} hover>
@@ -634,7 +881,10 @@ const CurriculumSetup = () => {
                               sx={{
                                 px: 2,
                                 py: 0.5,
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
@@ -647,12 +897,22 @@ const CurriculumSetup = () => {
                               label={item.status}
                               size="small"
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? 'rgba(0, 194, 146, 0.2)' : 'rgba(252, 75, 108, 0.2)')
-                                  : (item.status === 'active' ? '#dcfce7' : '#fee2e2'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.status === 'active' ? '#00c292' : '#fc4b6c')
-                                  : (item.status === 'active' ? '#166534' : '#991b1b'),
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.status === 'active'
+                                      ? 'rgba(0, 194, 146, 0.2)'
+                                      : 'rgba(252, 75, 108, 0.2)'
+                                    : item.status === 'active'
+                                      ? '#dcfce7'
+                                      : '#fee2e2',
+                                color: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.status === 'active'
+                                      ? '#00c292'
+                                      : '#fc4b6c'
+                                    : item.status === 'active'
+                                      ? '#166534'
+                                      : '#991b1b',
                               }}
                             />
                           </TableCell>
@@ -661,12 +921,22 @@ const CurriculumSetup = () => {
                               label={item.agent_curriculum_id ? 'Yes' : 'No'}
                               size="small"
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.agent_curriculum_id ? 'rgba(30, 77, 183, 0.2)' : 'rgba(255, 255, 255, 0.08)')
-                                  : (item.agent_curriculum_id ? '#dbeafe' : '#f3f4f6'),
-                                color: (theme) => theme.palette.mode === 'dark'
-                                  ? (item.agent_curriculum_id ? '#4570EA' : '#adb0bb')
-                                  : (item.agent_curriculum_id ? '#1e40af' : '#6b7280'),
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.agent_curriculum_id
+                                      ? 'rgba(30, 77, 183, 0.2)'
+                                      : 'rgba(255, 255, 255, 0.08)'
+                                    : item.agent_curriculum_id
+                                      ? '#dbeafe'
+                                      : '#f3f4f6',
+                                color: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? item.agent_curriculum_id
+                                      ? '#4570EA'
+                                      : '#adb0bb'
+                                    : item.agent_curriculum_id
+                                      ? '#1e40af'
+                                      : '#6b7280',
                               }}
                             />
                           </TableCell>
@@ -706,6 +976,10 @@ const CurriculumSetup = () => {
         {/* RIGHT - Assign to Classes */}
         <Box sx={{ flex: { md: 6 }, width: '100%', minWidth: 0 }}>
           <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 2 },
+              '& .MuiCardContent-root': { pt: 1, px: 1.5, pb: '12px !important' },
+            }}
             title={
               <Box
                 display="flex"
@@ -714,7 +988,17 @@ const CurriculumSetup = () => {
                 flexWrap="wrap"
                 gap={1}
               >
-                <Typography variant="h5">Assign to Classes</Typography>
+                <Box>
+                  <Typography variant="h5">Assign to Classes</Typography>
+                  {classData.length > 0 && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {classData.length} class–programme row{classData.length === 1 ? '' : 's'} across{' '}
+                      {new Set(classData.map((c) => c.class_id)).size} class
+                      {new Set(classData.map((c) => c.class_id)).size === 1 ? '' : 'es'} — a class with several
+                      programmes (e.g. SS1) gets one row per programme.
+                    </Typography>
+                  )}
+                </Box>
                 <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
                   <Select
                     data-tour={CURRICULUM_TOUR_KEYS.ASSIGN_SELECT}
@@ -730,7 +1014,7 @@ const CurriculumSetup = () => {
                     </MenuItem>
                     {sessions.map((session) => (
                       <MenuItem key={session.id} value={session.id}>
-                        {session.sesname}
+                        {session.session_name}
                       </MenuItem>
                     ))}
                   </Select>
@@ -751,7 +1035,13 @@ const CurriculumSetup = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                  <Button data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN} variant="contained" size="small" onClick={handleSaveAssignments} disabled={loadingSave}>
+                  <Button
+                    data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN}
+                    variant="contained"
+                    size="small"
+                    onClick={handleSaveAssignments}
+                    disabled={loadingSave}
+                  >
                     {loadingSave ? <CircularProgress size={24} /> : 'Update'}
                   </Button>
                 </Box>
@@ -760,27 +1050,44 @@ const CurriculumSetup = () => {
           >
             <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
-                <Table stickyHeader sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}>
+                <Table
+                  stickyHeader
+                  size="small"
+                  sx={{ tableLayout: 'fixed', width: '100%', minWidth: 360 }}
+                >
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.100' }}>
-                      <TableCell
-                        sx={{ fontWeight: 700, width: '10%', py: 1.5, whiteSpace: 'nowrap' }}
-                      >
+                      <TableCell sx={{ fontWeight: 700, width: '5%', whiteSpace: 'nowrap' }}>
                         S/N
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '40%', py: 1.5 }}>Class</TableCell>
-                      <TableCell sx={{ fontWeight: 700, width: '50%', py: 1.5 }}>
-                        Curriculum Name
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Class</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '25%' }}>Programme</TableCell>
+                      <TableCell sx={{ fontWeight: 700, width: '45%' }}>Curriculum Name</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {loadingAssignments ? (
-                      <TableRow>
-                        <TableCell colSpan={3} align="center">
-                          <CircularProgress size={24} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <Skeleton variant="text" width={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={100} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width={80} height={20} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton
+                              variant="rectangular"
+                              width={140}
+                              height={32}
+                              sx={{ borderRadius: 1 }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : classData.length > 0 ? (
                       classData.map((item, i) => (
                         <TableRow key={item.id} hover>
@@ -788,15 +1095,25 @@ const CurriculumSetup = () => {
                           <TableCell>
                             <Box
                               sx={{
-                                px: 2,
-                                py: 0.5,
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f1f5f9',
+                                px: 1.25,
+                                py: 0.25,
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : '#f1f5f9',
                                 borderRadius: 2,
                                 display: 'inline-block',
                               }}
                             >
-                              {item.class_name}
+                              {item.class_code || item.class_name}
                             </Box>
+                          </TableCell>
+                          <TableCell>
+                            {item.programme_name || (
+                              <Typography variant="caption" color="text.secondary">
+                                No programme
+                              </Typography>
+                            )}
                           </TableCell>
                           <TableCell>
                             <Select
@@ -805,7 +1122,10 @@ const CurriculumSetup = () => {
                               onChange={(e) => handleClassCurriculumChange(item.id, e.target.value)}
                               displayEmpty
                               sx={{
-                                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#f8fafc',
+                                bgcolor: (theme) =>
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.03)'
+                                    : '#f8fafc',
                                 borderRadius: 2,
                                 width: '100%',
                               }}
@@ -826,7 +1146,7 @@ const CurriculumSetup = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
+                        <TableCell colSpan={4} align="center">
                           <Typography color="textSecondary">
                             Select session and term to load classes
                           </Typography>
@@ -890,10 +1210,19 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseCreateModal} disabled={loadingCreate}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseCreateModal}
+            disabled={loadingCreate}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleCreateCurriculum} disabled={loadingCreate} startIcon={loadingCreate ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleCreateCurriculum}
+            disabled={loadingCreate}
+            startIcon={loadingCreate ? <CircularProgress /> : null}
           >
             {loadingCreate ? 'Creating...' : 'Create'}
           </Button>
@@ -930,10 +1259,19 @@ const CurriculumSetup = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditModal} disabled={loadingUpdate}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseEditModal}
+            disabled={loadingUpdate}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingUpdate} startIcon={loadingUpdate ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleUpdateCurriculum}
+            disabled={loadingUpdate}
+            startIcon={loadingUpdate ? <CircularProgress /> : null}
           >
             {loadingUpdate ? 'Updating...' : 'Update'}
           </Button>
@@ -950,10 +1288,20 @@ const CurriculumSetup = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseDeleteModal} disabled={loadingDelete}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseDeleteModal}
+            disabled={loadingDelete}
+          >
             Cancel
           </Button>
-          <Button size="small" color="error" onClick={handleDeleteCurriculum} disabled={loadingDelete} startIcon={loadingDelete ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            color="error"
+            onClick={handleDeleteCurriculum}
+            disabled={loadingDelete}
+            startIcon={loadingDelete ? <CircularProgress /> : null}
           >
             {loadingDelete ? 'Deleting...' : 'Delete'}
           </Button>
@@ -965,6 +1313,12 @@ const CurriculumSetup = () => {
         <DialogTitle>Import Curriculum</DialogTitle>
 
         <DialogContent sx={{ p: { xs: 1, md: 2 } }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Copies a ready-made curriculum — its subjects, programme mapping, and scheme of work —
+            from the shared library into your school, so you don't have to build it from scratch.
+            Pick one or more curricula on the left, choose which subjects to bring in on the right,
+            then confirm.
+          </Alert>
           <Box
             sx={{
               display: 'grid',
@@ -1142,6 +1496,9 @@ const CurriculumSetup = () => {
                           key={curriculumId}
                           curriculum={curriculum}
                           subjects={subjects}
+                          selectedSubjectIds={selectedSubjectIds[curriculumId] || []}
+                          onToggleSubject={handleToggleSubject}
+                          onToggleAll={handleToggleAllSubjects}
                           onViewSchemes={handleViewSchemes}
                         />
                       );
@@ -1165,7 +1522,11 @@ const CurriculumSetup = () => {
             Cancel
           </Button>
 
-          <Button size="small" onClick={handleImportSelected} disabled={selectedCurriculums.length === 0}>
+          <Button
+            size="small"
+            onClick={handleImportSelected}
+            disabled={selectedCurriculums.length === 0}
+          >
             Import ({selectedCurriculums.length})
           </Button>
         </DialogActions>
@@ -1178,43 +1539,112 @@ const CurriculumSetup = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Confirm Import</DialogTitle>
+        <DialogTitle>{importResult ? 'Import Complete' : 'Confirm Import'}</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to import the selected curriculum(s) and subject(s)?
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              This action will import:
-            </Typography>
-            <Box sx={{ ml: 2 }}>
-              {selectedCurriculums.map((curriculumId) => {
-                const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
-                const subjectCount = (curriculumSubjects[curriculumId] || []).length;
-                return (
-                  <Box key={curriculumId} sx={{ mb: 1 }}>
-                    <Typography variant="body2" fontWeight="bold">
-                      • {curriculum?.curriculum_name}
+          {importResult ? (
+            <Box>
+              <Alert
+                severity={importResult.subjects_skipped_no_programme > 0 ? 'warning' : 'success'}
+                sx={{ mb: 2 }}
+              >
+                {importResult.curriculums_imported} curriculum(s) and{' '}
+                {importResult.subjects_imported} subject(s) imported —{' '}
+                {importResult.schemes_imported} scheme-of-work week(s) written.
+              </Alert>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Curricula already present
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {importResult.curriculums_already_present}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Subjects already present
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {importResult.subjects_already_present}
+                  </Typography>
+                </Box>
+                {importResult.subjects_skipped_no_programme > 0 && (
+                  <Box sx={{ gridColumn: '1 / -1' }}>
+                    <Typography variant="caption" color="warning.main">
+                      {importResult.subjects_skipped_no_programme} subject(s) skipped — no matching
+                      programme found for them in this school yet.
                     </Typography>
-                    {subjectCount > 0 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-                        {subjectCount} subject(s) included
-                      </Typography>
-                    )}
                   </Box>
-                );
-              })}
+                )}
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2 }}>
+                Curriculum/subject records that already existed were left exactly as they are, but
+                their scheme-of-work content (topics, sub-topics, learning objectives) still
+                refreshes to match the latest from the shared library on every import — that's what
+                the {importResult.schemes_imported} figure above reflects, even when every subject
+                shows as "already present".
+              </Typography>
             </Box>
-          </Box>
+          ) : (
+            <>
+              <Typography>
+                Are you sure you want to import the selected curriculum(s) and subject(s)?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Safe to run again later: anything already imported (or customized since) is left
+                untouched — only what's genuinely missing gets created.
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" color="text.secondary">
+                  This action will import:
+                </Typography>
+                <Box sx={{ ml: 2 }}>
+                  {selectedCurriculums.map((curriculumId) => {
+                    const curriculum = agentCurriculums.find((c) => c.id === curriculumId);
+                    const subjectCount = (selectedSubjectIds[curriculumId] || []).length;
+                    return (
+                      <Box key={curriculumId} sx={{ mb: 1 }}>
+                        <Typography variant="body2" fontWeight="bold">
+                          • {curriculum?.curriculum_name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+                          {subjectCount} subject(s) selected
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setOpenImportConfirmModal(false)}>
-            Cancel
-          </Button>
-          <Button size="small" onClick={handleConfirmImport} color="primary" disabled={loadingImport} startIcon={loadingImport ? <CircularProgress /> : null}
-          >
-            {loadingImport ? 'Importing...' : 'Confirm Import'}
-          </Button>
+          {importResult ? (
+            <Button variant="contained" size="small" onClick={handleDoneImport}>
+              Done
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => setOpenImportConfirmModal(false)}
+                disabled={loadingImport}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={handleConfirmImport}
+                color="primary"
+                disabled={loadingImport}
+                startIcon={loadingImport ? <CircularProgress size={16} color="inherit" /> : null}
+              >
+                {loadingImport ? 'Importing...' : 'Confirm Import'}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -1222,44 +1652,88 @@ const CurriculumSetup = () => {
       <Dialog
         open={Boolean(viewSchemesSubject)}
         onClose={handleCloseViewSchemes}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
           Schemes of Work
           <Typography variant="caption" display="block" color="text.secondary">
             {viewSchemesSubject?.subject_name}
+            {viewSchemesSubject?.agent_programme_name && ` — ${viewSchemesSubject.agent_programme_name}`}
           </Typography>
         </DialogTitle>
         <DialogContent dividers>
           {viewSchemesSubject?.schemes?.length > 0 ? (
             <Box display="flex" flexDirection="column" gap={2}>
               {viewSchemesSubject.schemes.map((scheme, index) => (
-                <Paper key={scheme.id || index} sx={{ p: 2 }}>
+                <Paper key={scheme.id || index} variant="outlined" sx={{ p: 2 }}>
                   <Typography variant="subtitle2" fontWeight="bold">
                     {scheme.term?.term_name || `Term ${scheme.term_id}`} -{' '}
                     {scheme.week?.week_name || `Week ${scheme.week_id}`}
                   </Typography>
-                  {scheme.learning_objective && (
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                      <strong>Objective:</strong> {scheme.learning_objective}
+                  {scheme.class?.class_name && (
+                    <Typography variant="caption" display="block" color="text.secondary">
+                      {scheme.class.class_name}
                     </Typography>
                   )}
-                  {scheme.topics && scheme.topics.length > 0 && (
-                    <Box mt={1}>
-                      <Typography variant="body2" fontWeight="bold">
-                        Topics:
-                      </Typography>
-                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {scheme.topics.map((topic) => (
-                          <li key={topic.id}>
-                            <Typography variant="body2" color="text.secondary">
-                              {topic.topic_name}
-                            </Typography>
-                          </li>
-                        ))}
-                      </ul>
+
+                  {scheme.topics && scheme.topics.length > 0 ? (
+                    <Box mt={1} display="flex" flexDirection="column" gap={1.5}>
+                      {scheme.topics.map((topic) => (
+                        <Box key={topic.id}>
+                          <Typography variant="body2">
+                            <strong>Topic:</strong> {topic.topic_name}
+                          </Typography>
+                          {topic.subtopics && topic.subtopics.length > 0 && (
+                            <Box mt={0.5} pl={2}>
+                              {topic.subtopics.map((subtopic) => (
+                                <Box key={subtopic.id} mb={1}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    <strong>Subtopic:</strong> {subtopic.subtopic_name}
+                                  </Typography>
+                                  {subtopic.learning_objectives && subtopic.learning_objectives.length > 0 && (
+                                    <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                                      {subtopic.learning_objectives.map((objective) => (
+                                        <li key={objective.id}>
+                                          <Typography variant="body2" color="text.secondary">
+                                            {objective.learning_objective_details}
+                                          </Typography>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      ))}
                     </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      No topics added yet.
+                    </Typography>
+                  )}
+
+                  {(scheme.learning_material || scheme.resource_links) && (
+                    <>
+                      <Divider sx={{ my: 1.5 }} />
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        {scheme.learning_material && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Lesson Content:</strong> {scheme.learning_material}
+                          </Typography>
+                        )}
+                        {scheme.resource_links && (
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Video Content:</strong>{' '}
+                            <Link href={scheme.resource_links} target="_blank" rel="noopener noreferrer">
+                              {scheme.resource_links}
+                            </Link>
+                          </Typography>
+                        )}
+                      </Box>
+                    </>
                   )}
                 </Paper>
               ))}
@@ -1271,7 +1745,9 @@ const CurriculumSetup = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseViewSchemes}>Close</Button>
+          <Button variant="contained" size="small" onClick={handleCloseViewSchemes}>
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
 

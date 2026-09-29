@@ -13,7 +13,7 @@ import {
   TableFooter,
   TablePagination,
   TableContainer,
-  CircularProgress,
+  Skeleton,
   Alert,
   Typography,
   Box,
@@ -179,7 +179,7 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AgentsIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
           <Typography variant="h6" component="span">
-            Organization with this Permission
+            Agents with this Permission
           </Typography>
           {totalRows > 0 && !loading && (
             <Chip
@@ -238,8 +238,8 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '33%' }}>Organization Name</TableCell>
-                <TableCell sx={{ width: '22%' }}>Organization</TableCell>
+                <TableCell sx={{ width: '33%' }}>Agent Name</TableCell>
+                <TableCell sx={{ width: '22%' }}>Agent</TableCell>
                 <TableCell sx={{ width: '18%' }}>Email</TableCell>
                 <TableCell sx={{ width: '12%' }} align="center">
                   Status
@@ -252,11 +252,15 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
 
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(6)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : users.length > 0 ? (
                 users.map((user, index) => (
                   <TableRow key={user.id} hover>

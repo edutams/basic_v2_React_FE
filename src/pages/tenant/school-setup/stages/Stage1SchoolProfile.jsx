@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
-import { Box, Typography, Link, CircularProgress, useTheme, Button } from '@mui/material';
-import { IconUpload, IconPhoto } from '@tabler/icons-react';
+import { useState, useEffect, useContext, useMemo } from 'react';
+import { Box, Typography, Link, Chip, Skeleton, useTheme, Button } from '@mui/material';
+import { IconUpload, IconPhoto, IconCircleCheck } from '@tabler/icons-react';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 import { getFullImageUrl } from '@/helpers/ImageHelper';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
@@ -174,6 +174,22 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
     refreshTenantInfo();
   };
 
+  // A single profile page doesn't have list-like counts the way the other
+  // stages do (sessions, classes, learners) — a stat-card row here would
+  // just restate what's already visible below. Completeness is the one
+  // metric that's actually meaningful for a page like this.
+  const completeness = useMemo(() => {
+    const items = [
+      !!logo,
+      !!tenantData?.name,
+      !!tenantData?.address,
+      !!tenantData?.schoolType,
+      ...admins.map((a) => !!(a.firstName && a.lastName)),
+    ];
+    const done = items.filter(Boolean).length;
+    return { done, total: items.length };
+  }, [logo, tenantData, admins]);
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -196,11 +212,29 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       leftTitle="Set up your school profile."
       leftSubtitle="Upload your logo, confirm your school details and admin information to get started."
     >
-      <Typography
-        sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary', mb: 1 }}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
+          mb: 1,
+        }}
       >
-        Set Up Your School Profile
-      </Typography>
+        <Typography sx={{ fontSize: { xs: 20, sm: 26 }, fontWeight: 800, color: 'text.primary' }}>
+          Set Up Your School Profile
+        </Typography>
+        {!loading && (
+          <Chip
+            icon={<IconCircleCheck size={16} />}
+            label={`Profile ${completeness.done}/${completeness.total} complete`}
+            size="small"
+            color={completeness.done === completeness.total ? 'success' : 'default'}
+            variant={completeness.done === completeness.total ? 'filled' : 'outlined'}
+          />
+        )}
+      </Box>
       <Typography
         sx={{
           fontSize: 13,
@@ -218,8 +252,22 @@ const Stage1SchoolProfile = ({ onNext, onBack, onSkip }) => {
       </Typography>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" pt={6}>
-          <CircularProgress />
+        <Box>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 3, sm: 4 },
+              alignItems: 'flex-start',
+              mb: 3,
+            }}
+          >
+            <Skeleton variant="rounded" width={160} height={160} sx={{ flexShrink: 0 }} />
+            <Box sx={{ flex: 1, width: '100%' }}>
+              <Skeleton variant="rounded" height={160} />
+            </Box>
+          </Box>
+          <Skeleton variant="rounded" height={220} />
         </Box>
       ) : (
         <>

@@ -19,7 +19,7 @@ import {
   Menu,
   MenuItem,
   Alert,
-  CircularProgress,
+  Skeleton,
   FormControl,
   InputLabel,
   Select,
@@ -589,11 +589,13 @@ const AssignmentManagement = () => {
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
             <Typography variant="h5" data-tour="acl-assign-heading">
-              Assign Roles/Permission to Organizations
+              Assign Roles/Permission to Agents
             </Typography>
             <ShowTourGuideButton />
           </Box>
         }
+               sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
+
       >
 
         <Grid container spacing={1.5} mb={3} alignItems="center">
@@ -647,11 +649,11 @@ const AssignmentManagement = () => {
           {currentUserLevel === 1 && (
             <Grid size={{ xs: 12, md: 2.5 }}>
               <FormControl fullWidth size="small">
-                <InputLabel id="level-filter-label">Organization Level</InputLabel>
+                <InputLabel id="level-filter-label">Agent Level</InputLabel>
                 <Select
                   labelId="level-filter-label"
                   value={levelFilter}
-                  label="Organization Level"
+                  label="Agent Level"
                   onChange={(e) => setLevelFilter(e.target.value)}
                 >
                   <SelectMenuItem value="">All Levels</SelectMenuItem>
@@ -666,14 +668,14 @@ const AssignmentManagement = () => {
           )}
 
           <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} sx={{ height: 40, px: 2 }}>
+            <Button variant="contained" size="small" onClick={handleSearch} >
               Search
             </Button>
           </Grid>
 
           {hasFilters && (
             <Grid size="auto">
-              <Button variant="outlined" color="error" size="small" onClick={resetFilters} sx={{ height: 40, px: 2 }}>
+              <Button variant="outlined" color="error" size="small" onClick={resetFilters} >
                 Clear Filters
               </Button>
             </Grid>
@@ -687,7 +689,7 @@ const AssignmentManagement = () => {
               startIcon={<ExportIcon fontSize="small" />}
               endIcon={<ArrowDropDownIcon />}
               onClick={(e) => setExportAnchorEl(e.currentTarget)}
-              sx={{ height: 40, px: 2, textTransform: 'none', fontWeight: 600 }}
+              
             >
               Export
             </Button>
@@ -711,12 +713,12 @@ const AssignmentManagement = () => {
         <Box sx={{ p: 0 }}>
           {/* <Paper> */}
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 750 }}>
+            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>User Details</TableCell>
-                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Organization</TableCell>
+                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Agent</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '10%' }}>Status</TableCell>
                   <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
@@ -727,11 +729,15 @@ const AssignmentManagement = () => {
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
                     const userStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'inactive' ? 'Inactive' : 'Active';

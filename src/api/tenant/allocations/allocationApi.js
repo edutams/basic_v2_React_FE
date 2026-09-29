@@ -1,6 +1,12 @@
 import tenantApi from '@/api/tenant/tenant_api';
 
 const allocationApi = {
+  // Coverage stats for the Class & Subject Allocations tab's header cards
+  getAllocationStats: async (params = {}) => {
+    const response = await tenantApi.get('/allocations/stats', { params });
+    return response.data;
+  },
+
   // Class Teacher Allocations
   getClassTeacherAllocations: async (params = {}) => {
     const response = await tenantApi.get('/allocations/class-teacher', { params });
@@ -9,6 +15,13 @@ const allocationApi = {
 
   saveClassTeacherAllocations: async (data) => {
     const response = await tenantApi.post('/allocations/class-teacher', data);
+    return response.data;
+  },
+
+  // Whether a teacher already holds a different active class teacher
+  // assignment this term — informational, for a warn-but-allow prompt.
+  checkClassTeacherConflict: async (params) => {
+    const response = await tenantApi.get('/allocations/class-teacher/check-conflict', { params });
     return response.data;
   },
 

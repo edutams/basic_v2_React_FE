@@ -49,7 +49,7 @@ const ActivityLog = ({ onViewAll }) => {
   const [openModal, setOpenModal] = useState(false);
 
   const fetchUserActivities = async (isMounted = true) => {
-    const causerId = user?.id || user?.user_id;
+    const causerId = user?.id;
     if (!causerId) {
       if (isMounted) setLoading(false);
       return;
@@ -58,7 +58,7 @@ const ActivityLog = ({ onViewAll }) => {
     try {
       setLoading(true);
       const res = await tenantApi.get(`/activity-logs/causer/${causerId}?limit=5`);
-      const rawList = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
+      const rawList = res?.data?.data ?? [];
 
       if (isMounted) {
         const causerName = user?.full_name || (user?.fname && user?.lname ? `${user.fname} ${user.lname}` : "User");
@@ -347,8 +347,8 @@ const ActivityLogModal = ({ open, onClose, user }) => {
         }
 
         if (isMounted) {
-          const list = res?.data?.data || (Array.isArray(res?.data) ? res.data : []);
-          const total = res?.data?.total || res?.data?.meta?.total || list.length;
+          const list = res?.data?.data ?? [];
+          const total = res?.data?.total ?? list.length;
           setLogs(list);
           setTotalCount(total);
         }

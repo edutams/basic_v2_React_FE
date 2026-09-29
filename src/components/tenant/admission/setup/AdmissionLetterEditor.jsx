@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Box, Grid, Typography, Button, Stack, Paper, Tooltip, Divider } from '@mui/material';
 import TiptapEdit from '@/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import ParentCard from 'src/components/shared/ParentCard';
+import { sanitizeHtml } from '@/utils/sanitizeHtml';
 
 const PLACEHOLDER_FIELDS = [
   { label: "Student's First Name", value: "[@FIRST_NAME]" },
@@ -100,7 +101,13 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
   };
 
   return (
-    <ParentCard title="Admission Letter Editor">
+    <ParentCard
+      title="Admission Letter Editor"
+      sx={{
+        '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+        '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+      }}
+    >
       <Box
         sx={{
           bgcolor: 'primary.main',
@@ -284,7 +291,7 @@ const AdmissionLetterEditor = ({ onChange, initialContent = '', readOnly = false
                       '& em': { fontStyle: 'italic' },
                       '& ul, & ol': { pl: 2.5, mb: 0.75 },
                     }}
-                    dangerouslySetInnerHTML={{ __html: applyPreviewSamples(letterContent) }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(applyPreviewSamples(letterContent)) }}
                   />
                 ) : (
                   <Typography variant="caption" color="text.disabled">

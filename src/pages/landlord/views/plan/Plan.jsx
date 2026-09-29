@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import {
   Typography,
   Box,
@@ -17,15 +17,12 @@ import {
   TableFooter,
   TablePagination,
   Snackbar,
+  Portal,
   Alert,
-  Switch,
-  FormControlLabel,
-  useMediaQuery,
-  useTheme,
   Tooltip,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEdit, IconPackage, IconTrash } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -40,7 +37,7 @@ import PackageModal from '@/components/landlord/add-package/components/PackageMo
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Plans' }];
 
-const Plan = () => {
+const Plan = forwardRef(({ onPlanChanged }, ref) => {
   const [open, setOpen] = useState(false);
   const [openPackageModal, setOpenPackageModal] = useState(false);
   const [openManagePackagesModal, setOpenManagePackagesModal] = useState(false);
@@ -57,7 +54,6 @@ const Plan = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-  const [lockSubscription, setLockSubscription] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [modules, setModules] = useState([]);
   const [packages, setPackages] = useState([]);
@@ -122,6 +118,11 @@ const Plan = () => {
       setSnackbarOpen(true);
       handleClose();
       fetchData();
+      // A new/updated active plan rolls out to every organization's
+      // my_plans immediately (EduTierService::rolloutPlanToOrganizations),
+      // so the dashboard's stat cards are stale the moment this succeeds —
+      // let the parent page know to refetch them too.
+      onPlanChanged?.();
     } catch (error) {
       setSnackbarMessage(`Failed to ${actionType} plan`);
       setSnackbarSeverity('error');
@@ -156,19 +157,13 @@ const Plan = () => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
         fetchData();
+        onPlanChanged?.();
       } catch (error) {
         setSnackbarMessage('Failed to delete plan');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     }
-  };
-
-  const handleLockSubscriptionChange = (event) => {
-    setLockSubscription(event.target.checked);
-    setSnackbarMessage(`Subscription ${event.target.checked ? 'locked' : 'unlocked'}`);
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
   };
 
   const handleOpenManagePackages = (plan) => {
@@ -228,8 +223,11 @@ const Plan = () => {
   };
 
   const paginatedPlans = plans.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  const theme = useTheme();
-  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Exposes the "Add New Plan" action to the parent (PackageManager.jsx),
+  // whose tab-header row now owns this button instead of it living inside
+  // this tab's own card header.
+  useImperativeHandle(ref, () => ({ openAddModal: () => handleOpen('create') }));
 
   const renderDescriptionList = (description) => {
     const lines = description.split('\n').filter((line) => line.trim() !== '');
@@ -261,64 +259,11 @@ const Plan = () => {
   return (
     <PageContainer title="Plans" description="This is the Plans page">
       {/* <Breadcrumb title="Plans" items={BCrumb} /> */}
-      <Box
-        title={
-          <Box sx={{ width: '100%' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-                gap: 2,
-              }}
-            >
-              <Typography variant="h5">All Plans</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                {!isMobileOrTablet && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={lockSubscription}
-                        onChange={handleLockSubscriptionChange}
-                        color="primary"
-                        aria-label="Lock subscription toggle"
-                      />
-                    }
-                    label="Lock Subscription"
-                    labelPlacement="start"
-                    sx={{ m: 0 }}
-                  />
-                )}
-                <Button variant="contained" size="small" color="primary" onClick={() => handleOpen('create')} sx={{ minWidth: 120 }}>
-                  Add New Plan
-                </Button>
-              </Box>
-            </Box>
-            {isMobileOrTablet && (
-              <Box sx={{ mt: 2, width: '100%' }}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={lockSubscription}
-                      onChange={handleLockSubscriptionChange}
-                      color="primary"
-                      aria-label="Lock subscription toggle"
-                    />
-                  }
-                  label="Lock Subscription"
-                  labelPlacement="start"
-                  sx={{ m: 0 }}
-                />
-              </Box>
-            )}
-          </Box>
-        }
+      <ParentCard
+        sx={{ px: 0, py: 0, backgroundColor: 'transparent', boxShadow: 'none', border: 'none', '& .MuiCardHeader-root': { p: 0 }, '& .MuiCardContent-root': { p: 0 } }}
       >
-        <Box>
           <TableContainer>
-            <Table aria-label="plan table" sx={{ whiteSpace: 'nowrap' }}>
+            <Table aria-label="plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>
@@ -346,11 +291,15 @@ const Plan = () => {
               </TableHead>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center', py: 10 }}>
-                      <CircularProgress size={40} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(7)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : paginatedPlans.length > 0 ? (
                   paginatedPlans.map((plan, index) => (
                     <TableRow key={plan.id} hover>
@@ -438,12 +387,17 @@ const Plan = () => {
                           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
-                          <MenuItem onClick={() => handleOpen('update', plan)}>Edit Plan</MenuItem>
+                          <MenuItem onClick={() => handleOpen('update', plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
+                            Edit Plan
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenManagePackages(plan)}>
+                            <IconPackage size={16} style={{ marginRight: 8 }} />
                             Manage Packages
                           </MenuItem>
 
-                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)}>
+                          <MenuItem onClick={() => handleOpenDeleteDialog(plan)} sx={{ color: 'error.main' }}>
+                            <IconTrash size={16} style={{ marginRight: 8 }} />
                             Delete Plan
                           </MenuItem>
                         </Menu>
@@ -489,7 +443,6 @@ const Plan = () => {
               </TableFooter>
             </Table>
           </TableContainer>
-        </Box>
 
         <ReusableModal
           open={open}
@@ -519,20 +472,27 @@ const Plan = () => {
           severity="error"
         />
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
+        {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it
+            can get trapped under an open Dialog's stacking context
+            regardless of z-index. Portal escapes it to document.body,
+            same as Dialog. */}
+        <Portal>
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
             onClose={() => setSnackbarOpen(false)}
-            severity={snackbarSeverity}
-            sx={{ width: '100%' }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
           >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
+            <Alert
+              onClose={() => setSnackbarOpen(false)}
+              severity={snackbarSeverity}
+              sx={{ width: '100%' }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
+        </Portal>
 
         {openPackageModal && (
           <PackageModal
@@ -569,9 +529,9 @@ const Plan = () => {
             onCancel={handleCloseManageModule}
           />
         </ReusableModal>
-      </Box>
+      </ParentCard>
     </PageContainer>
   );
-};
+});
 
 export default Plan;

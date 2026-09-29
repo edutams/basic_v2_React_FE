@@ -8,7 +8,7 @@ import {
   Typography,
   Box,
   Chip,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import aclApi from '@/api/tenant/acl/aclApi';
 
@@ -78,8 +78,10 @@ const SchoolViewRoleModal = ({ open, onClose, currentAgent }) => {
       </DialogTitle>
       <DialogContent dividers>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-            <CircularProgress size={24} />
+          <Box sx={{ py: 2 }}>
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" width={100} height={32} sx={{ mr: 1, mb: 1, borderRadius: '8px' }} />
+            ))}
           </Box>
         ) : userRoles.length > 0 ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

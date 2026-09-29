@@ -35,6 +35,7 @@ import {
   InputLabel,
   Avatar,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -201,7 +202,7 @@ const SchoolAlcManager = () => {
 
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [activeTab, setActiveTab] = useState('Role Management');
@@ -648,7 +649,7 @@ const SchoolAlcManager = () => {
       {/* Top Header with Tabs & Primary Actions */}
       <Box
         sx={{
-          mb: 3,
+          mb: 2,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -704,7 +705,7 @@ const SchoolAlcManager = () => {
 
       {activeTab === 'Role Management' && (
         <AclTourProvider steps={roleTourSteps} autoPlay storageKey="acl_role_tour_seen">
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 2 }}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <StatCard
@@ -760,7 +761,11 @@ const SchoolAlcManager = () => {
             </Grid>
           </Box>
 
-          <ParentCard>
+          <ParentCard
+            sx={{
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
             <Box
               sx={{
                 mb: 2.5,
@@ -931,7 +936,7 @@ const SchoolAlcManager = () => {
             {/* Table Container */}
             <Box data-tour="acl-role-table">
               <TableContainer>
-                <Table stickyHeader>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ width: 60, fontWeight: 700 }}>S/N</TableCell>
@@ -949,11 +954,23 @@ const SchoolAlcManager = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={36} height={36} />
+                              <Skeleton variant="text" width={140} height={20} />
+                            </Box>
+                          </TableCell>
+                          <TableCell><Skeleton variant="text" width="85%" height={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={40} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="rounded" width={64} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                          <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
                     ) : filteredRows.length > 0 ? (
                       filteredRows.map((row, index) => {
                         const isSystemRole = row.is_sys === 'yes';
@@ -1234,24 +1251,21 @@ const SchoolAlcManager = () => {
                       </TableRow>
                     )}
                   </TableBody>
-
-                  <TableFooter>
-                    <TableRow>
-                      <TablePagination
-                        rowsPerPageOptions={[]}
-                        count={hasFilters ? filteredRows.length : totalRoles}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={(_, newPage) => setPage(newPage)}
-                        onRowsPerPageChange={(e) => {
-                          setRowsPerPage(parseInt(e.target.value, 10));
-                          setPage(0);
-                        }}
-                      />
-                    </TableRow>
-                  </TableFooter>
                 </Table>
               </TableContainer>
+
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                component="div"
+                count={totalRoles}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+              />
             </Box>
           </ParentCard>
         </AclTourProvider>

@@ -17,7 +17,7 @@ import {
   TablePagination,
   TextField,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Chip,
   Paper,
   IconButton,
@@ -195,8 +195,10 @@ const SchoolRecentChangesModal = ({ open, onClose }) => {
           </Box>
 
           {loading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" py={6}>
-              <CircularProgress size={32} />
+            <Box sx={{ py: 2 }}>
+              {[...Array(5)].map((_, i) => (
+                <Skeleton key={i} variant="text" height={50} sx={{ mb: 1, borderRadius: 1 }} />
+              ))}
             </Box>
           ) : logs.length === 0 ? (
             <Paper

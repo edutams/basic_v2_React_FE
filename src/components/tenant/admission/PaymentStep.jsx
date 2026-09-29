@@ -12,7 +12,11 @@ import {
   Stack,
   Alert,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import {
+  ArrowBack as ArrowBackIcon,
+  CheckCircle as CheckCircleIcon,
+  AccountBalanceWallet as WalletIcon,
+} from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
 import {
@@ -21,6 +25,82 @@ import {
 } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
+
+// Flat, bordered card shell — matches the card language used across the
+// rest of the reworked admission flow instead of MUI's default elevation.
+const cardSx = {
+  borderRadius: '8px',
+  border: '1px solid',
+  borderColor: '#e2e8f0',
+  boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+};
+
+const BackButton = (props) => (
+  <Button
+    variant="outlined"
+    size="small"
+    color="inherit"
+    startIcon={<ArrowBackIcon />}
+    sx={{ textTransform: 'none' }}
+    {...props}
+  >
+    Back
+  </Button>
+);
+
+// Loud, unmistakable "real money" total — big amount, colored border, wallet
+// icon — instead of a plain h6 that reads no differently from any other row.
+const TotalBox = ({ label, amount, color }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      ...cardSx,
+      borderColor: color,
+      borderWidth: '1.5px',
+      px: 2,
+      py: 1.75,
+      bgcolor: `${color}10`,
+    }}
+  >
+    <Box display="flex" alignItems="center" justifyContent="space-between" gap={1.5}>
+      <Box display="flex" alignItems="center" gap={1}>
+        <WalletIcon sx={{ color, fontSize: 22 }} />
+        <Typography variant="body2" fontWeight={700} sx={{ color }}>
+          {label}
+        </Typography>
+      </Box>
+      <Typography variant="h4" fontWeight={800} sx={{ color, lineHeight: 1 }}>
+        ₦{amount.toLocaleString()}
+      </Typography>
+    </Box>
+  </Paper>
+);
+
+const FeeBreakdown = ({ feeItems }) => (
+  <Paper elevation={0} sx={{ ...cardSx, overflow: 'hidden', mb: 1.5 }}>
+    {feeItems.map((fee, i) => (
+      <Box
+        key={fee.label}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          px: 2,
+          py: 1.25,
+          borderBottom: i < feeItems.length - 1 ? '1px solid' : 'none',
+          borderColor: '#e2e8f0',
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {fee.label}
+        </Typography>
+        <Typography variant="body2" fontWeight={700}>
+          ₦{fee.amount.toLocaleString()}
+        </Typography>
+      </Box>
+    ))}
+  </Paper>
+);
 
 const PaymentStep = ({
   onNext,
@@ -88,30 +168,21 @@ const PaymentStep = ({
     !selectedBatch ||
     (selectedBatch.require_payment && selectedBatch.pre_application_payments === undefined) ||
     checkingPayment;
-  // console.log(selectedBatch, 333);
 
   if (isPaymentDataLoading) {
     return (
       <Box>
-        <Typography variant="h6" fontWeight={700} mb={0.5}>
+        <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1.1rem' }} mb={0.25}>
           Pre-Application Payment Breakdown
         </Typography>
-        <Divider sx={{ mb: 3 }} />
-        <Paper sx={{ borderRadius: 2, p: 3, textAlign: 'center' }}>
+        <Divider sx={{ mb: 2 }} />
+        <Paper elevation={0} sx={{ ...cardSx, p: 3, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
             {checkingPayment ? 'Checking payment status...' : 'Loading payment details...'}
           </Typography>
         </Paper>
-        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="inherit"
-            startIcon={<ArrowBackIcon />}
-            onClick={onBack}
-          >
-            Back
-          </Button>
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+          <BackButton onClick={onBack} />
         </Box>
       </Box>
     );
@@ -123,12 +194,12 @@ const PaymentStep = ({
   if (hasAlreadyPaid) {
     return (
       <Box>
-        <Typography variant="h6" fontWeight={700} mb={0.5}>
+        <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1.1rem' }} mb={0.25}>
           Pre-Application Payment
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 2 }} />
 
-        <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 3 }}>
+        <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: '8px' }}>
           <Typography variant="body2" fontWeight={600}>
             Payment Already Completed
           </Typography>
@@ -138,58 +209,25 @@ const PaymentStep = ({
           </Typography>
         </Alert>
 
-        <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
-          {feeItems.map((fee, i) => (
-            <Box
-              key={fee.label}
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                px: 2.5,
-                py: 1.5,
-                borderBottom: i < feeItems.length - 1 ? '1px solid' : 'none',
-                borderColor: 'divider',
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                {fee.label}
-              </Typography>
-              <Typography variant="body2" fontWeight={600}>
-                ₦{fee.amount.toLocaleString()}
-              </Typography>
-            </Box>
-          ))}
-        </Paper>
+        <FeeBreakdown feeItems={feeItems} />
 
-        <Paper sx={{ borderRadius: 2, px: 2.5, py: 2, bgcolor: '#FAFAFA' }}>
-          <Box display="flex" justifyContent="space-between">
-            <Typography variant="body2" fontWeight={700} color="success.main">
-              Total Paid
-            </Typography>
-            <Typography variant="h6" fontWeight={800} color="success.main">
-              ₦ {totalPayable.toLocaleString()}
-            </Typography>
-          </Box>
-        </Paper>
+        <TotalBox label="Total Paid" amount={totalPayable} color="#16a34a" />
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="inherit"
-            startIcon={<ArrowBackIcon />}
-            onClick={onBack}
-            disabled={isLoading}
-          >
-            Back
-          </Button>
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column-reverse', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems="center"
+          gap={1.5}
+          sx={{ mt: 2 }}
+        >
+          <BackButton onClick={onBack} disabled={isLoading} sx={{ width: { xs: '100%', sm: 'auto' } }} />
           <Button
             variant="contained"
             size="small"
             onClick={onNext}
             disabled={isLoading}
-            sx={{ fontWeight: 600 }}
+            sx={{ fontWeight: 700, textTransform: 'none', width: { xs: '100%', sm: 'auto' } }}
           >
             Continue
           </Button>
@@ -249,47 +287,16 @@ const PaymentStep = ({
 
   return (
     <Box>
-      <Typography variant="h6" fontWeight={700} mb={0.5}>
+      <Typography variant="h6" fontWeight={700} sx={{ fontSize: '1.1rem' }} mb={0.25}>
         Pre-Application Payment Breakdown
       </Typography>
-      <Divider sx={{ mb: 3 }} />
+      <Divider sx={{ mb: 2 }} />
 
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
-        {feeItems.map((fee, i) => (
-          <Box
-            key={fee.label}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              px: 2.5,
-              py: 1.5,
-              borderBottom: i < feeItems.length - 1 ? '1px solid' : 'none',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {fee.label}
-            </Typography>
-            <Typography variant="body2" fontWeight={600}>
-              ₦{fee.amount.toLocaleString()}
-            </Typography>
-          </Box>
-        ))}
-      </Paper>
+      <FeeBreakdown feeItems={feeItems} />
 
-      <Paper sx={{ borderRadius: 2, px: 2.5, py: 2, bgcolor: '#FAFAFA' }}>
-        <Box display="flex" justifyContent="space-between">
-          <Typography variant="body2" fontWeight={700} color="error.main">
-            Total Payable
-          </Typography>
-          <Typography variant="h6" fontWeight={800} color="error.main">
-            ₦ {totalPayable.toLocaleString()}
-          </Typography>
-        </Box>
-      </Paper>
+      <TotalBox label="Total Payable" amount={totalPayable} color="#dc2626" />
 
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
+      <Box sx={{ mt: 3, textAlign: 'center' }}>
         <Button
           variant="contained"
           size="small"
@@ -297,45 +304,42 @@ const PaymentStep = ({
           onClick={handlePayNow}
           disabled={isLoading || processing || totalPayable <= 0}
           sx={{
-            bgcolor: '#8B0000',
-            color: '#fff',
             fontWeight: 700,
-            fontSize: '1rem',
+            textTransform: 'none',
+            fontSize: '1.05rem',
             py: 1.5,
             maxWidth: 480,
-            '&:hover': { bgcolor: '#6B0000' },
+            borderRadius: '8px',
+            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
           }}
         >
-          {processing ? 'Processing...' : 'Pay Now'}
+          {processing ? 'Processing...' : `Pay ₦${totalPayable.toLocaleString()} Now`}
         </Button>
       </Box>
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-        <Button
-          variant="contained"
-          size="small"
-          color="inherit"
-          startIcon={<ArrowBackIcon />}
-          onClick={onBack}
-          disabled={isLoading || processing}
-        >
-          Back
-        </Button>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
+        <BackButton onClick={onBack} disabled={isLoading || processing} />
       </Box>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '8px' } }}
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Confirm Payment</DialogTitle>
         <Divider />
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               You are about to make an admission payment for:
             </Typography>
-            <Box sx={{ bgcolor: '#f8fafc', borderRadius: 2, p: 2 }}>
-              <Typography variant="body2" fontWeight={600} color="text.secondary">
+            <Box sx={{ bgcolor: '#f8fafc', borderRadius: '8px', p: 1.5 }}>
+              <Typography variant="caption" fontWeight={600} color="text.secondary">
                 Admission Batch
               </Typography>
-              <Typography variant="body1" fontWeight={700}>
+              <Typography variant="body2" fontWeight={700} sx={{ mt: 0.25 }}>
                 {selectedBatch?.batch_name || 'N/A'}
               </Typography>
             </Box>
@@ -344,27 +348,46 @@ const PaymentStep = ({
                 <Typography variant="body2" color="text.secondary">
                   {fee.label}
                 </Typography>
-                <Typography variant="body2" fontWeight={600}>
+                <Typography variant="body2" fontWeight={700}>
                   ₦{fee.amount.toLocaleString()}
                 </Typography>
               </Box>
             ))}
             <Divider />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="subtitle1" fontWeight={700}>
-                Total
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 1.25,
+                borderRadius: '8px',
+                bgcolor: '#dc262610',
+              }}
+            >
+              <Typography variant="body1" fontWeight={700} sx={{ color: '#dc2626' }}>
+                You will pay
               </Typography>
-              <Typography variant="h6" fontWeight={800} color="primary.main">
+              <Typography variant="h4" fontWeight={800} sx={{ color: '#dc2626', lineHeight: 1 }}>
                 ₦{totalPayable.toLocaleString()}
               </Typography>
             </Box>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" onClick={() => setConfirmOpen(false)}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setConfirmOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleConfirmPayment} sx={{ fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmPayment}
+            sx={{ fontWeight: 700, textTransform: 'none' }}
+          >
             Confirm & Pay
           </Button>
         </DialogActions>

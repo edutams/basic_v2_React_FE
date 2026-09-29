@@ -43,17 +43,30 @@ import {
   IconChevronDown,
   IconDownload,
   IconUpload,
+  IconHistory,
+  IconSchool,
+  IconBook,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
+import allocationApi from '@/api/tenant/allocations/allocationApi';
 import { useNotification } from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
+import ClassTeacherAllocation from './ClassTeacherAllocation';
+import SubjectTeacherAllocation from './SubjectTeacherAllocation';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import {
+  migrateClassTeacherAllocations,
+  migrateSubjectTeacherAllocations,
+} from '@/api/tenant/term-migration/termMigrationApi';
+import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import UploadStaffModal from './components/UploadStaffModal';
+import StaffStatusModal from './components/StaffStatusModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate } from 'react-router-dom';
@@ -74,8 +87,9 @@ const StaffManager = () => {
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState([]);
   const [activeTab, setActiveTab] = useState('teaching');
-  const [activeSubTab, setActiveSubTab] = useState('profiling'); // For Teaching Staff sub-tabs
-  const [allocationSubTab, setAllocationSubTab] = useState('class-teacher'); // For Allocation sub-tabs
+  const [allocationSubTab, setAllocationSubTab] = useState('class-teacher'); // For Class & Subject Allocations sub-tabs
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
+  const [allocationsRefreshKey, setAllocationsRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
@@ -93,6 +107,8 @@ const StaffManager = () => {
     nonTeaching: 0,
     onLeave: 0,
   });
+  const [allocationStats, setAllocationStats] = useState(null);
+  const [allocationStatsLoading, setAllocationStatsLoading] = useState(true);
 
   // Menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -105,6 +121,7 @@ const StaffManager = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Form data - for staff modal
@@ -123,6 +140,30 @@ const StaffManager = () => {
   useEffect(() => {
     fetchStaff();
   }, [activeTab, page, rowsPerPage, searchQuery, statusFilter]);
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'allocations') {
+      fetchAllocationStats();
+    }
+  }, [activeTab, allocationsRefreshKey]);
+
+  const fetchAllocationStats = async () => {
+    setAllocationStatsLoading(true);
+    try {
+      const response = await allocationApi.getAllocationStats();
+      if (response.status) {
+        setAllocationStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch allocation stats', error);
+    } finally {
+      setAllocationStatsLoading(false);
+    }
+  };
 
   const confirmImpersonateStaff = (staffMember) => {
     setStaffToImpersonate(staffMember);
@@ -153,42 +194,41 @@ const StaffManager = () => {
         page: page + 1,
         per_page: rowsPerPage,
         search: searchQuery,
+        staff_type: activeTab,
       };
+
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
 
       const response = await staffApi.getAll(params);
 
       if (response.status) {
-        const allStaff = response.data || [];
-
-        // Filter by tab and status
-        let filtered = allStaff.filter((s) => s.staff_type === activeTab);
-
-        // Apply status filter
-        if (statusFilter !== 'all') {
-          filtered = filtered.filter((s) => (s.status || 'active').toLowerCase() === statusFilter);
-        }
-
-        setStaff(filtered);
-
-        // Calculate stats
-        const teaching = allStaff.filter((s) => s.staff_type === 'teaching').length;
-        const nonTeaching = allStaff.filter((s) => s.staff_type === 'non-teaching').length;
-        const onLeave = allStaff.filter((s) => s.status === 'leave').length;
-
-        setStats({
-          total: allStaff.length,
-          teaching,
-          nonTeaching,
-          onLeave,
-        });
-
-        setTotal(response.total || filtered.length);
+        // Filtering (by staff_type, status) and pagination both happen
+        // server-side now — response.data is already exactly this tab's page.
+        setStaff(response.data || []);
+        setTotal(response.total_staff ?? 0);
       }
     } catch (error) {
       notify.error('Failed to fetch staff');
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // School-wide counts for the stat cards — independent of the current
+  // tab/page/filter, so "Teaching Staff" doesn't read 0 just because the
+  // Non-Teaching tab happens to be open.
+  const fetchStats = async () => {
+    try {
+      const response = await staffApi.getCounts();
+      if (response.status) {
+        const { total, teaching, non_teaching: nonTeaching, on_leave: onLeave } = response.data;
+        setStats({ total, teaching, nonTeaching, onLeave });
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -241,6 +281,7 @@ const StaffManager = () => {
     const res = await staffApi.uploadTemplate(file);
     const message = res?.message || 'Upload complete';
     fetchStaff();
+    fetchStats();
     return message;
   };
 
@@ -271,46 +312,46 @@ const StaffManager = () => {
           staffData.classAllocations ||
           (staffData.classTeachers && staffData.classTeachers.length > 0
             ? staffData.classTeachers.map((classTeacher) => {
-                return {
-                  session_term_id: classTeacher.session_term_id || '',
-                  programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: classTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: classTeacher.class_arm_id || '',
-                };
-              })
+              return {
+                session_term_id: classTeacher.session_term_id || '',
+                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: classTeacher.class_arm_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+              },
+            ]);
 
         // Transform subject teachers to subjectAllocations array
         const subjectAllocations =
           staffData.subjectAllocations ||
           (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
             ? staffData.subjectTeachers.map((subjectTeacher) => {
-                return {
-                  session_term_id: subjectTeacher.session_term_id || '',
-                  programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
-                  class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
-                  class_arm_id: subjectTeacher.class_arm_id || '',
-                  curriculum_id: subjectTeacher.subject?.curriculum_id || '',
-                  subject_id: subjectTeacher.subject_id || '',
-                };
-              })
+              return {
+                session_term_id: subjectTeacher.session_term_id || '',
+                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                class_arm_id: subjectTeacher.class_arm_id || '',
+                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                subject_id: subjectTeacher.subject_id || '',
+              };
+            })
             : [
-                {
-                  session_term_id: '',
-                  programme_id: '',
-                  class_id: '',
-                  class_arm_id: '',
-                  curriculum_id: '',
-                  subject_id: '',
-                },
-              ]);
+              {
+                session_term_id: '',
+                programme_id: '',
+                class_id: '',
+                class_arm_id: '',
+                curriculum_id: '',
+                subject_id: '',
+              },
+            ]);
 
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
@@ -358,6 +399,11 @@ const StaffManager = () => {
 
   const handleViewStaff = () => {
     setViewModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleUpdateStatusClick = () => {
+    setStatusModalOpen(true);
     handleMenuClose();
   };
 
@@ -413,6 +459,7 @@ const StaffManager = () => {
         notify.success('Staff added successfully');
         setAddModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to add staff');
@@ -468,6 +515,7 @@ const StaffManager = () => {
         notify.success('Staff updated successfully');
         setEditModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to update staff');
@@ -483,6 +531,7 @@ const StaffManager = () => {
         notify.success('Staff deleted successfully');
         setDeleteModalOpen(false);
         fetchStaff();
+        fetchStats();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to delete staff');
@@ -502,16 +551,21 @@ const StaffManager = () => {
     switch (status?.toLowerCase()) {
       case 'active':
         return 'success';
-      case 'inactive':
-        return 'error';
       case 'leave':
         return 'warning';
+      case 'inactive':
+      case 'suspended':
+        return 'error';
+      case 'retired':
+      case 'transferred':
+        return 'info';
+      case 'dead':
       default:
         return 'default';
     }
   };
 
-  const statCards = [
+  const staffStatCards = [
     {
       title: 'Total Staff',
       value: stats.total,
@@ -538,12 +592,67 @@ const StaffManager = () => {
     },
   ];
 
+  const classAllocationStatCards = [
+    {
+      title: 'Total Class Arms',
+      value: allocationStats?.total_class_arms ?? 0,
+      icon: IconSchool,
+    },
+    {
+      title: 'Arms With Class Teacher',
+      value: `${allocationStats?.class_arms_with_teacher ?? 0}/${allocationStats?.total_class_arms ?? 0}`,
+      icon: IconUserCheck,
+    },
+    {
+      title: 'Still Need a Teacher',
+      value: allocationStats?.class_arms_without_teacher ?? 0,
+      icon: IconUserX,
+    },
+    {
+      title: 'Class Teachers Assigned',
+      value: allocationStats?.total_class_teachers ?? 0,
+      icon: IconUsers,
+    },
+  ];
+
+  const subjectAllocationStatCards = [
+    {
+      title: 'Total Subject Slots',
+      value: allocationStats?.total_class_subject_pairs ?? 0,
+      icon: IconBook,
+    },
+    {
+      title: 'Slots With a Teacher',
+      value: `${allocationStats?.class_subject_pairs_with_teacher ?? 0}/${allocationStats?.total_class_subject_pairs ?? 0}`,
+      icon: IconUserCheck,
+    },
+    {
+      title: 'Still Need a Teacher',
+      value: allocationStats?.class_subject_pairs_without_teacher ?? 0,
+      icon: IconUserX,
+    },
+    {
+      title: 'Subject Teachers Assigned',
+      value: allocationStats?.total_subject_teachers ?? 0,
+      icon: IconUsers,
+    },
+  ];
+
+  const statCards =
+    activeTab === 'allocations'
+      ? allocationSubTab === 'class-teacher'
+        ? classAllocationStatCards
+        : subjectAllocationStatCards
+      : staffStatCards;
+
+  const statCardsLoading = activeTab === 'allocations' ? allocationStatsLoading : loading;
+
   return (
     <PageContainer title="Staff Manager" description="Manage Teaching & Non Teaching Staff">
       <Breadcrumb title="Staff Manager" items={BCrumb} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 1 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard
@@ -551,27 +660,25 @@ const StaffManager = () => {
               label={stat.title}
               icon={stat.icon}
               colorIndex={i}
-              loading={loading}
+              loading={statCardsLoading}
             />
           </Grid>
         ))}
       </Grid>
 
       {/* Main Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => {
             setActiveTab(newValue);
             setPage(0);
-            if (newValue === 'teaching') {
-              setActiveSubTab('profiling');
-            }
           }}
           sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
         >
           <Tab label="Teaching Staff" value="teaching" />
           <Tab label="Non-Teaching Staff" value="non-teaching" />
+          <Tab label="Class & Subject Allocations" value="allocations" />
         </Tabs>
       </Box>
 
@@ -585,7 +692,7 @@ const StaffManager = () => {
               ? '1px solid rgba(255, 255, 255, 0.08)'
               : '1px solid #eee',
           overflow: 'hidden',
-          p: 2,
+          p: 1.5,
         }}
       >
         {/* Content Area */}
@@ -594,10 +701,6 @@ const StaffManager = () => {
             <TeachingStaffTab
               loading={loading}
               staff={staff}
-              activeSubTab={activeSubTab}
-              setActiveSubTab={setActiveSubTab}
-              allocationSubTab={allocationSubTab}
-              setAllocationSubTab={setAllocationSubTab}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               statusFilter={statusFilter}
@@ -635,6 +738,47 @@ const StaffManager = () => {
               getStatusColor={getStatusColor}
             />
           )}
+
+          {activeTab === 'allocations' && (
+            <Box>
+              <Box
+                sx={{
+                  mb: 3,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 2,
+                }}
+              >
+                <Tabs
+                  value={allocationSubTab}
+                  onChange={(e, newValue) => setAllocationSubTab(newValue)}
+                  sx={{
+                    '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
+                  }}
+                >
+                  <Tab label="Class Allocations" value="class-teacher" />
+                  <Tab label="Subject Allocations" value="subject-teacher" />
+                </Tabs>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<MigrateIcon />}
+                  onClick={() => setMigrateModalOpen(true)}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Migrate from Previous Term
+                </Button>
+              </Box>
+              {allocationSubTab === 'class-teacher' && (
+                <ClassTeacherAllocation key={`class-${allocationsRefreshKey}`} />
+              )}
+              {allocationSubTab === 'subject-teacher' && (
+                <SubjectTeacherAllocation key={`subject-${allocationsRefreshKey}`} />
+              )}
+            </Box>
+          )}
         </Box>
       </Card>
 
@@ -657,6 +801,10 @@ const StaffManager = () => {
         <MenuItem onClick={handleEditStaff}>
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
+        </MenuItem>
+        <MenuItem onClick={handleUpdateStatusClick}>
+          <IconHistory size={18} style={{ marginRight: 8 }} />
+          Update Status
         </MenuItem>
         <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
           <IconTrash size={18} style={{ marginRight: 8 }} />
@@ -681,6 +829,28 @@ const StaffManager = () => {
           Upload Filled Template
         </MenuItem>
       </Menu>
+
+      {/* Term Migration Modal for Class/Subject Allocations */}
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title={
+          allocationSubTab === 'class-teacher'
+            ? 'Migrate Class Teacher Allocations'
+            : 'Migrate Subject Teacher Allocations'
+        }
+        description={
+          allocationSubTab === 'class-teacher'
+            ? "Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
+            : "Carries every active subject-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
+        }
+        migrateFn={
+          allocationSubTab === 'class-teacher'
+            ? migrateClassTeacherAllocations
+            : migrateSubjectTeacherAllocations
+        }
+        onSuccess={() => setAllocationsRefreshKey((k) => k + 1)}
+      />
 
       {/* Add Staff Modal - Teaching */}
       {activeTab === 'teaching' && (
@@ -742,7 +912,7 @@ const StaffManager = () => {
                     Staff ID
                   </Typography>
                   <Typography variant="body1" fontWeight={600}>
-                    {selectedStaff.staff_id || 'N/A'}
+                    {selectedStaff.user?.user_id || 'N/A'}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
@@ -751,8 +921,8 @@ const StaffManager = () => {
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>
                     <Chip
-                      label={selectedStaff.status || 'Active'}
-                      color={getStatusColor(selectedStaff.status)}
+                      label={selectedStaff.staff_status || 'Active'}
+                      color={getStatusColor(selectedStaff.staff_status)}
                       size="small"
                     />
                   </Box>
@@ -867,6 +1037,17 @@ const StaffManager = () => {
         onClose={() => setUploadModalOpen(false)}
         onUpload={handleUploadTemplate}
         onDownloadTemplate={handleDownloadTemplate}
+      />
+
+      <StaffStatusModal
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        staff={selectedStaff}
+        getStatusColor={getStatusColor}
+        onStatusChanged={() => {
+          fetchStaff();
+          fetchStats();
+        }}
       />
 
       {/* Delete Confirmation */}

@@ -7,7 +7,7 @@ import {
   Button,
   TextField,
   Box,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 
 const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditing, loading }) => {
@@ -46,7 +46,7 @@ const NewRoleModal = ({ open, onClose, formData, onFieldChange, onSave, isEditin
         </Button>
         <Button size="small" onClick={onSave} color="primary" disabled={loading}>
           {loading ? (
-            <CircularProgress size={24} color="inherit" />
+            <Skeleton variant="text" width={80} height={20} />
           ) : isEditing ? (
             'Save Changes'
           ) : (

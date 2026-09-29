@@ -66,7 +66,7 @@ const NonTeachingStaffForm = ({
           // without_pagination: true,
         });
 
-        setRoles(res.data.data || []);
+        setRoles(res.data.data ?? []);
       } catch (error) {
         console.error('Failed to fetch roles:', error);
       }

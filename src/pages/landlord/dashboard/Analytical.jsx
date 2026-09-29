@@ -20,6 +20,7 @@ import {
   Button,
   TextField,
   InputAdornment,
+  Skeleton,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Chart from 'react-apexcharts';
@@ -27,7 +28,7 @@ import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import agentApi from '@/api/landlord/organizations/agent';
 import activityLogApi from '@/api/landlord/activity-log/activityLogApi';
-import { getStatCardColor } from '@/utils/statCardColors';
+// import { getStatCardColor } from '@/utils/statCardColors';
 import {
   flexRender,
   getCoreRowModel,
@@ -52,35 +53,16 @@ import TotalSubAgentModal from '@/pages/landlord/views/agent/components/TotalSub
 
 const columnHelper = createColumnHelper();
 
+const PLAN_DISTRIBUTION_COLORS = ['#2196f3', '#9c27b0', '#ff4081', '#4caf50', '#ff9800'];
+
+function formatNaira(value) {
+  return `₦${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 export default function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const isDark = theme.palette.mode === 'dark';
-
-  // Revenue Trend Mock Data
-  const revenueSeries = [
-    { name: 'Revenue', data: [3.0, 0.5, 0.2, 4.5, 4.0, 2.7, 6.0, 2.3, 0.5, 4.5, 4.0, 5.5] },
-  ];
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-
-  // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39, 25];
-  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
-
-
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
@@ -130,43 +112,53 @@ export default function Dashboard() {
   // Table filter states
   const [searchName, setSearchName] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
-  const [filterGateway, setFilterGateway] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [tableLoading, setTableLoading] = useState(false);
 
   const [data, setData] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await agentApi.getAll();
-        const paginator = response.status === true ? response.data : response;
-        const agentsArray = paginator.data || [];
+  const fetchTopAgents = async (filters = {}) => {
+    setTableLoading(true);
+    try {
+      const response = await agentApi.getAll(filters);
+      const paginator = response.status === true ? response.data : response;
+      const agentsArray = paginator.data || [];
 
-        if (agentsArray.length > 0) {
-          const mappedData = agentsArray.slice(0, 10).map((agent) => ({
-            s_n: agent.id,
-            agentDetails: agent.organization_name || agent.name,
-            organizationName: agent.organization_name || agent.org_name,
-            imgsrc: agent.organization_logo || agent.image,
-            tenants_count: agent.tenants_count || 0,
-            sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
-            access_level: agent.access_level,
-            phoneNumber: agent.organization_phone || agent.phone,
-            contactDetails: agent.organization_email || agent.email,
-            primaryColor: agent.primary_color || '#4a3aff',
-            status: agent.status
-              ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
-              : 'Inactive',
-            tenants: agent.tenants || [],
-          }));
-          setData(mappedData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch top performing agents', error);
-      }
-    };
-    fetchData();
+      const mappedData = agentsArray.slice(0, 10).map((agent) => ({
+        s_n: agent.id,
+        agentDetails: agent.organization_name || agent.name,
+        organizationName: agent.organization_name || agent.org_name,
+        imgsrc: agent.organization_logo || agent.image,
+        tenants_count: agent.tenants_count || 0,
+        sub_agents_count: agent.sub_organizations_count || agent.children_count || 0,
+        access_level: agent.access_level,
+        phoneNumber: agent.organization_phone || agent.phone,
+        contactDetails: agent.organization_email || agent.email,
+        primaryColor: agent.primary_color || '#4a3aff',
+        status: agent.status
+          ? agent.status.charAt(0).toUpperCase() + agent.status.slice(1)
+          : 'Inactive',
+        tenants: agent.tenants || [],
+      }));
+      setData(mappedData);
+    } catch (error) {
+      console.error('Failed to fetch top performing agents', error);
+    } finally {
+      setTableLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTopAgents();
   }, []);
+
+  const handleFilterClick = () => {
+    fetchTopAgents({
+      search: searchName || undefined,
+      access_level: filterLevel || undefined,
+      status: filterStatus || undefined,
+    });
+  };
 
   const columns = useMemo(
     () => [
@@ -180,7 +172,7 @@ export default function Dashboard() {
         ),
       }),
       columnHelper.accessor('agentDetails', {
-        header: () => 'Organization Details',
+        header: () => 'Agent Details',
         cell: (info) => {
           const agent = info.row.original;
           const initials = (agent.organizationName || 'NA')
@@ -228,25 +220,14 @@ export default function Dashboard() {
           );
         },
       }),
-      columnHelper.display({
-        id: 'gateway',
-        header: () => 'Gateway',
-        cell: () => (
-          <Typography variant="subtitle2" fontWeight="500" color="textSecondary">
-            -
-          </Typography>
-        ),
-      }),
       columnHelper.accessor('sub_agents_count', {
-        header: () => 'Sub Org.',
+        header: () => 'Sub Agents',
         cell: (info) => (
           <Box
             sx={{
               bgcolor: '#ede9fe',
               color: '#6d28d9',
               borderRadius: '20px',
-              px: 2,
-              py: 0.4,
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -340,26 +321,25 @@ export default function Dashboard() {
 
   return (
     <PageContainer title="Analytical Dashboard" description="this is Dashboard">
-      <Box mt={3}>
-        {/* Row 1: Stat Cards — new design */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total School"
-              value={analyticsLoading ? '...' : String(analytics?.totalSchools ?? 0)}
+              value={String(analytics?.totalSchools ?? 0)}
               colorIndex={0}
+              loading={analyticsLoading}
               subStats={[
                 {
                   label: 'Approved',
-                  value: analyticsLoading ? '...' : String(analytics?.activeSchools ?? 0),
+                  value: String(analytics?.activeSchools ?? 0),
                 },
                 {
                   label: 'Pending',
-                  value: analyticsLoading ? '...' : String(analytics?.pendingSchools ?? 0),
+                  value: String(analytics?.pendingSchools ?? 0),
                 },
                 {
                   label: 'Rejected',
-                  value: analyticsLoading ? '...' : String(analytics?.rejectedSchools ?? 0),
+                  value: String(analytics?.rejectedSchools ?? 0),
                 },
               ]}
               onIconClick={() => setIsSchoolModalOpen(true)}
@@ -370,11 +350,18 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
               title="Total Transaction Value"
-              value="₦7,000,234.00"
+              value={formatNaira(analytics?.transactionVolume)}
               colorIndex={1}
+              loading={analyticsLoading}
               subStats={[
-                { label: 'Commission', value: '₦100,000,000' },
-                { label: 'Volume', value: '304,043,000' },
+                {
+                  label: 'Collected',
+                  value: formatNaira(analytics?.transactionVolume),
+                },
+                {
+                  label: 'Pending',
+                  value: formatNaira(analytics?.transactionPending),
+                },
               ]}
               onIconClick={() => setIsTransactionModalOpen(true)}
               onClick={() => setIsTransactionModalOpen(true)}
@@ -383,25 +370,26 @@ export default function Dashboard() {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <DashboardStatCard
-              title="Total Organization"
-              value={analyticsLoading ? '...' : String(analytics?.totalSubAgents ?? 0)}
+              title="Total Agents"
+              value={String(analytics?.totalSubAgents ?? 0)}
               colorIndex={2}
+              loading={analyticsLoading}
               subStats={[
                 {
                   label: 'Lv2',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv2 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv2 ?? 0),
                 },
                 {
                   label: 'Lv3',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv3 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv3 ?? 0),
                 },
                 {
                   label: 'Lv4',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv4 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv4 ?? 0),
                 },
                 {
                   label: 'Lv5',
-                  value: analyticsLoading ? '...' : String(analytics?.subAgentLevels?.lv5 ?? 0),
+                  value: String(analytics?.subAgentLevels?.lv5 ?? 0),
                 },
               ]}
               onIconClick={() => setIsSubAgentModalOpen(true)}
@@ -410,24 +398,32 @@ export default function Dashboard() {
           </Grid>
         </Grid>
 
-        {/* Row 2: Charts and Login Activities */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        {/* Row 2: Charts and Login Activities — cards stay equal height
+            (default stretch) so the row reads as one aligned unit; each
+            card centers its own shorter content vertically instead, rather
+            than leaving a blank gap anchored to the bottom. */}
+        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 5 }}>
             <Card
               sx={{
                 p: 0,
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 3, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 3, isDark, theme).cardBg,
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box
                 sx={{
-                  p: 2,
+                  p: 1,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
@@ -439,60 +435,12 @@ export default function Dashboard() {
                   fontWeight="600"
                   sx={{ color: 'text.secondary' }}
                 >
-                  Transaction
+                  Transaction — Collected vs Pending
                 </Typography>
-                <Stack direction="row" spacing={1}>
-                  <Select
-                    size="small"
-                    value="year"
-                    sx={{
-                      minWidth: 100,
-                      height: '35px',
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                      borderRadius: '8px',
-                      color: isDark ? '#fff' : 'inherit',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-                      },
-                      '& .MuiSelect-icon': {
-                        color: isDark ? '#fff' : 'inherit',
-                      },
-                    }}
-                  >
-                    <MenuItem value="year">Year</MenuItem>
-                  </Select>
-
-                  <Select
-                    size="small"
-                    value="gateway"
-                    sx={{
-                      minWidth: 100,
-                      height: '35px',
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
-                      borderRadius: '8px',
-                      color: isDark ? '#fff' : 'inherit',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.23)',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.4)',
-                      },
-                      '& .MuiSelect-icon': {
-                        color: isDark ? '#fff' : 'inherit',
-                      },
-                    }}
-                  >
-                    <MenuItem value="gateway">Gateway</MenuItem>
-                  </Select>
-                </Stack>
               </Box>
               <Box
                 sx={{
                   background: 'transparent',
-                  p: 2,
                   '& .apexcharts-canvas': {
                     background: 'transparent !important',
                   },
@@ -511,12 +459,12 @@ export default function Dashboard() {
                       zoom: { enabled: false },
                       background: 'transparent',
                     },
-                    colors: [getStatCardColor(null, 3, isDark, theme).accentColor],
+                    colors: ['#16a34a', '#e11d48'],
                     plotOptions: {
                       bar: {
                         borderRadius: 4,
-                        columnWidth: '45%',
-                        distributed: false,
+                        columnWidth: '35%',
+                        distributed: true,
                       },
                     },
                     dataLabels: { enabled: false },
@@ -528,24 +476,26 @@ export default function Dashboard() {
                       yaxis: { lines: { show: true } }
                     },
                     xaxis: {
-                      categories: months,
+                      categories: ['Collected', 'Pending'],
                       axisBorder: { show: false },
-                      title: {
-                        text: 'Month',
-                        style: { color: '#adb0bb', fontWeight: 400 }
-                      }
                     },
                     yaxis: {
                       labels: {
                         show: true,
-                        formatter: (val) => `N${val.toFixed(1)}M`,
+                        formatter: (val) => formatNaira(val),
                       },
                     },
                     tooltip: {
                       theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+                      y: { formatter: (val) => formatNaira(val) },
                     },
                   }}
-                  series={revenueSeries}
+                  series={[
+                    {
+                      name: 'Amount',
+                      data: [analytics?.transactionVolume ?? 0, analytics?.transactionPending ?? 0],
+                    },
+                  ]}
                   type="bar"
                   height={250}
                   width="100%"
@@ -559,68 +509,79 @@ export default function Dashboard() {
               sx={{
                 p: 0,
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 4, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 4, isDark, theme).cardBg,
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                 position: 'relative',
                 overflow: 'hidden',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              <Box sx={{ p: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 5 }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="600"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    Login Activities (30 days)
-                  </Typography>
+              <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="600"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      Login Activities (30 days)
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                    >
+                      Staff, learner, and agent sign-ins across all your schools.
+                    </Typography>
+                  </Box>
                   <Box
                     onClick={() => setIsLoggedInUsersModalOpen(true)}
                     sx={{
-                      background: getStatCardColor(null, 4, isDark, theme).iconBg,
-                      p: 0.5,
-                      borderRadius: '4px',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F3E8FF',
+                      color: isDark ? '#ffffff' : '#9333EA',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      boxShadow: isDark
-                        ? '0 6px 16px rgba(0,0,0,.3)'
-                        : `0 8px 22px -2px ${getStatCardColor(null, 4, isDark, theme).iconGlow}`,
-                      '&:hover': { opacity: 0.8 }
+                      '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={20} color={getStatCardColor(null, 4, isDark, theme).iconColor} />
+                    <IconChartBar size={18} color="currentColor" />
                   </Box>
                 </Box>
 
-                <Stack spacing={2.5} sx={{ px: 2, flex: 1 }}>
-                  {(loginActivitiesLoading
-                    ? [{ label: 'Loading...', value: '...' }]
-                    : loginActivities
-                  )?.map((activity, index) => (
+                <Stack spacing={1} justifyContent="center" sx={{ flex: 1 }}>
+                  {loginActivitiesLoading
+                    ? [...Array(3)].map((_, i) => (
+                        <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
+                          <Skeleton variant="text" width={120} height={24} />
+                          <Skeleton variant="text" width={60} height={24} />
+                        </Stack>
+                      ))
+                    : loginActivities?.map((activity, index) => (
                     <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
                       <Typography
-                        variant="h5"
-                        fontWeight="500"
-                        sx={{
-                          color: isDark ? '#fff' : '#1a1a1a',
-                          fontSize: '18px'
-                        }}
+                        variant="subtitle2"
+                        fontWeight="700"
+                        sx={{ color: 'text.secondary', fontSize: '12px' }}
                       >
                         {activity.label}:
                       </Typography>
                       <Typography
-                        variant="h5"
-                        fontWeight="600"
-                        sx={{
-                          color: getStatCardColor(null, 4, isDark, theme).accentColor,
-                          fontSize: '20px'
-                        }}
+                        variant="subtitle2"
+                        fontWeight="700"
+                        sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}
                       >
                         {activity.value}
                       </Typography>
@@ -634,15 +595,22 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, lg: 4 }}>
             <Card
               sx={{
-                p: '24px !important',
+                p: '10px !important',
                 height: '100%',
-                borderRadius: '12px',
-                boxShadow: isDark
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
-                border: `1px solid ${getStatCardColor(null, 5, isDark, theme).borderColor}`,
-                background: getStatCardColor(null, 5, isDark, theme).cardBg,
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                 position: 'relative',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
               <Box
@@ -650,37 +618,54 @@ export default function Dashboard() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  mb: 5,
+                  mb: 2,
+                  flexShrink: 0,
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  fontWeight="600"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  Plan Distribution
-                </Typography>
+                <Box>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="600"
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    Plan Distribution
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                  >
+                    Breakdown of active subscriptions by plan type across all schools.
+                  </Typography>
+                </Box>
                 <Box
                   onClick={() => setIsPlanModalOpen(true)}
                   sx={{
-                    background: getStatCardColor(null, 5, isDark, theme).iconBg,
-                    p: 0.5,
-                    borderRadius: '4px',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#FEF3C7',
+                    color: isDark ? '#ffffff' : '#D97706',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    boxShadow: isDark
-                      ? '0 6px 16px rgba(0,0,0,.3)'
-                      : `0 8px 22px -2px ${getStatCardColor(null, 5, isDark, theme).iconGlow}`,
-                    '&:hover': { opacity: 0.8 },
+                    '&:hover': { opacity: 0.85 },
                   }}
                 >
-                  <IconChartBar size={20} color={getStatCardColor(null, 5, isDark, theme).iconColor} />
+                  <IconChartBar size={18} color="currentColor" />
                 </Box>
               </Box>
+              {/* flex:1 + centered — so on a row where the Transaction chart
+                  card ends up taller, the donut centers in the leftover
+                  space instead of sitting flush at the top with a gap
+                  below it. */}
               <Box
                 sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   '& .apexcharts-canvas': {
                     background: 'transparent !important',
                   },
@@ -689,79 +674,89 @@ export default function Dashboard() {
                   },
                 }}
               >
-                <Chart
-                  options={{
-                    chart: {
-                      type: 'donut',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
-                      foreColor: theme.palette.text.secondary,
-                      toolbar: { show: false },
-                      background: 'transparent',
-                    },
-                    labels: planLabels,
-                    colors: [
-                      getStatCardColor(null, 5, isDark, theme).accentColor,
-                      '#2196f3',
-                      '#ff4081',
-                      '#9c27b0'
-                    ],
-                    plotOptions: {
-                      pie: {
-                        donut: {
-                          size: '50%',
-                          background: 'transparent',
+                {analyticsLoading ? (
+                  <Skeleton variant="circular" width={160} height={160} sx={{ mx: 'auto' }} />
+                ) : (analytics?.planDistribution ?? []).length === 0 ? (
+                  <Box sx={{ py: 4, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No active plan assignments yet.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Chart
+                    // Remounts once the real labels/series arrive instead of
+                    // reusing the initial empty-array mount — ApexCharts
+                    // donut charts don't reliably pick up a change in the
+                    // number of series/labels on an existing instance.
+                    key={analytics.planDistribution.map((p) => p.label).join('|')}
+                    options={{
+                      chart: {
+                        type: 'donut',
+                        fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                        foreColor: theme.palette.text.secondary,
+                        toolbar: { show: false },
+                        background: 'transparent',
+                      },
+                      labels: analytics.planDistribution.map((p) => p.label),
+                      colors: PLAN_DISTRIBUTION_COLORS,
+                      plotOptions: {
+                        pie: {
+                          donut: {
+                            size: '50%',
+                            background: 'transparent',
+                          },
                         },
                       },
-                    },
-                    dataLabels: {
-                      enabled: true,
-                      formatter: function (val) {
-                        return val.toFixed(0) + '%';
+                      dataLabels: {
+                        enabled: true,
+                        formatter: function (val) {
+                          return val.toFixed(0) + '%';
+                        },
+                        style: {
+                          fontSize: '10px',
+                          fontWeight: '600',
+                          colors: ['#ffffff'],
+                        },
+                        dropShadow: { enabled: false },
                       },
-                      style: {
-                        fontSize: '10px',
+                      stroke: { show: false },
+                      legend: {
+                        show: true,
+                        position: 'right',
+                        horizontalAlign: 'center',
+                        floating: false,
+                        fontSize: '12px',
                         fontWeight: '600',
-                        colors: ['#ffffff'],
+                        labels: { colors: theme.palette.text.secondary },
+                        itemMargin: { horizontal: 5, vertical: 5 },
                       },
-                      dropShadow: { enabled: false },
-                    },
-                    stroke: { show: false },
-                    legend: {
-                      show: true,
-                      position: 'right',
-                      horizontalAlign: 'center',
-                      floating: false,
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      labels: { colors: theme.palette.text.secondary },
-                      itemMargin: { horizontal: 5, vertical: 5 },
-                    },
-                    tooltip: {
-                      theme: theme.palette.mode,
-                      fillSeriesColor: false,
-                    },
-                  }}
-                  series={planSeries}
-                  type="donut"
-                  height={200}
-                  width="100%"
-                />
+                      tooltip: {
+                        theme: theme.palette.mode,
+                        fillSeriesColor: false,
+                      },
+                    }}
+                    series={analytics.planDistribution.map((p) => p.total)}
+                    type="donut"
+                    height={200}
+                    width="100%"
+                  />
+                )}
               </Box>
             </Card>
           </Grid>
         </Grid>
 
         {/* Row 3: Top Agents Table */}
-        <Grid container spacing={3}>
+        <Grid container spacing={1.5}>
           <Grid size={12}>
             <ParentCard
               title={
                 <Stack
                   direction="row"
-                  spacing={1}
+                  // spacing={1}
                   alignItems="center"
                   justifyContent="space-between"
-                  sx={{ width: '100%' }}
+                  sx={{ width: '100%',py:"0px",px:"0px" }}
                 >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Box
@@ -780,7 +775,7 @@ export default function Dashboard() {
                     </Box>
                     <Typography variant="h5">Agent Performance</Typography>
                   </Stack>
-                  <Button variant="contained" size="small" onClick={() => navigate('/agent/organization')}
+                  <Button variant="contained" size="small" onClick={() => navigate('/organization')}
                     sx={{
                       borderRadius: '8px',
                       textTransform: 'none',
@@ -798,18 +793,17 @@ export default function Dashboard() {
                   </Button>
                 </Stack>
               }
+              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
             >
-              <Box
+              {/* <Box
                 sx={{
-                  mt: 2,
-                  p: 1,
                   borderRadius: '8px',
                   bgcolor: isDark ? theme.palette.background.default : '#f8fafc',
                 }}
               >
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
-                  spacing={2}
+                  spacing={1}
                   alignItems={{ xs: 'stretch', sm: 'center' }}
                   flexWrap="wrap"
                 >
@@ -842,12 +836,56 @@ export default function Dashboard() {
                   <Select
                     size="small"
                     displayEmpty
-                    value={filterGateway}
-                    onChange={(e) => setFilterGateway(e.target.value)}
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    sx={{ minWidth: 120 }}
+                  >
+                    <MenuItem value="">Status</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
+                  </Select>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleFilterClick}
+                    disabled={tableLoading}
+                    sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
+                  >
+                    Filter
+                  </Button>
+                </Stack>
+              </Box> */}
+               <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1}
+                  alignItems={{ xs: 'stretch', sm: 'center' }}
+                  flexWrap="wrap"
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Search by Name"
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconSearch size={16} color="#888" />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{ minWidth: 200, flex: 1 }}
+                  />
+                  <Select
+                    size="small"
+                    displayEmpty
+                    value={filterLevel}
+                    onChange={(e) => setFilterLevel(e.target.value)}
                     sx={{ minWidth: 140 }}
                   >
-                    <MenuItem value="">Gateway</MenuItem>
-                    <MenuItem value="skoolpay">Skoolpay</MenuItem>
+                    <MenuItem value="">Agent Levels</MenuItem>
+                    <MenuItem value="1">Level 1</MenuItem>
+                    <MenuItem value="2">Level 2</MenuItem>
+                    <MenuItem value="3">Level 3</MenuItem>
                   </Select>
                   <Select
                     size="small"
@@ -857,22 +895,29 @@ export default function Dashboard() {
                     sx={{ minWidth: 120 }}
                   >
                     <MenuItem value="">Status</MenuItem>
-                    <MenuItem value="Active">Active</MenuItem>
-                    <MenuItem value="Inactive">Inactive</MenuItem>
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="inactive">Inactive</MenuItem>
                   </Select>
-                  <Button variant="contained" size="small" sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none', }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleFilterClick}
+                    disabled={tableLoading}
+                    sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
+                  >
                     Filter
                   </Button>
                 </Stack>
-              </Box>
-              <TableContainer component={Paper} elevation={0}>
-                <Table>
+              <Box sx={{ overflowX: 'auto' }}>
+                <Table stickyHeader size="small" sx={{ minWidth: 700, mt: 1 }}>
                   <TableHead>
                     {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
+                      <TableRow sx={{ bgcolor: '#f8f9fa' }} key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
-                          <TableCell key={header.id}>
-                            <Typography variant="h6">
+                          <TableCell key={header.id} sx={{ py: 0.5, px: 1.5 }}>
+                            <Typography
+                              sx={{ fontSize: '11.5px', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.4 }}
+                            >
                               {header.isPlaceholder
                                 ? null
                                 : flexRender(header.column.columnDef.header, header.getContext())}
@@ -883,25 +928,47 @@ export default function Dashboard() {
                     ))}
                   </TableHead>
                   <TableBody>
-                    {table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id} hover>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
+                    {tableLoading ? (
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(6)].map((_, j) => (
+                            <TableCell key={j} sx={{ py: 0.5, px: 1.5 }}>
+                              <Skeleton variant="text" width={j === 0 ? 40 : 100} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : table.getRowModel().rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                          No agents found
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow key={row.id} hover>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} sx={{ py: 0.5, px: 1.5 }}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </Box>
             </ParentCard>
           </Grid>
         </Grid>
-      </Box>
 
       {/* Agent Modals */}
-      <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+      <PlanDistributionModal
+        open={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        planDistribution={analytics?.planDistribution ?? []}
+        totalOrganizations={analytics?.totalOrganizations ?? 0}
+      />
       <LoggedInUsersModal
         open={isLoggedInUsersModalOpen}
         onClose={() => setIsLoggedInUsersModalOpen(false)}
@@ -927,6 +994,8 @@ export default function Dashboard() {
       <TotalTransactionModal
         open={isTransactionModalOpen}
         onClose={() => setIsTransactionModalOpen(false)}
+        transactionVolume={analytics?.transactionVolume ?? 0}
+        transactionPending={analytics?.transactionPending ?? 0}
       />
       <TotalSubAgentModal
         open={isSubAgentModalOpen}

@@ -2,13 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
-import {
-  Box,
-  Tabs,
-  Tab,
-  CardContent,
-  Divider,
-} from '@mui/material';
+import { Box, Tabs, Tab, Divider } from '@mui/material';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
 
@@ -233,12 +227,21 @@ const AttendancePsychomotor = () => {
       id: 'mark-attendance',
       label: `${counter}. Mark Attendance`,
       component: (
-        <MarkAttendanceTab
+        <MarkAttendanceTab metrics={attendanceMetrics} onFilter={handleAttendanceFilter} />
+      ),
+      analytics: (
+        <AttendanceAnalyticsCards
           metrics={attendanceMetrics}
-          onFilter={handleAttendanceFilter}
+          schoolDaysMetrics={schoolDaysMetrics}
+          loading={loading}
+          classArmId={selectedClassArmId}
+          sessionId={selectedSessionId}
+          termId={selectedTermId}
+          weekId={selectedWeekId}
+          programmeId={selectedProgrammeId}
+          classId={selectedClassId}
         />
       ),
-      analytics: <AttendanceAnalyticsCards metrics={attendanceMetrics} schoolDaysMetrics={schoolDaysMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} programmeId={selectedProgrammeId} classId={selectedClassId} />,
     });
     counter++;
 
@@ -246,16 +249,38 @@ const AttendancePsychomotor = () => {
       id: 'mark-psychomotor',
       label: `${counter}. Mark Psychomotor`,
       component: (
-        <MarkPsychomotorTab
+        <MarkPsychomotorTab metrics={psychomotorMetrics} onFilter={handlePsychomotorFilter} />
+      ),
+      analytics: (
+        <PsychomotorAnalyticsCards
           metrics={psychomotorMetrics}
-          onFilter={handlePsychomotorFilter}
+          loading={loading}
+          classArmId={selectedClassArmId}
+          sessionId={selectedSessionId}
+          termId={selectedTermId}
+          weekId={selectedWeekId}
+          programmeId={selectedProgrammeId}
+          classId={selectedClassId}
         />
       ),
-      analytics: <PsychomotorAnalyticsCards metrics={psychomotorMetrics} loading={loading} classArmId={selectedClassArmId} sessionId={selectedSessionId} termId={selectedTermId} weekId={selectedWeekId} />,
     });
 
     return tabs;
-  }, [can, attendanceMetrics, psychomotorMetrics, schoolDaysMetrics, loading, handleAttendanceFilter, handlePsychomotorFilter, selectedClassArmId, selectedSessionId, selectedTermId, selectedWeekId, selectedProgrammeId, selectedClassId]);
+  }, [
+    can,
+    attendanceMetrics,
+    psychomotorMetrics,
+    schoolDaysMetrics,
+    loading,
+    handleAttendanceFilter,
+    handlePsychomotorFilter,
+    selectedClassArmId,
+    selectedSessionId,
+    selectedTermId,
+    selectedWeekId,
+    selectedProgrammeId,
+    selectedClassId,
+  ]);
 
   // ── Ensure activeTab stays within bounds ────────────────────
   useEffect(() => {
@@ -289,7 +314,10 @@ const AttendancePsychomotor = () => {
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <PageContainer title="Attendance & Psychomotor" description="Mark attendance and psychomotor assessments">
+    <PageContainer
+      title="Attendance & Psychomotor"
+      description="Mark attendance and psychomotor assessments"
+    >
       <Breadcrumb title="Attendance & Psychomotor" items={BCrumb} />
 
       {/* ── Dynamic Analytics Cards ─────────────────────────── */}
@@ -309,7 +337,6 @@ const AttendancePsychomotor = () => {
                   textTransform: 'none',
                   fontWeight: 600,
                   fontSize: '15px',
-                  py: 1.5,
                 },
               }}
             >
@@ -325,14 +352,21 @@ const AttendancePsychomotor = () => {
             <Divider />
           </Box>
         }
+        sx={{
+          '& .MuiCardHeader-root': {
+            p: 0,
+          },
+          '& .MuiCardContent-root': {
+            p: 1.5,
+            '&:last-child': { pb: 1.5 },
+          },
+        }}
       >
-        <CardContent>
-          {availableTabs.map((tab, idx) => (
-            <TabPanel key={tab.id} value={activeTab} index={idx}>
-              {tab.component}
-            </TabPanel>
-          ))}
-        </CardContent>
+        {availableTabs.map((tab, idx) => (
+          <TabPanel key={tab.id} value={activeTab} index={idx}>
+            {tab.component}
+          </TabPanel>
+        ))}
       </ParentCard>
     </PageContainer>
   );

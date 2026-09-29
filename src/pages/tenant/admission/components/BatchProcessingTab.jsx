@@ -41,14 +41,7 @@ import {
   Download as DownloadIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import {
-  IconNote,
-  IconEdit,
-  IconEye,
-  IconHistory,
-  IconCheck,
-  IconX,
-} from '@tabler/icons-react';
+import { IconNote, IconEdit, IconEye, IconHistory, IconCheck, IconX } from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
   fetchBatchClasses,
@@ -65,6 +58,7 @@ import {
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAdmissionCodeFormat } from '@/api/tenant/admission/admissionApi';
+import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import ViewAdmissionModal from './ViewAdmissionModal';
 
 const statusColors = {
@@ -97,7 +91,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
+  const [filter, setFilter] = useState({
+    appBatchId: '',
+    classId: '',
+    status: 'pending',
+    search: '',
+  });
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
@@ -169,7 +168,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const getBatchLabel = (app) => {
-    const parts = [app.sesname, app.prog_name, app.batchname].filter(Boolean);
+    const parts = [app.session_name, app.prog_name, app.batchname].filter(Boolean);
     return parts.length ? `${parts[0]} - ${parts[1]} (${parts[2]})` : '—';
   };
 
@@ -362,7 +361,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           mname: app.mname || '',
           batchname: app.batchname,
           prog_name: app.prog_name,
-          sesname: app.sesname,
+          session_name: app.session_name,
         };
         await resetAdmissionOffer(payload);
         notify.success('Admission offer reset successfully');
@@ -546,12 +545,14 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     }
 
     try {
-      const [programmesRes, codeFormatRes] = await Promise.all([
+      const [programmesRes, codeFormatRes, categoriesRes] = await Promise.all([
         fetchProgrammes(),
         fetchAdmissionCodeFormat(),
+        fetchActiveCategories(),
       ]);
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
       const hasCodeFormat = !!codeFormatRes?.data?.code_format;
+      const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
       setBatchModal({
         open: true,
@@ -559,9 +560,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         programmes,
         classes: [],
         classArms: [],
+        categories,
         selectedProgramme: '',
         selectedClass: '',
         selectedClassArm: '',
+        selectedPayCategory: '',
         rejectionReason: '',
         revokedReason: '',
         hasCodeFormat,
@@ -626,6 +629,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       selectedProgramme,
       selectedClass,
       selectedClassArm,
+      selectedPayCategory,
       rejectionReason,
       revokedReason,
       hasCodeFormat,
@@ -633,8 +637,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     } = batchModal;
 
     // Validation
-    if (action === 'admit' && (!selectedProgramme || !selectedClass || !selectedClassArm)) {
-      notify.warning('Please select programme, class, and class arm for admission');
+    if (
+      action === 'admit' &&
+      (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
+    ) {
+      notify.warning('Please select programme, class, class arm, and pay category for admission');
       return;
     }
 
@@ -661,6 +668,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         programme_id: selectedProgramme || null,
         class_id: selectedClass || null,
         class_arm_id: selectedClassArm || null,
+        bursary_payment_category_id: selectedPayCategory || null,
         rejection_reason: rejectionReason || null,
         revoked_reason: revokedReason || null,
       };
@@ -692,7 +700,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   return (
     <Box>
       {/* ── Status Tabs ──────────────────────────────────────────────── */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: -1 }}>
         <Tabs
           value={statusTab}
           onChange={handleStatusTabChange}
@@ -749,7 +757,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               <MenuItem value="">-- Select Batch --</MenuItem>
               {allBatches.map((batch) => (
                 <MenuItem key={batch.batch_id} value={String(batch.batch_id)}>
-                  {batch.sesname} - {batch.prog_name} ({batch.batchname})
+                  {batch.session_name} - {batch.prog_name} ({batch.batchname})
                 </MenuItem>
               ))}
             </Select>
@@ -812,8 +820,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               revoked applications.
             </Typography>
             <Typography variant="body2">
-              Select (<strong>check</strong>) the applicant(s) you want to include before using
-              the <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
+              Select (<strong>check</strong>) the applicant(s) you want to include before using the{' '}
+              <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
               Only the checked applicants will be included in the downloaded template.
             </Typography>
           </Stack>
@@ -1056,7 +1064,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                           onClick={() => {
                             const form_number = selectedApp?.form_number;
                             handleMenuClose();
-                            if (form_number) navigate(`/admission/print-application/${form_number}`);
+                            if (form_number)
+                              navigate(`/admission/print-application/${form_number}`);
                           }}
                         >
                           <IconEye size={18} style={{ marginRight: 12 }} />
@@ -1096,7 +1105,10 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
                         {/* Reverse Admission Offer */}
                         {selectedApp && canResetOffer(selectedApp) && (
-                          <MenuItem onClick={() => openConfirmResetOffer(selectedApp)} sx={{ color: 'error.main' }}>
+                          <MenuItem
+                            onClick={() => openConfirmResetOffer(selectedApp)}
+                            sx={{ color: 'error.main' }}
+                          >
                             <IconX size={18} style={{ marginRight: 12 }} />
                             Reverse Admission Offer
                           </MenuItem>
@@ -1107,17 +1119,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Typography variant="h6" color="text.secondary" fontWeight={500}>
-                        No record found
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
-                        {filter.appBatchId && filter.classId
-                          ? 'No applications for the selected batch and class.'
-                          : 'Select a batch and class to view applications.'}
-                      </Typography>
-                    </Stack>
+                  <TableCell colSpan={13} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      {filter.appBatchId && filter.classId
+                        ? 'No applications found for the selected batch and class.'
+                        : 'Select an admission batch to view applications.'}
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}
@@ -1203,7 +1210,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     <MenuItem value="">-- Select Class Arm --</MenuItem>
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
-                        {arm.arm_names}
+                        {arm.class_arm_names}
                         {arm.student_count !== undefined && (
                           <Typography
                             component="span"
@@ -1214,6 +1221,24 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                             ({arm.student_count})
                           </Typography>
                         )}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl fullWidth size="small">
+                  <InputLabel>Pay Category *</InputLabel>
+                  <Select
+                    value={batchModal.selectedPayCategory}
+                    label="Pay Category *"
+                    onChange={(e) =>
+                      setBatchModal((prev) => ({ ...prev, selectedPayCategory: e.target.value }))
+                    }
+                  >
+                    <MenuItem value="">-- Select Pay Category --</MenuItem>
+                    {(batchModal.categories || []).map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {cat.name}
                       </MenuItem>
                     ))}
                   </Select>

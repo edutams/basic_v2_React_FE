@@ -10,12 +10,14 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 
 // components
-import { IconArticle, IconBell, IconLock, IconUserCircle } from '@tabler/icons';
+import { IconArticle, IconBell, IconLock, IconSchool, IconUserCircle } from '@tabler/icons';
 import BlankCard from '@/components/shared/BlankCard';
 import NotificationTab from '@/components/tenant/account-setting/NotificationTab';
 import BillsTab from '@/components/tenant/account-setting/BillsTab';
 import SecurityTab from '@/components/tenant/account-setting/SecurityTab';
 import AccountTab from '@/components/tenant/account-setting/AccountTab';
+import SchoolTab from '@/components/tenant/account-setting/SchoolTab';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 const BCrumb = [
   {
@@ -52,6 +54,8 @@ function a11yProps(index) {
 
 const AccountSetting = () => {
   const [value, setValue] = React.useState(0);
+  const { can } = usePermissions();
+  const canManageSchoolProfile = can('setup.school.profile');
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -66,7 +70,7 @@ const AccountSetting = () => {
       <Grid container spacing={3}>
         <Grid size={12}>
           <BlankCard>
-            <Box sx={{ maxWidth: { xs: 320, sm: 480 } }}>
+            <Box sx={{ maxWidth: { xs: 320, sm: canManageSchoolProfile ? 600 : 480 } }}>
               <Tabs
                 value={value}
                 onChange={handleChange}
@@ -99,6 +103,14 @@ const AccountSetting = () => {
                   label="Security"
                   {...a11yProps(3)}
                 />
+                {canManageSchoolProfile && (
+                  <Tab
+                    iconPosition="start"
+                    icon={<IconSchool size="22" />}
+                    label="School"
+                    {...a11yProps(4)}
+                  />
+                )}
               </Tabs>
             </Box>
             <Divider />
@@ -115,6 +127,11 @@ const AccountSetting = () => {
               <TabPanel value={value} index={3}>
                 <SecurityTab />
               </TabPanel>
+              {canManageSchoolProfile && (
+                <TabPanel value={value} index={4}>
+                  <SchoolTab />
+                </TabPanel>
+              )}
             </CardContent>
           </BlankCard>
         </Grid>

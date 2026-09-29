@@ -1,19 +1,22 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  Stack,
-  CircularProgress,
-  Typography,
-  Alert,
-  Button,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Stack, CircularProgress, Typography, Alert, Button } from '@mui/material';
+import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
-const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+const GeneralSubjectsTab = forwardRef(function GeneralSubjectsTab(
+  { session, term, termId, programme, classLevel, classArm, onStatusChange },
+  ref,
+) {
+  const navigate = useNavigate();
   // ── Data States ───────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
   const [learners, setLearners] = useState([]);
@@ -34,8 +37,11 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
     setError('');
     try {
       const [subjRes, learnerRes] = await Promise.all([
-        subjectRegistrationApi.getGeneralSubjects(classLevel, { programme_id: programme || undefined }),
+        subjectRegistrationApi.getGeneralSubjects(classLevel, {
+          programme_id: programme || undefined,
+        }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
+          programme_id: programme || undefined,
           session_id: session || undefined,
           term_id: termId || undefined,
         }),
@@ -48,12 +54,15 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       if (learnerRes.data?.data) {
         const learnerData = learnerRes.data.data;
         const transformed = learnerData.map((l) => ({
-          id: l.student_reg_id,
+          id: l.student_registration_id,
           name: l.name,
+          admissionNo: l.admission_no,
+          avatar: l.avatar,
+          gender: l.gender,
           registered: {},
         }));
         learnerData.forEach((l) => {
-          const learner = transformed.find((t) => t.id === l.student_reg_id);
+          const learner = transformed.find((t) => t.id === l.student_registration_id);
           if (learner) {
             (l.registered_subjects || []).forEach((rs) => {
               learner.registered[rs.subject_id] = true;
@@ -64,7 +73,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
 
         // Snapshot the original registration state
         const orig = {};
-        transformed.forEach((l) => { orig[l.id] = { ...l.registered }; });
+        transformed.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
         setOriginalRegistered(orig);
         setPendingChanges({});
       }
@@ -118,11 +129,13 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes);
+      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
       setPendingChanges({});
       // Update original snapshot to match current state after save
       const orig = {};
-      learners.forEach((l) => { orig[l.id] = { ...l.registered }; });
+      learners.forEach((l) => {
+        orig[l.id] = { ...l.registered };
+      });
       setOriginalRegistered(orig);
     } catch (e) {
       console.error('Save failed:', e);
@@ -132,6 +145,16 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       setSaving(false);
     }
   };
+
+  // Lets the parent render its own "Save Selected" button up on the tabs
+  // row (same action, just also reachable without scrolling down) —
+  // pendingCount/saving are reported up for that button's label/disabled
+  // state, and the actual save is triggered back down via this ref.
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected }));
+
+  useEffect(() => {
+    onStatusChange?.({ pendingCount, saving });
+  }, [pendingCount, saving, onStatusChange]);
 
   const registerAll = (subjectId) => {
     setLearners((prev) =>
@@ -176,7 +199,9 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
   return (
     <Box>
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
       {loading ? (
@@ -184,8 +209,22 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
           <CircularProgress size={32} />
         </Box>
       ) : subjects.length === 0 ? (
-        <Alert severity="info">
-          No subjects have been created for this class. Please go to the Curriculum step to create subjects before registering learners.
+        <Alert
+          severity="info"
+          sx={{ alignItems: 'center' }}
+          action={
+            <Button
+              variant="contained"
+              color="info"
+              size="small"
+              onClick={() => navigate('/curriculum-setup')}
+            >
+              Go to Curriculum
+            </Button>
+          }
+        >
+          No subjects have been created for this class. Please go to the Curriculum step to create
+          subjects before registering learners.
         </Alert>
       ) : (
         <SubjectMatrixTable
@@ -212,6 +251,6 @@ const GeneralSubjectsTab = ({ session, term, termId, programme, classLevel, clas
       )}
     </Box>
   );
-};
+});
 
 export default GeneralSubjectsTab;

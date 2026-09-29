@@ -24,7 +24,7 @@ import {
   Tabs,
   Tab,
   TextField,
-  CircularProgress,
+  Skeleton,
   Grid,
   Stack,
   Avatar,
@@ -123,7 +123,7 @@ const roleTourSteps = [
     content: (
       <StepContent
         title="Roles Table"
-        body="Each row shows a role, description, assigned organizations/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned organizations."
+        body="Each row shows a role, description, assigned agents/members, and status. Use the action buttons or menu (⋮) to attach/view permissions or view assigned agents."
       />
     ),
   },
@@ -135,7 +135,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Permission Assignment"
-        body="Assign roles and permissions to organizations. Search for an organization, then use the columns to assign roles or direct permissions."
+        body="Assign roles and permissions to agents. Search for an agent, then use the columns to assign roles or direct permissions."
       />
     ),
   },
@@ -144,7 +144,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Search"
-        body="Search for an organization by name to quickly find the one you want to manage."
+        body="Search for an agent by name to quickly find the one you want to manage."
       />
     ),
   },
@@ -153,7 +153,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="Assign Direct Permission"
-        body="Open the ⋮ (More) menu on any row and choose 'Assign Direct Permission'. Permissions are grouped by module — tick the ones to assign directly to the organization."
+        body="Open the ⋮ (More) menu on any row and choose 'Assign Direct Permission'. Permissions are grouped by module — tick the ones to assign directly to the agent."
       />
     ),
   },
@@ -162,7 +162,7 @@ const assignTourSteps = [
     content: (
       <StepContent
         title="View Permission"
-        body="In the same ⋮ (More) menu, choose 'View Permission' to see all permissions attached to the organization. Check or uncheck permissions, then submit your changes."
+        body="In the same ⋮ (More) menu, choose 'View Permission' to see all permissions attached to the agent. Check or uncheck permissions, then submit your changes."
       />
     ),
   },
@@ -183,7 +183,7 @@ const analysisTourSteps = [
     content: (
       <StepContent
         title="Analysis Views"
-        body="Role Based shows each role with its total permissions and the organizations assigned to it. Permission Based shows each permission with the roles and organization teams that use it. Click the numbers to drill down."
+        body="Role Based shows each role with its total permissions and the agents assigned to it. Permission Based shows each permission with the roles and agent teams that use it. Click the numbers to drill down."
       />
     ),
   },
@@ -552,6 +552,7 @@ const AlcManager = () => {
                   icon={IconShield}
                   color="primary"
                   subtitle="All defined roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -562,6 +563,7 @@ const AlcManager = () => {
                   icon={IconShieldLock}
                   color="success"
                   subtitle="Platform default roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -572,6 +574,7 @@ const AlcManager = () => {
                   icon={IconShield}
                   color="warning"
                   subtitle="Custom created roles"
+                  loading={loading}
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -582,6 +585,7 @@ const AlcManager = () => {
                   icon={IconUsers}
                   color="info"
                   subtitle="Users with roles"
+                  loading={loading}
                 />
               </Grid>
             </Grid>
@@ -601,6 +605,7 @@ const AlcManager = () => {
                   <ShowTourGuideButton />
                 </Box>
               }
+               sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
             >
               <Box sx={{ mb: 3 }} data-tour="acl-role-filter">
                 <Stack
@@ -648,7 +653,6 @@ const AlcManager = () => {
                       size="small"
                       color="primary"
                       onClick={handleApplySearch}
-                      sx={{ px: 2.5, height: 40 }}
                     >
                       Search
                     </Button>
@@ -660,7 +664,6 @@ const AlcManager = () => {
                         size="small"
                         startIcon={<IconX size={16} />}
                         onClick={handleClearFilters}
-                        sx={{ height: 40, px: 2, textTransform: 'none' }}
                       >
                         Clear Filter
                       </Button>
@@ -684,7 +687,6 @@ const AlcManager = () => {
                           setNewRoleForm({ roleName: '', guardName: 'landlord', description: '' });
                           setNewRoleModalOpen(true);
                         }}
-                        sx={{ height: 40, px: 2.5, textTransform: 'none' }}
                       >
                         New Role
                       </Button>
@@ -697,7 +699,6 @@ const AlcManager = () => {
                       startIcon={<ExportIcon fontSize="small" />}
                       endIcon={<ArrowDropDownIcon />}
                       onClick={(e) => setExportAnchorEl(e.currentTarget)}
-                      sx={{ height: 40, px: 2, textTransform: 'none' }}
                     >
                       Export
                     </Button>
@@ -723,7 +724,7 @@ const AlcManager = () => {
 
               <Box data-tour="acl-role-table">
                 <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                  <Table>
+                  <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                     <TableHead>
                       <TableRow>
                         <TableCell sx={{ fontWeight: 600 }}>S/N</TableCell>
@@ -739,11 +740,24 @@ const AlcManager = () => {
 
                     <TableBody>
                       {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                            <CircularProgress size={28} />
-                          </TableCell>
-                        </TableRow>
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <TableRow key={`skel-${i}`}>
+                            <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                            <TableCell>
+                              <Stack direction="row" spacing={1.5} alignItems="center">
+                                <Skeleton variant="rounded" width={34} height={34} sx={{ borderRadius: '50%' }} />
+                                <Box>
+                                  <Skeleton variant="text" width={120} height={16} />
+                                  <Skeleton variant="text" width={80} height={12} />
+                                </Box>
+                              </Stack>
+                            </TableCell>
+                            <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="text" width={30} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="text" width={30} /></TableCell>
+                            <TableCell align="center"><Skeleton variant="rounded" width={24} height={24} sx={{ borderRadius: '8px', mx: 'auto' }} /></TableCell>
+                          </TableRow>
+                        ))
                       ) : rows.length > 0 ? (
                         rows.map((row, index) => {
                           const isSysRole = row.is_sys === 'yes' || row.is_system;
@@ -814,7 +828,7 @@ const AlcManager = () => {
                               </TableCell>
 
                               <TableCell>
-                                <Tooltip title="Click to view assigned organizations & users">
+                                <Tooltip title="Click to view assigned agents & users">
                                   <Typography
                                     variant="body2"
                                     onClick={() => handleOpenOrgsModal(row)}

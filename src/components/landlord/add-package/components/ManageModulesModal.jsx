@@ -5,7 +5,7 @@ import {
   Checkbox,
   FormControlLabel,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   TextField,
 } from '@mui/material';
@@ -103,8 +103,10 @@ const ManageModulesModal = ({ open, onClose, currentPackage, onModuleAssignment 
 
         {/* Loading */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
+          <Box sx={{ py: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
           </Box>
         ) : (
           <Box

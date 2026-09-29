@@ -26,12 +26,13 @@ import {
   IconShieldLock,
   IconCalendarClock,
   IconArchive,
+  IconTimeline,
 } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
-import api from '../../../../api/landlord/landlord_api';
+import api from '@/api/landlord/landlord_api';
 
 const iconMapper = {
-  ChartPie: IconChartPie,
+  ChartPie: IconTimeline,
   CurrencyDollar: IconCurrencyDollar,
   ShieldX: IconShieldLock,
   CalendarClock: IconCalendarClock,
@@ -116,6 +117,7 @@ const SidebarItems = () => {
             return (
               <NavCollapse
                 menu={item}
+                level={1}
                 pathDirect={pathDirect}
                 hideMenu={hideMenu}
                 pathWithoutLastPart={pathWithoutLastPart}

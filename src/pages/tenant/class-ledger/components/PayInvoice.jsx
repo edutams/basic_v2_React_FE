@@ -3,16 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import Radio from '@mui/material/Radio';
-import CreditCard from '@mui/icons-material/CreditCard';
 
 import {
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
   Box,
   Avatar,
@@ -37,10 +30,10 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { getStudentSchedule } from '@/api/tenant/bursary/classLedger';
 import {
@@ -48,6 +41,7 @@ import {
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { getParentPaymentWallets } from '@/api/tenant/admission/admissionApi';
 
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -105,59 +99,37 @@ const PayInvoice = () => {
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
+  /* Guards against a double-click firing two overlapping payment-gateway
+     widgets — the SDK popup takes a moment to open, and a second click in
+     that window would invoke it a second time, which looks like the page
+     has frozen. */
+  const [submittingPayment, setSubmittingPayment] = useState(false);
 
-  // Dummy wallet balances for UI representation
-  const availableWallets = [
-    {
-      id: 'father',
-      name: "Father's Wallet",
-      balance: 150000,
-      parent: {
-        id: 1,
-        name: 'Nwafor Chukwudi',
-        email: 'father@example.com',
-        phone: '08012345678',
-        wallet_number: '9048121392',
-      },
-      themeMain: 'primary.main',
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeBorder: isDark ? 'rgba(25,118,210,0.2)' : '#dbeafe',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.1)' : '#e0e7ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.2)' : '#e0e7ff',
-    },
-    {
-      id: 'mother',
-      name: "Mother's Wallet",
-      balance: 85000,
-      parent: {
-        id: 2,
-        name: 'Jane Nwafor',
-        email: 'mother@example.com',
-        phone: '08087654321',
-        wallet_number: '9048121391',
-      },
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
-      themeMain: '#0288d1',
-    },
-    {
-      id: 'child',
-      name: "Child's Wallet",
-      balance: 25000,
-      parent: {
-        id: 3,
-        name: 'David Nwafor',
-        email: 'child@example.com',
-        phone: '08011223344',
-        wallet_number: '9048121395',
-      },
-      themeBg: isDark ? 'rgba(25,118,210,0.05)' : '#f0f4ff',
-      themeSelectedBg: isDark ? 'rgba(25,118,210,0.25)' : '#e0e7ff',
-      themeHoverBg: isDark ? 'rgba(25,118,210,0.12)' : '#e0e7ff',
-      themeMain: 'secondary.main',
-    },
-  ];
+  // The guardian's own wallet plus this one ward's wallet — whichever of
+  // the two actually exist yet. Real data from getParentPaymentWallets(),
+  // replacing what used to be a hardcoded 3-wallet dummy array.
+  const [availableWallets, setAvailableWallets] = useState([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user_id) return;
+    let mounted = true;
+    setWalletsLoading(true);
+    getParentPaymentWallets([user_id])
+      .then((res) => {
+        if (mounted) setAvailableWallets(res?.status ? res.data || [] : []);
+      })
+      .catch((err) => {
+        console.error('Failed to load payment wallets:', err);
+        if (mounted) setAvailableWallets([]);
+      })
+      .finally(() => {
+        if (mounted) setWalletsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [user_id]);
 
   /* ACTIONS */
   const handleCompCheckChange = (id, checked) => {
@@ -355,7 +327,10 @@ const PayInvoice = () => {
       setClassId(data.student_info?.class_id);
       setSelectedCategoryId(String(data.invoice_info?.bursary_payment_category_id || ''));
 
-      /* Map compulsory fees — all values come straight from API; payable pre-set from API */
+      /* Map compulsory fees — all values come straight from API; payable
+         pre-set from API. getStudentSchedule() already excludes
+         fully-settled invoices server-side (balance <= 0), so every row
+         here genuinely still needs payment — nothing to filter client-side. */
       const mappedComp = (data.compulsory_data || []).map((item) => {
         const instList = item.installments || [];
         /* Auto-preselect the first installment if none is already set */
@@ -401,7 +376,8 @@ const PayInvoice = () => {
       });
       setCompFees(mappedComp);
 
-      /* Map optional fees */
+      /* Map optional fees — getStudentSchedule() already excludes
+         fully-settled invoices server-side, same as compulsory above. */
       const mappedOpt = (data.optional_data || []).map((item) => ({
         id: item.id,
         bursary_schedule_id: item.bursary_schedule_id,
@@ -448,7 +424,7 @@ const PayInvoice = () => {
           setSessionInfo({
             session_id: active.session_id,
             term_id: active.term_id,
-            session: active.sesname || '',
+            session: active.session_name || '',
             term: active.term_name || '',
           });
           await fetchInvoiceData();
@@ -474,12 +450,26 @@ const PayInvoice = () => {
     return () => window.removeEventListener('paymentCompleted', handler);
   }, [fetchInvoiceData]);
 
+  /* ── Smart wallet default ── */
+  /* Once there's something to pay, auto-pick the first wallet that can
+     actually cover it — saves the parent a step, and never overrides a
+     choice they've already made themselves. */
+  useEffect(() => {
+    if (selectedWallet || grandTotal <= 0) return;
+    const sufficient = availableWallets.find((w) => w.balance >= grandTotal);
+    setSelectedWallet(sufficient?.id || availableWallets[0]?.id || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grandTotal]);
+
   /* ── Pay Now ── */
   const handlePayNow = async () => {
     if (grandTotal <= 0) {
       notify.error('Please select at least one item to pay');
       return;
     }
+
+    if (submittingPayment) return; // already in flight — ignore repeat clicks
+    setSubmittingPayment(true);
 
     const payload = [];
 
@@ -527,11 +517,12 @@ const PayInvoice = () => {
 
     if (payload.length === 0) {
       notify.info('No valid items selected for payment');
+      setSubmittingPayment(false);
       return;
     }
 
     try {
-      const res = await createPendingPayment({ schedules: payload });
+      const res = await createPendingPayment({ schedules: payload, payer_user_id: selectedWallet });
       // console.log('Full API response:', res?.success);
       // console.log('SkoolPay on window:', window.SkoolPay);
       if (res?.success) {
@@ -556,35 +547,38 @@ const PayInvoice = () => {
     } catch (err) {
       console.error(err);
       notify.error(err.response?.data?.message || 'Payment initiation failed');
+    } finally {
+      setSubmittingPayment(false);
     }
   };
 
   /* SECTION HEADER BLOCK */
+  /* Renders just the colored title strip — no border/radius/margin of its
+     own. It's meant to sit flush on top of a content Box inside a single
+     outer Paper (see the two "section" wrappers below), so the bar and its
+     fees read as one attached panel instead of two floating boxes. */
   const renderHeaderBlock = ({ title, borderLeftColor, icon, action }) => (
-    <Paper
-      elevation={0}
+    <Box
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' },
         alignItems: { xs: 'stretch', sm: 'center' },
         justifyContent: 'space-between',
-        p: 2,
-        mb: 2,
-        gap: { xs: 2, sm: 0 },
+        p: 1.5,
+        gap: { xs: 1.5, sm: 0 },
         bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'white',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
+        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
         borderLeft: `5px solid ${borderLeftColor}`,
-        borderRadius: '8px',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 38,
-            height: 38,
+            width: 34,
+            height: 34,
             borderRadius: '8px',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0'}`,
             bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
@@ -598,15 +592,8 @@ const PayInvoice = () => {
         </Typography>
       </Box>
       <Box>{action}</Box>
-    </Paper>
+    </Box>
   );
-
-  /* ── Shared read-only cell style ── */
-  const roCell = {
-    py: 1.5,
-    fontWeight: 600,
-    color: 'text.primary',
-  };
 
   /* ───────────────────────────────────────────── */
   /* LOADING / ERROR SCREEN                       */
@@ -642,6 +629,8 @@ const PayInvoice = () => {
   const studentName = studentInfo?.name || 'Unknown Student';
   const studentLearnerId = studentInfo?.user_id || '—';
   const studentClassName = studentInfo?.class_name || '—';
+  const studentGender = studentInfo?.gender || '';
+  const studentArm = studentInfo?.class_arm || '';
   const invoiceNumber = invoiceInfo?.invoice_number || '';
   const breadcrumbTitle = `Pay Invoice${invoiceNumber ? ` #${invoiceNumber}` : ''}`;
 
@@ -652,511 +641,167 @@ const PayInvoice = () => {
     { title: breadcrumbTitle },
   ];
 
-  /* Shared table head cell style */
-  const thCell = {
-    fontWeight: 600,
-    color: isDark ? '#94a3b8' : '#475569',
-    py: 1.5,
-    whiteSpace: 'nowrap',
-  };
+  /* ── Convenience: quick "N of M selected" counters ── */
+  const compSelectedCount = compFees.filter((f) => f.checked).length;
+  const optSelectedCount = optFees.filter((f) => f.checked).length;
+
+  /* ── Intelligence: flag a wallet that can't cover the current total ── */
+  const selectedWalletObj = availableWallets.find((w) => w.id === selectedWallet);
+  const insufficientBalance =
+    grandTotal > 0 && !!selectedWalletObj && selectedWalletObj.balance < grandTotal;
 
   return (
     <PageContainer title={breadcrumbTitle}>
       <Breadcrumb title={breadcrumbTitle} items={BCrumbLive} />
-      <Box sx={{ pb: 8 }}>
-        {/* HEADER — Student Info & Wallets */}
-        <Box sx={{ mb: 3, mt: 2 }}>
-          <Button
-            variant="text"
-            color="primary"
-            onClick={() => navigate('/class-ledger')}
-            sx={{
-              mb: 1.5,
-              textTransform: 'none',
-              fontWeight: 600,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            ← Back to Class Ledger
-          </Button>
-
+      <Box sx={{ pb: 4 }}>
+        {/* HEADER — Student Info */}
+        <Box sx={{ mb: 2, mt: 1.5 }}>
           <Paper
             elevation={0}
             sx={{
-              p: 3,
+              p: 1.5,
               display: 'flex',
-              flexDirection: { xs: 'column', lg: 'row' },
+              flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',
-              alignItems: { xs: 'flex-start', lg: 'center' },
-              gap: 4,
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: 1.5,
               bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-              borderRadius: '16px',
-              boxShadow: isDark ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+              borderRadius: '12px',
+              boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.04)',
             }}
           >
             {/* LEFT: Student Profile Row */}
-            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', width: '100%' }}>
-              <Avatar
-                sx={{
-                  width: 80,
-                  height: 80,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                }}
-              >
-                <PersonOutlineIcon sx={{ fontSize: 40 }} />
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', width: '100%' }}>
+              <Avatar sx={{ width: 44, height: 44 }}>
+                <PersonOutlineIcon sx={{ fontSize: 24 }} />
               </Avatar>
-              <Box>
-                <Typography variant="h5" fontWeight={800} color="text.primary" mb={0.5}>
-                  {studentName}
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, sm: 4 }, mt: 1 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Learner ID
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700}>
-                      {studentLearnerId}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Class
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700}>
-                      {studentClassName}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Session & Term
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700}>
-                      {activeSessionInfo.session} • {activeSessionInfo.term}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* RIGHT: Wallet Balances */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: { xs: 'flex-start', lg: 'flex-end' },
-                gap: 1.5,
-                width: { xs: '100%', lg: 'auto' },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <AccountBalanceWalletOutlinedIcon color="primary" fontSize="small" />
+              <Box sx={{ minWidth: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                  <Typography variant="subtitle1" fontWeight={800} color="text.primary" noWrap>
+                    {studentName}
+                  </Typography>
+                  {studentGender && (
+                    <Chip
+                      label={
+                        studentGender.toLowerCase() === 'male'
+                          ? 'Male'
+                          : studentGender.toLowerCase() === 'female'
+                            ? 'Female'
+                            : studentGender
+                      }
+                      size="small"
+                      color={
+                        studentGender.toLowerCase() === 'male'
+                          ? 'info'
+                          : studentGender.toLowerCase() === 'female'
+                            ? 'secondary'
+                            : 'default'
+                      }
+                      variant="outlined"
+                      sx={{ fontWeight: 700 }}
+                    />
+                  )}
+                </Stack>
                 <Typography
-                  variant="subtitle2"
-                  fontWeight={800}
-                  color="primary.main"
-                  sx={{ textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.75rem' }}
+                  variant="body2"
+                  fontWeight={600}
+                  color="text.secondary"
+                  noWrap
+                  sx={{ display: 'block' }}
                 >
-                  Select Payment Wallet:
+                  ID {studentLearnerId} &nbsp;·&nbsp; {studentClassName} &nbsp; {studentArm}{' '}
+                  &nbsp;·&nbsp;
+                  {activeSessionInfo.session} {activeSessionInfo.term}
                 </Typography>
               </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  flexWrap: 'nowrap',
-                  pb: { xs: 1, lg: 0 },
-                  overflowX: { xs: 'auto', lg: 'visible' },
-                  width: { xs: '100%', lg: 'auto' },
-                  '&::-webkit-scrollbar': {
-                    height: '6px',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
-                    borderRadius: '10px',
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
-                    borderRadius: '10px',
-                    '&:hover': {
-                      backgroundColor: isDark ? 'rgba(255,255,255,0.3)' : '#94a3b8',
-                    },
-                  },
-                }}
-              >
-                {availableWallets.map((wallet) => (
-                  <Box
-                    key={wallet.id}
-                    onClick={() => setSelectedWallet(wallet.id)}
-                    sx={{
-                      p: 1,
-                      minWidth: { xs: 200, sm: 220 },
-                      flexShrink: 0,
-                      borderRadius: 1,
-                      cursor: 'pointer',
-                      transition: 'all .2s',
-                      bgcolor:
-                        selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg,
-
-                      border: '2px solid',
-                      borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
-                      '&:hover': {
-                        bgcolor: wallet.themeHoverBg,
-                        borderColor: wallet.themeMain,
-                      },
-                    }}
-                  >
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                      <Box display="flex" alignItems="center" gap={1}>
-                        {/* ATM Card Icon - Added */}
-                        <CreditCard sx={{ color: wallet.themeMain, fontSize: 28 }} />
-
-                        <Typography variant="subtitle2" fontWeight={800}>
-                          {wallet.name}
-                        </Typography>
-                      </Box>
-
-                      <Radio
-                        checked={selectedWallet === wallet.id}
-                        value={wallet.id}
-                        sx={{
-                          color: 'error.main',
-                          '&.Mui-checked': {
-                            color: 'error.main',
-                          },
-                          p: 0,
-                        }}
-                      />
-                    </Box>
-
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      Balance
-                    </Typography>
-
-                    <Typography variant="h5" fontWeight={800} color="error.main">
-                      ₦{format(wallet.balance)}
-                    </Typography>
-
-                    <Typography variant="body2" fontWeight={600}>
-                      {wallet.parent.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                      Wallet No.
-                    </Typography>
-
-                    <Typography variant="h6" fontWeight={200} color="dark">
-                      {wallet.parent.wallet_number}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
             </Box>
+
+            {/* Print + Back — top right, extreme end */}
+            <Stack direction="row" spacing={1} sx={{ flexShrink: 0, flexWrap: 'wrap' }}>
+              <Button
+                variant="outlined"
+                size="small"
+                color="inherit"
+                onClick={() => setPrintModalOpen(true)}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Print
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => navigate('/class-ledger')}
+                startIcon={<ArrowBackIcon fontSize="small" />}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              >
+                Back
+              </Button>
+            </Stack>
           </Paper>
         </Box>
 
-        {/* ERROR ALERT */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {/* OWING WARNING */}
-        {owingInfo?.owing_status === 'owing' && (
-          <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
-            <strong>Outstanding Balance Detected</strong>
-            <br />
-            You need to pay for the previous term you owe{' '}
-            <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.
-          </Alert>
-        )}
-
         {/* ══════════════════════════════════════════════ */}
-        {/* COMPULSORY PAYMENT                           */}
+        {/* CHECKOUT LAYOUT — fees (left) + sticky summary (right) */}
+        {/* Reversed column order on mobile puts the summary/pay panel   */}
+        {/* first, so totals and the wallet picker are visible without   */}
+        {/* scrolling all the way down.                                 */}
         {/* ══════════════════════════════════════════════ */}
-        {renderHeaderBlock({
-          title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-          borderLeftColor: '#10b981',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: null,
-        })}
-
-        <TableContainer
-          component={Paper}
-          variant="outlined"
+        <Box
           sx={{
-            borderRadius: 3,
-            mb: 4,
-            overflowX: 'auto',
-            borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+            display: 'flex',
+            flexDirection: { xs: 'column-reverse', lg: 'row' },
+            alignItems: 'flex-start',
+            gap: 2.5,
           }}
         >
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-              <TableRow>
-                <TableCell sx={thCell}>#</TableCell>
-                <TableCell sx={thCell}>Pay Description</TableCell>
-                <TableCell sx={thCell}>Original Amount (₦)</TableCell>
-                <TableCell align="center" sx={thCell}>
-                  Paid (₦)
-                </TableCell>
-                <TableCell align="center" sx={thCell}>
-                  Balance (₦)
-                </TableCell>
-                <TableCell align="center" sx={thCell}>
-                  Discount (₦)
-                </TableCell>
-                <TableCell align="center" sx={thCell}>
-                  Penalty (₦)
-                </TableCell>
-                <TableCell align="center" sx={thCell}>
-                  {installmentalSetting === 'percentage' ? 'Installment' : 'Amount (₦)'}
-                </TableCell>
-                <TableCell sx={thCell}>Payable (₦)</TableCell>
-                <TableCell align="right" sx={thCell}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      gap: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={isDark ? '#94a3b8' : '#475569'}
-                    >
-                      Select All
-                    </Typography>
-                    <Checkbox
-                      size="small"
-                      checked={compFees.length > 0 && compFees.every((f) => f.checked)}
-                      indeterminate={
-                        compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)
-                      }
-                      onChange={(e) => handleAllCompCheckChange(e.target.checked)}
-                      sx={{ p: 0.5 }}
-                    />
-                  </Box>
-                </TableCell>
-              </TableRow>
-            </TableHead>
+          {/* ── LEFT: Fee tables ── */}
+          <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+            {/* ERROR ALERT */}
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-            <TableBody>
-              {compFees.map((fee, idx) => (
-                <TableRow
-                  key={fee.id}
-                  hover
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
-                  <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
+            {/* OWING WARNING */}
+            {owingInfo?.owing_status === 'owing' && (
+              <Alert severity="error" sx={{ mb: 2, fontSize: '1.05rem' }}>
+                <strong>Outstanding Balance Detected</strong>
+                <br />
+                You need to pay for the previous term you owe{' '}
+                <strong>{owingInfo.owing_session_label}</strong> before you can pay for this term.
+              </Alert>
+            )}
 
-                  {/* Description */}
-                  <TableCell sx={{ py: 1.5, fontWeight: 500, color: 'text.primary' }}>
-                    {fee.description}
-                  </TableCell>
-
-                  {/* Amount — read-only */}
-                  <TableCell sx={{ ...roCell, fontWeight: 700, fontSize: '1rem' }}>
-                    ₦{format(fee.amount)}
-                  </TableCell>
-
-                  {/* Paid — read-only */}
-                  <TableCell align="center" sx={roCell}>
-                    ₦{format(fee.paid_amount)}
-                  </TableCell>
-
-                  {/* Balance — read-only */}
-                  <TableCell align="center" sx={roCell}>
-                    ₦{format(fee.balance)}
-                  </TableCell>
-
-                  {/* Discount — read-only */}
-                  <TableCell align="center" sx={roCell}>
-                    ₦{format(fee.discount_amount)}
-                  </TableCell>
-
-                  {/* Penalty — read-only */}
-                  <TableCell align="center" sx={roCell}>
-                    ₦{format(fee.penalty_amount)}
-                  </TableCell>
-
-                  {/* Installment dropdown (percentage) OR custom amount input — INTERACTIVE */}
-                  <TableCell align="center" sx={{ py: 1.5 }}>
-                    {installmentalSetting === 'percentage' ? (
-                      <FormControl size="small" sx={{ minWidth: 130 }}>
-                        <Select
-                          value={fee.installment_id || ''}
-                          onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
-                          displayEmpty
-                          sx={{
-                            borderRadius: 2,
-                            '& .MuiSelect-select': { py: 0.75, fontSize: '0.875rem' },
-                          }}
-                        >
-                          <MenuItem value="">
-                            <em>Select</em>
-                          </MenuItem>
-                          {(fee.installments || []).map((inst) => (
-                            <MenuItem key={inst.id} value={inst.id}>
-                              {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    ) : (
-                      <TextField
-                        size="small"
-                        type="number"
-                        sx={{ width: 110, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
-                        value={fee.custom_amount}
-                        onChange={(e) => handleCustomAmountChange(fee.id, e.target.value, 'comp')}
-                        inputProps={{ min: 0, max: fee.balance }}
-                      />
-                    )}
-                  </TableCell>
-
-                  {/* Payable — recalculates on installment/amount change */}
-                  <TableCell
-                    sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}
-                  >
-                    ₦{format(fee.payable)}
-                  </TableCell>
-
-                  {/* Checkbox */}
-                  <TableCell align="right" sx={{ py: 1.5 }}>
-                    <Checkbox
-                      size="small"
-                      checked={fee.checked}
-                      onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {/* Footer */}
-              <TableRow sx={{ bgcolor: isDark ? 'rgba(59,130,246,0.15)' : '#dbeafe' }}>
-                <TableCell colSpan={8} sx={{ py: 1.5 }}>
-                  <Typography variant="body2" fontWeight={700} color="text.secondary">
-                    Total Compulsory
-                  </Typography>
-                </TableCell>
-                <TableCell
-                  sx={{
-                    py: 1.5,
-                    fontWeight: 800,
-                    color: isDark ? '#60a5fa' : '#1e40af',
-                    fontSize: '1rem',
-                  }}
-                >
-                  ₦{format(compTotal)}
-                </TableCell>
-                <TableCell sx={{ py: 1.5 }} />
-              </TableRow>
-            </TableBody>
-          </Table>
-          {compFees.length === 0 && (
+            {/* ══════════════════════════════════════════════ */}
+            {/* COMPULSORY PAYMENT                           */}
+            {/* No table here on purpose — a 9-column money table forced a  */}
+            {/* horizontal scroll in the narrower checkout column. Each fee */}
+            {/* is a self-contained card instead, so it wraps and never    */}
+            {/* needs a scrollbar to read an amount. The header bar and    */}
+            {/* the fee list share one outer Paper — no gap between them — */}
+            {/* so they read as a single attached panel.                   */}
+            {/* ══════════════════════════════════════════════ */}
             <Paper
+              variant="outlined"
               sx={{
-                p: 4,
-                textAlign: 'center',
-                bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
+                borderRadius: '10px',
+                overflow: 'hidden',
+                mb: 3,
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
               }}
             >
-              <Typography variant="body1" color="text.secondary">
-                No compulsory fees found for this invoice.
-              </Typography>
-            </Paper>
-          )}
-        </TableContainer>
-
-        {/* ══════════════════════════════════════════════ */}
-        {/* OPTIONAL PAYMENT                             */}
-        {/* ══════════════════════════════════════════════ */}
-        {renderHeaderBlock({
-          title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
-          borderLeftColor: '#3b82f6',
-          icon: <ReceiptLongOutlinedIcon fontSize="small" />,
-          action: (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                gap: { xs: 1.5, sm: 2 },
-                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
-              }}
-            >
-              {/* Enable / disable optional section */}
-              {can('bursary_manager.ledger.create_invoice_discount') && (
-                <Switch
-                  checked={optionalEnabled}
-                  onChange={(e) => setOptionalEnabled(e.target.checked)}
-                  sx={{
-                    '& .MuiSwitch-switchBase.Mui-checked': {
-                      color: '#8338ec',
-                      '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
-                    },
-                  }}
-                />
-              )}
-              {owingInfo?.owing_status !== 'owing' && (
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenOptionalModal}
-                  sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  Add Optional Pay.
-                </Button>
-              )}
-            </Box>
-          ),
-        })}
-
-        {optionalEnabled && optFees.length > 0 ? (
-          <TableContainer
-            component={Paper}
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              mb: 4,
-              overflowX: 'auto',
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-            }}
-          >
-            <Table sx={{ minWidth: 800 }}>
-              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc' }}>
-                <TableRow>
-                  <TableCell sx={thCell}>#</TableCell>
-                  <TableCell sx={thCell}>Item</TableCell>
-                  <TableCell sx={thCell}>Original Amount (₦)</TableCell>
-                  <TableCell align="center" sx={thCell}>
-                    Paid (₦)
-                  </TableCell>
-                  <TableCell align="center" sx={thCell}>
-                    Balance (₦)
-                  </TableCell>
-                  <TableCell align="center" sx={thCell}>
-                    Discount (₦)
-                  </TableCell>
-                  <TableCell align="center" sx={thCell}>
-                    Penalty (₦)
-                  </TableCell>
-                  <TableCell sx={thCell}>Payable (₦)</TableCell>
-                  <TableCell align="right" sx={thCell}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 1,
-                      }}
-                    >
+              {renderHeaderBlock({
+                title: `Compulsory Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
+                borderLeftColor: '#10b981',
+                icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+                action: (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                      Subtotal ₦{format(compTotal)}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Typography
                         variant="body2"
                         fontWeight={600}
@@ -1166,209 +811,598 @@ const PayInvoice = () => {
                       </Typography>
                       <Checkbox
                         size="small"
-                        checked={optFees.length > 0 && optFees.every((f) => f.checked)}
+                        checked={compFees.length > 0 && compFees.every((f) => f.checked)}
                         indeterminate={
-                          optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
+                          compFees.some((f) => f.checked) && !compFees.every((f) => f.checked)
                         }
-                        onChange={(e) => handleAllOptCheckChange(e.target.checked)}
+                        onChange={(e) => handleAllCompCheckChange(e.target.checked)}
                         sx={{ p: 0.5 }}
                       />
                     </Box>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
+                  </Box>
+                ),
+              })}
 
-              <TableBody>
-                {optFees.map((fee, idx) => (
-                  <TableRow
-                    key={fee.id}
-                    hover
-                    sx={{
-                      bgcolor: isDark ? 'rgba(16,185,129,0.08)' : '#f0fdf4',
-                      '&:last-child td, &:last-child th': { border: 0 },
-                    }}
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+                }}
+              >
+                {compFees.length === 0 ? (
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ textAlign: 'center', py: 2.5 }}
                   >
-                    <TableCell sx={{ py: 1.5, color: 'text.secondary' }}>{idx + 1}</TableCell>
-
-                    {/* Item name + selected option chips */}
-                    <TableCell sx={{ py: 1.5 }}>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color="text.primary"
-                        sx={{ mb: 0.5 }}
+                    No compulsory fees found for this invoice.
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {compFees.map((fee, idx) => (
+                      <Paper
+                        key={fee.id}
+                        variant="outlined"
+                        onClick={() => handleCompCheckChange(fee.id, !fee.checked)}
+                        sx={{
+                          p: 0.75,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          borderColor: fee.checked
+                            ? 'success.main'
+                            : isDark
+                              ? 'rgba(255,255,255,0.1)'
+                              : '#e2e8f0',
+                          bgcolor: fee.checked
+                            ? isDark
+                              ? 'rgba(16,185,129,0.12)'
+                              : '#ecfdf5'
+                            : isDark
+                              ? 'rgba(255,255,255,0.03)'
+                              : '#ffffff',
+                        }}
                       >
-                        {fee.description}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {(fee.selectedOptions || []).map((opt, oi) => {
-                          const optionData =
-                            typeof opt === 'number'
-                              ? fee.optionsPool?.find((o) => o.option_id === opt)
-                              : opt;
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          }}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={fee.checked}
+                            onChange={(e) => handleCompCheckChange(fee.id, e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ p: 0.5 }}
+                          />
 
-                          return (
-                            <Chip
-                              key={optionData?.option_id || oi}
-                              label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
-                              size="small"
-                              variant="outlined"
-                              color="primary"
-                              sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-                            />
-                          );
-                        })}
-                      </Box>
-                    </TableCell>
+                          {/* Description + amount breakdown — one truncating line */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 0.75,
+                              minWidth: 0,
+                              flex: '1 1 200px',
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.primary"
+                              noWrap
+                              sx={{ flexShrink: 0, maxWidth: '55%' }}
+                            >
+                              {idx + 1}. {fee.description}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="text.secondary"
+                              noWrap
+                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                            >
+                              ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                              {format(fee.balance)}
+                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                            </Typography>
+                          </Box>
 
-                    {/* Amount — read-only */}
-                    <TableCell sx={{ ...roCell, fontWeight: 700, fontSize: '1rem' }}>
-                      ₦{format(fee.amount)}
-                    </TableCell>
+                          {/* Installment dropdown (percentage) OR custom amount input — INTERACTIVE */}
+                          <Box sx={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
+                            {installmentalSetting === 'percentage' ? (
+                              <FormControl size="small" sx={{ minWidth: 100 }}>
+                                <Select
+                                  value={fee.installment_id || ''}
+                                  onChange={(e) => handleInstallmentChange(fee.id, e.target.value)}
+                                  displayEmpty
+                                  sx={{
+                                    borderRadius: 2,
+                                    '& .MuiSelect-select': { py: 0.5, fontSize: '0.8125rem' },
+                                  }}
+                                >
+                                  <MenuItem value="">
+                                    <em>Select</em>
+                                  </MenuItem>
+                                  {(fee.installments || []).map((inst) => (
+                                    <MenuItem key={inst.id} value={inst.id}>
+                                      {inst.inst1}%{inst.inst2 ? ` : ${inst.inst2}%` : ''}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            ) : (
+                              <TextField
+                                size="small"
+                                type="number"
+                                sx={{ width: 100, bgcolor: isDark ? 'rgba(0,0,0,0.1)' : 'white' }}
+                                value={fee.custom_amount}
+                                onChange={(e) =>
+                                  handleCustomAmountChange(fee.id, e.target.value, 'comp')
+                                }
+                                inputProps={{ min: 0, max: fee.balance }}
+                              />
+                            )}
+                          </Box>
 
-                    {/* Paid — read-only */}
-                    <TableCell align="center" sx={roCell}>
-                      ₦{format(fee.paid_amount)}
-                    </TableCell>
+                          {/* Payable — recalculates on installment/amount change */}
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={800}
+                            color="primary.main"
+                            sx={{
+                              flexShrink: 0,
+                              minWidth: 80,
+                              textAlign: 'right',
+                              fontSize: '1.1rem',
+                            }}
+                          >
+                            ₦{format(fee.payable)}
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+            </Paper>
 
-                    {/* Balance — read-only */}
-                    <TableCell align="center" sx={roCell}>
-                      ₦{format(fee.balance)}
-                    </TableCell>
-
-                    {/* Discount — read-only */}
-                    <TableCell align="center" sx={roCell}>
-                      ₦{format(fee.discount_amount)}
-                    </TableCell>
-
-                    {/* Penalty — read-only */}
-                    <TableCell align="center" sx={roCell}>
-                      ₦{format(fee.penalty_amount)}
-                    </TableCell>
-
-                    {/* Payable — from API (optional fees have no installment control here) */}
-                    <TableCell
-                      sx={{ py: 1.5, fontWeight: 700, color: 'text.primary', fontSize: '1rem' }}
-                    >
-                      ₦{format(fee.payable)}
-                    </TableCell>
-
-                    {/* Checkbox */}
-                    <TableCell align="right" sx={{ py: 1.5 }}>
-                      <Checkbox
-                        size="small"
-                        checked={fee.checked}
-                        onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-
-                {/* Footer */}
-                <TableRow sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }}>
-                  <TableCell colSpan={7} sx={{ py: 1.5 }}>
-                    <Typography variant="body2" fontWeight={700} color="text.secondary">
-                      Total Optional
-                    </Typography>
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      py: 1.5,
-                      fontWeight: 800,
-                      color: isDark ? '#60a5fa' : '#1e40af',
-                      fontSize: '1rem',
-                    }}
-                  >
-                    ₦{format(optTotal)}
-                  </TableCell>
-                  <TableCell sx={{ py: 1.5 }} />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        ) : optionalEnabled ? (
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              mb: 4,
-              textAlign: 'center',
-              bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f8fafc',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
-              borderRadius: 3,
-            }}
-          >
-            <Typography variant="body1" fontWeight={600} color="text.secondary">
-              {/* No optional payment set for this student.  */}
-              No outstanding optional fees. All optional payments have been cleared.
-            </Typography>
-          </Paper>
-        ) : null}
-
-        {/* ══════════════════════════════════════════════ */}
-        {/* STICKY BOTTOM ACTION SHEET                   */}
-        {/* ══════════════════════════════════════════════ */}
-        <Paper
-          elevation={3}
-          sx={{
-            position: 'sticky',
-            bottom: 16,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            p: 2,
-            mt: 4,
-            bgcolor: isDark ? 'rgba(234,179,8,0.15)' : '#fef9c3',
-            border: `1px solid ${isDark ? 'rgba(234,179,8,0.3)' : '#fef08a'}`,
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'center', md: 'center' },
-            justifyContent: { xs: 'center', md: 'space-between' },
-            gap: 2,
-            boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)',
-          }}
-        >
-          {/* Left — Amount display */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: { xs: 'center', md: 'flex-start' },
-              gap: 0.5,
-            }}
-          >
-            <Typography variant="body2" fontWeight={600} color="text.secondary">
-              Total Payable Amount
-            </Typography>
-            <Typography variant="h1" fontWeight={900} color="primary.main">
-              ₦{format(grandTotal)}
-            </Typography>
-          </Box>
-
-          {/* Right — Pay button */}
-          <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              disabled={grandTotal === 0}
-              onClick={() => {
-                if (grandTotal <= 0) {
-                  notify.error('Please select at least one item to pay');
-                  return;
-                }
-                setConfirmModalOpen(true);
-              }}
+            {/* ══════════════════════════════════════════════ */}
+            {/* OPTIONAL PAYMENT — card list, same reasoning as Compulsory */}
+            {/* Header bar + content share one outer Paper — no gap — same as   */}
+            {/* the Compulsory section above.                                  */}
+            {/* ══════════════════════════════════════════════ */}
+            <Paper
+              variant="outlined"
               sx={{
-                px: 4,
-                py: 1.2,
-                fontSize: '1.05rem',
-                fontWeight: 700,
+                borderRadius: '10px',
+                overflow: 'hidden',
+                mb: 3,
+                borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
               }}
             >
-              Pay Now
-            </Button>
+              {renderHeaderBlock({
+                title: `Optional Payment${owingInfo?.owing_session_label ? ` - ${owingInfo.owing_session_label}` : ''}`,
+                borderLeftColor: '#3b82f6',
+                icon: <ReceiptLongOutlinedIcon fontSize="small" />,
+                action: (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                      gap: { xs: 1.5, sm: 2 },
+                      justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                    }}
+                  >
+                    {optionalEnabled && optFees.length > 0 && (
+                      <>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary">
+                          Subtotal ₦{format(optTotal)}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color={isDark ? '#94a3b8' : '#475569'}
+                          >
+                            Select All
+                          </Typography>
+                          <Checkbox
+                            size="small"
+                            checked={optFees.length > 0 && optFees.every((f) => f.checked)}
+                            indeterminate={
+                              optFees.some((f) => f.checked) && !optFees.every((f) => f.checked)
+                            }
+                            onChange={(e) => handleAllOptCheckChange(e.target.checked)}
+                            sx={{ p: 0.5 }}
+                          />
+                        </Box>
+                      </>
+                    )}
+                    {/* Enable / disable optional section */}
+                    {can('bursary_manager.ledger.create_invoice_discount') && (
+                      <Switch
+                        checked={optionalEnabled}
+                        onChange={(e) => setOptionalEnabled(e.target.checked)}
+                        sx={{
+                          '& .MuiSwitch-switchBase.Mui-checked': {
+                            color: '#8338ec',
+                            '& + .MuiSwitch-track': { backgroundColor: '#8338ec' },
+                          },
+                        }}
+                      />
+                    )}
+                    {owingInfo?.owing_status !== 'owing' && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenOptionalModal}
+                        sx={{ textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
+                      >
+                        Add Optional Pay.
+                      </Button>
+                    )}
+                  </Box>
+                ),
+              })}
+
+              <Box
+                sx={{
+                  p: 1.5,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+                }}
+              >
+                {optionalEnabled && optFees.length > 0 ? (
+                  <Stack spacing={1}>
+                    {optFees.map((fee, idx) => (
+                      <Paper
+                        key={fee.id}
+                        variant="outlined"
+                        onClick={() => handleOptCheckChange(fee.id, !fee.checked)}
+                        sx={{
+                          p: 0.75,
+                          borderRadius: 2,
+                          cursor: 'pointer',
+                          borderColor: fee.checked
+                            ? 'success.main'
+                            : isDark
+                              ? 'rgba(255,255,255,0.1)'
+                              : '#e2e8f0',
+                          bgcolor: fee.checked
+                            ? isDark
+                              ? 'rgba(16,185,129,0.12)'
+                              : '#ecfdf5'
+                            : isDark
+                              ? 'rgba(255,255,255,0.03)'
+                              : '#ffffff',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          }}
+                        >
+                          <Checkbox
+                            size="small"
+                            checked={fee.checked}
+                            onChange={(e) => handleOptCheckChange(fee.id, e.target.checked)}
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{ p: 0.5 }}
+                          />
+
+                          {/* Description + amount breakdown — one truncating line */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 0.75,
+                              minWidth: 0,
+                              flex: '1 1 200px',
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.primary"
+                              noWrap
+                              sx={{ flexShrink: 0, maxWidth: '55%' }}
+                            >
+                              {idx + 1}. {fee.description}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="text.secondary"
+                              noWrap
+                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                            >
+                              ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                              {format(fee.balance)}
+                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                            </Typography>
+                          </Box>
+
+                          {/* Payable */}
+                          <Typography
+                            variant="subtitle1"
+                            fontWeight={800}
+                            color="primary.main"
+                            sx={{
+                              flexShrink: 0,
+                              minWidth: 80,
+                              textAlign: 'right',
+                              fontSize: '1.1rem',
+                            }}
+                          >
+                            ₦{format(fee.payable)}
+                          </Typography>
+                        </Box>
+
+                        {(fee.selectedOptions || []).length > 0 && (
+                          <Box
+                            sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, pl: 4.5, mt: 0.5 }}
+                          >
+                            {fee.selectedOptions.map((opt, oi) => {
+                              const optionData =
+                                typeof opt === 'number'
+                                  ? fee.optionsPool?.find((o) => o.option_id === opt)
+                                  : opt;
+
+                              return (
+                                <Chip
+                                  key={optionData?.option_id || oi}
+                                  label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
+                                  sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+                                />
+                              );
+                            })}
+                          </Box>
+                        )}
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : optionalEnabled ? (
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ textAlign: 'center', py: 2.5 }}
+                  >
+                    No outstanding optional fees. All optional payments have been cleared.
+                  </Typography>
+                ) : null}
+              </Box>
+            </Paper>
           </Box>
-        </Paper>
+          {/* ── end LEFT column ── */}
+
+          {/* ── RIGHT: Sticky Payment Summary — the "checkout panel" ── */}
+          <Box
+            sx={{
+              width: { xs: '100%', lg: 340 },
+              flexShrink: 0,
+              position: { lg: 'sticky' },
+              top: { lg: 88 },
+            }}
+          >
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0'}`,
+                bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#ffffff',
+                boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.04)',
+              }}
+            >
+              <Typography variant="subtitle2" fontWeight={800}>
+                Payment Summary
+              </Typography>
+              <Divider sx={{ my: 1 }} />
+
+              {compFees.length > 0 && (
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Compulsory ({compSelectedCount}/{compFees.length})
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    ₦{format(compTotal)}
+                  </Typography>
+                </Box>
+              )}
+              {optionalEnabled && optFees.length > 0 && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mt: 0.5,
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Optional ({optSelectedCount}/{optFees.length})
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    ₦{format(optTotal)}
+                  </Typography>
+                </Box>
+              )}
+
+              <Divider sx={{ my: 1 }} />
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1.5,
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight={700}>
+                  Total Payable
+                </Typography>
+                <Typography variant="h5" fontWeight={900} color="primary.main">
+                  ₦{format(grandTotal)}
+                </Typography>
+              </Box>
+
+              <Typography
+                variant="caption"
+                fontWeight={800}
+                color="primary.main"
+                sx={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}
+              >
+                Pay From
+              </Typography>
+              <Stack spacing={1} sx={{ mt: 1, mb: 1.5 }}>
+                {walletsLoading ? (
+                  <>
+                    <Box sx={{ height: 64, borderRadius: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }} />
+                    <Box sx={{ height: 64, borderRadius: 1.5, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f5f9' }} />
+                  </>
+                ) : availableWallets.length === 0 ? (
+                  <Alert severity="info" sx={{ borderRadius: 1.5 }}>
+                    No wallet has been generated yet. Make a payment to generate one.
+                  </Alert>
+                ) : (
+                  availableWallets.map((wallet) => {
+                    const walletInsufficient = grandTotal > 0 && wallet.balance < grandTotal;
+                    return (
+                      <Box
+                        key={wallet.id}
+                        onClick={() => setSelectedWallet(wallet.id)}
+                        sx={{
+                          p: 1,
+                          borderRadius: 1.5,
+                          cursor: 'pointer',
+                          transition: 'all .15s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          bgcolor:
+                            selectedWallet === wallet.id
+                              ? isDark
+                                ? 'rgba(25,118,210,0.2)'
+                                : '#e0e7ff'
+                              : isDark
+                                ? 'rgba(25,118,210,0.05)'
+                                : '#f0f4ff',
+                          border: '1.5px solid',
+                          borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
+                          '&:hover': { borderColor: 'primary.main' },
+                        }}
+                      >
+                        <Radio
+                          checked={selectedWallet === wallet.id}
+                          value={wallet.id}
+                          size="small"
+                          sx={{
+                            color: 'error.main',
+                            p: 0,
+                            '&.Mui-checked': { color: 'error.main' },
+                          }}
+                        />
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              noWrap
+                              sx={{ minWidth: 0 }}
+                            >
+                              {wallet.label}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              fontWeight={800}
+                              color="error.main"
+                              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                            >
+                              ₦{format(wallet.balance)}
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            color="text.primary"
+                            noWrap
+                            sx={{ display: 'block', fontWeight: 600 }}
+                          >
+                            {wallet.name}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ display: 'block' }}
+                          >
+                            Wallet No: {wallet.wallet_no}
+                          </Typography>
+                          {walletInsufficient && (
+                            <Chip
+                              label="Insufficient balance"
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              sx={{
+                                height: 18,
+                                fontSize: '0.65rem',
+                                mt: 0.5,
+                                '& .MuiChip-label': { px: 0.75 },
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })
+                )}
+              </Stack>
+
+              {insufficientBalance && (
+                <Alert severity="warning" sx={{ mb: 1.5, py: 0.25 }}>
+                  This wallet's balance is below the total payable — choose another wallet or reduce
+                  your selection.
+                </Alert>
+              )}
+
+              <Button
+                fullWidth
+                variant="contained"
+                disabled={grandTotal === 0}
+                onClick={() => {
+                  if (grandTotal <= 0) {
+                    notify.error('Please select at least one item to pay');
+                    return;
+                  }
+                  setConfirmModalOpen(true);
+                }}
+                sx={{ py: 1.2, fontWeight: 700, fontSize: '1rem' }}
+              >
+                {grandTotal > 0 ? `Pay Now · ₦${format(grandTotal)}` : 'Pay Now'}
+              </Button>
+            </Paper>
+          </Box>
+        </Box>
       </Box>
 
       {/* ══════════════════════════════════════════════ */}
@@ -1430,80 +1464,91 @@ const PayInvoice = () => {
             <Divider sx={{ my: 2 }} />
 
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Select Payment Source
+              Pay From
             </Typography>
-            <Stack spacing={2}>
+            <Stack spacing={1}>
               {availableWallets.map((wallet) => (
                 <Box
                   key={wallet.id}
                   onClick={() => setSelectedWallet(wallet.id)}
                   sx={{
-                    p: 1.5,
-                    minWidth: 220,
-                    borderRadius: 1,
+                    p: 1,
+                    borderRadius: 1.5,
                     cursor: 'pointer',
-                    transition: 'all .2s',
-                    bgcolor: selectedWallet === wallet.id ? wallet.themeSelectedBg : wallet.themeBg, // now all use same default bg
-
-                    border: '2px solid',
-                    borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider', // better than error color
-                    '&:hover': {
-                      bgcolor: wallet.themeHoverBg,
-                      borderColor: wallet.themeMain,
-                    },
+                    transition: 'all .15s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    bgcolor:
+                      selectedWallet === wallet.id
+                        ? isDark
+                          ? 'rgba(25,118,210,0.2)'
+                          : '#e0e7ff'
+                        : isDark
+                          ? 'rgba(25,118,210,0.05)'
+                          : '#f0f4ff',
+                    border: '1.5px solid',
+                    borderColor: selectedWallet === wallet.id ? 'primary.main' : 'divider',
+                    '&:hover': { borderColor: 'primary.main' },
                   }}
                 >
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <CreditCard sx={{ color: wallet.themeMain, fontSize: 28 }} />
-
-                      <Typography variant="subtitle2" fontWeight={800}>
-                        {wallet.name}
+                  <Radio
+                    checked={selectedWallet === wallet.id}
+                    value={wallet.id}
+                    size="small"
+                    sx={{
+                      color: 'error.main',
+                      p: 0,
+                      '&.Mui-checked': { color: 'error.main' },
+                    }}
+                  />
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 1,
+                      }}
+                    >
+                      <Typography variant="caption" fontWeight={700} noWrap sx={{ minWidth: 0 }}>
+                        {wallet.label}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={800}
+                        color="error.main"
+                        sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                      >
+                        ₦{format(wallet.balance)}
                       </Typography>
                     </Box>
-
-                    <Radio
-                      checked={selectedWallet === wallet.id}
-                      value={wallet.id}
-                      sx={{
-                        color: 'error.main',
-                        '&.Mui-checked': {
-                          color: 'error.main',
-                        },
-                        p: 0,
-                      }}
-                    />
+                    <Typography
+                      variant="caption"
+                      color="text.primary"
+                      noWrap
+                      sx={{ display: 'block', fontWeight: 600 }}
+                    >
+                      {wallet.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      noWrap
+                      sx={{ display: 'block' }}
+                    >
+                      Wallet No: {wallet.wallet_no}
+                    </Typography>
                   </Box>
-
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    Balance
-                  </Typography>
-
-                  <Typography variant="h6" fontWeight={800} color="error.main">
-                    ₦{format(wallet.balance)}
-                  </Typography>
-
-                  <Typography variant="body2" fontWeight={600} sx={{ mt: 0.5 }}>
-                    {wallet.parent.name}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.5 }}
-                  >
-                    Wallet No.
-                  </Typography>
-
-                  <Typography variant="h6" fontWeight={200} color="dark">
-                    {wallet.parent.wallet_number}
-                  </Typography>
                 </Box>
               ))}
             </Stack>
+
+            {insufficientBalance && (
+              <Alert severity="warning" sx={{ py: 0.25 }}>
+                This wallet's balance is below the total payable.
+              </Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -1517,7 +1562,11 @@ const PayInvoice = () => {
           </Button>
           <Button
             size="small"
-            disabled={!selectedWallet}
+            // A wallet selection is only required when there's actually a
+            // wallet to choose from — if none exists yet (availableWallets
+            // is empty), the payment should still proceed: SkoolPay's own
+            // widget creates one as part of the checkout flow itself.
+            disabled={(availableWallets.length > 0 && !selectedWallet) || submittingPayment}
             onClick={() => {
               setConfirmModalOpen(false);
               handlePayNow();
@@ -1631,7 +1680,12 @@ const PayInvoice = () => {
                           >
                             <Typography
                               variant="body2"
-                              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, mr: 1 }}
+                              noWrap
+                              sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                mr: 1,
+                                minWidth: 0,
+                              }}
                             >
                               {opt.option_name}
                             </Typography>
@@ -1642,6 +1696,7 @@ const PayInvoice = () => {
                               sx={{
                                 fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                 whiteSpace: 'nowrap',
+                                flexShrink: 0,
                               }}
                             >
                               ₦{(Number(opt.amount) || 0).toLocaleString()}

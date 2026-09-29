@@ -13,7 +13,7 @@ import {
   TableFooter,
   TablePagination,
   TableContainer,
-  CircularProgress,
+  Skeleton,
   Alert,
   Typography,
   Box,
@@ -59,7 +59,7 @@ import { useNotification } from '@/hooks/useNotification';
  *   onClose  {function}
  *   roleId   {number|string|null}
  */
-const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
+const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -107,7 +107,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
       }
     } catch (err) {
       console.error('Failed to fetch role organizations:', err);
-      setError('Failed to load organizations. Please try again.');
+      setError('Failed to load agents. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -186,6 +186,11 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
           <AgentsIcon fontSize="small" color="primary" />
           <Typography variant="h6" component="span">
             Team with this Role
+            {roleName && (
+              <Box component="span" sx={{ color: 'primary.main', fontWeight: 600, ml: 0.5 }}>
+                - {roleName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              </Box>
+            )}
           </Typography>
           {totalRows > 0 && !loading && (
             <Chip label={`${totalRows} teams`} size="small" color="primary" />
@@ -241,7 +246,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
                 <TableCell sx={{ width: '33%' }}>Team Name</TableCell>
-                <TableCell sx={{ width: '25%' }}>Organization</TableCell>
+                <TableCell sx={{ width: '25%' }}>Agent</TableCell>
                 <TableCell sx={{ width: '13%' }} align="center">
                   Status
                 </TableCell>
@@ -253,11 +258,15 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
 
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(5)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : users.length > 0 ? (
                 users.map((user, index) => (
                   <TableRow key={user.id} hover>
@@ -362,8 +371,8 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, onUserRemoved }) => {
                       }}
                     >
                       {search
-                        ? 'No organizations match your search.'
-                        : 'No organizations have this role yet.'}
+                        ? 'No agents match your search.'
+                        : 'No agents have this role yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>

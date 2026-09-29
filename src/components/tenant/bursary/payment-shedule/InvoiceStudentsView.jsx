@@ -36,6 +36,8 @@ import {
   DialogActions,
   Divider,
   FormControlLabel,
+  Chip,
+  useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -43,8 +45,91 @@ import {
   Close as CloseIcon,
   Add as AddIcon,
   Description as DescriptionIcon,
+  ArrowBack as ArrowBackIcon,
+  Groups as GroupsIcon,
+  CheckCircle as CheckCircleIcon,
+  PendingActions as PendingActionsIcon,
+  Payments as PaymentsIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
+
+// One neutral scheme set for this page's stat cards — each also doubles as
+// a quick filter (click to show only that slice of the table) instead of a
+// separate row of filter chips duplicating the same information.
+const statSchemes = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+];
+
+const InvoiceStatCard = ({ icon: Icon, value, label, subtitle, schemeIndex = 0, active, onClick }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const scheme = statSchemes[schemeIndex % statSchemes.length];
+  return (
+    <Paper
+      elevation={0}
+      onClick={onClick}
+      sx={{
+        p: '14px',
+        borderRadius: '14px',
+        // Same standing border every other stat card in the app already
+        // has (not just an on-hover effect) — it's what makes a white card
+        // read as a distinct card on a white page background. Only the
+        // color/width change when this card is the active filter.
+        border: '1px solid',
+        borderColor: active ? scheme.color : isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        borderWidth: active ? 2 : 1,
+        bgcolor: 'background.paper',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+        ...(onClick && {
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            borderColor: active ? scheme.color : '#94a3b8',
+            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+          },
+        }),
+      }}
+    >
+      <Box
+        sx={{
+          width: 44,
+          height: 44,
+          borderRadius: '12px',
+          bgcolor: scheme.bg,
+          color: scheme.color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 22 }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.1, color: scheme.color }} noWrap>
+          {value}
+        </Typography>
+        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block' }} noWrap>
+          {label}
+        </Typography>
+        {subtitle && (
+          <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }} noWrap>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Paper>
+  );
+};
 
 const InvoiceStudentsView = () => {
   const { session_term_id, class_id, pay_schedule_id } = useParams();
@@ -67,7 +152,18 @@ const InvoiceStudentsView = () => {
   const [selectedStudentCategory, setSelectedStudentCategory] = useState(
     searchParams.get('category_id') || '',
   );
+  // searchInput is the draft text as the user types; searchQuery is what
+  // actually filters the table, only updated on clicking Search / Enter —
+  // this table is entirely client-side already-fetched data, but a manual
+  // trigger reads far more intentional than filtering on every keystroke.
+  const [searchInput, setSearchInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const handleSearch = () => setSearchQuery(searchInput);
+  // Purely client-side quick filter over the already-fetched student list —
+  // driven by clicking a stat card, not a separate round trip. Distinct
+  // from the URL `pending` param above, which drives the initial server
+  // fetch when arriving here from a "N students still need invoices" link.
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
   const [anchorStudent, setAnchorStudent] = useState(null);
@@ -548,14 +644,33 @@ const InvoiceStudentsView = () => {
     setSelectedStudents([]);
   };
 
+  // Mirrors the "still pending" check fetchAndSetStudentData() already uses
+  // to decide whether to clean up the `pending` URL param — single
+  // definition, so the stat cards/filter and that cleanup can never disagree.
+  const isPendingInvoice = (student) =>
+    !student.compulsory_invoice_generated || Number(student.compulsory_invoice_generated) === 0;
+
   // ── Filtered students ──
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       !searchQuery ||
       student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.admissionId?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'generated' && !isPendingInvoice(student)) ||
+      (statusFilter === 'pending' && isPendingInvoice(student));
+    return matchesSearch && matchesStatus;
   });
+
+  // ── Stats (from the full, unfiltered list — always the whole class) ──
+  const totalStudents = students.length;
+  const pendingCount = students.filter(isPendingInvoice).length;
+  const generatedCount = totalStudents - pendingCount;
+  const totalCompulsoryAmount = students.reduce(
+    (sum, s) => sum + (Number(s.total_compulsory_payment) || 0),
+    0,
+  );
 
   // ── Render states ──
   // Show spinner while categories are still resolving OR students are loading
@@ -582,7 +697,13 @@ const InvoiceStudentsView = () => {
     <>
       <ParentCard
         title={
-          <Box>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            gap={2}
+            flexWrap="wrap"
+          >
             <Typography
               variant="h5"
               sx={{
@@ -593,8 +714,21 @@ const InvoiceStudentsView = () => {
               Student Invoice List {sessionLabel}
               {termLabel ? ` - ${termLabel}` : ''} · {className}
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/payment-schedule')}
+              sx={{ flexShrink: 0 }}
+            >
+              Back
+            </Button>
           </Box>
         }
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
       >
         {searchParams.get('pending') && Number(searchParams.get('pending')) > 0 && (
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -605,81 +739,101 @@ const InvoiceStudentsView = () => {
           </Alert>
         )}
 
+        {/* ── Stats — also double as quick filters; click one to narrow the
+            table below to just that slice ── */}
+        <Grid container spacing={1.5} sx={{ mb: 2 }} alignItems="stretch">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <InvoiceStatCard
+              icon={GroupsIcon}
+              value={totalStudents}
+              label="Total Students"
+              subtitle={className || 'This class'}
+              schemeIndex={0}
+              active={statusFilter === 'all'}
+              onClick={() => setStatusFilter('all')}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <InvoiceStatCard
+              icon={CheckCircleIcon}
+              value={generatedCount}
+              label="Invoices Generated"
+              subtitle={`${generatedCount} of ${totalStudents}`}
+              schemeIndex={1}
+              active={statusFilter === 'generated'}
+              onClick={() => setStatusFilter('generated')}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <InvoiceStatCard
+              icon={PendingActionsIcon}
+              value={pendingCount}
+              label="Pending Invoices"
+              subtitle={pendingCount > 0 ? 'Needs generating' : 'All caught up'}
+              schemeIndex={2}
+              active={statusFilter === 'pending'}
+              onClick={() => setStatusFilter('pending')}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <InvoiceStatCard
+              icon={PaymentsIcon}
+              value={`₦${totalCompulsoryAmount.toLocaleString()}`}
+              label="Total Compulsory"
+              subtitle="Across all students"
+              schemeIndex={3}
+            />
+          </Grid>
+        </Grid>
+
+        {/* ── Filters (left) + primary actions (right), one row — Back now
+            lives at the top-right of the page header instead. ── */}
         <Box
           display="flex"
-          flexDirection={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
+          flexWrap="wrap"
+          alignItems="center"
           gap={1.5}
           mb={2}
         >
-          <Button variant="contained" size="small" onClick={() => navigate('/payment-schedule')}
-            sx={{ alignSelf: { xs: 'flex-start', sm: 'auto' } }}
-          >
-            Back
-          </Button>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          >
-            <Button variant="contained" size="small" disabled={selectedStudents.length === 0 || generatingInvoice} onClick={handleGenerateInvoiceClick} startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
-              sx={{
-                width: { xs: '100%', sm: 'auto' },
-                whiteSpace: 'nowrap',
+          <FormControl size="small" sx={{ minWidth: 140 }}>
+            <Select
+              displayEmpty
+              value={selectedStudentCategory}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedStudentCategory(val);
+                if (val && val !== 'all') {
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.set('category_id', val);
+                    return next;
+                  });
+                } else {
+                  setSearchParams((prev) => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('category_id');
+                    return next;
+                  });
+                }
               }}
+              sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
+              disabled={categoriesLoading}
             >
-              {generatingInvoice ? (
-                <CircularProgress size={16} sx={{ color: 'inherit', mr: 0.5 }} />
-              ) : null}
-              Generate Invoice
-            </Button>
-            <Button variant="contained" size="small" onClick={handlePrintInvoiceForAll} disabled={filteredStudents.length === 0} sx={{ width: { xs: '100%', sm: 'auto' }, whiteSpace: 'nowrap', }}>
-              View Invoice for All
-            </Button>
-          </Stack>
-        </Box>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-        <Grid container spacing={1.5} mb={3} alignItems="center" justifyContent="flex-end">
-          <Grid size={{ xs: 12, sm: 6, md: 'auto' }}>
-            <FormControl size="small" fullWidth sx={{ minWidth: { xs: 1, sm: 200 } }}>
-              <Select
-                displayEmpty
-                value={selectedStudentCategory}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSelectedStudentCategory(val);
-                  if (val && val !== 'all') {
-                    setSearchParams((prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.set('category_id', val);
-                      return next;
-                    });
-                  } else {
-                    setSearchParams((prev) => {
-                      const next = new URLSearchParams(prev);
-                      next.delete('category_id');
-                      return next;
-                    });
-                  }
-                }}
-                sx={{ '& .MuiSelect-select': { color: 'text.secondary' } }}
-                disabled={categoriesLoading}
-              >
-                {categories.map((cat) => (
-                  <MenuItem key={cat.id} value={String(cat.id)}>
-                    {cat.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 'auto' }}>
+          <Stack direction="row" spacing={1} sx={{ flexGrow: 1, maxWidth: 380 }}>
             <TextField
               size="small"
               placeholder="Search by name or ID"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               fullWidth
               slotProps={{
                 input: {
@@ -691,8 +845,63 @@ const InvoiceStudentsView = () => {
                 },
               }}
             />
-          </Grid>
-        </Grid>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSearch}
+              sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+            >
+              Search
+            </Button>
+          </Stack>
+
+          {statusFilter !== 'all' && (
+            <Chip
+              label={`Showing: ${statusFilter === 'generated' ? 'Invoices Generated' : 'Pending Invoices'}`}
+              onDelete={() => setStatusFilter('all')}
+              size="small"
+              color={statusFilter === 'generated' ? 'success' : 'warning'}
+              sx={{ fontWeight: 600 }}
+            />
+          )}
+
+          {/* Pushes the actions below to the far right, same place they
+              were before, just sharing this row with the filters now. */}
+          <Box sx={{ flexGrow: 1 }} />
+
+          {selectedStudents.length > 0 && (
+            <Chip
+              label={`${selectedStudents.length} selected`}
+              color="primary"
+              size="small"
+              onDelete={() => setSelectedStudents([])}
+              sx={{ fontWeight: 700 }}
+            />
+          )}
+          <Button
+            variant="contained"
+            size="small"
+            disabled={selectedStudents.length === 0 || generatingInvoice}
+            onClick={handleGenerateInvoiceClick}
+            startIcon={generatingInvoice ? undefined : <DescriptionIcon />}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            {generatingInvoice ? (
+              <CircularProgress size={16} sx={{ color: 'inherit', mr: 0.5 }} />
+            ) : null}
+            Generate Invoice
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<VisibilityIcon />}
+            onClick={handlePrintInvoiceForAll}
+            disabled={filteredStudents.length === 0}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            View all Invoice
+          </Button>
+        </Box>
 
         {/* Show inline spinner while students load (after categories are ready) */}
         {loading ? (
@@ -714,7 +923,7 @@ const InvoiceStudentsView = () => {
               },
             }}
           >
-            <Table sx={{ minWidth: { xs: 700, sm: 900 } }}>
+            <Table size="small" sx={{ minWidth: { xs: 700, sm: 900 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell

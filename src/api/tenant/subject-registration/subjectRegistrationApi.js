@@ -28,23 +28,43 @@ const subjectRegistrationApi = {
       params: { ...params, class_id: classId, arm_id: armId },
     }),
 
-  // ── Registration Actions ─────────────────────────────────
-  registerSubject: (learnerId, subjectId) =>
-    tenantApi.post(`/subject-registration/register`, { learner_id: learnerId, subject_id: subjectId }),
-  unregisterSubject: (learnerId, subjectId) =>
-    tenantApi.post(`/subject-registration/unregister`, { learner_id: learnerId, subject_id: subjectId }),
-  bulkRegisterSubject: (subjectId, learnerIds) =>
-    tenantApi.post(`/subject-registration/bulk-register`, { subject_id: subjectId, learner_ids: learnerIds }),
-  bulkUnregisterSubject: (subjectId, learnerIds) =>
-    tenantApi.post(`/subject-registration/bulk-unregister`, { subject_id: subjectId, learner_ids: learnerIds }),
-  toggleRegistration: (learnerId, subjectId, registered) =>
+  // ── Registration Actions ──────────────────────────────────
+  // `term` is { session_id, term_id } for whichever term is selected in the
+  // filters — without it, a write made while viewing a past term silently
+  // landed on whatever term happens to be "active" right now instead.
+  registerSubject: (learnerId, subjectId, term = {}) =>
+    tenantApi.post(`/subject-registration/register`, {
+      learner_id: learnerId,
+      subject_id: subjectId,
+      ...term,
+    }),
+  unregisterSubject: (learnerId, subjectId, term = {}) =>
+    tenantApi.post(`/subject-registration/unregister`, {
+      learner_id: learnerId,
+      subject_id: subjectId,
+      ...term,
+    }),
+  bulkRegisterSubject: (subjectId, learnerIds, term = {}) =>
+    tenantApi.post(`/subject-registration/bulk-register`, {
+      subject_id: subjectId,
+      learner_ids: learnerIds,
+      ...term,
+    }),
+  bulkUnregisterSubject: (subjectId, learnerIds, term = {}) =>
+    tenantApi.post(`/subject-registration/bulk-unregister`, {
+      subject_id: subjectId,
+      learner_ids: learnerIds,
+      ...term,
+    }),
+  toggleRegistration: (learnerId, subjectId, registered, term = {}) =>
     tenantApi.post(`/subject-registration/toggle`, {
       learner_id: learnerId,
       subject_id: subjectId,
       registered,
+      ...term,
     }),
-  bulkToggle: (changes) =>
-    tenantApi.post(`/subject-registration/bulk-toggle`, { changes }),
+  bulkToggle: (changes, term = {}) =>
+    tenantApi.post(`/subject-registration/bulk-toggle`, { changes, ...term }),
 
   // ── Stats ────────────────────────────────────────────────
   getRegistrationStats: (params = {}) =>

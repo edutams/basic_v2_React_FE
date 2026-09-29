@@ -9,7 +9,7 @@ import {
   InputLabel,
   Stack,
   Avatar,
-  Chip,
+  Paper,
   TableContainer,
   Table,
   TableHead,
@@ -21,20 +21,20 @@ import {
   RadioGroup,
   FormControlLabel,
   TablePagination,
-  CircularProgress,
+  Skeleton,
   useTheme,
+  useMediaQuery,
   Menu,
   ListItemIcon,
   Snackbar,
   Alert,
+  alpha,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   FileDownload as DownloadIcon,
   PictureAsPdf as PdfIcon,
   TableChart as ExcelIcon,
-  Male as MaleIcon,
-  Female as FemaleIcon,
 } from '@mui/icons-material';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
@@ -49,9 +49,33 @@ import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 
 const STORAGE_KEY = 'psychomotor_assessments';
 
+/**
+ * Whether a "YYYY-MM-DD" date string is strictly after today — same helper
+ * as Mark Attendance, used to lock out weeks that haven't started yet.
+ * Parsed as a local midnight Date, not `new Date(str)` directly (which
+ * reads "YYYY-MM-DD" as UTC and can shift a day off depending on timezone).
+ */
+const isFutureDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== 'string') return false;
+  const datePart = dateStr.slice(0, 10);
+  if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) return false;
+  const date = new Date(datePart + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date.getTime() > today.getTime();
+};
+
+/**
+ * Case-insensitive gender check — the API sends `sex` lowercase
+ * ('male'/'female'), so comparing against the literal 'MALE' always fell
+ * through to "female" regardless of the actual value.
+ */
+const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
+
 const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -76,7 +100,11 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   // ── Assessment Data ───────────────────────────────────────
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
   const exportMenuOpen = Boolean(exportAnchorEl);
-  const [alertSnackbar, setAlertSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [alertSnackbar, setAlertSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
 
   const [activeWeekId, setActiveWeekId] = useState(null);
 
@@ -148,82 +176,97 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           if (ackRes?.academic_week_id) {
             setActiveWeekId(String(ackRes.academic_week_id));
           }
-        } catch (e) { /* best-effort */ }
-      } catch (e) { console.error(e); }
+        } catch (e) {
+          /* best-effort */
+        }
+      } catch (e) {
+        console.error(e);
+      }
     };
     load();
   }, []);
 
   useEffect(() => {
     if (!pSession) return;
-    fetchTerms(pSession).then((r) => {
-      const termsData = r.data?.data || r.data || [];
-      setTerms(termsData);
-      // Try to preselect the term matching the active SessionTerm's term_id
-      if (Array.isArray(termsData) && termsData.length > 0) {
-        const match = termsData.find((t) => String(t.id) === String(pTermId));
-        if (match) {
-          setPTerm(match.id);
-        } else {
-          setPTerm(termsData[0].id);
+    fetchTerms(pSession)
+      .then((r) => {
+        const termsData = r.data?.data || r.data || [];
+        setTerms(termsData);
+        // Try to preselect the term matching the active SessionTerm's term_id
+        if (Array.isArray(termsData) && termsData.length > 0) {
+          const match = termsData.find((t) => String(t.id) === String(pTermId));
+          if (match) {
+            setPTerm(match.id);
+          } else {
+            setPTerm(termsData[0].id);
+          }
         }
-      }
-    }).catch(console.error);
+      })
+      .catch(console.error);
   }, [pSession]);
 
   useEffect(() => {
     if (!pProgramme) return;
-    fetchClassesByProgramme(pProgramme).then((r) => {
-      const d = r.data?.data || r.data || [];
-      setClasses(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassesByProgramme(pProgramme)
+      .then((r) => {
+        const d = r.data?.data || r.data || [];
+        setClasses(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [pProgramme]);
 
   useEffect(() => {
     if (!pClass) return;
-    fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined }).then((r) => {
-      const d = r.data || [];
-      setArms(Array.isArray(d) ? d : []);
-    }).catch(console.error);
+    fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined })
+      .then((r) => {
+        const d = r.data || [];
+        setArms(Array.isArray(d) ? d : []);
+      })
+      .catch(console.error);
   }, [pClass, pProgramme]);
 
   // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
     if (!pSession || !pTermId) return;
-    attendanceApi.getWeeksBySessionTerm({
-      session_id: pSession,
-      term_id: pTermId,
-    }).then((r) => {
-      const d = r.data?.data || [];
-      const weeks = Array.isArray(d) ? d : [];
-      setWeeks(weeks);
-      const match = activeWeekId
-        ? weeks.find((w) => String(w.week_id) === activeWeekId)
-        : null;
-      if (match) {
-        setPWeek(match.wk_id ?? match.week_id ?? match.id);
-      } else {
-        const fallback = weeks.find((w) => w.status === 'active')
-          || (weeks.length > 0 ? weeks[weeks.length - 1] : null);
-        if (fallback) {
-          setPWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
+    attendanceApi
+      .getWeeksBySessionTerm({
+        session_id: pSession,
+        term_id: pTermId,
+      })
+      .then((r) => {
+        const d = r.data?.data || [];
+        const weeks = Array.isArray(d) ? d : [];
+        setWeeks(weeks);
+        const match = activeWeekId ? weeks.find((w) => String(w.week_id) === activeWeekId) : null;
+        if (match) {
+          setPWeek(match.wk_id ?? match.week_id ?? match.id);
+        } else {
+          const fallback =
+            weeks.find((w) => w.status === 'active') ||
+            (weeks.length > 0 ? weeks[weeks.length - 1] : null);
+          if (fallback) {
+            setPWeek(fallback.wk_id ?? fallback.week_id ?? fallback.id);
+          }
         }
-      }
-    }).catch(console.error);
+      })
+      .catch(console.error);
   }, [pSession, pTermId, activeWeekId]);
 
   // ── Load domain traits from API ───────────────────────────
   useEffect(() => {
-    attendanceApi.getPsychomotorDomains({
-      session_id: pSession || undefined,
-      term_id: pTermId || undefined,
-    }).then((r) => {
-      const d = r.data?.data;
-      if (d) {
-        if (Array.isArray(d.affective_traits)) setAffectiveTraits(d.affective_traits);
-        if (Array.isArray(d.psychomotor_traits)) setPsychomotorTraits(d.psychomotor_traits);
-      }
-    }).catch(console.error);
+    attendanceApi
+      .getPsychomotorDomains({
+        session_id: pSession || undefined,
+        term_id: pTermId || undefined,
+      })
+      .then((r) => {
+        const d = r.data?.data;
+        if (d) {
+          if (Array.isArray(d.affective_traits)) setAffectiveTraits(d.affective_traits);
+          if (Array.isArray(d.psychomotor_traits)) setPsychomotorTraits(d.psychomotor_traits);
+        }
+      })
+      .catch(console.error);
   }, [pSession, pTermId]);
 
   // ── Fetch Learners ────────────────────────────────────────
@@ -244,13 +287,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
         // Update domain traits from response payload
         if (Array.isArray(payload.affective_traits)) setAffectiveTraits(payload.affective_traits);
-        if (Array.isArray(payload.psychomotor_traits)) setPsychomotorTraits(payload.psychomotor_traits);
+        if (Array.isArray(payload.psychomotor_traits))
+          setPsychomotorTraits(payload.psychomotor_traits);
 
         setLearners(students);
         // Build assessments map
         const assMap = {};
         students.forEach((l) => {
-          assMap[l.student_reg_id] = {
+          assMap[l.student_registration_id] = {
             affective: l.affective || {},
             psychomotor: l.psychomotor || {},
           };
@@ -282,16 +326,28 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const handleApplyFilter = () => {
     fetchLearners();
     setFilterApplied(true);
-    if (onFilter) onFilter(pArm, pSession, pTermId, pWeek);
+    // A new filter can return a shorter list — reset to page 1 so the
+    // table never lands on a now-out-of-range page.
+    setPPage(0);
+    // Pass programme/class too — matches MarkAttendanceTab's onFilter shape,
+    // so the parent's selectedProgrammeId/selectedClassId (used as fallback
+    // preselects in the Psychomotor stat-card modal filters) stay in sync.
+    if (onFilter) onFilter(pArm, pSession, pTermId, pWeek, pProgramme, pClass);
   };
 
   const handleSubmitFinal = async () => {
     setSubmitting(true);
     try {
       const assessmentData = Object.entries(assessments).map(([studentId, data]) => ({
-        student_id: Number(studentId),
-        affective: Object.entries(data.affective || {}).map(([trait, rating]) => ({ trait, rating })),
-        psychomotor: Object.entries(data.psychomotor || {}).map(([trait, rating]) => ({ trait, rating })),
+        student_registration_id: Number(studentId),
+        affective: Object.entries(data.affective || {}).map(([trait, rating]) => ({
+          trait,
+          rating,
+        })),
+        psychomotor: Object.entries(data.psychomotor || {}).map(([trait, rating]) => ({
+          trait,
+          rating,
+        })),
       }));
 
       await attendanceApi.submitAssessments({
@@ -310,6 +366,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
 
       // Clear localStorage after successful submission
       localStorage.removeItem(STORAGE_KEY);
+
+      // Refresh the stat cards now that real data changed — was only ever
+      // triggered by the Filter button or a tab switch.
+      if (onFilter) onFilter(pArm, pSession, pTermId, pWeek, pProgramme, pClass);
     } catch (e) {
       console.error('Failed to submit assessments:', e);
       setAlertSnackbar({
@@ -356,7 +416,10 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', 'psychomotor-report-' + new Date().toISOString().slice(0, 10) + '.pdf');
+      link.setAttribute(
+        'download',
+        'psychomotor-report-' + new Date().toISOString().slice(0, 10) + '.pdf',
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -367,15 +430,17 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   };
 
   return (
-    <Box sx={{ pt: 1 }}>
+    <Box>
       {/* ── Filters Row ─────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
+      <Grid container spacing={2} sx={{ mb: 1 }} alignItems="center">
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Session</InputLabel>
             <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
               {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>{s.sesname || s.name || s.id}</MenuItem>
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name || s.name || s.id}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -383,14 +448,20 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Term</InputLabel>
-            <Select value={pTerm} label="Term" onChange={(e) => {
-              const val = e.target.value;
-              setPTerm(val);
-              const term = terms.find((t) => t.id === val);
-              if (term) setPTermId(term.id);
-            }}>
+            <Select
+              value={pTerm}
+              label="Term"
+              onChange={(e) => {
+                const val = e.target.value;
+                setPTerm(val);
+                const term = terms.find((t) => t.id === val);
+                if (term) setPTermId(term.id);
+              }}
+            >
               {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term_name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -401,9 +472,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             <Select value={pWeek} label="Week" onChange={(e) => setPWeek(e.target.value)}>
               {weeks.map((w) => {
                 const weekId = w.wk_id ?? w.week_id ?? w.id;
+                // A week that hasn't started yet has nothing to assess —
+                // only weeks up to and including the current one are
+                // selectable. Past weeks stay open for catch-up.
+                const notReachedYet = isFutureDate(w.start_date);
                 return (
-                  <MenuItem key={weekId} value={weekId}>
+                  <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
                     {w.week_name || `Week ${weekId}`}
+                    {notReachedYet ? ' (upcoming)' : ''}
                   </MenuItem>
                 );
               })}
@@ -413,9 +489,15 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Programme</InputLabel>
-            <Select value={pProgramme} label="Programme" onChange={(e) => setPProgramme(e.target.value)}>
+            <Select
+              value={pProgramme}
+              label="Programme"
+              onChange={(e) => setPProgramme(e.target.value)}
+            >
               {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>{p.programme_name || p.name}</MenuItem>
+                <MenuItem key={p.id} value={p.id}>
+                  {p.programme_name || p.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -425,7 +507,9 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             <InputLabel>Class</InputLabel>
             <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
               {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>{c.class_name }</MenuItem>
+                <MenuItem key={c.id} value={c.id}>
+                  {c.class_name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -433,205 +517,510 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Class/Arm</InputLabel>
-            <Select value={pArm} label="Class Arm" onChange={(e) => setPArm(e.target.value)}>
+            <Select value={pArm} label="Class/Arm" onChange={(e) => setPArm(e.target.value)}>
               {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>{a.arm_names}</MenuItem>
+                <MenuItem key={a.id} value={a.id}>
+                  {a.class_arm_names}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
       </Grid>
 
-      {/* ── Action Buttons Row (right-aligned) ─────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center" justifyContent="flex-end">
-        <Grid size={{ xs: 12, sm: 'auto' }}>
-          <Button variant="contained" size="small" startIcon={<FilterIcon />} onClick={handleApplyFilter}>
+      {/* ── Action Bar (Counts on left, Filter & Actions on right) ── */}
+      <Box
+        sx={{
+          mb: 2.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1.5,
+        }}
+      >
+        {/* Left Side: Learner Count (only shown when filterApplied is true) */}
+        <Box>
+          {filterApplied && (
+            <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
+              <Box component="span" sx={{ color: 'primary.main' }}>
+                {`${learners.length} Learners`}
+              </Box>{' '}
+              Loaded
+            </Typography>
+          )}
+        </Box>
+
+        {/* Right Side: Filter Results + Export + Submit Final Assessments */}
+        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" gap={1}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<FilterIcon />}
+            onClick={handleApplyFilter}
+          >
             Filter Results
           </Button>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 'auto' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            disabled={!filterApplied}
-            onClick={(e) => setExportAnchorEl(e.currentTarget)}
-          >
-            Export Report
-          </Button>
-          <Menu
-            anchorEl={exportAnchorEl}
-            open={exportMenuOpen}
-            onClose={() => setExportAnchorEl(null)}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem onClick={handleExportExcel} dense>
-              <ListItemIcon><ExcelIcon fontSize="small" /></ListItemIcon>
-              Export to Excel
-            </MenuItem>
-            <MenuItem onClick={handleExportPdf} dense>
-              <ListItemIcon><PdfIcon fontSize="small" /></ListItemIcon>
-              Export to PDF
-            </MenuItem>
-          </Menu>
-        </Grid>
-      </Grid>
+
+          {filterApplied && (
+            <>
+              {/* Export Dropdown */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={(e) => setExportAnchorEl(e.currentTarget)}
+              >
+                Export Report
+              </Button>
+              <Menu
+                anchorEl={exportAnchorEl}
+                open={exportMenuOpen}
+                onClose={() => setExportAnchorEl(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <MenuItem onClick={handleExportExcel} dense>
+                  <ListItemIcon>
+                    <ExcelIcon fontSize="small" />
+                  </ListItemIcon>
+                  Export to Excel
+                </MenuItem>
+                <MenuItem onClick={handleExportPdf} dense>
+                  <ListItemIcon>
+                    <PdfIcon fontSize="small" />
+                  </ListItemIcon>
+                  Export to PDF
+                </MenuItem>
+              </Menu>
+
+              {/* Submit Final Assessments Button */}
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={handleSubmitFinal}
+                disabled={submitting || learners.length === 0}
+              >
+                {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
+              </Button>
+            </>
+          )}
+        </Stack>
+      </Box>
 
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
-      {/* ── Assessment Table ─────────────────────────────── */}
-      <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{
-                width: 40,
-                position: 'sticky',
-                left: 0,
-                zIndex: 2,
-                bgcolor: isDark ? '#1e1e1e' : '#fff',
-                borderRight: `1px solid ${theme.palette.divider}`,
-              }}>S/N</TableCell>
-              <TableCell sx={{
-                minWidth: 200,
-                position: 'sticky',
-                left: 40,
-                zIndex: 2,
-                bgcolor: isDark ? '#1e1e1e' : '#fff',
-                borderRight: `1px solid ${theme.palette.divider}`,
-              }}>Learner's Name</TableCell>
-              <TableCell sx={{ minWidth: 280 }}>Mark Affective Domain</TableCell>
-              <TableCell sx={{ minWidth: 280 }}>Mark Psychomotor</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '12px',
+          border: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '1.5px solid rgba(255, 255, 255, 0.15)'
+              : '1.5px solid #cbd5e1',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 4px 16px rgba(0, 0, 0, 0.35)'
+              : '0 4px 16px rgba(15, 23, 42, 0.05)',
+          overflow: 'hidden',
+        }}
+      >
+        <TableContainer
+          sx={{
+            overflowX: 'auto',
+            overflowY: 'auto',
+            height: { xs: '420px', md: '470px' },
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(90deg, #1e293b 268px, rgba(255, 255, 255, 0.18) 268px, rgba(255, 255, 255, 0.18) 270px, #121827 270px)'
+                : 'linear-gradient(90deg, #f1f5f9 268px, #cbd5e1 268px, #cbd5e1 270px, #ffffff 270px)',
+            '& .MuiTableHead-root .MuiTableCell-root': {
+              bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
+              fontWeight: 700,
+              color: (theme) => (theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a'),
+              borderBottom: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '2px solid rgba(255, 255, 255, 0.12)'
+                  : '2px solid #cbd5e1',
+            },
+            '& .MuiTableCell-root': {
+              borderColor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : '#e2e8f0',
+            },
+          }}
+        >
+          <Table
+            sx={{
+              minWidth: 800,
+              tableLayout: 'fixed',
+              borderCollapse: 'separate',
+              borderSpacing: 0,
+            }}
+            stickyHeader
+          >
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={28} />
+                <TableCell
+                  sx={{
+                    width: 50,
+                    minWidth: 50,
+                    maxWidth: 50,
+                    fontWeight: 700,
+                    ...(!isMobile && { position: 'sticky', left: 0, zIndex: 3 }),
+                    bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                    borderRight: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? '1px solid rgba(255, 255, 255, 0.15)'
+                        : '1px solid #cbd5e1',
+                  }}
+                >
+                  S/N
                 </TableCell>
-              </TableRow>
-            ) : learners.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
-                  {pArm && pWeek ? 'No learners found.' : 'Select class/arm and week, then click Filter.'}
+                <TableCell
+                  sx={{
+                    width: 220,
+                    minWidth: 220,
+                    maxWidth: 220,
+                    fontWeight: 700,
+                    ...(!isMobile && { position: 'sticky', left: 50, zIndex: 3 }),
+                    bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                    borderRight: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? '2px solid rgba(255, 255, 255, 0.18)'
+                        : '2px solid #cbd5e1',
+                  }}
+                >
+                  Learner's Name
                 </TableCell>
+                <TableCell sx={{ minWidth: 280 }}>Mark Affective Domain</TableCell>
+                <TableCell sx={{ minWidth: 280 }}>Mark Psychomotor</TableCell>
               </TableRow>
-            ) : (
-              learners.map((learner, idx) => {
-                const studentAssess = assessments[learner.student_reg_id] || { affective: {}, psychomotor: {} };
-                return (
-                  <TableRow key={learner.student_reg_id} hover sx={{ verticalAlign: 'top' }}>
-                    <TableCell sx={{
-                      position: 'sticky',
-                      left: 0,
-                      zIndex: 1,
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
-                    }}>{String(idx + 1).padStart(2, '0')}</TableCell>
-                    <TableCell sx={{
-                      position: 'sticky',
-                      left: 40,
-                      zIndex: 1,
-                      bgcolor: isDark ? '#1e1e1e' : '#fff',
-                      borderRight: `1px solid ${theme.palette.divider}`,
-                    }}>
-                      <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Avatar sx={{ width: 36, height: 36, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main' }}>
-                          {(learner.name || '?').charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1}>
-                            <Typography variant="body2" fontWeight={600}>{learner.name}</Typography>
-                            <Chip
-                              icon={learner.gender === 'MALE' ? <MaleIcon fontSize="small" /> : <FemaleIcon fontSize="small" />}
-                              label={learner.gender}
-                              size="small"
-                              color={learner.gender === 'MALE' ? 'primary' : 'success'}
-                              variant="soft"
-                              sx={{ height: 20, fontSize: '10px', fontWeight: 600 }}
-                            />
-                          </Stack>
-                        </Box>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                // Skeleton rows matching the real table's column layout —
+                // S/N + Name + affective/psychomotor rating columns — instead
+                // of a generic centered spinner.
+                Array.from({ length: 6 }).map((_, rowIdx) => (
+                  <TableRow key={`skeleton-row-${rowIdx}`}>
+                    <TableCell
+                      sx={{
+                        width: 50,
+                        minWidth: 50,
+                        maxWidth: 50,
+                        ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255, 255, 255, 0.12)'
+                            : '1px solid #cbd5e1',
+                      }}
+                    >
+                      <Skeleton variant="text" width={16} />
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        width: 220,
+                        minWidth: 220,
+                        maxWidth: 220,
+                        ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                        bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        borderRight: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? '2px solid rgba(255, 255, 255, 0.18)'
+                            : '2px solid #cbd5e1',
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="text" width="60%" />
                       </Stack>
                     </TableCell>
-                    {/* Affective domain */}
-                    <TableCell>
+                    <TableCell sx={{ minWidth: 280 }}>
                       <Stack spacing={1}>
-                        {affectiveTraits.length > 0 ? affectiveTraits.map((trait) => (
-                          <Stack key={trait} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1}>
-                            <Typography variant="caption" sx={{ minWidth: 80, color: 'text.secondary', fontWeight: 500 }}>
-                              {trait}
-                            </Typography>
-                            <RadioGroup
-                              row
-                              value={studentAssess.affective[trait] ?? ''}
-                              onChange={(e) => setRating(learner.student_reg_id, 'affective', trait, Number(e.target.value))}
-                            >
-                              {[1, 2, 3, 4, 5].map((val) => (
-                                <FormControlLabel
-                                  key={val}
-                                  value={val}
-                                  control={<Radio size="small" sx={{ p: 0.5 }} />}
-                                  label={val}
-                                  labelPlacement="bottom"
-                                  sx={{ mx: 0.25, '& .MuiFormControlLabel-label': { fontSize: '10px' } }}
-                                />
-                              ))}
-                            </RadioGroup>
-                          </Stack>
-                        )) : (
-                          <Typography variant="caption" color="text.secondary">
-                            No affective domains configured.
-                          </Typography>
-                        )}
+                        {Array.from({ length: 3 }).map((__, i) => (
+                          <Skeleton key={i} variant="rounded" height={26} />
+                        ))}
                       </Stack>
                     </TableCell>
-                    {/* Psychomotor domain */}
-                    <TableCell>
+                    <TableCell sx={{ minWidth: 280 }}>
                       <Stack spacing={1}>
-                        {psychomotorTraits.length > 0 ? psychomotorTraits.map((trait) => (
-                          <Stack key={trait} direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1}>
-                            <Typography variant="caption" sx={{ minWidth: 110, color: 'text.secondary', fontWeight: 500 }}>
-                              {trait}
-                            </Typography>
-                            <RadioGroup
-                              row
-                              value={studentAssess.psychomotor[trait] ?? ''}
-                              onChange={(e) => setRating(learner.student_reg_id, 'psychomotor', trait, Number(e.target.value))}
-                            >
-                              {[1, 2, 3, 4, 5].map((val) => (
-                                <FormControlLabel
-                                  key={val}
-                                  value={val}
-                                  control={<Radio size="small" sx={{ p: 0.5 }} />}
-                                  label={val}
-                                  labelPlacement="bottom"
-                                  sx={{ mx: 0.25, '& .MuiFormControlLabel-label': { fontSize: '10px' } }}
-                                />
-                              ))}
-                            </RadioGroup>
-                          </Stack>
-                        )) : (
-                          <Typography variant="caption" color="text.secondary">
-                            No psychomotor domains configured.
-                          </Typography>
-                        )}
+                        {Array.from({ length: 3 }).map((__, i) => (
+                          <Skeleton key={i} variant="rounded" height={26} />
+                        ))}
                       </Stack>
                     </TableCell>
                   </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                ))
+              ) : learners.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      width: 50,
+                      minWidth: 50,
+                      maxWidth: 50,
+                      ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '1px solid rgba(255, 255, 255, 0.12)'
+                          : '1px solid #cbd5e1',
+                    }}
+                  />
+                  <TableCell
+                    sx={{
+                      width: 220,
+                      minWidth: 220,
+                      maxWidth: 220,
+                      ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                      borderRight: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? '2px solid rgba(255, 255, 255, 0.18)'
+                          : '2px solid #cbd5e1',
+                    }}
+                  />
+                  <TableCell colSpan={2} align="center" sx={{ py: 6, px: 2 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      {pArm && pWeek
+                        ? 'No learners found for the selected filters.'
+                        : 'Select class/arm and week, then click Filter.'}
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                learners
+                  .slice(pPage * pRowsPerPage, pPage * pRowsPerPage + pRowsPerPage)
+                  .map((learner, sliceIdx) => {
+                    const idx = pPage * pRowsPerPage + sliceIdx;
+                    const studentAssess = assessments[learner.student_registration_id] || {
+                      affective: {},
+                      psychomotor: {},
+                    };
+                    return (
+                      <TableRow
+                        key={learner.student_registration_id}
+                        hover
+                        sx={{ verticalAlign: 'top' }}
+                      >
+                        <TableCell
+                          sx={{
+                            width: 50,
+                            minWidth: 50,
+                            maxWidth: 50,
+                            ...(!isMobile && { position: 'sticky', left: 0, zIndex: 2 }),
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '1px solid rgba(255, 255, 255, 0.12)'
+                                : '1px solid #cbd5e1',
+                          }}
+                        >
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            width: 220,
+                            minWidth: 220,
+                            maxWidth: 220,
+                            ...(!isMobile && { position: 'sticky', left: 50, zIndex: 2 }),
+                            bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                            borderRight: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '2px solid rgba(255, 255, 255, 0.18)'
+                                : '2px solid #cbd5e1',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Avatar
+                              src={learner.avatar || undefined}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                bgcolor: 'primary.main',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {(learner.name || '?').charAt(0)}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Stack direction="row" alignItems="center" spacing={0.75}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
+                                  {learner.name}
+                                </Typography>
+                                {/* Single-letter M/F badge, after the name now — the old
+                                    chip compared gender against the literal 'MALE', but
+                                    the API sends it lowercase, so it always fell through
+                                    to the female icon regardless of actual gender. */}
+                                <Box
+                                  title={learner.gender}
+                                  sx={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    flexShrink: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    fontWeight: 700,
+                                    bgcolor: alpha(
+                                      isMaleGender(learner.gender)
+                                        ? theme.palette.primary.main
+                                        : theme.palette.success.main,
+                                      isDark ? 0.28 : 0.14,
+                                    ),
+                                    color: isMaleGender(learner.gender)
+                                      ? theme.palette.primary.main
+                                      : theme.palette.success.main,
+                                  }}
+                                >
+                                  {isMaleGender(learner.gender) ? 'M' : 'F'}
+                                </Box>
+                              </Stack>
+                              {learner.admission_no && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', lineHeight: 1.2 }}
+                                  noWrap
+                                >
+                                  {learner.admission_no}
+                                </Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        </TableCell>
+                        {/* Affective domain */}
+                        <TableCell>
+                          <Stack spacing={1}>
+                            {affectiveTraits.length > 0 ? (
+                              affectiveTraits.map((trait) => (
+                                <Stack
+                                  key={trait}
+                                  direction={{ xs: 'column', sm: 'row' }}
+                                  alignItems={{ sm: 'center' }}
+                                  spacing={1}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      width: 140,
+                                      flexShrink: 0,
+                                      color: 'text.secondary',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {trait}
+                                  </Typography>
+                                  <RadioGroup
+                                    row
+                                    value={studentAssess.affective[trait] ?? ''}
+                                    onChange={(e) =>
+                                      setRating(
+                                        learner.student_registration_id,
+                                        'affective',
+                                        trait,
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                  >
+                                    {[1, 2, 3, 4, 5].map((val) => (
+                                      <FormControlLabel
+                                        key={val}
+                                        value={val}
+                                        control={<Radio size="small" sx={{ p: 0.5 }} />}
+                                        label={val}
+                                        labelPlacement="bottom"
+                                        sx={{
+                                          mx: 0.25,
+                                          '& .MuiFormControlLabel-label': { fontSize: '10px' },
+                                        }}
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                </Stack>
+                              ))
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No affective domains configured.
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                        {/* Psychomotor domain */}
+                        <TableCell>
+                          <Stack spacing={1}>
+                            {psychomotorTraits.length > 0 ? (
+                              psychomotorTraits.map((trait) => (
+                                <Stack
+                                  key={trait}
+                                  direction={{ xs: 'column', sm: 'row' }}
+                                  alignItems={{ sm: 'center' }}
+                                  spacing={1}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      width: 140,
+                                      flexShrink: 0,
+                                      color: 'text.secondary',
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {trait}
+                                  </Typography>
+                                  <RadioGroup
+                                    row
+                                    value={studentAssess.psychomotor[trait] ?? ''}
+                                    onChange={(e) =>
+                                      setRating(
+                                        learner.student_registration_id,
+                                        'psychomotor',
+                                        trait,
+                                        Number(e.target.value),
+                                      )
+                                    }
+                                  >
+                                    {[1, 2, 3, 4, 5].map((val) => (
+                                      <FormControlLabel
+                                        key={val}
+                                        value={val}
+                                        control={<Radio size="small" sx={{ p: 0.5 }} />}
+                                        label={val}
+                                        labelPlacement="bottom"
+                                        sx={{
+                                          mx: 0.25,
+                                          '& .MuiFormControlLabel-label': { fontSize: '10px' },
+                                        }}
+                                      />
+                                    ))}
+                                  </RadioGroup>
+                                </Stack>
+                              ))
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">
+                                No psychomotor domains configured.
+                              </Typography>
+                            )}
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-      {/* ── Pagination ──────────────────────────────────── */}
-      <Box sx={{ pt: 2 }}>
+        {/* ── Pagination embedded inside Paper container ──── */}
         <TablePagination
           component="div"
           count={learners.length}
@@ -642,30 +1031,41 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
             setPRowsPerPage(parseInt(e.target.value, 10));
             setPPage(0);
           }}
+          sx={{
+            borderTop: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '1px solid rgba(255, 255, 255, 0.12)'
+                : '1px solid #cbd5e1',
+            bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
+          }}
         />
-      </Box>
+      </Paper>
 
       {/* ── Submit Footer ──────────────────────────────── */}
-      <Box
-        sx={{
-          mt: 3,
-          p: 2,
-          borderRadius: 2,
-          bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f9fafb',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2,
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          {learners.length > 0 ? `${learners.length} learners loaded.` : 'No data loaded.'}
-        </Typography>
-        <Button variant="contained" size="small" onClick={handleSubmitFinal} disabled={submitting || learners.length === 0}>
-          {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
-        </Button>
-      </Box>
+      {filterApplied && (
+        <Box
+          sx={{
+            mt: 3,
+            p: 2,
+            borderRadius: 2,
+            bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#f9fafb',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-end',
+            flexWrap: 'wrap',
+            gap: 2,
+          }}
+        >
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSubmitFinal}
+            disabled={submitting || learners.length === 0}
+          >
+            {submitting ? 'SUBMITTING...' : 'SUBMIT FINAL ASSESSMENTS'}
+          </Button>
+        </Box>
+      )}
 
       <Snackbar
         open={alertSnackbar.open}

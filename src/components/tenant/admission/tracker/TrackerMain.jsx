@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, Button, Chip } from '@mui/material';
+import { Box, Paper, Typography, Button, Chip, useTheme } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
   RadioButtonUnchecked as LockedIcon,
@@ -6,18 +6,43 @@ import {
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
+/**
+ * Shared card shell — flat, bordered, rounded 16px, matching the card
+ * language used across the reworked admission pages (ApplicationCard,
+ * TrackerHeader) instead of MUI's default elevated Paper shadow.
+ */
+const TrackerCard = ({ sx, children, ...rest }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        borderRadius: '10px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+        p: { xs: 1.5, sm: 1.75 },
+        ...sx,
+      }}
+      {...rest}
+    >
+      {children}
+    </Paper>
+  );
+};
+
 const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
-  <Paper
+  <TrackerCard
     sx={{
-      borderRadius: 3,
-      p: { xs: 2, sm: 2.5 },
-      mb: 2,
+      mb: 1.5,
       display: 'flex',
       flexDirection: { xs: 'column', sm: 'row' },
       alignItems: { xs: 'flex-start', sm: 'center' },
       gap: 2,
       borderLeft: '4px solid',
-      borderLeftColor: 'success.dark',
+      borderLeftColor: '#16a34a',
     }}
   >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
@@ -26,22 +51,21 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
           width: 48,
           height: 48,
           borderRadius: 2,
-          bgcolor: 'success.light',
+          bgcolor: '#dcfce7',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <CheckCircleIcon sx={{ color: 'success.dark', fontSize: 28 }} />
+        <CheckCircleIcon sx={{ color: '#16a34a', fontSize: 28 }} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography
           variant="caption"
-          color="success.dark"
           fontWeight={700}
-          sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
+          sx={{ color: '#16a34a', textTransform: 'uppercase', letterSpacing: 0.5 }}
         >
           Form Submitted
         </Typography>
@@ -55,18 +79,28 @@ const FormSubmittedCard = ({ submittedDate, onViewDetails, onEditForm }) => (
     </Box>
 
     <Box
-      sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}
+      sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'flex-end' }, width: '100%' }}
     >
       {onEditForm && (
-        <Button variant="contained" size="small" onClick={onEditForm} sx={{ fontWeight: 600, borderRadius: 2, flexShrink: 0, whiteSpace: 'nowrap', }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onEditForm}
+          sx={{ fontWeight: 600, borderRadius: 2, textTransform: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}
+        >
           Edit Form
         </Button>
       )}
-      <Button variant="contained" size="small" onClick={onViewDetails} sx={{ fontWeight: 600, borderRadius: 2, flexShrink: 0, whiteSpace: 'nowrap', }}>
+      <Button
+        variant="contained"
+        size="small"
+        onClick={onViewDetails}
+        sx={{ fontWeight: 600, borderRadius: 2, textTransform: 'none', flexShrink: 0, whiteSpace: 'nowrap' }}
+      >
         View Form Details
       </Button>
     </Box>
-  </Paper>
+  </TrackerCard>
 );
 
 FormSubmittedCard.propTypes = {
@@ -85,21 +119,21 @@ const CurrentStageCard = ({
   showActions = true,
   showRequirementStatus = true,
 }) => (
-  <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2, bgcolor: '#F7F9FF' }}>
+  <TrackerCard sx={{ mb: 1.5, bgcolor: (t) => (t.palette.mode === 'dark' ? t.palette.background.paper : '#f8fafc') }}>
     <Box display="flex" alignItems="center" gap={1} mb={1}>
       <Box
         sx={{
           width: 40,
           height: 40,
           borderRadius: 2,
-          bgcolor: '#E8EDF8',
+          bgcolor: '#e0f2fe',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexShrink: 0,
         }}
       >
-        <CalendarIcon sx={{ color: 'primary.main', fontSize: 22 }} />
+        <CalendarIcon sx={{ color: '#0284c7', fontSize: 22 }} />
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -115,7 +149,7 @@ const CurrentStageCard = ({
           variant="h5"
           fontWeight={800}
           lineHeight={1.2}
-          sx={{ fontSize: { xs: '1.1rem', sm: '1.5rem' } }}
+          sx={{ fontSize: { xs: '1.05rem', sm: '1.35rem' } }}
         >
           {stageTitle}
         </Typography>
@@ -130,7 +164,7 @@ const CurrentStageCard = ({
           fontWeight: 700,
           fontSize: { xs: 10, sm: 11 },
           borderRadius: 2,
-          height: 28,
+          height: 26,
           flexShrink: 0,
         }}
       />
@@ -139,18 +173,18 @@ const CurrentStageCard = ({
     <Typography
       variant="body2"
       color="text.secondary"
-      sx={{ pl: { xs: 0, sm: 7 }, mb: 2, lineHeight: 1.6 }}
+      sx={{ pl: { xs: 0, sm: 6.5 }, mb: 2, lineHeight: 1.6 }}
     >
       {stageDescription}
     </Typography>
 
     {showRequirementStatus && (
-      <Paper
+      <Box
         sx={{
           borderRadius: 2,
-          bgcolor: 'info.light',
-          px: { xs: 2, sm: 2.5 },
-          py: { xs: 1.5, sm: 2 },
+          bgcolor: '#e0f2fe',
+          px: { xs: 1.5, sm: 1.75 },
+          py: { xs: 1, sm: 1.25 },
           mb: 2,
           display: 'flex',
           justifyContent: 'space-between',
@@ -184,20 +218,32 @@ const CurrentStageCard = ({
             {timeLimit}
           </Typography>
         </Box>
-      </Paper>
+      </Box>
     )}
 
     {showActions && (
       <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} gap={1.5}>
-        <Button variant="contained" size="small" onClick={onStart} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onStart}
+          fullWidth
+          sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, textTransform: 'none' }}
+        >
           Start {stageTitle}
         </Button>
-        <Button variant="contained" size="small" onClick={onPractice} fullWidth sx={{ fontWeight: 700, py: 1.5, borderRadius: 2 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onPractice}
+          fullWidth
+          sx={{ fontWeight: 700, py: 1.25, borderRadius: 2, textTransform: 'none' }}
+        >
           Practice Test
         </Button>
       </Box>
     )}
-  </Paper>
+  </TrackerCard>
 );
 
 CurrentStageCard.propTypes = {
@@ -212,7 +258,7 @@ CurrentStageCard.propTypes = {
 };
 
 const NextStepCard = ({ title, description, actionLabel, actionDisabled, onAction }) => (
-  <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 } }}>
+  <TrackerCard>
     <Box
       display="flex"
       flexDirection={{ xs: 'column', sm: 'row' }}
@@ -255,11 +301,24 @@ const NextStepCard = ({ title, description, actionLabel, actionDisabled, onActio
         </Box>
       </Box>
 
-      <Button variant="contained" size="small" disabled={actionDisabled} onClick={onAction} sx={{ fontWeight: 700, borderRadius: 2, flexShrink: 0, alignSelf: { xs: 'flex-end', sm: 'center' }, whiteSpace: 'nowrap', }}>
+      <Button
+        variant="contained"
+        size="small"
+        disabled={actionDisabled}
+        onClick={onAction}
+        sx={{
+          fontWeight: 700,
+          borderRadius: 2,
+          textTransform: 'none',
+          flexShrink: 0,
+          alignSelf: { xs: 'stretch', sm: 'center' },
+          whiteSpace: 'nowrap',
+        }}
+      >
         {actionLabel}
       </Button>
     </Box>
-  </Paper>
+  </TrackerCard>
 );
 
 NextStepCard.propTypes = {

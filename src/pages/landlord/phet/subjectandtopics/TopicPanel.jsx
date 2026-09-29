@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -18,17 +17,22 @@ import {
   Chip,
   Button,
   TextField,
+  Skeleton,
   InputAdornment,
-  Alert
+  Alert,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
   Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { IconRefresh, IconListDetails, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
+import MiniStat from '@/components/shared/stats/MiniStat';
 
-const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false }) => {
+const TopicPanel = ({ selectedSubject, topics = [], stats, onAction, isLoading = false, onFetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState(null);
@@ -52,45 +56,104 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
     handleMenuClose();
   };
 
-  const filteredTopics = topics.filter((topic) =>
-    topic.topic.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setPage(0);
+  const handleFetch = () => {
+    onFetch?.(selectedSubject?.id, searchTerm);
   };
 
-  const hasActiveFilters = searchTerm !== '';
+  // `topics` is already exactly what the backend returned for the currently
+  // selected subject + search term — no client-side re-filtering here, only
+  // client-side paging over that already-scoped list.
+  const paginatedTopics = topics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const paginatedTopics = filteredTopics.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+  // Reset to page 1 whenever the underlying list changes (new search results,
+  // switching subject, a row added/removed) so pagination never points past
+  // the end.
+  useEffect(() => {
+    setPage(0);
+  }, [topics]);
+
+  // Search is subject-scoped, so clear any leftover term when the selected
+  // subject changes — otherwise switching subjects silently keeps filtering
+  // by a search term that belonged to the previous one.
+  useEffect(() => {
+    setSearchTerm('');
+  }, [selectedSubject?.id]);
 
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">
-            {selectedSubject ? (
-              <>
-                Manage Topics in{' '}
-                <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
-                  {selectedSubject.subject_name}
-                </Box>
-              </>
-            ) : (
-              'Manage Topics'
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          {selectedSubject && stats && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <MiniStat label="Total Topics" value={stats.total} loading={isLoading} icon={IconListDetails} />
+              <MiniStat
+                label="Active"
+                value={stats.active}
+                loading={isLoading}
+                color="success.main"
+                icon={IconCircleCheck}
+              />
+              <MiniStat
+                label="Inactive"
+                value={stats.inactive}
+                loading={isLoading}
+                color="error.main"
+                icon={IconCircleX}
+              />
+            </Box>
+          )}
+
+          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} flexWrap="wrap">
+            <Typography variant="h5" sx={{ minWidth: 0 }}>
+              {selectedSubject ? (
+                <>
+                  Manage Topics in{' '}
+                  <Box component="span" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {selectedSubject.subject_name}
+                  </Box>
+                </>
+              ) : (
+                'Manage Topics'
+              )}
+            </Typography>
+            {selectedSubject && (
+              <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')} sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
+                Add New Topic
+              </Button>
             )}
-          </Typography>
+          </Box>
+
           {selectedSubject && (
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => onAction('create')}>
-              Add New Topic
-            </Button>
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <TextField
+                placeholder="Search topics..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleFetch();
+                }}
+                size="small"
+                sx={{ minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {onFetch && (
+                <Button variant="outlined" size="small" onClick={handleFetch} startIcon={<IconRefresh size={16} />}>
+                  Fetch
+                </Button>
+              )}
+            </Box>
           )}
         </Box>
       }
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       {!selectedSubject ? (
         <Box>
@@ -99,37 +162,33 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
           </Alert>
         </Box>
       ) : isLoading ? (
-        <Typography sx={{ p: 2 }}>Loading...</Typography>
+        <Box sx={{ p: 0 }}>
+          <TableContainer>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+              <TableHead>
+                <TableRow>
+                  {['S/N', 'Topic', 'Status', 'Action'].map((h) => (
+                    <TableCell key={h} sx={{ fontWeight: 'bold' }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                    <TableCell><Skeleton variant="rounded" width={60} height={24} /></TableCell>
+                    <TableCell><Skeleton variant="circular" width={32} height={32} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
       ) : (
         <Box sx={{ p: 0 }}>
-          <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
-              placeholder="Search topics..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(0);
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            {hasActiveFilters && (
-              <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
-                Clear Filters
-              </Button>
-            )}
-          </Box>
-
-          <Paper>
-            <TableContainer>
-              <Table sx={{ whiteSpace: 'nowrap' }}>
+         <TableContainer>
+              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -173,14 +232,11 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                             onClose={handleMenuClose}
                           >
                             <MenuItem onClick={() => handleActionClick('update')}>
+                              <EditIcon fontSize="small" sx={{ mr: 1 }} />
                               Edit Topic
                             </MenuItem>
-                            {/* <MenuItem onClick={() =>
-                              handleActionClick(t.status === 'active' ? 'deactivate' : 'activate')
-                            }>
-                              {t.status === 'active' ? 'Deactivate' : 'Activate'}
-                            </MenuItem> */}
-                            <MenuItem onClick={() => handleActionClick('delete')}>
+                            <MenuItem onClick={() => handleActionClick('delete')} sx={{ color: 'error.main' }}>
+                              <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                               Delete Topic
                             </MenuItem>
                           </Menu>
@@ -189,7 +245,7 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} align="center">
+                      <TableCell colSpan={4} align="center">
                         <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
                           <Typography variant="body2" color="textSecondary">
                             No topics found
@@ -203,8 +259,8 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                   <TableRow>
                     <TablePagination
                       rowsPerPageOptions={[5, 10, 25]}
-                      colSpan={3}
-                      count={filteredTopics.length}
+                      colSpan={4}
+                      count={topics.length}
                       rowsPerPage={rowsPerPage}
                       page={page}
                       onPageChange={(_, newPage) => setPage(newPage)}
@@ -217,7 +273,6 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
                 </TableFooter>
               </Table>
             </TableContainer>
-          </Paper>
         </Box>
       )}
     </ParentCard>
@@ -227,8 +282,14 @@ const TopicPanel = ({ selectedSubject, topics = [], onAction, isLoading = false 
 TopicPanel.propTypes = {
   selectedSubject: PropTypes.object,
   topics: PropTypes.array,
+  stats: PropTypes.shape({
+    total: PropTypes.number,
+    active: PropTypes.number,
+    inactive: PropTypes.number,
+  }),
   onAction: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  onFetch: PropTypes.func,
 };
 
 export default TopicPanel;

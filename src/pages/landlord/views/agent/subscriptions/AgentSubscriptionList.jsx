@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -11,20 +11,23 @@ import {
   TableCell,
   TableFooter,
   TablePagination,
-  Paper,
   Chip,
   IconButton,
   Menu,
   MenuItem,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Alert,
-  Tooltip,
+  Button,
+  Avatar,
+  Stack,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
+  Divider,
+  Grid,
+  Link,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -32,30 +35,75 @@ import {
   CheckCircle as CheckIcon,
   Cancel as CancelIcon,
   Visibility as ViewIcon,
+  LocalOffer as DiscountIcon,
+  PersonOutline as PersonOutlineIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
 
 import axios from '@/api/landlord/landlord_api';
 import useNotification from 'src/hooks/useNotification';
-
 import ConfirmationDialog from 'src/components/shared/ConfirmationDialog';
+import SubscriptionInvoiceModal from './SubscriptionInvoiceModal';
 
-const AgentSubscriptionList = ({ status }) => {
+// ─── Status Chip ────────────────────────────────────────────────────────────
+const StatusChip = ({ status }) => {
+  const isActive = status === 'active';
+  const isPending = status === 'pending';
+  return (
+    <Chip
+      label={isActive ? 'Active' : isPending ? 'Pending' : 'Expired'}
+      size="small"
+      sx={{
+        bgcolor: isActive ? 'success.light' : isPending ? 'warning.light' : 'error.light',
+        color: isActive ? 'success.dark' : isPending ? 'warning.dark' : 'error.dark',
+        fontWeight: 600,
+        borderRadius: '8px',
+        fontSize: 11,
+      }}
+    />
+  );
+};
+
+// ─── Table Header Styles ────────────────────────────────────────────────────
+const thSx = { fontWeight: 700, fontSize: '13px' };
+
+const EMPTY_FILTERS = { transaction_ref: '', from: '', to: '', session_id: '', term_id: '' };
+
+const AgentSubscriptionList = ({ status, onMutate, subscriptionCharges }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [filterDraft, setFilterDraft] = useState(EMPTY_FILTERS);
+  const [activeFilters, setActiveFilters] = useState(EMPTY_FILTERS);
+  const [filterOptions, setFilterOptions] = useState({ sessions: [], terms: [] });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const notify = useNotification();
 
-  const fetchSubscriptions = async () => {
+  // Discount modal state
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [discountRow, setDiscountRow] = useState(null);
+  const [discountValue, setDiscountValue] = useState(0);
+  const [discountSaving, setDiscountSaving] = useState(false);
+
+  // View detail modal state
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailRow, setDetailRow] = useState(null);
+
+  const getSchoolUrl = (row) => {
+    const domain = row.tenant?.organization?.organization_domain;
+    const shortName = row.tenant?.tenant_short_name;
+    if (domain && shortName) return `https://${shortName}.${domain}`;
+    return null;
+  };
+
+  const fetchSubscriptions = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get('/v1/landlord/subscriptions', {
-        params: { status },
-      });
+      const res = await axios.post('/v1/landlord/subscriptions', { status, ...activeFilters });
       setRows(res.data.data);
     } catch (error) {
       console.error('Error fetching subscriptions:', error);
@@ -63,19 +111,49 @@ const AgentSubscriptionList = ({ status }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [status, activeFilters]);
 
   useEffect(() => {
     fetchSubscriptions();
-  }, [status]);
+  }, [fetchSubscriptions]);
+
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const res = await axios.get('/v1/landlord/subscriptions/filter-options');
+        if (res.data.status === 'success') {
+          setFilterOptions(res.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscription filter options', error);
+      }
+    };
+    loadFilterOptions();
+  }, []);
+
+  const handleFilterApply = () => {
+    // Trim so stray whitespace pasted into the ref field (or a tab from
+    // tabbing between fields mid-typing) doesn't end up baked into the
+    // querystring and silently miss an otherwise-matching row.
+    setActiveFilters({
+      ...filterDraft,
+      transaction_ref: filterDraft.transaction_ref.trim(),
+    });
+  };
+
+  const handleFilterReset = () => {
+    setFilterDraft(EMPTY_FILTERS);
+    setActiveFilters(EMPTY_FILTERS);
+  };
+
+  const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
       await axios.patch(`/v1/landlord/subscriptions/${id}/status`, { status: newStatus });
-      notify.success(
-        `Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`,
-      );
+      notify.success(`Subscription successfully ${newStatus === 'active' ? 'approved' : 'updated'}`);
       fetchSubscriptions();
+      onMutate?.();
       handleMenuClose();
     } catch (error) {
       console.error('Error updating status:', error);
@@ -107,13 +185,61 @@ const AgentSubscriptionList = ({ status }) => {
     });
   };
 
-  const filteredRows = rows.filter((row) => {
-    const searchStr = `${row.tenant?.tenant_name || ''} ${row.sessions?.sesname || ''} ${row.terms?.term_name || ''
-      } ${row.my_plans?.display_name || ''}`.toLowerCase();
-    return searchStr.includes(searchTerm.toLowerCase());
-  });
+  // ── Invoice Modal ────────────────────────────────────────────────────────
+  const handleViewInvoiceClick = (row) => {
+    setSelectedRow(row);
+    setInvoiceModalOpen(true);
+    setAnchorEl(null);
+  };
 
-  const paginatedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // ── Discount Modal ───────────────────────────────────────────────────────
+  const handleOpenDiscount = (row) => {
+    setDiscountRow(row);
+    setDiscountValue(row.discount || 0);
+    setDiscountModalOpen(true);
+    handleMenuClose();
+  };
+
+  const handleSaveDiscount = async () => {
+    if (!discountRow) return;
+    setDiscountSaving(true);
+    try {
+      await axios.patch(`/v1/landlord/subscriptions/${discountRow.id}/discount`, {
+        discount: parseInt(discountValue, 10),
+      });
+      notify.success('Discount updated successfully');
+      setDiscountModalOpen(false);
+      setDiscountRow(null);
+      fetchSubscriptions();
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      notify.error(error.response?.data?.message || 'Failed to update discount');
+    } finally {
+      setDiscountSaving(false);
+    }
+  };
+
+  // ── View Detail ──────────────────────────────────────────────────────────
+  const handleViewDetail = (row) => {
+    setDetailRow(row);
+    setDetailModalOpen(true);
+    handleMenuClose();
+  };
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  const formatAmount = (val) => parseFloat(val || 0).toLocaleString();
+  const formatDate = (val) => (val ? new Date(val).toLocaleDateString('en-GB') : '—');
+
+  const calcAmountDue = (row) => {
+    const amount = parseFloat(row.amount) || 0;
+    const discountPct = parseFloat(row.discount) || 0;
+    const afterDiscount = amount - (amount * discountPct) / 100;
+    // Was missing the gateway charge that the page-level "Amount Due" stat
+    // (and the tenant's own equivalent table) already includes — this is
+    // exactly why the stat and this table showed two different numbers.
+    const chargesNum = parseFloat(subscriptionCharges) || 0;
+    return afterDiscount + chargesNum;
+  };
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -125,145 +251,252 @@ const AgentSubscriptionList = ({ status }) => {
     setSelectedRow(null);
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'expired':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
+      {/* ── Filter Bar ───────────────────────────────────────────────────── */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'flex-end', gap: 1.5, flexWrap: 'wrap' }}>
         <TextField
-          placeholder="Search by school, session, or plan..."
-          sx={{ width: { xs: '100%', sm: 350, md: 350 } }}
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(0);
+          label="Search"
+          placeholder="Transaction Ref. Number"
+          sx={{ width: { xs: '100%', sm: 480 } }}
+          size="small"
+          value={filterDraft.transaction_ref}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, transaction_ref: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleFilterApply();
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon fontSize="small" />
               </InputAdornment>
             ),
           }}
         />
+        <TextField
+          label="From"
+          type="date"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.from}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, from: e.target.value }))}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="To"
+          type="date"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.to}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, to: e.target.value }))}
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          select
+          label="Session"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.session_id}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, session_id: e.target.value }))}
+        >
+          <MenuItem value="">-- Select Session --</MenuItem>
+          {filterOptions.sessions.map((s) => (
+            <MenuItem key={s.id} value={s.id}>
+              {s.session_name}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Term"
+          size="small"
+          sx={{ width: { xs: '100%', sm: 160 } }}
+          value={filterDraft.term_id}
+          onChange={(e) => setFilterDraft((p) => ({ ...p, term_id: e.target.value }))}
+        >
+          <MenuItem value="">-- Select Term --</MenuItem>
+          {filterOptions.terms.map((t) => (
+            <MenuItem key={t.id} value={t.id}>
+              {t.term_name}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Button variant="contained" size="small" onClick={handleFilterApply}>
+          Fetch
+        </Button>
+        {hasActiveFilters && (
+          <Button size="small" onClick={handleFilterReset}>
+            Reset
+          </Button>
+        )}
       </Box>
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" py={5}>
-          <CircularProgress />
-        </Box>
-      ) : (
+      {/* ── Table ────────────────────────────────────────────────────────── */}
         <Box>
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1, verticalAlign: 'top' }, tableLayout: 'fixed' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>School</TableCell>
-                  <TableCell>Session/Term</TableCell>
-                  <TableCell>Plan Details</TableCell>
-                  <TableCell>Amount (₦)</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="center">Action</TableCell>
+                  <TableCell sx={{ ...thSx, width: '3%' }}>#</TableCell>
+                  <TableCell sx={{ ...thSx, width: '16%' }}>School Info</TableCell>
+                  <TableCell sx={{ ...thSx, width: '10%' }}>Session/Term</TableCell>
+                  <TableCell sx={{ ...thSx, width: '12%' }}>Plan Details</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Amount (₦)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '7%' }}>Discount (%)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Amount Due (₦)</TableCell>
+                  <TableCell sx={{ ...thSx, width: '11%' }}>Trans. Ref. No.</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Transaction Date</TableCell>
+                  <TableCell sx={{ ...thSx, width: '8%' }}>Bank Pay Date</TableCell>
+                  <TableCell sx={{ ...thSx, width: '7%' }}>Status</TableCell>
+                  <TableCell sx={{ ...thSx, width: '2%' }} align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedRows.length > 0 ? (
-                  paginatedRows.map((row, index) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          {row.tenant?.tenant_name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {row.tenant?.id}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {row.sessions?.sesname} <br />
-                        <Typography variant="caption" color="textSecondary">
-                          {row.terms?.term_name || 'Full Session'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {row.my_plans?.display_name} <br />
-                        <Typography variant="caption" color="textSecondary">
-                          {row.plans?.description}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{row.amount}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={row.status.toUpperCase()}
-                          size="small"
-                          color={getStatusColor(row.status)}
-                          sx={{ borderRadius: '6px' }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Box display="flex" justifyContent="center" alignItems="center">
-                          {row.status === 'pending' && (
-                            <Button variant="contained" size="small" color="success" sx={{ mr: 1 }} onClick={() => handleApproveConfirm(row)}
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(12)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 20 : 90} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : rows.length > 0 ? (
+                  rows.map((row, index) => {
+                    const amountNum = parseFloat(row.amount) || 0;
+                    const discountPct = parseFloat(row.discount) || 0;
+                    const amountDue = calcAmountDue(row);
+
+                    return (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Avatar
+                              src={row.tenant?.school_logo || row.tenant?.image}
+                              sx={{ width: 40, height: 40, bgcolor: '#E7E9EB', flexShrink: 0 }}
                             >
-                              Approve
-                            </Button>
+                              {!row.tenant?.school_logo && !row.tenant?.image && (
+                                <PersonOutlineIcon sx={{ color: '#000', fontSize: 22 }} />
+                              )}
+                            </Avatar>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="subtitle2" fontWeight={700} sx={{ lineHeight: 1.3, wordBreak: 'break-word' }}>
+                                {row.tenant?.tenant_name || '—'}
+                              </Typography>
+                              {(() => {
+                                const url = getSchoolUrl(row);
+                                return url ? (
+                                  <Link
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    color="text.secondary"
+                                    underline="hover"
+                                    sx={{ display: 'block', lineHeight: 1.3, wordBreak: 'break-all' }}
+                                  >
+                                    {url.replace('https://', '')}
+                                  </Link>
+                                ) : (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {row.tenant?.tenant_short_name || '—'}
+                                  </Typography>
+                                );
+                              })()}
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          {row.sessions?.session_name || '—'}
+                          <br />
+                          <Typography variant="caption" color="textSecondary">
+                            {row.terms?.term_name || 'Full Session'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {row.my_plans?.display_name || '—'}
+                          <br />
+                          <Typography variant="caption" color="textSecondary">
+                            {row.plans?.description || ''}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>₦{formatAmount(amountNum)}</TableCell>
+                        <TableCell>
+                          {discountPct > 0 ? (
+                            <Chip
+                              label={`${discountPct}%`}
+                              size="small"
+                              sx={{ bgcolor: 'info.light', color: 'info.dark', fontWeight: 600, borderRadius: '8px', fontSize: 11 }}
+                            />
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">0%</Typography>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            ₦{formatAmount(amountDue)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell sx={{ wordBreak: 'break-all' }}>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: 11 }}>
+                            {row.latest_approved_transaction?.trans_id || '—'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{formatDate(row.latest_approved_transaction?.trans_date)}</TableCell>
+                        <TableCell>{formatDate(row.latest_approved_transaction?.bank_pay_date)}</TableCell>
+                        <TableCell>
+                          <StatusChip status={row.status} />
+                        </TableCell>
+                        <TableCell align="center">
                           <IconButton onClick={(e) => handleMenuOpen(e, row)}>
                             <MoreVertIcon fontSize="small" />
                           </IconButton>
-                        </Box>
 
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedRow?.id === row.id}
-                          onClose={handleMenuClose}
-                        >
-                          <MenuItem onClick={() => { }}>
-                            <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Details
-                          </MenuItem>
-                          {row.status !== 'active' && (
-                            <MenuItem onClick={() => handleApproveConfirm(row)}>
-                              <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
+                          <Menu
+                            anchorEl={anchorEl}
+                            open={Boolean(anchorEl) && selectedRow?.id === row.id}
+                            onClose={handleMenuClose}
+                          >
+                            <MenuItem onClick={() => handleViewInvoiceClick(row)}>
+                              <ViewIcon sx={{ mr: 1, fontSize: '18px' }} /> View Invoice
                             </MenuItem>
-                          )}
-                          {row.status !== 'expired' && (
-                            <MenuItem onClick={() => handleRejectConfirm(row)}>
-                              <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
-                            </MenuItem>
-                          )}
-                        </Menu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                            {/* Only pending subscriptions haven't been paid for yet —
+                                once active (paid) or expired, the discount is locked in. */}
+                            {row.status === 'pending' && (
+                              <MenuItem onClick={() => handleOpenDiscount(row)}>
+                                <DiscountIcon sx={{ mr: 1, fontSize: '18px' }} /> Set Discount
+                              </MenuItem>
+                            )}
+                            {/* {row.status !== 'active' && (
+                              <MenuItem onClick={() => handleApproveConfirm(row)}>
+                                <CheckIcon sx={{ mr: 1, fontSize: '18px' }} /> Approve
+                              </MenuItem>
+                            )}
+                            {row.status !== 'expired' && (
+                              <MenuItem onClick={() => handleRejectConfirm(row)}>
+                                <CancelIcon sx={{ mr: 1, fontSize: '18px' }} /> Reject/Expire
+                              </MenuItem>
+                            )} */}
+                          </Menu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} sx={{ textAlign: 'center' }}>
+                    <TableCell colSpan={12} align="center">
                       <Alert
                         severity="info"
                         sx={{
                           mb: 0,
                           justifyContent: 'center',
                           textAlign: 'center',
-                          '& .MuiAlert-icon': {
-                            mr: 1.5,
-                          },
+                          '& .MuiAlert-icon': { mr: 1.5 },
                         }}
                       >
-                        <Typography variant="body1" color="textSecondary">
-                          No subscriptions found
-                        </Typography>
+                        {hasActiveFilters ? 'No subscriptions match these filters' : 'No subscriptions found'}
                       </Alert>
                     </TableCell>
                   </TableRow>
@@ -273,8 +506,8 @@ const AgentSubscriptionList = ({ status }) => {
                 <TableRow>
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
-                    colSpan={7}
-                    count={filteredRows.length}
+                    colSpan={12}
+                    count={rows.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
@@ -288,10 +521,221 @@ const AgentSubscriptionList = ({ status }) => {
             </Table>
           </TableContainer>
         </Box>
-      )}
+
+      {/* ── Discount Modal ───────────────────────────────────────────────── */}
+      <Dialog
+        open={discountModalOpen}
+        onClose={() => setDiscountModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        disableEnforceFocus
+        disableAutoFocus
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 700,
+          }}
+        >
+          Set Discount
+          <IconButton onClick={() => setDiscountModalOpen(false)} size="small">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2 }}>
+          <Alert severity="info" sx={{ mb: 2, borderRadius: 2, fontSize: '0.8rem' }}>
+            Set the percentage discount you want to give to this subschool for the selected subscription
+          </Alert>
+          <TextField
+            fullWidth
+            size="small"
+            type="number"
+            label="Discount"
+            value={discountValue}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (raw === '' || raw === '-') {
+                setDiscountValue(raw);
+                return;
+              }
+              const val = parseInt(raw, 10);
+              if (!isNaN(val) && val >= 0 && val <= 100) {
+                setDiscountValue(val);
+              }
+            }}
+            onBlur={() => {
+              if (discountValue === '' || discountValue === '-' || isNaN(Number(discountValue))) {
+                setDiscountValue(0);
+              }
+            }}
+            inputProps={{ min: 0, max: 100, sx: { textAlign: 'center', fontWeight: 600 } }}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">Set Discount</InputAdornment>,
+              endAdornment: <InputAdornment position="end">of 100%</InputAdornment>,
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => { setDiscountModalOpen(false); setDiscountRow(null); }}
+            disabled={discountSaving}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSaveDiscount}
+            disabled={discountSaving}
+            sx={{ fontWeight: 600, bgcolor: '#f9a825', '&:hover': { bgcolor: '#f57f17' } }}
+          >
+            {discountSaving ? 'Updating...' : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── View Detail Modal ────────────────────────────────────────────── */}
+      <Dialog
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        disableEnforceFocus
+        disableAutoFocus
+      >
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 700,
+          }}
+        >
+          Subscription Details
+          <IconButton onClick={() => setDetailModalOpen(false)} size="small">
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2 }}>
+          {detailRow && (
+            <Stack spacing={2}>
+              {/* School Info */}
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Avatar
+                  src={detailRow.tenant?.school_logo || detailRow.tenant?.image}
+                  sx={{ width: 56, height: 56, bgcolor: '#E7E9EB' }}
+                >
+                  {!detailRow.tenant?.school_logo && !detailRow.tenant?.image && (
+                    <PersonOutlineIcon sx={{ color: '#000', fontSize: 32 }} />
+                  )}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {detailRow.tenant?.tenant_name || '—'}
+                  </Typography>
+                  {(() => {
+                    const url = getSchoolUrl(detailRow);
+                    return url ? (
+                      <Link
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="caption"
+                        color="text.secondary"
+                        underline="hover"
+                      >
+                        {url.replace('https://', '')}
+                      </Link>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        {detailRow.tenant?.tenant_short_name || '—'}
+                      </Typography>
+                    );
+                  })()}
+                </Box>
+              </Stack>
+
+              <Divider />
+
+              {/* Details Grid */}
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Session</Typography>
+                  <Typography variant="body2" fontWeight={600}>{detailRow.sessions?.session_name || '—'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Term</Typography>
+                  <Typography variant="body2" fontWeight={600}>{detailRow.terms?.term_name || 'Full Session'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Plan</Typography>
+                  <Typography variant="body2" fontWeight={600}>{detailRow.my_plans?.display_name || '—'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Status</Typography>
+                  <Box><StatusChip status={detailRow.status} /></Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Amount</Typography>
+                  <Typography variant="body2" fontWeight={600}>₦{formatAmount(detailRow.amount)}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Discount</Typography>
+                  <Typography variant="body2" fontWeight={600}>{detailRow.discount || 0}%</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Amount Due</Typography>
+                  <Typography variant="body2" fontWeight={600} color="primary.main">
+                    ₦{formatAmount(calcAmountDue(detailRow))}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">Subscription Mode</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {detailRow.subscription_mode === 'per_session' ? 'Per Session' : 'Per Term'}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">Created</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {detailRow.created_at ? new Date(detailRow.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                    }) : '—'}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={() => setDetailModalOpen(false)}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Status Confirm Dialog ────────────────────────────────────────── */}
       <ConfirmationDialog
         {...confirm}
         onClose={() => setConfirm((prev) => ({ ...prev, open: false }))}
+      />
+
+      <SubscriptionInvoiceModal
+        open={invoiceModalOpen}
+        onClose={() => setInvoiceModalOpen(false)}
+        selectedRow={selectedRow}
+        subscriptionCharges={subscriptionCharges}
+        onExtended={() => {
+          fetchSubscriptions();
+          onMutate?.();
+        }}
       />
     </Box>
   );

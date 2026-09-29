@@ -73,7 +73,13 @@ const SetupWelcome = () => {
     await logout();
     navigate('/login');
   };
-  const handleStartSetup = () => navigate('/school-profile?stage=1');
+  // Resume where they left off: onboarding_stage on the tenant is the
+  // highest stage they've COMPLETED (see InitialSetup.handleSaveAndContinue
+  // -> updateStageOnBackend, which records the stage just finished, not the
+  // one being entered) — so the next stage to show is that + 1. A tenant
+  // who has never started (onboarding_stage is 0/absent) starts at stage 1.
+  const resumeStage = Math.min(5, Math.max(1, (tenantInfo?.onboarding_stage || 0) + 1));
+  const handleStartSetup = () => navigate(`/school-profile?stage=${resumeStage}`);
 
   return (
     <Box

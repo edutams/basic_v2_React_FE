@@ -11,7 +11,7 @@ import {
   Avatar,
   Stack,
   Chip,
-  CircularProgress,
+  Skeleton,
   Alert,
   IconButton,
   Menu,
@@ -28,6 +28,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import agentApi from '../../../../api/landlord/organizations/agent';
 import { useAuth } from '../../../../hooks/useAuth';
+import { safeWindowOpen } from '../../../../utils/safeWindowOpen';
 
 const SchoolsView = ({ selectedAgent }) => {
   const { user } = useAuth();
@@ -119,9 +120,8 @@ const SchoolsView = ({ selectedAgent }) => {
     try {
       const response = await agentApi.impersonateTenant(selectedSchool.id);
 
-      if (response?.redirect_url) {
-        window.open(response.redirect_url, '_blank');
-      } else {
+      const opened = response?.redirect_url && safeWindowOpen(response.redirect_url);
+      if (!opened) {
         alert(response?.error || 'Failed to impersonate tenant');
       }
     } catch (error) {
@@ -201,11 +201,15 @@ const SchoolsView = ({ selectedAgent }) => {
 
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={30} />
-                </TableCell>
-              </TableRow>
+              [...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(4)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : paginatedSchools.length > 0 ? (
               paginatedSchools.map((school, index) => (
                 <TableRow key={school.id || index} hover>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Grid,
   Card,
@@ -6,7 +6,6 @@ import {
   Typography,
   Stack,
   MenuItem,
-  Select,
   Table,
   TableBody,
   TableCell,
@@ -24,6 +23,10 @@ import {
   Divider,
   useTheme,
   Alert,
+  Skeleton,
+  FormControl,
+  Select,
+  InputLabel,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -42,8 +45,24 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
-import { getStatCardColor } from '@/utils/statCardColors';
-import ParentCard from '@/components/shared/ParentCard';
+import PlanDistributionModal from './PlanDistributionModal';
+import agentApi from '@/api/landlord/organizations/agent';
+import dayjs from 'dayjs';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isoWeek from 'dayjs/plugin/isoWeek';
+
+dayjs.extend(weekOfYear);
+dayjs.extend(isoWeek);
+
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
+
 
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
@@ -54,6 +73,15 @@ const OverviewTab = ({ data }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const open = Boolean(anchorEl);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+
+  // Transaction chart filters
+  const [period, setPeriod] = useState('this_year');
+  const [periodValue, setPeriodValue] = useState(null);
+  const [chartData, setChartData] = useState({ categories: [], series: [] });
+  const [chartLoading, setChartLoading] = useState(true);
+
+  const orgId = data?.raw?.id ?? data?.raw?.organization_id ?? null;
 
   const handleMenuClick = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -64,6 +92,36 @@ const OverviewTab = ({ data }) => {
     setAnchorEl(null);
     setSelectedRow(null);
   };
+
+  // ── Transaction chart fetch ──────────────────────────────────────
+  const fetchChartData = useCallback(async () => {
+    if (!orgId) return;
+    setChartLoading(true);
+    try {
+      const params = { period };
+      if (period === 'today' && periodValue) {
+        params.periodValue = periodValue;
+      } else if (period === 'this_week' && periodValue) {
+        params.periodValue = JSON.stringify(periodValue);
+      } else if (period === 'this_month' && periodValue) {
+        params.periodValue = JSON.stringify(periodValue);
+      } else if (period === 'this_year' && periodValue) {
+        params.periodValue = periodValue;
+      }
+      const res = await agentApi.getTransactionChart(orgId, params);
+      if (res.status && res.data) {
+        setChartData(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch chart data', err);
+    } finally {
+      setChartLoading(false);
+    }
+  }, [orgId, period, periodValue]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, [fetchChartData]);
 
   // ── Top Agents columns ──────────────────────────────────────────────
   const agentColumns = useMemo(
@@ -233,7 +291,7 @@ const OverviewTab = ({ data }) => {
         header: () => 'Transaction',
         cell: (info) => (
           <Typography variant="body2" fontWeight={700} color="textPrimary" fontSize={12}>
-            #{info.getValue()}
+            ₦{info.getValue()}
           </Typography>
         ),
       }),
@@ -261,11 +319,7 @@ const OverviewTab = ({ data }) => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const transactionColors = getStatCardColor(null, 3, isDarkMode, theme);
-  const creditColors = getStatCardColor(null, 4, isDarkMode, theme);
-  const planColorsCard = getStatCardColor(null, 5, isDarkMode, theme);
-
-  const revenueOptions = {
+  const revenueOptions = useMemo(() => ({
     chart: {
       type: 'bar',
       toolbar: { show: false },
@@ -277,7 +331,7 @@ const OverviewTab = ({ data }) => {
     dataLabels: { enabled: false },
     stroke: { show: true, width: 2, colors: ['transparent'] },
     xaxis: {
-      categories: data.revenueData.map((d) => d.month),
+      categories: chartData.categories,
       axisBorder: { show: false },
       axisTicks: { show: false },
       labels: { style: { colors: theme.palette.text.secondary, fontSize: '12px' } },
@@ -285,94 +339,73 @@ const OverviewTab = ({ data }) => {
     yaxis: {
       labels: {
         style: { colors: theme.palette.text.secondary, fontSize: '12px' },
-        formatter: (val) => (val >= 1000000 ? `${(val / 1000000).toFixed(1)}M` : `${val / 1000}K`),
+        formatter: (val) => {
+          if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+          if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+          return val.toLocaleString();
+        },
       },
     },
-    fill: { opacity: 1, colors: [transactionColors.accentColor] },
+    colors: ['#2563EB', '#F59E0B'],
+    fill: { opacity: 1 },
+    legend: { show: true, position: 'top', horizontalAlign: 'right' },
     tooltip: {
+      shared: true,
+      intersect: false,
       theme: isDarkMode ? 'dark' : 'light',
-      y: { formatter: (val) => `# ${val.toLocaleString()}` },
+      y: { formatter: (val) => `₦${val.toLocaleString()}` },
     },
     grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
-  };
+  }), [chartData.categories, theme.palette.text.secondary, theme.palette.divider, isDarkMode]);
 
-  const revenueSeries = [{ name: 'Transaction', data: data.revenueData.map((d) => d.revenue) }];
+  const revenueSeries = useMemo(() => chartData.series, [chartData.series]);
 
-  const planSeries = [40, 15, 35, 10];
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
+  const planDistribution = data.planDistribution ?? [];
+  const planSeries = planDistribution.map((p) => p.total ?? 0);
+  const planLabels = planDistribution.map((p) => p.label ?? '');
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
   return (
-    <Box sx={{ p: { xs: 1, md: 2 }, bgcolor: isDarkMode ? 'transparent' : '#F8FAFC' }}>
-      {/* Year Filter — right aligned, consistent style */}
-      <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="flex-end" mb={3}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            border: `1px solid ${isDarkMode ? '#444' : '#E2E8F0'}`,
-            borderRadius: '6px',
-            bgcolor: isDarkMode ? '#2d2d2d' : 'white',
-            overflow: 'hidden',
-          }}
-        >
-          <Select
-            size="small"
-            value="2026"
-            renderValue={(v) => `Year ${v}`}
-            sx={{
-              '& fieldset': { border: 'none' },
-              minWidth: 120,
-              fontSize: '13px',
-              fontWeight: 600,
-              color: isDarkMode ? '#fff' : '#333',
-            }}
-          >
-            <MenuItem value="2026">2026</MenuItem>
-            <MenuItem value="2025">2025</MenuItem>
-          </Select>
-        </Box>
-        <Button variant="contained" size="small" sx={{ height: 40, px: 3, borderRadius: '6px', textTransform: 'none', fontWeight: 600, }}>
-          Filter
-        </Button>
-      </Stack>
-
-      <Grid container spacing={3}>
+    <Box sx={{ p: { xs: 1, md: 1.5 } }}>
+      {/* alignItems: 'flex-start' — without it, Grid's default stretch makes
+          the shorter Recent Onboarding / Credit Facilities+Plan cards match
+          the tall Transaction chart's height, leaving a large dead blank
+          area at the bottom of each shorter card. */}
+      <Grid container spacing={1.5} alignItems="flex-start">
         {/* Column 1: Transaction Chart */}
         <Grid size={{ xs: 12, md: 5 }}>
           <Card
             sx={{
-              p: 3,
-              borderRadius: '12px',
-              height: '98%',
-              border: `1px solid ${transactionColors.borderColor}`,
-              background: isDarkMode ? theme.palette.background.paper : transactionColors.cardBg,
-              boxShadow: isDarkMode
-                ? '0 6px 24px rgba(0,0,0,0.28)'
-                : '0 4px 20px rgba(0,0,0,0.07)',
+              px: '3px',
+              py: '3px',
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+              cursor: 'pointer',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
             }}
           >
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={4}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6" fontWeight={800} sx={{ color: theme.palette.text.primary }}>
                 Transaction
               </Typography>
-              <Button variant="outlined" size="small" startIcon={<IconFilter size={16} />}
-                sx={{
-                  borderRadius: '8px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  bgcolor: '#FFFFFF !important',
-                  color: isDarkMode ? '#333333' : 'text.primary',
-                  borderColor: isDarkMode ? 'rgba(255,255,255,0.2)' : '#E2E8F0',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  '&:hover': {
-                    bgcolor: '#F8FAFC !important',
-                    borderColor: '#CBD5E1',
-                  },
-                }}
-              >
-                Filter by Date
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <Select value={period} onChange={(e) => { setPeriod(e.target.value); setPeriodValue(null); }}>
+                    <MenuItem value="today">Today</MenuItem>
+                    <MenuItem value="this_week">This Week</MenuItem>
+                    <MenuItem value="this_month">This Month</MenuItem>
+                    <MenuItem value="this_year">This Year</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
             </Stack>
             <Box
               sx={{
@@ -380,31 +413,46 @@ const OverviewTab = ({ data }) => {
                 '& .apexcharts-svg': { background: 'transparent !important' },
               }}
             >
-              <Chart
-                options={revenueOptions}
-                series={revenueSeries}
-                type="bar"
-                height={320}
-                width="100%"
-              />
+              {chartLoading ? (
+                <Skeleton variant="rounded" height={320} sx={{ borderRadius: 2 }} />
+              ) : (
+                <Chart
+                  key={`chart-${period}-${JSON.stringify(chartData.categories)}`}
+                  options={revenueOptions}
+                  series={revenueSeries}
+                  type="bar"
+                  height={320}
+                  width="100%"
+                />
+              )}
             </Box>
           </Card>
         </Grid>
 
-        {/* Column 2: Plan Distribution & Credit Facilities */}
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Stack spacing={3} sx={{ maxHeight: '100%' }}>
+        {/* Column 2: Credit Facilities + Plan Distribution side by side, with
+            Recent Onboarding School spanning the full width beneath both. */}
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Grid container spacing={1.5}>
             {/* Credit Facilities Card */}
+            <Grid size={{ xs: 12, sm: 6 }}>
             <Card
               sx={{
-                borderRadius: '8px',
-                border: `1px solid ${creditColors.borderColor}`,
-                background: isDarkMode ? theme.palette.background.paper : creditColors.cardBg,
-                boxShadow: isDarkMode
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
+                px: '3px',
+                py: '3px',
+                borderRadius: '14px',
+                bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
                 overflow: 'hidden',
-                flex: 1,
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -412,8 +460,6 @@ const OverviewTab = ({ data }) => {
               {/* Header Section */}
               <Box
                 sx={{
-                  px: 2,
-                  pt: 2,
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
@@ -434,13 +480,10 @@ const OverviewTab = ({ data }) => {
                 <Box
                   sx={{
                     p: 0.6,
-                    background: `${creditColors.iconBg} !important`,
-                    boxShadow: isDarkMode
-                      ? '0 4px 12px rgba(0,0,0,0.3)'
-                      : `0 4px 14px ${creditColors.iconGlow}`,
+                    background: schemeMap[1].bg,
                     borderRadius: '4px',
                     display: 'flex',
-                    color: creditColors.iconColor || 'white',
+                    color: schemeMap[1].color,
                   }}
                 >
                   <IconChartBar size={18} strokeWidth={2.5} />
@@ -448,11 +491,11 @@ const OverviewTab = ({ data }) => {
               </Box>
 
               {/* Content Section */}
-              <Box sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{  display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Box
                   sx={{
                     flex: 1.8,
-                    bgcolor: creditColors.valueBg,
+                    bgcolor: schemeMap[1].bg,
                     borderRadius: '4px',
                     p: 2,
                     display: 'flex',
@@ -477,7 +520,7 @@ const OverviewTab = ({ data }) => {
                   <Typography
                     fontWeight={800}
                     sx={{
-                      color: creditColors.accentColor,
+                      color: schemeMap[1].color,
                       fontSize: '18px',
                       lineHeight: 1,
                       wordBreak: 'break-word',
@@ -515,61 +558,123 @@ const OverviewTab = ({ data }) => {
                 </Box>
               </Box>
             </Card>
+            </Grid>
 
             {/* Plan Distribution Card */}
+            <Grid size={{ xs: 12, sm: 6 }}>
             <Card
               sx={{
-                p: 3,
-                borderRadius: '12px',
-                flex: 1.5,
-                border: `1px solid ${planColorsCard.borderColor}`,
-                background: isDarkMode ? theme.palette.background.paper : planColorsCard.cardBg,
-                boxShadow: isDarkMode
-                  ? '0 6px 24px rgba(0,0,0,0.28)'
-                  : '0 4px 20px rgba(0,0,0,0.07)',
+                px: '3px',
+                py: '3px',
+                borderRadius: '14px',
+                bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
+                height: '100%',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
                 color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
               }}
             >
-              <Typography
-                variant="subtitle2"
-                fontWeight={800}
-                color="textPrimary"
-                mb={2}
-                sx={{ color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F' }}
+              {/* Header Section */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
               >
-                Plan Distribution
-              </Typography>
-              <Box sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-                <ReusablePieChart
-                  series={planSeries}
-                  colors={planColors}
-                  labels={planLabels}
-                  height={170}
-                  hideCard
-                />
+                <Box sx={{ flex: 1 }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 700,
+                      color: theme.palette.text.primary,
+                      fontSize: '14px',
+                      letterSpacing: '0.2px',
+                    }}
+                  >
+                    Plan Distribution
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                  >
+                    Breakdown of active subscriptions by plan type across all schools.
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    p: 0.6,
+                    background: schemeMap[3].bg,
+                    borderRadius: '4px',
+                    display: 'flex',
+                    color: schemeMap[3].color,
+                    flexShrink: 0,
+                    cursor: 'pointer',
+                    '&:hover': { opacity: 0.85 },
+                  }}
+                  onClick={() => setIsPlanModalOpen(true)}
+                >
+                  <IconChartBar size={18} strokeWidth={2.5} />
+                </Box>
+              </Box>
+
+              {/* Chart Section */}
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
+                {planSeries.length > 0 ? (
+                  <ReusablePieChart
+                    series={planSeries}
+                    colors={planColors}
+                    labels={planLabels}
+                    height={140}
+                    hideCard
+                  />
+                ) : (
+                  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+                    <Skeleton variant="circular" width={120} height={120} />
+                    <Skeleton variant="text" width="60%" height={14} />
+                    <Skeleton variant="text" width="40%" height={14} />
+                  </Box>
+                )}
               </Box>
             </Card>
-          </Stack>
-        </Grid>
+            </Grid>
 
-        {/* Column 3: Recent Onboarding School */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <ParentCard
+            {/* Recent Onboarding School — spans the full width beneath both
+                cards above, with its own internal scroll since this list
+                only grows over time. */}
+            <Grid size={{ xs: 12 }}>
+          <Paper
+            elevation={0}
             sx={{
-              borderRadius: '12px',
-              height: '98%',
-              border: `1px solid ${theme.palette.divider}`,
-              bgcolor: theme.palette.background.paper,
-              boxShadow: 'none',
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              px: "3px",
+              py: "3px",
             }}
           >
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ px: 1, pt: 1 }}>
               <Typography variant="subtitle2" fontWeight={800} color="textPrimary">
                 Recent Onboarding School
               </Typography>
             </Box>
-            <TableContainer sx={{ height: 'calc(100% - 60px)' }}>
-              <Table size="small">
+            {/* Fixed height + internal scroll — this list only grows, and we
+                don't want the card itself to keep growing with it. */}
+            <TableContainer sx={{ maxHeight: 260, overflowY: 'auto' }}>
+              <Table size="small" stickyHeader>
                 <TableHead
                   sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
                 >
@@ -579,6 +684,8 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
+                        width: '45%',
                       }}
                     >
                       School
@@ -588,6 +695,7 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
                       }}
                     >
                       Agent
@@ -597,18 +705,10 @@ const OverviewTab = ({ data }) => {
                         fontWeight: 800,
                         fontSize: '11px',
                         color: theme.palette.text.secondary,
+                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
                       }}
                     >
                       Date
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        color: theme.palette.text.secondary,
-                      }}
-                    >
-                      Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -624,16 +724,20 @@ const OverviewTab = ({ data }) => {
                           '& td': { borderBottom: `1px solid ${theme.palette.divider}` },
                         }}
                       >
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell sx={{ whiteSpace: 'normal' }}>
                           <Typography
                             variant="caption"
                             fontWeight={800}
-                            sx={{ color: theme.palette.text.primary, fontSize: '11px' }}
+                            sx={{
+                              color: theme.palette.text.primary,
+                              fontSize: '11px',
+                              wordBreak: 'break-word',
+                            }}
                           >
                             {row.school}
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <Box
                             display="flex"
                             justifyContent="space-between"
@@ -661,7 +765,7 @@ const OverviewTab = ({ data }) => {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
+                        <TableCell>
                           <Chip
                             label={row.created_at}
                             size="small"
@@ -674,16 +778,11 @@ const OverviewTab = ({ data }) => {
                             }}
                           />
                         </TableCell>
-                        <TableCell sx={{ py: 1.5 }}>
-                          <IconButton size="small" onClick={(e) => handleMenuClick(e, row)}>
-                            <IconDotsVertical size={16} color={theme.palette.text.secondary} />
-                          </IconButton>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 2 }}>
+                      <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
                         <Alert
                           severity="info"
                           sx={{ justifyContent: 'center', textAlign: 'center' }}
@@ -696,13 +795,24 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
+            </Grid>
+          </Grid>
         </Grid>
 
         {/* Bottom Row: Top Agents */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard>
-            <Box sx={{ p: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Box sx={{ px: "2px" }}>
               <Typography variant="subtitle1" fontWeight={800} color="textPrimary">
                 TOP 10 AGENT BY REVENUE
               </Typography>
@@ -740,7 +850,7 @@ const OverviewTab = ({ data }) => {
                         sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                          <TableCell key={cell.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
@@ -760,15 +870,25 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
         </Grid>
 
         {/* Bottom Row: Top Schools */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <ParentCard>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: '14px',
+              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
             <Box
               sx={{
-                p: 2,
+                px: "3px",
+                py: "3px",
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -794,7 +914,6 @@ const OverviewTab = ({ data }) => {
                             fontWeight: 700,
                             fontSize: '12px',
                             color: theme.palette.text.secondary,
-                            py: 1.2,
                           }}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
@@ -812,7 +931,7 @@ const OverviewTab = ({ data }) => {
                         sx={{ '& td': { borderBottom: `1px solid ${theme.palette.divider}` } }}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} sx={{ py: 1.5 }}>
+                          <TableCell key={cell.id}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         ))}
@@ -832,7 +951,7 @@ const OverviewTab = ({ data }) => {
                 </TableBody>
               </Table>
             </TableContainer>
-          </ParentCard>
+          </Paper>
         </Grid>
       </Grid>
 
@@ -904,6 +1023,13 @@ const OverviewTab = ({ data }) => {
       >
         <IconHelpCircle size={32} />
       </IconButton>
+
+      <PlanDistributionModal
+        open={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        planDistribution={planDistribution}
+        totalOrganizations={data.totalOrganizations ?? 0}
+      />
     </Box>
   );
 };

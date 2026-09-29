@@ -13,7 +13,7 @@ import {
   TableFooter,
   TablePagination,
   IconButton,
-  CircularProgress,
+  Skeleton,
   Alert,
   useTheme
 } from '@mui/material';
@@ -162,7 +162,7 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
         </Box>
         <Box sx={{ p: 0 }}>
           <TableContainer>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+            <Table size="small" sx={{ whiteSpace: 'nowrap', '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
               <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : '#F9FAFB' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600, color: theme.palette.text.primary }}>S/N</TableCell>
@@ -178,11 +178,15 @@ const ViewUsersListModal = ({ open, onClose, schoolId, schoolName, filters }) =>
               </TableHead>
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  [...Array(4)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(5)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center">

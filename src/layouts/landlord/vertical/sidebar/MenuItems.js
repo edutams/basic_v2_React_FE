@@ -96,7 +96,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Agent',
     icon: IconUserCircle,
-    href: '/agent',
+    href: '/organization',
     permission: ['landlord.organization.index'],
   },
   {
@@ -162,7 +162,7 @@ const Menuitems = [
     id: uniqueId(),
     title: 'Tenant Subscriptions',
     icon: IconAppWindow,
-    href: '/agent/subscriptions',
+    href: '/organization/subscriptions',
     permission: ['landlord.subscription.index'],
   },
   {

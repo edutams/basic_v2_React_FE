@@ -1,7 +1,18 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Box, Tab, Grid, useTheme, CircularProgress, Typography } from '@mui/material';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import {
+  Box,
+  Tab,
+  Grid,
+  Stack,
+  useTheme,
+  Skeleton,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { IconLayoutDashboard, IconUsers, IconSchool } from '@tabler/icons-react';
+import { IconLayoutDashboard, IconUsers, IconSchool, IconBuildingBank } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 
 import PageContainer from '@/components/container/PageContainer';
@@ -12,11 +23,13 @@ import StatCards from './components/StatCards';
 import OverviewTab from './components/OverviewTab';
 import TeamTab from './components/TeamTab';
 import ManageTeamTab from './components/ManageTeamTab';
+import BankAccountDetailsTab from './components/BankAccountDetailsTab';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import TotalSubAgentModal from './components/TotalSubAgentModal';
 
 import { AuthContext } from '@/context/AgentContext/auth';
+import { usePermissions } from '@/context/AgentContext/permissions';
 
 import agentApi from '@/api/landlord/organizations/agent';
 import SchoolsTab from './components/SchoolsTab/SchoolsTab';
@@ -25,10 +38,54 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import RegisterSchoolForm from '@/components/landlord/add-school/component/RegisterSchool';
 import ParentCard from '@/components/shared/ParentCard';
 
+// Mirrors the general shape of the tab strip + OverviewTab grid (chart /
+// credit-facility+plan-distribution / recent-onboarding / two revenue
+// tables) so the page isn't just blank while `agentData` is still loading.
+const TabContentSkeleton = () => (
+  <ParentCard
+    sx={{
+      borderRadius: '12px',
+      overflow: 'hidden',
+      border: '1px solid',
+      borderColor: 'divider',
+    }}
+  >
+    <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, py: 1.5, display: 'flex', gap: 3 }}>
+      {[...Array(4)].map((_, i) => (
+        <Skeleton key={i} variant="text" width={90} height={28} />
+      ))}
+    </Box>
+    <Box sx={{ p: 2 }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Skeleton variant="rounded" height={380} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Stack spacing={3}>
+            <Skeleton variant="rounded" height={140} sx={{ borderRadius: '14px' }} />
+            <Skeleton variant="rounded" height={220} sx={{ borderRadius: '14px' }} />
+          </Stack>
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Skeleton variant="rounded" height={380} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: '14px' }} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Skeleton variant="rounded" height={280} sx={{ borderRadius: '14px' }} />
+        </Grid>
+      </Grid>
+    </Box>
+  </ParentCard>
+);
+
 const ViewAgent = () => {
   const { id } = useParams();
+  const { can } = usePermissions();
 
   const [value, setValue] = useState('1');
+  const manageTeamRef = useRef(null);
 
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
@@ -71,7 +128,7 @@ const ViewAgent = () => {
               id: data.id,
               name: data.organization_name,
               handle: data.organization_email,
-              level: `Level ${data.access_level} Organization`,
+              level: `Level ${data.access_level} Agent`,
               status: data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'Inactive',
@@ -117,28 +174,9 @@ const ViewAgent = () => {
 
             team: data.users || [],
 
-            revenueData: [
-              { month: 'Jan', revenue: 120000 },
-              { month: 'Feb', revenue: 85000 },
-              { month: 'Mar', revenue: 200000 },
-              { month: 'Apr', revenue: 150000 },
-              { month: 'May', revenue: 310000 },
-              { month: 'Jun', revenue: 270000 },
-              { month: 'Jul', revenue: 190000 },
-              { month: 'Aug', revenue: 230000 },
-              { month: 'Sep', revenue: 175000 },
-              { month: 'Oct', revenue: 290000 },
-              { month: 'Nov', revenue: 340000 },
-              { month: 'Dec', revenue: 410000 },
-            ],
-
             loginActivities: [],
 
-            planDistribution: [
-              { label: 'Basic', value: 50 },
-              { label: 'Basic +', value: 35 },
-              { label: 'Basic ++', value: 15 },
-            ],
+            planDistribution: analytics?.planDistribution ?? [],
 
             recentOnboarding: (data.tenants || [])
               .slice()
@@ -153,10 +191,10 @@ const ViewAgent = () => {
 
                 created_at: tenant.created_at
                   ? new Date(tenant.created_at).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                  })
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })
                   : '—',
               })),
 
@@ -213,201 +251,288 @@ const ViewAgent = () => {
     [agentData?.stats, analytics],
   );
   const BCrumb = [
-    { to: '/agent', title: 'Home' },
-    { to: '/agent/organization', title: 'Organization' },
+    { to: '/dashboard', title: 'Home' },
+    { to: '/organization', title: 'Agent' },
     { title: 'View Profile' },
   ];
 
   return (
     <PageContainer
-      title="View Organization Profile"
-      description="Detailed organization profile view"
+      title="View Agent Profile"
+      description="Detailed agent profile view"
     >
-      <Box sx={{ minHeight: '100vh', p: { xs: 1, md: 2 } }}>
-        <Breadcrumb title="View Profile" items={BCrumb} />
+      <Breadcrumb title="View Profile" items={BCrumb} />
 
-        {isLoading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress />
-          </Box>
-        ) : agentData ? (
-          <>
-            <Grid container spacing={3} alignItems="stretch" sx={{ mt: 1 }}>
-              <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-                <ProfileHeader
-                  profile={agentData.profile}
-                  onManageSchools={() => setValue('3')}
-                  onManageAgent={() => setValue('2')}
-                />
-              </Grid>
+      <Grid container spacing={2} mb={3}>
+        <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+          {isLoading ? (
+            <Skeleton variant="rounded" width={300} height={200} sx={{ borderRadius: 2 }} />
+          ) : agentData ? (
+            <ProfileHeader
+              profile={agentData.profile}
+              onManageSchools={() => setValue('3')}
+              onManageAgent={() => setValue('2')}
+            />
+          ) : (
+            <Skeleton variant="rounded" width={300} height={200} sx={{ borderRadius: 2 }} />
+          )}
+        </Grid>
 
-              <Grid size={{ xs: 12, md: 8, lg: 8 }}>
-                <StatCards
-                  stats={mergedStats}
-                  onTransactionClick={() => setIsTransactionModalOpen(true)}
-                  onSchoolClick={() => setIsSchoolModalOpen(true)}
-                  onSubAgentClick={() => setIsSubAgentModalOpen(true)}
-                  accessLevel={accessLevel}
-                />
-              </Grid>
-            </Grid>
+        <Grid size={{ xs: 12, md: 8, lg: 8 }}>
+          <StatCards
+            stats={mergedStats}
+            onTransactionClick={() => setIsTransactionModalOpen(true)}
+            onSchoolClick={() => setIsSchoolModalOpen(true)}
+            onSubAgentClick={() => setIsSubAgentModalOpen(true)}
+            accessLevel={accessLevel}
+            loadingTransaction={isLoading}
+            loadingSubAgents={analyticsLoading}
+            loadingSchools={analyticsLoading}
+          />
+        </Grid>
+      </Grid>
 
-            <Box mt={4}>
-              <ParentCard
+      {isLoading && !agentData ? (
+        <Box mt={3}>
+          <TabContentSkeleton />
+        </Box>
+      ) : agentData ? (
+        <Box mt={3}>
+          <ParentCard
+            sx={{
+              bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+              '& .MuiCardContent-root': { p: 0, pt: 0 },
+            }}
+          >
+            <TabContext value={value}>
+              <Box
                 sx={{
-                  bgcolor: isDark ? '#1e1e1e' : '#FFFFFF',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  border: isDark ? '1px solid #333' : '1px solid #E2E8F0',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  pr: { xs: 1.5, sm: 2 },
                 }}
               >
-                <TabContext value={value}>
-                  <Box>
-                    <TabList
-                      onChange={(_, newValue) => setValue(newValue)}
-                      variant="scrollable"
-                      scrollButtons="auto"
-                      allowScrollButtonsMobile
+                <TabList
+                  onChange={(_, newValue) => setValue(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{ borderBottom: 0 }}
+                >
+                  <Tab
+                    icon={<IconLayoutDashboard size={18} />}
+                    iconPosition="start"
+                    label="Overview"
+                    value="1"
+                  />
+
+                  <Tab
+                    icon={<IconUsers size={18} />}
+                    iconPosition="start"
+                    label="Sub Agents"
+                    value="2"
+                  />
+
+                  <Tab
+                    icon={<IconSchool size={18} />}
+                    iconPosition="start"
+                    label="Schools"
+                    value="3"
+                  />
+
+                  <Tab
+                    icon={<IconUsers size={18} />}
+                    iconPosition="start"
+                    label="Manage Team"
+                    value="4"
+                  />
+
+                  {can('landlord.bank_account.manage') && (
+                    <Tab
+                      icon={<IconBuildingBank size={18} />}
+                      iconPosition="start"
+                      label="Bank Account Details"
+                      value="5"
+                    />
+                  )}
+                </TabList>
+
+                {/* Tab-specific actions — shown only while their own tab is
+                      active, instead of living inside each tab's own content. */}
+                {value === '1' && (
+                  <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
+                        borderRadius: '6px',
+                        bgcolor: isDark ? '#2d2d2d' : 'white',
+                        overflow: 'hidden',
+                      }}
                     >
-                      <Tab
-                        icon={<IconLayoutDashboard size={18} />}
-                        iconPosition="start"
-                        label="Overview"
-                        value="1"
-                      />
+                      <Select
+                        size="small"
+                        value="2026"
+                        renderValue={(v) => `Year ${v}`}
+                        sx={{
+                          '& fieldset': { border: 'none' },
+                          minWidth: 120,
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: isDark ? '#fff' : '#333',
+                        }}
+                      >
+                        <MenuItem value="2026">2026</MenuItem>
+                        <MenuItem value="2025">2025</MenuItem>
+                      </Select>
+                    </Box>
+                    <Button variant="contained" size="small">
+                      Filter
+                    </Button>
+                  </Stack>
+                )}
 
-                      <Tab
-                        icon={<IconUsers size={18} />}
-                        iconPosition="start"
-                        label="Sub Organizations"
-                        value="2"
-                      />
+                {value === '4' && accessLevel !== 1 && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => manageTeamRef.current?.openAddModal()}
+                    sx={{ textTransform: 'none', borderRadius: '8px' }}
+                  >
+                    Add Team Member
+                  </Button>
+                )}
+              </Box>
 
-                      <Tab
-                        icon={<IconSchool size={18} />}
-                        iconPosition="start"
-                        label="Schools"
-                        value="3"
-                      />
+              <Box>
+                <TabPanel value="1" sx={{ p: 0 }}>
+                  <OverviewTab data={agentData} />
+                </TabPanel>
 
-                      <Tab
-                        icon={<IconUsers size={18} />}
-                        iconPosition="start"
-                        label="Manage Team"
-                        value="4"
-                      />
-                    </TabList>
-                  </Box>
+                <TabPanel value="2" sx={{ p: 1.5 }}>
+                  <TeamTab
+                    team={agentData.team || []}
+                    onAddAgent={() => setIsAddAgentModalOpen(true)}
+                    isDashboard={isDashboard}
+                    accessLevel={accessLevel}
+                    isViewingProfile
+                    organizationId={id}
+                  />
+                </TabPanel>
 
-                  <Box>
-                    <TabPanel value="1" sx={{ p: 0 }}>
-                      <OverviewTab data={agentData} />
-                    </TabPanel>
+                <TabPanel value="3" sx={{ p: 1.5 }}>
+                  <SchoolsTab
+                    schools={agentData.schools || []}
+                    onAddSchool={() => setIsAddSchoolModalOpen(true)}
+                    organizationId={id}
+                    handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+                    refreshKey={refreshKey}
+                    isViewingProfile={true}
+                  />
+                </TabPanel>
 
-                    <TabPanel value="2" sx={{ p: 3 }}>
-                      <TeamTab
-                        team={agentData.team || []}
-                        onAddAgent={() => setIsAddAgentModalOpen(true)}
-                        isDashboard={isDashboard}
-                        accessLevel={accessLevel}
-                        isViewingProfile
-                        organizationId={id}
-                      />
-                    </TabPanel>
+                <TabPanel value="4" sx={{ p: 1.5 }}>
+                  <ManageTeamTab
+                    ref={manageTeamRef}
+                    organizationId={id}
+                    accessLevel={accessLevel}
+                    isViewingProfile
+                    hideCard
+                    hideAddButton
+                  />
+                </TabPanel>
 
-                    <TabPanel value="3" sx={{ p: 3 }}>
-                      <SchoolsTab
-                        schools={agentData.schools || []}
-                        onAddSchool={() => setIsAddSchoolModalOpen(true)}
-                        organizationId={id}
-                        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-                        refreshKey={refreshKey}
-                        isViewingProfile={true}
-                      />
-                    </TabPanel>
+                {can('landlord.bank_account.manage') && (
+                  <TabPanel value="5" sx={{ p: 1.5 }}>
+                    <BankAccountDetailsTab
+                      organizationId={id}
+                      organization={agentData.raw}
+                      onSaved={() => setRefreshKey((prev) => prev + 1)}
+                    />
+                  </TabPanel>
+                )}
+              </Box>
+            </TabContext>
+          </ParentCard>
+        </Box>
+      ) : !isLoading ? (
+        <Box p={3} textAlign="center">
+          <Typography variant="h6">Failed to load agent data.</Typography>
+        </Box>
+      ) : null}
 
-                    <TabPanel value="4" sx={{ p: 3 }}>
-                      <ManageTeamTab
-                        organizationId={id}
-                        accessLevel={accessLevel}
-                        isViewingProfile
-                      />
-                    </TabPanel>
-                  </Box>
-                </TabContext>
-              </ParentCard>
-            </Box>
-          </>
-        ) : (
-          <Box p={3} textAlign="center">
-            <Typography variant="h6">Failed to load organization data.</Typography>
-          </Box>
-        )}
+      <TotalSchoolModal
+        open={isSchoolModalOpen}
+        onClose={() => setIsSchoolModalOpen(false)}
+        stats={mergedStats}
+        organizationId={id}
+      />
 
-        <TotalSchoolModal
-          open={isSchoolModalOpen}
-          onClose={() => setIsSchoolModalOpen(false)}
-          stats={mergedStats}
-          organizationId={id}
-        />
+      <TotalTransactionModal
+        open={isTransactionModalOpen}
+        onClose={() => setIsTransactionModalOpen(false)}
+      />
 
-        <TotalTransactionModal
-          open={isTransactionModalOpen}
-          onClose={() => setIsTransactionModalOpen(false)}
-        />
+      <TotalSubAgentModal
+        open={isSubAgentModalOpen}
+        onClose={() => setIsSubAgentModalOpen(false)}
+        totalSubAgents={agentData?.stats?.totalSubAgents}
+        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+        orgId={id}
+        accessLevel={accessLevel}
+      />
 
-        <TotalSubAgentModal
-          open={isSubAgentModalOpen}
-          onClose={() => setIsSubAgentModalOpen(false)}
-          totalSubAgents={agentData?.stats?.totalSubAgents}
-          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-          orgId={id}
-          accessLevel={accessLevel}
-        />
+      <AgentModal
+        open={isAddAgentModalOpen}
+        onClose={() => setIsAddAgentModalOpen(false)}
+        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+        parentId={id}
+      />
 
-        <AgentModal
-          open={isAddAgentModalOpen}
-          onClose={() => setIsAddAgentModalOpen(false)}
-          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-          parentId={id}
-        />
-
-        <AgentModal
-          open={isUpdateModalOpen}
-          onClose={() => setIsUpdateModalOpen(false)}
-          handleRefresh={() => setRefreshKey((prev) => prev + 1)}
-          actionType="update"
-          selectedAgent={
-            agentData
-              ? {
+      <AgentModal
+        open={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        handleRefresh={() => setRefreshKey((prev) => prev + 1)}
+        actionType="update"
+        selectedAgent={
+          agentData
+            ? {
                 ...agentData.raw,
                 ...agentData.leadUser,
                 id: id,
                 organization_logo: agentData.raw?.organization_logo,
                 avatar: agentData.leadUser?.avatar,
               }
-              : null
-          }
-        />
+            : null
+        }
+      />
 
-        <ReusableModal
-          open={isAddSchoolModalOpen}
-          onClose={() => setIsAddSchoolModalOpen(false)}
-          title="Register School"
-          size="large"
-        >
-          <RegisterSchoolForm
-            actionType="create"
-            onSubmit={() => {
-              setIsAddSchoolModalOpen(false);
-              setRefreshKey((prev) => prev + 1);
-            }}
-            onCancel={() => setIsAddSchoolModalOpen(false)}
-            organizationId={id}
-          />
-        </ReusableModal>
-      </Box>
+      <ReusableModal
+        open={isAddSchoolModalOpen}
+        onClose={() => setIsAddSchoolModalOpen(false)}
+        title="Register School"
+        size="large"
+      >
+        <RegisterSchoolForm
+          actionType="create"
+          onSubmit={() => {
+            setIsAddSchoolModalOpen(false);
+            setRefreshKey((prev) => prev + 1);
+          }}
+          onCancel={() => setIsAddSchoolModalOpen(false)}
+          organizationId={id}
+        />
+      </ReusableModal>
     </PageContainer>
   );
 };

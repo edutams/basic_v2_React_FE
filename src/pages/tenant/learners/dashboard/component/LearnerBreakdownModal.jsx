@@ -172,7 +172,17 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
 
   // ── Local breakdown rows for the Academic Overview cards (mocked data) ──
   const overviewRows = (() => {
-    if (type !== 'assignments_submitted' && type !== 'quizzes_taken' && type !== 'tests_exams_taken' && type !== 'resources_accessed' && type !== 'submission_rate' && type !== 'quiz_average_score' && type !== 'overall_average_score' && type !== 'subject_strength' && type !== 'class_standing') {
+    if (
+      type !== 'assignments_submitted' &&
+      type !== 'quizzes_taken' &&
+      type !== 'tests_exams_taken' &&
+      type !== 'resources_accessed' &&
+      type !== 'submission_rate' &&
+      type !== 'quiz_average_score' &&
+      type !== 'overall_average_score' &&
+      type !== 'subject_strength' &&
+      type !== 'class_standing'
+    ) {
       return [];
     }
     const subjects = Array.isArray(academicOverview.subjects) ? academicOverview.subjects : [];
@@ -318,15 +328,19 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
 
   const chipColor = (value) => {
     const v = String(value || '').toLowerCase();
-    if (['present', 'complete', 'approved', 'active', 'paid', 'a', 'b'].includes(v)) return 'success';
-    if (['absent', 'late', 'declined', 'incomplete', 'pending', 'c', 'd'].includes(v)) return 'warning';
+    if (['present', 'complete', 'approved', 'active', 'paid', 'a', 'b'].includes(v))
+      return 'success';
+    if (['absent', 'late', 'declined', 'incomplete', 'pending', 'c', 'd'].includes(v))
+      return 'warning';
     if (v === 'f') return 'error';
     return 'default';
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+      <DialogTitle
+        sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+      >
         {title}
         <Chip
           label={`${displayTotal.toLocaleString()} records`}
@@ -337,7 +351,17 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
       </DialogTitle>
 
       {/* Search + session term filter */}
-      <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+      <Box
+        sx={{
+          px: 3,
+          pt: 1,
+          pb: 1,
+          display: 'flex',
+          gap: 1.5,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
         <TextField
           size="small"
           placeholder="Search…"
@@ -365,7 +389,7 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
           </MenuItem>
           {sessionTerms.map((st) => (
             <MenuItem key={st.id} value={String(st.id)}>
-              {st.session?.sesname} — {st.display_term?.display_name}
+              {st.session?.session_name} — {st.term?.term_name}
             </MenuItem>
           ))}
         </TextField>
@@ -381,7 +405,11 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
         ) : displayRows.length === 0 ? (
           <Alert severity="info">No records match your search.</Alert>
         ) : (
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
+          <TableContainer
+            elevation={0}
+            variant="outlined"
+            sx={{ borderRadius: 2, overflowX: 'auto' }}
+          >
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -397,7 +425,9 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
               <TableBody>
                 {displayRows.map((row, i) => (
                   <TableRow key={row.id || i}>
-                    <TableCell sx={{ color: 'text.secondary' }}>{page * rowsPerPage + i + 1}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>
+                      {page * rowsPerPage + i + 1}
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
                         {rowName(row)}

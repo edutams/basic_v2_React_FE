@@ -1,0 +1,208 @@
+import React from 'react';
+import { Box, Typography, Paper, Grid, CircularProgress, useTheme, Skeleton, Alert } from '@mui/material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
+
+/**
+ * Application Trend Line Chart Component
+ */
+const ApplicationTrend = ({
+  trendData = [],
+  metrics = {},
+  loading = false,
+}) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const data = trendData;
+  const totalApps = (metrics.total_applications ?? 0).toLocaleString();
+  const newThisMonth = (metrics.new_this_month ?? 0).toLocaleString();
+  const avgPerMonth = (metrics.avg_per_month ?? 0).toLocaleString();
+  const vsLastSession = metrics.vs_last_session ?? '0%';
+  const vsLastSessionIsDown = String(vsLastSession).trim().startsWith('-');
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 1,
+        borderRadius: '14px',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
+      }}
+    >
+      {/* Header with Title + Session Term Filter */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+        <Typography
+          sx={{
+            fontSize: '11px',
+            fontWeight: 800,
+            color: isDark ? 'rgba(255,255,255,0.6)' : '#64748b',
+            textTransform: 'uppercase',
+            letterSpacing: 0.5,
+          }}
+        >
+          APPLICATION TREND
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Legend */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ width: 12, height: 3, bgcolor: '#2563eb', borderRadius: 1 }} />
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: '11px', color: '#2563eb' }}>
+                This Session
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box sx={{ width: 12, height: 2, bgcolor: '#94a3b8', borderStyle: 'dashed' }} />
+              <Typography variant="caption" fontWeight={600} sx={{ fontSize: '11px', color: '#94a3b8' }}>
+                vs Last Session
+              </Typography>
+            </Box>
+          </Box>
+
+
+        </Box>
+      </Box>
+
+      {/* Chart */}
+      <Box sx={{ width: '100%', height: 220, mb: 2 }}>
+        {loading ? (
+          <Box sx={{ py: 3, px: 2 }}>
+            <Skeleton variant="text" width="60%" height={16} sx={{ mb: 2 }} />
+            <Skeleton variant="rounded" width="100%" height={160} sx={{ borderRadius: 1 }} />
+            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} variant="text" width="20%" height={14} />
+              ))}
+            </Box>
+          </Box>
+        ) : data.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', px: 2 }}>
+            <Alert severity="info" sx={{ justifyContent: 'center', width: '100%' }}>
+              No trend data available
+            </Alert>
+          </Box>
+        ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9'} />
+            <XAxis
+              dataKey="month"
+              tickFormatter={(val) => val.split(' ')[0]}
+              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(v) => (v >= 1000 ? `${v / 1000}K` : v)}
+            />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                borderColor: isDark ? '#334155' : '#cbd5e1',
+                borderRadius: 8,
+                fontSize: 12,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              }}
+              formatter={(val) => [val.toLocaleString(), 'Applications']}
+            />
+            <Line
+              type="monotone"
+              dataKey="thisSession"
+              stroke="#2563eb"
+              strokeWidth={3}
+              dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#ffffff' }}
+              activeDot={{ r: 6 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="lastSession"
+              stroke="#cbd5e1"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              dot={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+        )}
+      </Box>
+
+      {/* Bottom Metrics Bar */}
+      <Box
+        sx={{
+          p: 1.5,
+          borderRadius: '10px',
+          bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+        }}
+      >
+        <Grid container spacing={1} textAling="center">
+          <Grid size={{ xs: 3 }}>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
+              Total Applications
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
+              {totalApps}
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 3 }} sx={{ borderLeft: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pl: 1 }}>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
+              New This Month
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
+              {newThisMonth}
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 3 }} sx={{ borderLeft: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pl: 1 }}>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
+              Avg. Per Month
+            </Typography>
+            <Typography variant="subtitle1" fontWeight={800} sx={{ fontSize: '13.5px', color: isDark ? '#fff' : '#0f172a' }}>
+              {avgPerMonth}
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 3 }} sx={{ borderLeft: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e2e8f0', pl: 1 }}>
+            <Typography variant="caption" sx={{ fontSize: '10px', color: '#64748b', fontWeight: 600, display: 'block' }}>
+              vs Last Session
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: vsLastSessionIsDown ? '#dc2626' : '#16a34a' }}>
+              {vsLastSessionIsDown ? <ArrowDownward sx={{ fontSize: 14 }} /> : <ArrowUpward sx={{ fontSize: 14 }} />}
+              <Typography
+                variant="subtitle1"
+                fontWeight={800}
+                sx={{ fontSize: '13.5px', color: vsLastSessionIsDown ? '#dc2626' : '#16a34a' }}
+              >
+                {vsLastSession}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    </Paper>
+  );
+};
+
+export default ApplicationTrend;

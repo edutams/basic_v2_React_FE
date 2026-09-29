@@ -13,7 +13,7 @@ import {
   InputAdornment,
   Button,
   Alert,
-  CircularProgress,
+  Skeleton,
   Grid,
   Chip,
   IconButton,
@@ -27,7 +27,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
@@ -532,57 +531,77 @@ const SchoolPermissionBased = () => {
 
   return (
     <Box>
-      <Box sx={{ py: 1, px: 0.5, mb: 2 }}>
+      <Box sx={{ mb: 2 }}>
         <Grid container spacing={2.5}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.totalP.toLocaleString()}
-            label="Total Permissions"
-            subtitle="Across all roles"
-            icon={IconLock}
-            colorIndex={0}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.totalP.toLocaleString()}
+              label="Total Permissions"
+              subtitle="Across all roles"
+              icon={IconLock}
+              colorIndex={0}
+              loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.assignedP.toLocaleString()}
-            label="Permissions Assigned"
-            subtitle="In use by roles"
-            icon={IconShieldCheck}
-            colorIndex={1}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.assignedP.toLocaleString()}
+              label="Permissions Assigned"
+              subtitle="In use by roles"
+              icon={IconShieldCheck}
+              colorIndex={1}
+              loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.unusedP}
-            label="Unused Permissions"
-            subtitle="Not assigned to any role"
-            icon={IconKey}
-            colorIndex={3}
-            loading={statsLoading}
-          />
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.unusedP}
+              label="Unused Permissions"
+              subtitle="Not assigned to any role"
+              icon={IconKey}
+              colorIndex={3}
+              loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            count={stats.affectedU.toLocaleString()}
-            label="Affected Users"
-            subtitle="Users impacted by permissions"
-            icon={IconUsers}
-            colorIndex={2}
-            loading={statsLoading}
-          />
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={stats.affectedU.toLocaleString()}
+              label="Affected Users"
+              subtitle="Users impacted by permissions"
+              icon={IconUsers}
+              colorIndex={2}
+              loading={statsLoading}
+              sx={{
+                border: "2px solid #94a3b8",
+              }}
+            />
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
 
       <Grid container spacing={3} alignItems="stretch">
         <Grid size={{ xs: 12, lg: 3.5 }} sx={{ display: 'flex' }}>
-          <ParentCard title="Permissions by Module" sx={{ width: '100%', height: '100%' }}>
+          <ParentCard
+            title="Permissions by Module"
+            sx={{
+              width: '100%',
+              height: '100%',
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
             <Box
               sx={{
                 py: 1,
@@ -605,7 +624,7 @@ const SchoolPermissionBased = () => {
                   }}
                 >
                   {statsLoading ? (
-                    <CircularProgress size={32} />
+                    <Skeleton variant="circular" width={120} height={120} />
                   ) : (
                     <Chart
                       options={chartOptions}
@@ -618,8 +637,8 @@ const SchoolPermissionBased = () => {
                 </Box>
 
                 <Box sx={{ mt: 1.5, px: 1 }}>
-                  {chartLegendData.slice(0, 8).map((item, idx) => {
-                    const isLast = idx === Math.min(chartLegendData.length, 8) - 1;
+                  {chartLegendData.slice(0, 5).map((item, idx) => {
+                    const isLast = idx === Math.min(chartLegendData.length, 5) - 1;
                     return (
                       <Box
                         key={idx}
@@ -675,10 +694,9 @@ const SchoolPermissionBased = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 8.5 }} sx={{ display: 'flex' }}>
-          <Paper
+          <ParentCard
             elevation={0}
             sx={{
-              p: 2.5,
               borderRadius: '16px',
               border: '1px solid',
               borderColor: 'divider',
@@ -687,6 +705,7 @@ const SchoolPermissionBased = () => {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
             <Box>
@@ -820,7 +839,7 @@ const SchoolPermissionBased = () => {
               </Box>
 
               <TableContainer sx={{ overflowX: 'auto', maxHeight: 380, overflowY: 'auto' }}>
-                <Table sx={{ minWidth: 960 }} stickyHeader>
+                <Table size="small" sx={{ minWidth: 960 }} stickyHeader>
                   <TableHead>
                     <TableRow sx={{ bgcolor: '#F8FAFC' }}>
                       <TableCell sx={{ width: 50, minWidth: 50, fontWeight: 700, py: 1.5 }}>
@@ -854,11 +873,15 @@ const SchoolPermissionBased = () => {
 
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                          <CircularProgress size={28} />
-                        </TableCell>
-                      </TableRow>
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          {[...Array(9)].map((_, j) => (
+                            <TableCell key={j}>
+                              <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
                     ) : displayPermissions.length > 0 ? (
                       displayPermissions.map((row, index) => {
                         const permName = row.name || row.permission || '';
@@ -892,7 +915,7 @@ const SchoolPermissionBased = () => {
                           <TableRow key={row.id || index} hover>
                             <TableCell sx={{ py: 1.5 }}>{page * rowsPerPage + index + 1}</TableCell>
 
-                             {/* Permission Code + Action Badge */}
+                            {/* Permission Code + Action Badge */}
                             <TableCell sx={{ py: 1.5 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Box>
@@ -1037,7 +1060,7 @@ const SchoolPermissionBased = () => {
                 setPage(0);
               }}
             />
-          </Paper>
+          </ParentCard>
         </Grid>
       </Grid>
 

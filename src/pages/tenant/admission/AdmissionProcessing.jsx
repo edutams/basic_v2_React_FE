@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Grid, Tabs, Tab, Stack, } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -21,6 +22,8 @@ import {
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Processing' }];
 
 const AdmissionProcessing = () => {
+  const location = useLocation();
+
   // ─── Data state ────────────────────────────────────────────────────────
   const [allBatches, setAllBatches] = useState([]);
   const [stats, setStats] = useState({
@@ -36,7 +39,11 @@ const AdmissionProcessing = () => {
   const [statsLoading, setStatsLoading] = useState(false);
 
   // ─── Tab state ─────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState(0);
+  // Quick Actions on the admission dashboard link here with { tab: 'batch' }
+  // (Admit Applicant) or { tab: 'individual' } (Enroll Student) — honor it so
+  // those two buttons actually land somewhere different from "Review
+  // Applications" instead of always opening the same default tab.
+  const [activeTab, setActiveTab] = useState(location.state?.tab === 'batch' ? 1 : 0);
 
   // ─── API calls ─────────────────────────────────────────────────────────
   const loadBatches = useCallback(async () => {
@@ -94,7 +101,7 @@ const AdmissionProcessing = () => {
       {/* ── Stat Cards ─────────────────────────────────────────────────── */}
 
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.applications}
@@ -136,6 +143,10 @@ const AdmissionProcessing = () => {
 
       {/* ── Main Card with Tabs ──────────────────────────────────────────────────── */}
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
             <Tabs
@@ -157,7 +168,7 @@ const AdmissionProcessing = () => {
           </Box>
         }
       >
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: 0 }}>
           {activeTab === 0 && (
             <IndividualProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
           )}

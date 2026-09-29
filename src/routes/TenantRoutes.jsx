@@ -4,6 +4,7 @@ import Loadable from '@/layouts/landlord/shared/loadable/Loadable';
 import TenantProtectedRoute from '@/components/protectedroutes/TenantProtectedRoute';
 import SetupRedirectHandler from '@/context/TenantContext/SetupRedirectHandler';
 import PrintReceipt from '@/pages/tenant/finance/bursary/PrintReceipt';
+import RouteErrorBoundary from '@/components/shared/RouteErrorBoundary';
 
 const SchoolLayout = Loadable(lazy(() => import('@/layouts/tenant/SchoolLayout')));
 const BlankLayout = Loadable(lazy(() => import('@/layouts/blank/BlankLayout')));
@@ -17,10 +18,12 @@ const AdmissionOfficerDashboard = Loadable(
 const BursaryOfficerDashboard = Loadable(
   lazy(() => import('@/pages/tenant/finance/BursaryOfficerDashboard')),
 );
+const TeacherDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/staff-manager/teacher-dashboard/TeacherDashboard')),
+);
 const SetupWelcome = Loadable(lazy(() => import('@/pages/tenant/school-setup/SetupWelcome')));
 const InitialSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/InitialSetup')));
 const CompleteSetup = Loadable(lazy(() => import('@/pages/tenant/school-setup/CompleteSetup')));
-const SessionWeekManager = Loadable(lazy(() => import('@/pages/tenant/school/SessionWeekManager')));
 const SchemeOfWork = Loadable(lazy(() => import('@/pages/tenant/scheme-of-work/SchemeOfWork')));
 const CurriculumManager = Loadable(
   lazy(() => import('@/pages/tenant/curriculum-manager/CurriculumManager')),
@@ -117,6 +120,37 @@ const PaySchoolFees = Loadable(
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
 );
+const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
+const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
+const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
+const ResultConsiderationPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/ResultConsiderationPage')),
+);
+const ResultEditPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultEditPage')));
+const ScoreSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreSheetPage')));
+const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBreakdownPage')));
+const PerformanceAnalyticsPage = Loadable(
+  lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')),
+);
+const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
+const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
+const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
+const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
+const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
+const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
+const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
+const CommunicationsPage = Loadable(
+  lazy(() => import('@/pages/tenant/communications/CommunicationsPage')),
+);
+
+// May open the Continuous Assessment (CA breakdown) page: learners via the
+// sidebar, staff via the Student Dossier / score sheet deep links. The learner
+// permission exists under two spellings across seeded databases.
+const CA_BREAKDOWN_ACCESS = [
+  'result.client.ca_breakdown',
+  'result.view_dossier',
+  'result.admin.view_score_sheet',
+];
 
 const TenantRoutes = [
   {
@@ -259,27 +293,18 @@ const TenantRoutes = [
       },
 
       {
-        path: 'manage-subscription',
+        path: 'subscriptions',
         element: (
-          <TenantProtectedRoute permission="manage.subscription.index">
+          <TenantProtectedRoute permission="subscriptions.index">
             <SubscriptionIndex />
           </TenantProtectedRoute>
         ),
       },
       {
-        path: 'subscription-history',
+        path: 'subscriptions-history',
         element: (
-          <TenantProtectedRoute permission="manage.subscription.index">
+          <TenantProtectedRoute permission="subscriptions.transaction_history">
             <SubscriptionIndex />
-          </TenantProtectedRoute>
-        ),
-      },
-
-      {
-        path: 'session-week-manager',
-        element: (
-          <TenantProtectedRoute permission="calendar.index">
-            <SessionWeekManager />
           </TenantProtectedRoute>
         ),
       },
@@ -314,14 +339,6 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="learner.setup.index">
             <LearnerManagement />
-          </TenantProtectedRoute>
-        ),
-      },
-      {
-        path: 'calendar',
-        element: (
-          <TenantProtectedRoute permission="calendar.index">
-            <CalendarPage />
           </TenantProtectedRoute>
         ),
       },
@@ -409,7 +426,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <PaymentShedule />
           </TenantProtectedRoute>
         ),
@@ -417,7 +434,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/:session_term_id/:class_id',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceStudentsView />
           </TenantProtectedRoute>
         ),
@@ -425,7 +442,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/:session_term_id/:class_id/:category_id/view_class_invoice',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceView />
           </TenantProtectedRoute>
         ),
@@ -433,7 +450,7 @@ const TenantRoutes = [
       {
         path: 'payment-schedule/invoice/print/:session_term_id/:class_id/:id',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <PrintInvoicePage />
           </TenantProtectedRoute>
         ),
@@ -471,10 +488,147 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      // ── Result Module routes (each maps to a sidebar link from the seeder) ──
+      {
+        path: 'result-setup',
+        element: (
+          <TenantProtectedRoute permission="result.admin.manage_result_setup">
+            <ResultModule />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'score-manager',
+        element: (
+          <TenantProtectedRoute permission="result.admin.upload_score">
+            <ScoreManagerPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-upload',
+        element: (
+          <TenantProtectedRoute permission="result.admin.upload_score">
+            <UploadScoresPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-consideration',
+        element: (
+          <TenantProtectedRoute permission="result.admin.consideration.view">
+            <ResultConsiderationPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-edit',
+        element: (
+          <TenantProtectedRoute permission="result.admin.edit">
+            <ResultEditPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-scoresheet',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_score_sheet">
+            <ScoreSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-ca_breakdown',
+        element: (
+          <TenantProtectedRoute anyOf={CA_BREAKDOWN_ACCESS}>
+            <CaBreakdownPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-analytics',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_analytics">
+            <PerformanceAnalyticsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-sheet',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_broadsheet">
+            <ResultSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-broadsheet',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_school_broadsheet">
+            <BroadsheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-summary',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_summary">
+            <SummarySheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-reportsheet',
+        element: (
+          <TenantProtectedRoute permission="result.view_dossier">
+            <ReportSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-reportcard',
+        element: (
+          <TenantProtectedRoute permission="result.client.view_report_sheet">
+            <ReportCardPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-comment-bank',
+        element: (
+          <TenantProtectedRoute permission="result.admin.manage_comment_bank">
+            <CommentBankPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-messaging',
+        element: (
+          <TenantProtectedRoute permission="result.admin.manage_result_messaging">
+            <MessagingPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'communications',
+        element: (
+          <TenantProtectedRoute permission="communication.index">
+            <CommunicationsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'communications/broadcast-messaging',
+        element: (
+          <TenantProtectedRoute permission="communication.index">
+            <CommunicationsPage />
+          </TenantProtectedRoute>
+        ),
+      },
       {
         path: 'bursary-setup',
         element: (
-          <TenantProtectedRoute permission="dashboard.index">
+          <TenantProtectedRoute permission="bursary_manager.setup.index">
             <BursarySetup />
           </TenantProtectedRoute>
         ),
@@ -504,10 +658,39 @@ const TenantRoutes = [
         ),
       },
       // ── Dashboard route (handles both school and parent dashboards) ──
-      { path: 'dashboard', element: <SchoolDashboardMain /> },
+      {
+        path: 'dashboard',
+        element: (
+          <TenantProtectedRoute permission="dashboard.index">
+            <SchoolDashboardMain />
+          </TenantProtectedRoute>
+        ),
+      },
       // ── Role-specific dashboards (linked from the Admin Dashboard) ──
-      { path: 'dashboard/admission', element: <AdmissionOfficerDashboard /> },
-      { path: 'dashboard/bursary', element: <BursaryOfficerDashboard /> },
+      {
+        path: 'dashboard/admission',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.dashboard.index">
+            <AdmissionOfficerDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'dashboard/bursary',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.dashboard.index">
+            <BursaryOfficerDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'staff-manager/teacher-dashboard',
+        element: (
+          <TenantProtectedRoute permission="teacher_dashboard.dashboard.index">
+            <TeacherDashboard />
+          </TenantProtectedRoute>
+        ),
+      },
 
       // ── Parent-specific routes ──
       { path: 'pay-school-fees', element: <PaySchoolFees /> },
@@ -601,8 +784,14 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+
+      // ── Catch-all: route unmatched paths to Page Under Development ──
+      {
+        path: '*',
+        element: <PageUnderDevelopment />,
+      },
     ],
   },
-];
+].map((route) => ({ errorElement: <RouteErrorBoundary />, ...route }));
 
 export default TenantRoutes;

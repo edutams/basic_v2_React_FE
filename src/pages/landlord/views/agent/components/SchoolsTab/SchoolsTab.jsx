@@ -8,7 +8,7 @@ import {
   Button,
   Alert,
   Chip,
-  CircularProgress,
+  Skeleton,
   Tabs,
   Tab,
   Divider,
@@ -20,13 +20,9 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
+  Portal,
 } from '@mui/material';
-import {
-  IconGridDots,
-  IconUserPlus,
-  IconAdjustmentsHorizontal,
-  IconChartBar,
-} from '@tabler/icons-react';
+import { IconGridDots, IconUserPlus, IconChartBar } from '@tabler/icons-react';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -46,12 +42,13 @@ import {
   rejectProspectiveTenant,
   updateSchool,
   approveSchoolOnboarding,
+  deleteProspectiveTenant,
 } from '@/api/landlord/school/schoolApi';
 import agentApi from '@/api/landlord/organizations/agent';
 import SchoolProfileModal from '@/components/shared/SchoolProfileModal';
-import FilterSideDrawer from '@/components/shared/FilterSideDrawer';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 import TotalSchoolModal from '../TotalSchoolModal';
+import SubscriptionModal from '@/pages/landlord/dashboard/components/SubscriptionModal';
 
 import {
   getSpaContact,
@@ -64,10 +61,10 @@ import ApplicationReview from './ApplicationReview';
 import SetupApprovals from './SetupApprovals';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';
 import { usePermissions } from '@/context/AgentContext/permissions';
-import { getStatCardColor } from '@/utils/statCardColors';
 import PlanDistributionModal from '../PlanDistributionModal';
 import ManageSchoolGateway from '../ManageSchoolGateway';
 import gatewayApi from '@/api/landlord/gateway/gatewayApi';
+import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 
 // ── PersonCard ────────────────────────────────────────────────────────────────
 
@@ -120,11 +117,13 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
   const [openConfirmReject, setOpenConfirmReject] = useState(false);
+  const [openConfirmReapprove, setOpenConfirmReapprove] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setRejectReason('');
       setShowRejectInput(false);
+      setOpenConfirmReapprove(false);
     }
   }, [open]);
 
@@ -389,24 +388,36 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         {prospect.status === 'pending' && !can('landlord.school.approval') && (
           <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            Only Level 1 organizations can approve or reject applications
+            Only Level 1 agents can approve or reject applications
           </Typography>
         )}
-        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onClose}
+          color="inherit"
+          sx={{ borderRadius: 2, textTransform: 'none', minWidth: 80 }}
+        >
           Close
         </Button>
         {prospect.status === 'pending' && can('landlord.school.approval') && (
           <>
             {!showRejectInput ? (
               <>
-                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Reject
                 </Button>
-                <Button variant="contained" size="small" startIcon={<CheckCircleOutlineIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<CheckCircleOutlineIcon />}
                   onClick={() => onApprove(prospect.id)}
                   disabled={loading}
                   sx={{
@@ -414,27 +425,49 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                     textTransform: 'none',
                   }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Approve & Provision'}
+                  {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="contained" size="small" color="inherit" onClick={() => setShowRejectInput(false)}
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="inherit"
+                  onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => setOpenConfirmReject(true)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
-                  {loading ? <CircularProgress size={18} color="inherit" /> : 'Confirm Reject'}
+                  {loading ? <Skeleton variant="text" width={100} height={18} /> : 'Confirm Reject'}
                 </Button>
               </>
             )}
           </>
+        )}
+        {prospect.status === 'rejected' && can('landlord.school.approval') && (
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<CheckCircleOutlineIcon />}
+            onClick={() => setOpenConfirmReapprove(true)}
+            disabled={loading}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            {loading ? <CircularProgress size={18} color="inherit" /> : 'Re-approve Application'}
+          </Button>
         )}
       </DialogActions>
 
@@ -450,6 +483,19 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
         confirmText="Yes, Reject"
         severity="error"
       />
+
+      <ConfirmationDialog
+        open={openConfirmReapprove}
+        onClose={() => setOpenConfirmReapprove(false)}
+        onConfirm={() => {
+          setOpenConfirmReapprove(false);
+          onApprove(prospect.id);
+        }}
+        title="Confirm Re-approval"
+        message={`Are you sure you want to re-approve and provision this School Application for "${prospect.tenant_name}"? This will create the school database and send login credentials.`}
+        confirmText="Yes, Re-approve & Provision"
+        severity="warning"
+      />
     </Dialog>
   );
 };
@@ -463,28 +509,49 @@ const SchoolsTab = ({
   refreshKey,
   isViewingProfile = false,
   isDashboard = false,
-  loginActivities = [],
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   const { user } = useAuth();
   const { can } = usePermissions();
 
   const [activeTab, setActiveTab] = useState(0);
-  const [nameValue, setNameValue] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
+  // `schoolList`/`schoolLoading` stay unfiltered — they only feed the
+  // analytics/summary stat cards above the tabs, which need the org's true
+  // totals regardless of whatever filters are active on the tables below.
   const [prospectList, setProspectList] = useState([]);
   const [schoolList, setSchoolList] = useState([]);
   const [prospectLoading, setProspectLoading] = useState(true);
   const [schoolLoading, setSchoolLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Each sub-tab's table now queries the backend independently with its own
+  // filters, instead of all three re-deriving from one shared, unfiltered
+  // list via client-side filtering.
+  const [setupList, setSetupList] = useState([]);
+  const [setupLoading, setSetupLoading] = useState(true);
+  const [approvedList, setApprovedList] = useState([]);
+  const [approvedLoading, setApprovedLoading] = useState(true);
+
+  const EMPTY_SCHOOL_FILTERS = { search: '', status: '', date_from: '', date_to: '' };
+  const [prospectFilters, setProspectFilters] = useState(EMPTY_SCHOOL_FILTERS);
+  const [setupFilters, setSetupFilters] = useState(EMPTY_SCHOOL_FILTERS);
+  const [approvedFilters, setApprovedFilters] = useState(EMPTY_SCHOOL_FILTERS);
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [openDeactivateDialog, setOpenDeactivateDialog] = useState(false);
@@ -502,9 +569,6 @@ const SchoolsTab = ({
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [profileSchool, setProfileSchool] = useState(null);
 
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
-
   const [gatewayModalOpen, setGatewayModalOpen] = useState(false);
   const [gatewaySchool, setGatewaySchool] = useState(null);
 
@@ -514,30 +578,17 @@ const SchoolsTab = ({
 
   // Analytics modals
   const [openPlanModal, setOpenPlanModal] = useState(false);
-  const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
   const [analyticsRefreshKey, setAnalyticsRefreshKey] = useState(0);
 
   // Analytics state for TotalSchoolModal
   const [analytics, setAnalytics] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
-  const schoolFilterDefs = [
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'pending', label: 'Pending' },
-        { value: 'approved', label: 'Approved' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-    { key: 'name', label: 'School Name', type: 'text', placeholder: 'Filter by name…' },
-    { key: 'date_from', label: 'Submitted From', type: 'date' },
-    { key: 'date_to', label: 'Submitted To', type: 'date' },
-  ];
+
+  // Subscription stats
+  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
@@ -559,10 +610,12 @@ const SchoolsTab = ({
     }
   };
 
-  const fetchProspects = useCallback(async () => {
+  // Applications Review's own filtered fetch — search/status/date range are
+  // sent to the backend, never filtered client-side.
+  const fetchProspects = useCallback(async (filters = prospectFilters) => {
     setProspectLoading(true);
     try {
-      const data = await getProspectiveTenants();
+      const data = await getProspectiveTenants(filters);
       const all = Array.isArray(data) ? data : [];
       setProspectList(
         organizationId
@@ -574,8 +627,9 @@ const SchoolsTab = ({
     } finally {
       setProspectLoading(false);
     }
-  }, [organizationId]);
+  }, [organizationId, prospectFilters]);
 
+  // Unfiltered — only feeds the analytics/summary stat cards above the tabs.
   const fetchSchools = useCallback(async () => {
     setSchoolLoading(true);
     try {
@@ -593,10 +647,71 @@ const SchoolsTab = ({
     }
   }, [organizationId]);
 
+  // Setup Approvals' own filtered fetch — always scoped server-side to
+  // tenants that haven't finished onboarding approval yet.
+  const fetchSetupSchools = useCallback(async (filters = setupFilters) => {
+    setSetupLoading(true);
+    try {
+      const data = await getSchools({ ...filters, exclude_onboarding_status: 'approved' });
+      const all = Array.isArray(data) ? data : [];
+      setSetupList(
+        organizationId
+          ? all.filter((s) => String(s.organization_id) === String(organizationId))
+          : all,
+      );
+    } catch (err) {
+      notify(err?.message || 'Failed to fetch schools', 'error');
+    } finally {
+      setSetupLoading(false);
+    }
+  }, [organizationId, setupFilters]);
+
+  // Approved Schools' own filtered fetch — always scoped server-side to
+  // onboarding-approved tenants.
+  const fetchApprovedSchools = useCallback(async (filters = approvedFilters) => {
+    setApprovedLoading(true);
+    try {
+      const data = await getSchools({ ...filters, onboarding_status: 'approved' });
+      const all = Array.isArray(data) ? data : [];
+      setApprovedList(
+        organizationId
+          ? all.filter((s) => String(s.organization_id) === String(organizationId))
+          : all,
+      );
+    } catch (err) {
+      notify(err?.message || 'Failed to fetch schools', 'error');
+    } finally {
+      setApprovedLoading(false);
+    }
+  }, [organizationId, approvedFilters]);
+
+  const handleProspectFilterApply = (filters) => {
+    setProspectFilters(filters);
+    fetchProspects(filters);
+  };
+  const handleSetupFilterApply = (filters) => {
+    setSetupFilters(filters);
+    fetchSetupSchools(filters);
+  };
+  const handleApprovedFilterApply = (filters) => {
+    setApprovedFilters(filters);
+    fetchApprovedSchools(filters);
+  };
+
+  // The unfiltered summary fetch always runs — the stat cards above the tabs
+  // need the org's true totals regardless of which tab is open.
   useEffect(() => {
-    fetchProspects();
     fetchSchools();
-  }, [fetchProspects, fetchSchools]);
+  }, [fetchSchools]);
+
+  // Each sub-tab now queries the backend independently, so only the tab
+  // that's actually visible needs to (re)fetch on mount / tab switch.
+  useEffect(() => {
+    if (activeTab === 0) fetchProspects();
+    else if (activeTab === 1) fetchSetupSchools();
+    else if (activeTab === 2) fetchApprovedSchools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Fetch analytics for TotalSchoolModal
   useEffect(() => {
@@ -613,28 +728,41 @@ const SchoolsTab = ({
     fetchAnalytics();
   }, [analyticsRefreshKey, refreshKey]);
 
+  // Fetch subscription stats by school type
+  useEffect(() => {
+    const fetchSubscriptionStats = async () => {
+      setSubscriptionStatsLoading(true);
+      try {
+        const res = await agentApi.getSubscriptionStatsBySchoolType(organizationId);
+        if (res.status && res.data) {
+          setSubscriptionStats(res.data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch subscription stats', e);
+      } finally {
+        setSubscriptionStatsLoading(false);
+      }
+    };
+    fetchSubscriptionStats();
+  }, [analyticsRefreshKey, refreshKey, organizationId]);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const handleFilterApply = (v) => {
-    setActiveFilters(v);
-    setPage(0);
-  };
   const handleApplicationStatusChange = () => {
     // Increment refresh key to trigger fresh analytics fetch
     setAnalyticsRefreshKey((prev) => prev + 1);
     if (handleRefresh) handleRefresh();
-  };
-  const handleFilterReset = () => {
-    setActiveFilters({});
-    setPage(0);
   };
 
   const handleApprove = async (id) => {
     setActionLoading(true);
     try {
       await approveProspectiveTenant(id);
+      // The approved application just became a real tenant — it now shows
+      // up in Setup Approvals (pending onboarding), not the applications list.
       await fetchProspects();
       await fetchSchools();
+      await fetchSetupSchools();
       setReviewOpen(false);
       handleApplicationStatusChange(); // Trigger analytics refresh
       notify('School approved and provisioned successfully');
@@ -672,7 +800,11 @@ const SchoolsTab = ({
 
       notify(`School successfully ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
 
+      // The status change could affect whichever of the two tables' status
+      // filter is currently applied, so refresh both alongside the summary.
       await fetchSchools();
+      await fetchSetupSchools();
+      await fetchApprovedSchools();
       await fetchProspects();
       setOpenDeactivateDialog(false);
       setSchoolToDeactivate(null);
@@ -694,7 +826,11 @@ const SchoolsTab = ({
     try {
       await approveSchoolOnboarding(schoolToApproveOnboarding.id);
       notify('Onboarding approved successfully', 'success');
-      await fetchSchools(); // Refresh list
+      // This moves the row from Setup Approvals to Approved Schools — both
+      // tables need refreshing, plus the unfiltered summary counts.
+      await fetchSchools();
+      await fetchSetupSchools();
+      await fetchApprovedSchools();
       setOpenApproveOnboardingDialog(false);
       setSchoolToApproveOnboarding(null);
     } catch (err) {
@@ -726,12 +862,6 @@ const SchoolsTab = ({
   };
 
   // ── Derived / summary ─────────────────────────────────────────────────────
-
-  const pendingProspects = prospectList.filter((p) => p.status === 'pending');
-
-  const setupPendingCount = schoolList.filter((s) => s.onboarding_status !== 'approved').length;
-
-  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
   const getSchoolType = (s) => {
     const raw = s.raw || s;
@@ -769,11 +899,12 @@ const SchoolsTab = ({
     [analytics, subscribedSchools],
   );
 
-  const planSeries = [40, 15, 35, 10];
-  const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3'];
+  const planDistribution = analytics?.planDistribution ?? [];
+  const planSeries = planDistribution.map((p) => p.total ?? 0);
+  const planLabels = planDistribution.map((p) => p.label ?? '');
+  const planColors = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
-  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, nameValue, activeFilters };
+  const sharedTabProps = { page, setPage, rowsPerPage, setRowsPerPage, setOpenAddModal, can };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -790,20 +921,25 @@ const SchoolsTab = ({
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
                 gap: 2,
-                mb: 3,
               }}
             >
               {/* Total Schools */}
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                   p:"10px !important",
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -822,28 +958,36 @@ const SchoolsTab = ({
                       size="small"
                       onClick={() => setOpenTotalSchoolModal(true)}
                       sx={{
-                        background: `${statColor0.iconBg} !important`,
-                        boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
-                        borderRadius: 1,
+                        width: 32,
+                        height: 32,
+                        borderRadius: '8px',
+                        bgcolor: s0.bg,
+                        color: s0.color,
                         '&:hover': { opacity: 0.85 },
                       }}
                     >
-                      <IconChartBar size={18} color="#fff" />
+                      <IconChartBar size={18} color={s0.color} />
                     </IconButton>
                   </Tooltip>
                 </Box>
                 <Box
                   sx={{
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
                     borderRadius: 1,
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 5,
+                    mb: 2,
                   }}
                 >
-                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
-                    {schoolSummary.total}
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: isDark ? '#ffffff' : s0.color,
+                    }}
+                  >
+                    {analyticsLoading ? <Skeleton variant="text" width={30} /> : schoolSummary.total}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -851,21 +995,35 @@ const SchoolsTab = ({
                     <Typography variant="caption" color="text.secondary">
                       Approved
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.active}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.active}
+                    </Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: '#E5E7EB' }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Pending
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.pending}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.pending}
+                    </Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: '#E5E7EB' }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Rejected
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.rejected}</Typography>
+                    <Typography fontWeight={600}>
+                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.rejected}
+                    </Typography>
                   </Box>
                 </Box>
               </Paper>
@@ -874,13 +1032,19 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                   p:"10px !important",
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -896,121 +1060,101 @@ const SchoolsTab = ({
                   </Typography>
                   <IconButton
                     size="small"
+                    onClick={() => setOpenSubscriptionModal(true)}
                     sx={{
-                      background: `${statColor1.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
-                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: s1.bg,
+                      color: s1.color,
                       '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={18} color="#fff" />
+                    <IconChartBar size={18} color={s1.color} />
                   </IconButton>
                 </Box>
                 <Box
                   sx={{
-                    background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+                    background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
                     borderRadius: 1,
                     px: 2,
                     py: 0.75,
                     display: 'inline-flex',
-                    mb: 5,
+                    mb: 2,
                   }}
                 >
-                  <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
-                    {schoolSummary.subscriptions}
+                  <Typography
+                    sx={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: isDark ? '#ffffff' : s1.color,
+                    }}
+                  >
+                    {subscriptionStatsLoading ? (
+                      <Skeleton variant="text" width={30} />
+                    ) : (
+                      subscriptionStats.total
+                    )}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">
-                      Primary
+                      Active
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.primary}</Typography>
+                    <Typography fontWeight={600}>
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
+                    </Typography>
                   </Box>
-                  <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: '#E5E7EB' }}
+                  />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Secondary
                     </Typography>
-                    <Typography fontWeight={600}>{schoolSummary.secondary}</Typography>
+                    <Typography fontWeight={600}>
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
+                    </Typography>
+                  </Box>
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ borderColor: '#E5E7EB' }}
+                  />
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Primary
+                    </Typography>
+                    <Typography fontWeight={600}>
+                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
+                    </Typography>
                   </Box>
                 </Box>
               </Paper>
 
               {/* Login Activities */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    mb: 5,
-                  }}
-                >
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Login Activities
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => setOpenLoginModal(true)}
-                    sx={{
-                      background: `${statColor2.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
-                      borderRadius: 1,
-                      '&:hover': { opacity: 0.85 },
-                    }}
-                  >
-                    <IconChartBar size={18} color="#fff" />
-                  </IconButton>
-                </Box>
-                <Box sx={{ pb: 0 }}>
-                  {(loginActivities && loginActivities.length > 0 ? loginActivities : [
-                    { label: 'Staffs', value: 0 },
-                    { label: 'Agents', value: 0 },
-                    { label: 'Total', value: 0 },
-                  ]).map((activity) => (
-                    <Box
-                      key={activity.label}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        py: 0.5,
-                        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {activity.label}
-                      </Typography>
-                      <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
-                        {activity.value}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Paper>
+              <LoginActivitiesCard />
 
               {/* Plan Distribution */}
               <Paper
                 elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: '16px',
-                  background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-                  boxShadow: isDark
-                    ? '0 6px 24px rgba(0,0,0,0.28)'
-                    : '0 4px 20px rgba(0,0,0,0.07)',
+                  p:"10px !important",
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
                 }}
               >
                 <Box
@@ -1028,52 +1172,37 @@ const SchoolsTab = ({
                     size="small"
                     onClick={() => setOpenPlanModal(true)}
                     sx={{
-                      background: `${statColor3.iconBg} !important`,
-                      boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
-                      borderRadius: 1,
+                      width: 32,
+                      height: 32,
+                      borderRadius: '8px',
+                      bgcolor: s3.bg,
+                      color: s3.color,
                       '&:hover': { opacity: 0.85 },
                     }}
                   >
-                    <IconChartBar size={18} color="#fff" />
+                    <IconChartBar size={18} color={s3.color} />
                   </IconButton>
                 </Box>
                 <Box
-                  sx={{ height: 160, display: 'flex', alignItems: 'center', overflow: 'hidden' }}
+                  sx={{ height: 130, display: 'flex', alignItems: 'center', }}
                 >
-                  <ReusablePieChart
-                    series={planSeries}
-                    colors={planColors}
-                    labels={planLabels}
-                    height={170}
-                    hideCard
-                  />
+                  {analyticsLoading ? (
+                    <Skeleton variant="circular" width={110} height={110} sx={{ mx: 'auto' }} />
+                  ) : planSeries.length > 0 ? (
+                    <ReusablePieChart
+                      series={planSeries}
+                      colors={planColors}
+                      labels={planLabels}
+                      height={130}
+                      hideCard
+                    />
+                  ) : (
+                    <Skeleton variant="circular" width={110} height={110} sx={{ mx: 'auto' }} />
+                  )}
                 </Box>
               </Paper>
             </Box>
           )}
-        {/* ── List header ── */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <Box
-              sx={{
-                width: 24,
-                height: 24,
-                bgcolor: '#2ca87f',
-                borderRadius: '4px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-              }}
-            >
-              <IconGridDots size={16} />
-            </Box>
-            <Typography variant="h5" fontWeight={700}>
-              List Of Schools
-            </Typography>
-          </Box>
-        </Box>
-
         {/* ── Tabs ── */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}>
           <Tabs
@@ -1081,7 +1210,6 @@ const SchoolsTab = ({
             onChange={(_, v) => {
               setActiveTab(v);
               setPage(0);
-              setNameValue('');
             }}
             variant="scrollable"
             scrollButtons="auto"
@@ -1119,70 +1247,15 @@ const SchoolsTab = ({
           </Tabs>
         </Box>
 
-        <Box sx={{ pt: 3 }}>
-          {/* Toolbar */}
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ sm: 'center' }}
-            spacing={2}
-            mb={3}
-          >
-            <Box />
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ marginLeft: 'auto' }}>
-              {activeTab === 0 && can('landlord.school.create') && (
-                <Button variant="contained" size="small" startIcon={<IconUserPlus />}
-                  onClick={() => setOpenAddModal(true)}
-                  sx={{
-                    textTransform: 'none',
-                    borderRadius: 2,
-                    px: 3,
-                  }}
-                >
-                  Add New School
-                </Button>
-              )}
-              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
-                onClick={() => setFilterDrawerOpen(true)}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2.5,
-                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  fontWeight: activeFilterCount > 0 ? 700 : 400,
-                  '&:hover': { borderColor: 'primary.main' },
-                }}
-              >
-                Filters
-
-                {activeFilterCount > 0 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      px: 0.8,
-                      py: 0.1,
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {activeFilterCount}
-                  </Box>
-                )}
-              </Button>
-            </Stack>
-          </Stack>
-
+        <Box sx={{ pt: 1 }}>
           {/* Tab panels */}
           {activeTab === 0 && (
             <ApplicationReview
               {...sharedTabProps}
               prospectList={prospectList}
               prospectLoading={prospectLoading}
+              filters={prospectFilters}
+              onApplyFilters={handleProspectFilterApply}
               onReview={(row) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
@@ -1193,9 +1266,11 @@ const SchoolsTab = ({
           {activeTab === 1 && (
             <SetupApprovals
               {...sharedTabProps}
-              schoolList={schoolList}
-              schoolLoading={schoolLoading}
+              schoolList={setupList}
+              schoolLoading={setupLoading}
               prospectLoading={prospectLoading}
+              filters={setupFilters}
+              onApplyFilters={handleSetupFilterApply}
               onReview={(row) => {
                 setReviewProspect(row);
                 setReviewOpen(true);
@@ -1207,8 +1282,10 @@ const SchoolsTab = ({
           {activeTab === 2 && (
             <ApprovedSchoolsTab
               {...sharedTabProps}
-              schoolList={schoolList}
-              schoolLoading={schoolLoading}
+              schoolList={approvedList}
+              schoolLoading={approvedLoading}
+              filters={approvedFilters}
+              onApplyFilters={handleApprovedFilterApply}
               onViewProfile={handleViewProfile}
               onApproveOnboarding={handleApproveOnboarding}
               onEdit={handleEdit}
@@ -1270,6 +1347,8 @@ const SchoolsTab = ({
               setOpenEditModal(false);
               fetchProspects();
               fetchSchools();
+              fetchSetupSchools();
+              fetchApprovedSchools();
             }}
             onCancel={() => setOpenEditModal(false)}
             useProspective={isEditingProspective}
@@ -1312,37 +1391,39 @@ const SchoolsTab = ({
           severity="success"
         />
 
-        <FilterSideDrawer
-          open={filterDrawerOpen}
-          onClose={() => setFilterDrawerOpen(false)}
-          filters={schoolFilterDefs}
-          title="Filter Schools"
-          onApply={handleFilterApply}
-          onReset={handleFilterReset}
-        />
-
-        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} />
+        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
         <TotalSchoolModal
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}
           stats={analytics}
           refreshKey={analyticsRefreshKey}
         />
+        <SubscriptionModal
+          open={openSubscriptionModal}
+          onClose={() => setOpenSubscriptionModal(false)}
+        />
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={3500}
-          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            severity={snackbar.severity}
+        {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it
+            can get trapped under an open Dialog's stacking context
+            regardless of z-index. Portal escapes it to document.body,
+            same as Dialog. */}
+        <Portal>
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3500}
             onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-            sx={{ width: '100%', borderRadius: 2 }}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+            <Alert
+              severity={snackbar.severity}
+              onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+              sx={{ width: '100%', borderRadius: 2 }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Portal>
 
         <ManageSchoolGateway
           open={gatewayModalOpen}

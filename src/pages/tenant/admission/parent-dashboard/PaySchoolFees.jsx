@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -22,8 +22,10 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import { fetchParentPayments } from '@/api/tenant/bursary/classLedger';
 import { createPendingPayment } from '@/api/tenant/bursary/bursaryPayment';
+import { getParentPaymentWallets } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
+import SelectWalletModal from '@/components/tenant/bursary/SelectWalletModal';
 
 const naira = (n) => `₦${(Number(n) || 0).toLocaleString()}`;
 
@@ -44,6 +46,11 @@ const initialsOf = (name = '') =>
 const PaySchoolFees = () => {
   const navigate = useNavigate();
   const notify = useNotification();
+  const [searchParams] = useSearchParams();
+  // Set when this page is reached via a specific ward's own "Fund Wallet"
+  // button (my-wards.jsx) — narrows everything below to just that ward's
+  // own payments instead of every ward this guardian has.
+  const wardIdFilter = searchParams.get('ward_id');
 
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +58,22 @@ const PaySchoolFees = () => {
   const [error, setError] = useState('');
   const [selected, setSelected] = useState({}); // invoice_id -> true
 
+  // Wallet picker — opened by "Pay Now", scoped to just the wards that
+  // actually have a selected payment right now (not every ward this
+  // guardian has).
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [wallets, setWallets] = useState([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+  const [selectedWalletId, setSelectedWalletId] = useState(null);
+
   const loadPayments = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
+      // getParentPayments() only returns invoices with an outstanding
+      // balance — already-settled ones are excluded server-side, so a
+      // refetch after paying naturally drops that item with no client-side
+      // filtering needed here.
       const res = await fetchParentPayments();
       if (res?.status) setWards(res.data || []);
       else setError(res?.message || 'Failed to load payments');
@@ -69,7 +88,11 @@ const PaySchoolFees = () => {
     loadPayments();
   }, [loadPayments]);
 
-  const allPayments = wards.flatMap((w) => w.payments || []);
+  // getParentPayments() only ever includes a ward here if they have at
+  // least one outstanding invoice, so no separate "hide empty ward" check
+  // is needed — this is purely the ?ward_id= display scope.
+  const visibleWards = wardIdFilter ? wards.filter((w) => w.id === wardIdFilter) : wards;
+  const allPayments = visibleWards.flatMap((w) => w.payments || []);
   const selectedCount = Object.values(selected).filter(Boolean).length;
   const totalPayable = allPayments
     .filter((p) => selected[p.invoice_id])
@@ -80,12 +103,40 @@ const PaySchoolFees = () => {
   };
 
   const toggleWard = (wardId, checked) => {
-    const ward = wards.find((w) => w.id === wardId);
+    const ward = visibleWards.find((w) => w.id === wardId);
     const next = { ...selected };
     (ward?.payments || []).forEach((p) => {
       next[p.invoice_id] = checked;
     });
     setSelected(next);
+  };
+
+  // Build the same schedule payload the invoice page uses — extracted so
+  // both "Pay Now" (to know which wards to fetch wallets for) and the
+  // actual confirm step can share it.
+  const buildSchedulePayload = () => {
+    const payload = [];
+    visibleWards.forEach((ward) => {
+      const fname = ward.name?.split(' ')[0] || '';
+      const lname = ward.name?.split(' ').slice(1).join(' ') || '';
+      (ward.payments || []).forEach((p) => {
+        if (!selected[p.invoice_id]) return;
+        payload.push({
+          bursary_schedule_id: p.bursary_schedule_id,
+          user_id: ward.id,
+          session_term_id: p.session_term_id,
+          amount: p.schedule_amount || p.payable,
+          instValue: p.payable,
+          paymentname: { name: p.payment_name, rev_code: p.rev_code },
+          fee_bearer: p.fee_bearer || 'client',
+          checked: true,
+          fname,
+          lname,
+          payment_type: 'ONLINE',
+        });
+      });
+    });
+    return payload;
   };
 
   const handlePay = async () => {
@@ -94,33 +145,41 @@ const PaySchoolFees = () => {
       return;
     }
 
+    const wardIds = [...new Set(buildSchedulePayload().map((p) => p.user_id))];
+
+    setSelectedWalletId(null);
+    setWalletModalOpen(true);
+    setWalletsLoading(true);
+    try {
+      const res = await getParentPaymentWallets(wardIds);
+      const wardWallets = res?.status ? res.data || [] : [];
+      setWallets(wardWallets);
+      // Reached via one specific ward's own "Fund Wallet" button — default
+      // to that ward's own wallet rather than making the parent pick
+      // between it and their own (still free to change it in the modal).
+      if (wardIdFilter) {
+        const wardWallet = wardWallets.find((w) => w.id === wardIdFilter);
+        if (wardWallet) setSelectedWalletId(wardWallet.id);
+      }
+    } catch (err) {
+      console.error('Failed to load payment wallets:', err);
+      setWallets([]);
+    } finally {
+      setWalletsLoading(false);
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    // A selection is only required when there's actually a wallet to pick
+    // — if wallets is empty, proceed anyway: SkoolPay's own widget creates
+    // one as part of the checkout flow itself.
+    if (wallets.length > 0 && !selectedWalletId) return;
+
     setPaying(true);
     setError('');
     try {
-      // Build the same schedule payload the invoice page uses.
-      const payload = [];
-      wards.forEach((ward) => {
-        const fname = ward.name?.split(' ')[0] || '';
-        const lname = ward.name?.split(' ').slice(1).join(' ') || '';
-        (ward.payments || []).forEach((p) => {
-          if (!selected[p.invoice_id]) return;
-          payload.push({
-            bursary_schedule_id: p.bursary_schedule_id,
-            user_id: ward.id,
-            session_term_id: p.session_term_id,
-            amount: p.schedule_amount || p.payable,
-            instValue: p.payable,
-            paymentname: { name: p.payment_name, rev_code: p.rev_code },
-            fee_bearer: p.fee_bearer || 'client',
-            checked: true,
-            fname,
-            lname,
-            payment_type: 'ONLINE',
-          });
-        });
-      });
-
-      const res = await createPendingPayment({ schedules: payload });
+      const payload = buildSchedulePayload();
+      const res = await createPendingPayment({ schedules: payload, payer_user_id: selectedWalletId });
       if (res?.success) {
         const paymentData = res.data || [];
         if (paymentData.length === 0) {
@@ -139,6 +198,7 @@ const PaySchoolFees = () => {
           hash,
         }));
 
+        setWalletModalOpen(false);
         makePayment(data, hash);
       } else {
         setError(res?.message || 'Payment initiation failed');
@@ -187,7 +247,7 @@ const PaySchoolFees = () => {
           <Skeleton variant="rounded" height={160} />
           <Skeleton variant="rounded" height={160} />
         </Stack>
-      ) : wards.length === 0 ? (
+      ) : visibleWards.length === 0 ? (
         <Paper
           elevation={0}
           sx={{ p: 5, textAlign: 'center', borderRadius: 3, border: '1px dashed #D1D5DB' }}
@@ -197,14 +257,14 @@ const PaySchoolFees = () => {
             No outstanding payments
           </Typography>
           <Typography variant="body2" sx={{ color: '#9CA3AF', mt: 0.5 }}>
-            All fees for your wards are settled.
+            {wardIdFilter ? 'All fees for this ward are settled.' : 'All fees for your wards are settled.'}
           </Typography>
         </Paper>
       ) : (
         <>
           {/* ── Ward payment cards ── */}
           <Stack spacing={2}>
-            {wards.map((ward) => {
+            {visibleWards.map((ward) => {
               const wardSelected = (ward.payments || []).every((p) => selected[p.invoice_id]);
               const wardSome = (ward.payments || []).some((p) => selected[p.invoice_id]);
               const wardTotal = (ward.payments || []).reduce(
@@ -354,6 +414,18 @@ const PaySchoolFees = () => {
           </Paper>
         </>
       )}
+
+      <SelectWalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        wallets={wallets}
+        loading={walletsLoading}
+        selectedWalletId={selectedWalletId}
+        onSelect={setSelectedWalletId}
+        onConfirm={handleConfirmPayment}
+        amount={totalPayable}
+        confirmLoading={paying}
+      />
     </PageContainer>
   );
 };

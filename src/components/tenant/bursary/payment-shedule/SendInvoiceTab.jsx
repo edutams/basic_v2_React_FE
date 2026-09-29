@@ -32,7 +32,9 @@ import {
   DialogActions,
   Stack,
   Tooltip,
+  LinearProgress,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import ParentCard from '@/components/shared/ParentCard';
 import {
   Search as SearchIcon,
@@ -41,6 +43,9 @@ import {
   MoreVert as MoreVertIcon,
   GetApp as DownloadIcon,
   Delete as DeleteIcon,
+  GroupsOutlined as GroupsIcon,
+  TaskAltOutlined as TaskAltIcon,
+  PendingActionsOutlined as PendingIcon,
 } from '@mui/icons-material';
 import TiptapEdit from 'src/pages/landlord/views/forms/form-tiptap/TiptapEdit';
 import {
@@ -53,6 +58,7 @@ import {
   sendInvoiceEmail,
   generateInvoiceExcel,
 } from '@/api/tenant/bursary/sendInvoiceApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 
 const INVOICE_PLACEHOLDER_FIELDS = [
   { label: "Student's First Name", value: '{student_fname}' },
@@ -69,6 +75,8 @@ const INVOICE_PLACEHOLDER_FIELDS = [
 ];
 
 const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [deliveryTab, setDeliveryTab] = useState(0);
 
   const [sessionTerms, setSessionTerms] = useState([]);
@@ -76,7 +84,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [classes, setClasses] = useState([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
 
-  const [selectedSessionTermId, setSelectedSessionTermId] = useState('');
+  // Session and term are picked separately — sessionTerms is still a flat
+  // list of session_term rows underneath, but selectedSessionTermId below
+  // is derived from these two rather than picked directly.
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedTermId, setSelectedTermId] = useState('');
   const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +99,13 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const [parentsList, setParentsList] = useState([]);
   const [loadingParents, setLoadingParents] = useState(false);
 
-  const [stats, setStats] = useState({ total_parents: 0, sent: 0, not_sent: 0 });
+  const [stats, setStats] = useState({
+    total_parents: 0,
+    sent_by_sms: 0,
+    sent_by_mail: 0,
+    excel_generated: 0,
+    total_sent: 0,
+  });
 
   const [selectedParents, setSelectedParents] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -124,6 +142,31 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
     programmeClasses.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     classes.find((c) => String(c.id) === String(selectedClassId))?.class_name ||
     '';
+
+  const distinctSessions = useMemo(() => {
+    const bySessionId = new Map();
+    sessionTerms.forEach((item) => {
+      if (!bySessionId.has(item.session_id)) {
+        bySessionId.set(item.session_id, item);
+      }
+    });
+    return Array.from(bySessionId.values());
+  }, [sessionTerms]);
+
+  const termsForSelectedSession = useMemo(
+    () => sessionTerms.filter((item) => item.session_id === selectedSessionId),
+    [sessionTerms, selectedSessionId],
+  );
+
+  const selectedSessionTermId =
+    sessionTerms.find(
+      (item) => item.session_id === selectedSessionId && item.term_id === selectedTermId,
+    )?.id || '';
+
+  // The backend only tracks how many were sent (`total_sent`, sms+email
+  // combined); "not sent" is whatever's left of the parent count.
+  const sentCount = Math.min(stats.total_sent, stats.total_parents);
+  const notSentCount = Math.max(stats.total_parents - sentCount, 0);
 
   const handleSendInvoice = async () => {
     if (selectedParents.length === 0) {
@@ -194,7 +237,14 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const loadFilterOptions = useCallback(async () => {
     try {
       setLoadingFilters(true);
-      const res = await fetchSendInvoiceFilterOptions();
+      // fetchSendInvoiceFilterOptions() returns session_terms ordered
+      // newest-first — that's "most recently created", not "actually
+      // active". Default off getActiveSessionTerm() instead, same single
+      // source of truth every other picker in the app uses.
+      const [res, activeRes] = await Promise.all([
+        fetchSendInvoiceFilterOptions(),
+        fetchActiveTenantSessionTerm(),
+      ]);
       if (res?.success && res.data) {
         const { session_terms, programmes: progs, classes: cls } = res.data;
 
@@ -202,8 +252,13 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         setProgrammes(progs || []);
         setClasses(cls || []);
 
-        if (session_terms?.length > 0 && !selectedSessionTermId) {
-          setSelectedSessionTermId(session_terms[0].id);
+        if (session_terms?.length > 0 && !selectedSessionId) {
+          const activeSessionTerm = activeRes?.status ? activeRes.data : null;
+          const defaultTerm =
+            (activeSessionTerm && session_terms.find((st) => st.id === activeSessionTerm.id)) ||
+            session_terms[0];
+          setSelectedSessionId(defaultTerm.session_id);
+          setSelectedTermId(defaultTerm.term_id);
         }
         if (progs?.length > 0 && !selectedProgrammeId) {
           setSelectedProgrammeId(String(progs[0].id));
@@ -243,6 +298,17 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   useEffect(() => {
     loadFilterOptions();
   }, [loadFilterOptions]);
+
+  // If the picked term doesn't exist for whichever session is now selected
+  // (e.g. switching to a session that only has two terms set up so far),
+  // fall back to the first term that session does have.
+  useEffect(() => {
+    if (!selectedSessionId || termsForSelectedSession.length === 0) return;
+    const stillValid = termsForSelectedSession.some((item) => item.term_id === selectedTermId);
+    if (!stillValid) {
+      setSelectedTermId(termsForSelectedSession[0].term_id);
+    }
+  }, [selectedSessionId, termsForSelectedSession, selectedTermId]);
 
   useEffect(() => {
     const load = async () => {
@@ -292,6 +358,13 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
       console.error('Failed to load stats', err);
     }
   }, [selectedSessionTermId, selectedClassId, selectedProgrammeId]);
+
+  // Stats card reflects the current filters as soon as they're picked,
+  // independent of the explicit Search/Fetch button that loads the parent
+  // list itself.
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
 
   const handleSearch = () => {
     if (!selectedSessionTermId) {
@@ -459,7 +532,11 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
   const renderSmsMailContent = () => (
     <Grid container spacing={3}>
       <Grid size={{ xs: 12, md: 5 }}>
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="subtitle1" fontWeight={700}>
@@ -488,7 +565,9 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               <CircularProgress size={24} />
             </Box>
           ) : groupedByStudent.length === 0 ? (
-            <Alert severity="info">No parents found</Alert>
+            <Alert severity="info" sx={{ justifyContent: 'center' }}>
+              No students found for the selected class.
+            </Alert>
           ) : (
             <Box sx={{ maxHeight: 500, overflowY: 'auto', pr: 1 }}>
               {groupedByStudent.map((group) => {
@@ -613,15 +692,15 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
       </Grid>
 
       <Grid size={{ xs: 12, md: 7 }}>
-        <Paper
+        <ParentCard
           variant="outlined"
           sx={{
-            p: { xs: 2, md: 3 },
             borderRadius: 3,
             borderColor: 'grey.200',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
           }}
         >
           <Typography variant="h6" fontWeight={700} mb={3}>
@@ -727,7 +806,12 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               </Typography>
               <Stack spacing={0.75}>
                 {INVOICE_PLACEHOLDER_FIELDS.map((field) => (
-                  <Button variant="contained" size="small" key={field.value} fullWidth onClick={() => handleInsertPlaceholder(field.value)}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    key={field.value}
+                    fullWidth
+                    onClick={() => handleInsertPlaceholder(field.value)}
                     sx={{
                       justifyContent: 'flex-start',
                       textTransform: 'none',
@@ -750,14 +834,20 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           </Grid>
 
           <Box display="flex" justifyContent="flex-end" mt={2}>
-            <Button variant="contained" size="small" color="primary" onClick={handleSendInvoice} disabled={sendingInvoice || selectedParents.length === 0}>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              onClick={handleSendInvoice}
+              disabled={sendingInvoice || selectedParents.length === 0}
+            >
               {sendingInvoice ? (
                 <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
               ) : null}
               Send Invoice to Parent
             </Button>
           </Box>
-        </Paper>
+        </ParentCard>
       </Grid>
     </Grid>
   );
@@ -914,7 +1004,7 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         variant="outlined"
         sx={{ borderRadius: 2, borderColor: 'grey.200' }}
       >
-        <Table size="medium">
+        <Table size="small">
           <TableHead>
             <TableRow>
               {/* <TableCell padding="checkbox">
@@ -1029,32 +1119,6 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
             pb: 2,
           }}
         >
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '1px solid',
-                borderColor: 'grey.200',
-              }}
-            >
-              <AssignmentTurnedInIcon sx={{ color: 'primary.main' }} />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={700}>
-                Send invoice to parent
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Review the parent's contact, write a message, and choose how to deliver.
-              </Typography>
-            </Box>
-          </Box>
-
           <Tabs value={deliveryTab} onChange={handleDeliveryTabChange} variant="scrollable">
             <Tab
               label={
@@ -1131,12 +1195,12 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
         </Box>
 
         <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2}>
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 } }}>
-            <InputLabel>Session Term</InputLabel>
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
+            <InputLabel>Session</InputLabel>
             <Select
-              value={selectedSessionTermId}
-              label="Session Term"
-              onChange={(e) => setSelectedSessionTermId(e.target.value)}
+              value={selectedSessionId}
+              label="Session"
+              onChange={(e) => setSelectedSessionId(e.target.value)}
               disabled={loadingFilters}
             >
               {loadingFilters ? (
@@ -1144,12 +1208,28 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
                   <CircularProgress size={16} />
                 </MenuItem>
               ) : (
-                sessionTerms.map((item) => (
-                  <MenuItem key={item.id} value={item.id}>
-                    {item.session?.sesname} - {item.display_term?.display_name}
+                distinctSessions.map((item) => (
+                  <MenuItem key={item.session_id} value={item.session_id}>
+                    {item.session?.session_name}
                   </MenuItem>
                 ))
               )}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 130 } }}>
+            <InputLabel>Term</InputLabel>
+            <Select
+              value={selectedTermId}
+              label="Term"
+              onChange={(e) => setSelectedTermId(e.target.value)}
+              disabled={loadingFilters || termsForSelectedSession.length === 0}
+            >
+              {termsForSelectedSession.map((item) => (
+                <MenuItem key={item.term_id} value={item.term_id}>
+                  {item.term?.term_name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
 
@@ -1213,18 +1293,31 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
               },
             }}
           />
-          <Button variant="contained" size="small" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} >
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+          >
             Search
           </Button>
         </Box>
 
         {deliveryTab === 2 && (
           <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
-            <Button variant="contained" size="small" onClick={handleGenerateExcelInvoice} disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleGenerateExcelInvoice}
+              disabled={generatingExcel || !selectedSessionTermId || !selectedClassId}
+            >
               {generatingExcel ? <CircularProgress size={20} color="inherit" /> : 'Generate'}
             </Button>
             {excelBlobUrl && (
-              <Button size="small" endIcon={<DownloadIcon />}
+              <Button
+                size="small"
+                endIcon={<DownloadIcon />}
                 component="a"
                 href={excelBlobUrl}
                 download={`Invoices_${selectedClassName || 'Class'}.xlsx`}
@@ -1235,6 +1328,123 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           </Box>
         )}
       </Box>
+
+      {selectedSessionTermId && (
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 2,
+            mb: 2,
+            borderRadius: 2,
+            bgcolor: isDark ? 'background.default' : '#fff',
+          }}
+        >
+          <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'grey.100',
+                  color: 'text.secondary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <GroupsIcon sx={{ fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Total Parents
+                </Typography>
+                <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
+                  {loadingParents ? <CircularProgress size={16} /> : stats.total_parents}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  bgcolor: isDark ? 'rgba(0,194,146,0.15)' : '#ebfaf2',
+                  color: 'success.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <TaskAltIcon sx={{ fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Invoice Sent
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="success.main" sx={{ lineHeight: 1.2 }}>
+                  {loadingParents ? <CircularProgress size={16} /> : sentCount}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  bgcolor:
+                    notSentCount > 0
+                      ? isDark
+                        ? 'rgba(253,201,15,0.15)'
+                        : '#fff4e5'
+                      : isDark
+                        ? 'rgba(0,194,146,0.15)'
+                        : '#ebfaf2',
+                  color: notSentCount > 0 ? 'warning.main' : 'success.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <PendingIcon sx={{ fontSize: 18 }} />
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Not Sent
+                </Typography>
+                <Typography
+                  variant="h6"
+                  fontWeight={700}
+                  color={notSentCount > 0 ? 'warning.main' : 'success.main'}
+                  sx={{ lineHeight: 1.2 }}
+                >
+                  {loadingParents ? <CircularProgress size={16} /> : notSentCount}
+                </Typography>
+              </Box>
+            </Box>
+          </Stack>
+
+          {stats.total_parents > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={(sentCount / stats.total_parents) * 100}
+                color={notSentCount === 0 ? 'success' : 'warning'}
+                sx={{ height: 8, borderRadius: 4 }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                {notSentCount === 0
+                  ? `All ${stats.total_parents} parent(s) have been sent an invoice`
+                  : `${sentCount} of ${stats.total_parents} parent(s) sent — ${notSentCount} left to go`}
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+      )}
 
       {deliveryTab === 0 && renderSmsMailContent()}
       {deliveryTab === 1 && renderSmsMailContent()}
@@ -1268,10 +1478,19 @@ const SendInvoiceTab = ({ showSnackbar, refreshStats }) => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseEditDialog}
+            disabled={savingEdit}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress /> : null}
+          <Button
+            size="small"
+            onClick={handleSaveEdit}
+            disabled={savingEdit}
+            startIcon={savingEdit ? <CircularProgress /> : null}
           >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>

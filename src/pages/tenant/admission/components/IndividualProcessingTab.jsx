@@ -32,6 +32,7 @@ import {
   Divider,
   Tab,
   Tabs,
+  Alert,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import {
@@ -82,7 +83,12 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
 
   // ─── Filter state ──────────────────────────────────────────────────────
-  const [filter, setFilter] = useState({ appBatchId: '', classId: '', status: 'pending', search: '' });
+  const [filter, setFilter] = useState({
+    appBatchId: '',
+    classId: '',
+    status: 'pending',
+    search: '',
+  });
   const [batchName, setBatchName] = useState('');
   const [batchClasses, setBatchClasses] = useState([]);
 
@@ -116,25 +122,22 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const getBatchLabel = (app) => {
-    const parts = [app.sesname, app.prog_name, app.batchname].filter(Boolean);
+    const parts = [app.session_name, app.prog_name, app.batchname].filter(Boolean);
     return parts.length ? `${parts[0]} - ${parts[1]} (${parts[2]})` : '—';
   };
 
   const getFormSubmitLabel = (value) => (value === 'yes' ? 'Submitted' : 'Not Submitted');
 
   // ─── API calls ─────────────────────────────────────────────────────────
-  const loadBatchClasses = useCallback(
-    async (batchId) => {
-      try {
-        const res = await fetchBatchClasses(batchId);
-        const list = Array.isArray(res?.data) ? res.data : [];
-        setBatchClasses(list);
-      } catch (err) {
-        console.error('Failed to load batch classes:', err);
-      }
-    },
-    [],
-  );
+  const loadBatchClasses = useCallback(async (batchId) => {
+    try {
+      const res = await fetchBatchClasses(batchId);
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setBatchClasses(list);
+    } catch (err) {
+      console.error('Failed to load batch classes:', err);
+    }
+  }, []);
 
   const loadApplications = useCallback(
     async (filters = null, url = null) => {
@@ -169,7 +172,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   const handleBatchChange = (e) => {
     const id = e.target.value;
     const found = allBatches.find((b) => Number(b.batch_id) === Number(id));
-    setBatchName(found ? `${found.sesname} - ${found.prog_name} (${found.batchname})` : '');
+    setBatchName(found ? `${found.session_name} - ${found.prog_name} (${found.batchname})` : '');
     setPage(0);
     setFilter((prev) => ({ ...prev, appBatchId: id, classId: '' }));
     setBatchClasses([]);
@@ -259,7 +262,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
           mname: app.mname || '',
           batchname: app.batchname,
           prog_name: app.prog_name,
-          sesname: app.sesname,
+          session_name: app.session_name,
         };
         await resetAdmissionOffer(payload);
         notify.success('Admission offer reset successfully');
@@ -288,7 +291,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
   return (
     <Box>
       {/* ── Status Tabs ──────────────────────────────────────────────── */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: -1 }}>
         <Tabs
           value={statusTab}
           onChange={handleStatusTabChange}
@@ -345,7 +348,7 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
               <MenuItem value="">-- Select Admission --</MenuItem>
               {allBatches.map((batch) => (
                 <MenuItem key={batch.batch_id} value={String(batch.batch_id)}>
-                  {batch.sesname} - {batch.prog_name} ({batch.batchname})
+                  {batch.session_name} - {batch.prog_name} ({batch.batchname})
                 </MenuItem>
               ))}
             </Select>
@@ -528,19 +531,14 @@ const IndividualProcessingTab = ({ allBatches, onDataChange }) => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Typography variant="h6" color="text.secondary" fontWeight={500}>
-                        No record found
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7 }}>
-                        {filter.search
-                          ? 'Try adjusting your search terms.'
-                          : filter.appBatchId
-                            ? 'No applications for the selected batch.'
-                            : 'Select an admission batch to view applications.'}
-                      </Typography>
-                    </Stack>
+                  <TableCell colSpan={13} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      {filter.search
+                        ? 'No record found. Try adjusting your search terms.'
+                        : filter.appBatchId
+                          ? 'No applications found for the selected batch.'
+                          : 'Select an admission batch to view applications.'}
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}

@@ -27,14 +27,20 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
+  Skeleton,
   Alert,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
 } from '@mui/material';
-import { IconUsers } from '@tabler/icons-react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { IconUsers, IconEye, IconLogin, IconEdit, IconBuilding, IconCoins } from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/context/AgentContext/auth.jsx';
 import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
+import { usePermissions } from '@/context/AgentContext/permissions';
+import useNotification from '@/hooks/useNotification';
 
 // Separate component for action menu to avoid hooks in loops
 const ActionMenuCell = ({
@@ -51,6 +57,7 @@ const ActionMenuCell = ({
   isViewingProfile = false,
 }) => {
   const [anchor, setAnchor] = useState(null);
+  const { can } = usePermissions();
 
   const handleClick = (event) => {
     setAnchor(event.currentTarget);
@@ -81,7 +88,10 @@ const ActionMenuCell = ({
               handleImpersonate(agent);
             }}
           >
-            Login As Agent
+            <ListItemIcon>
+              <IconLogin size={18} />
+            </ListItemIcon>
+            <ListItemText primary="Login As Agent" />
           </MenuItem>
         ) : (
           // When not viewing profile, show all menu items
@@ -89,10 +99,13 @@ const ActionMenuCell = ({
             <MenuItem
               onClick={() => {
                 handleClose();
-                navigate(`/agent/view/${agent.id}`);
+                navigate(`/view/${agent.id}`);
               }}
             >
-              View Profile
+              <ListItemIcon>
+                <IconEye size={18} />
+              </ListItemIcon>
+              <ListItemText primary="View Profile" />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -100,7 +113,10 @@ const ActionMenuCell = ({
                 handleImpersonate(agent);
               }}
             >
-              Login As Agent
+              <ListItemIcon>
+                <IconLogin size={18} />
+              </ListItemIcon>
+              <ListItemText primary="Login As Agent" />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -108,24 +124,64 @@ const ActionMenuCell = ({
                 handleUpdateAgent(agent, 'update');
               }}
             >
-              Update Agent Info
+              <ListItemIcon>
+                <IconEdit size={18} />
+              </ListItemIcon>
+              <ListItemText primary="Update Agent Info" />
             </MenuItem>
+            {can('landlord.commission.manage') && (
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  handleSetCommission(agent);
+                }}
+              >
+                <ListItemIcon>
+                  <IconCoins size={18} />
+                </ListItemIcon>
+                <ListItemText primary="Update Commission" />
+              </MenuItem>
+            )}
             <MenuItem
               onClick={() => {
                 handleClose();
                 handleViewSchools(agent, 'view');
               }}
             >
-              View School
+              <ListItemIcon>
+                <IconBuilding size={18} />
+              </ListItemIcon>
+              <ListItemText primary="View School" />
             </MenuItem>
-            <MenuItem
-              onClick={() => {
-                handleClose();
-                handleDeleteAgent(agent);
-              }}
-            >
-              Delete Agent
-            </MenuItem>
+            {(() => {
+              const hasSchools = (agent.tenants_count ?? 0) > 0;
+              const deleteItem = (
+                <MenuItem
+                  onClick={() => {
+                    if (hasSchools) return;
+                    handleClose();
+                    handleDeleteAgent(agent);
+                  }}
+                  disabled={hasSchools}
+                  sx={{ color: 'error.main' }}
+                >
+                  <ListItemIcon sx={{ color: 'error.main' }}>
+                    <DeleteIcon sx={{ fontSize: 18 }} />
+                  </ListItemIcon>
+                  <ListItemText primary="Delete Agent" />
+                </MenuItem>
+              );
+
+              // Disabled MenuItems block pointer events, so the Tooltip
+              // needs a wrapping span to still receive hover.
+              return hasSchools ? (
+                <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+                  <span>{deleteItem}</span>
+                </Tooltip>
+              ) : (
+                deleteItem
+              );
+            })()}
           </>
         )}
       </Menu>
@@ -139,12 +195,15 @@ const TeamTab = ({
   accessLevel,
   isViewingProfile = false,
   organizationId = null,
+  hideAddButton = false,
+  refreshKey = 0,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user } = useContext(AuthContext);
   const userAccessLevel = user?.organization?.access_level ?? 1;
+  const notify = useNotification();
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -169,6 +228,8 @@ const TeamTab = ({
   const [actionType, setActionType] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const handleAction = (agent, type) => {
     setSelectedAgent(agent);
@@ -176,9 +237,22 @@ const TeamTab = ({
     setIsModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (agentToDelete) {
-      // Add delete logic here if needed
+  const handleConfirmDelete = async () => {
+    if (!agentToDelete) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await agentApi.deleteOrganization(agentToDelete.id);
+      if (res.status) {
+        notify.success('Agent deleted successfully!');
+        setReloadKey((prev) => prev + 1);
+      } else {
+        notify.error(res.message || 'Failed to delete agent');
+      }
+    } catch (error) {
+      notify.error(error?.response?.data?.message || 'Failed to delete agent');
+    } finally {
+      setDeleteLoading(false);
       setDeleteDialogOpen(false);
       setAgentToDelete(null);
     }
@@ -314,7 +388,7 @@ const TeamTab = ({
       }
     };
     fetchData();
-  }, [page, rowsPerPage, isViewingProfile, organizationId]);
+  }, [page, rowsPerPage, isViewingProfile, organizationId, refreshKey, reloadKey]);
 
   // Handle search button click
   const handleSearch = () => {
@@ -388,34 +462,19 @@ const TeamTab = ({
     <Box>
       {/* Header */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              bgcolor: '#2ca87f',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-            }}
-          >
-            <IconUsers size={16} />
-          </Box>
-          <Typography variant="h5">
-            {isViewingProfile ? 'Sub Organizations' : 'List of Organization'}
-          </Typography>
-        </Stack>
-        {!isViewingProfile && (
+        {/* Level 5 is the last level — it can't create a level 6, so it
+            never gets an "Add New Agent" button (matches the backend's own
+            OrganizationService::createOrganization() abort for
+            access_level >= 5). */}
+        {!isViewingProfile && !hideAddButton && userAccessLevel < 5 && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
-            Add New Organization
+            Add New Agent
           </Button>
         )}
       </Stack>
 
       {/* Filters */}
-      <Grid container spacing={2} mb={3} alignItems="center">
+      <Grid container spacing={2} mb={1.5} alignItems="center">
         <Grid size={{ xs: 12, md: 4 }}>
           <TextField
             fullWidth
@@ -463,14 +522,17 @@ const TeamTab = ({
 
       {/* Table */}
       <TableContainer>
-        <Table>
+        <Table
+          stickyHeader
+          sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}
+        >
           <TableHead>
             <TableRow>
               <TableCell>
                 <Typography variant="h6">S/N</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Organization Details</Typography>
+                <Typography variant="h6">Agent Details</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Admin Details</Typography>
@@ -479,7 +541,7 @@ const TeamTab = ({
                 <Typography variant="h6">Access Level</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Sub Org.</Typography>
+                <Typography variant="h6">Sub Agents</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Total School</Typography>
@@ -497,11 +559,15 @@ const TeamTab = ({
           </TableHead>
           <TableBody>
             {tableLoading ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                  <CircularProgress size={24} />
-                </TableCell>
-              </TableRow>
+              [...Array(4)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(10)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : data.length > 0 ? (
               data.map((agent) => {
                 const initials = (agent.organizationName || 'NA')
@@ -513,11 +579,11 @@ const TeamTab = ({
                 const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                 const adminInitials = fullName
                   ? fullName
-                    .split(' ')
-                    .slice(0, 2)
-                    .map((w) => w[0])
-                    .join('')
-                    .toUpperCase()
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase()
                   : 'NA';
                 const level = Number(agent.access_level);
                 const colorMap = {
@@ -727,7 +793,7 @@ const TeamTab = ({
               <TableRow>
                 <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                   <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                    No organizations found
+                    No agents found
                   </Alert>
                 </TableCell>
               </TableRow>
@@ -755,7 +821,7 @@ const TeamTab = ({
           setIsModalOpen(false);
           setSelectedAgent(null);
         }}
-        handleRefresh={() => { }}
+        handleRefresh={() => {}}
         selectedAgent={selectedAgent}
         actionType={actionType}
       />
@@ -770,9 +836,11 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCancelDelete}>Cancel</Button>
-          <Button size="small" onClick={handleConfirmDelete} color="error">
-            Delete
+          <Button variant="contained" size="small" onClick={handleCancelDelete} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button size="small" onClick={handleConfirmDelete} color="error" disabled={deleteLoading}>
+            {deleteLoading ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

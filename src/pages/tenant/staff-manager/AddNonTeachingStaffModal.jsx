@@ -21,7 +21,7 @@ const AddNonTeachingStaffModal = ({
   return (
     <ReusableModal open={open} onClose={onClose} title={title} size="medium">
       <NonTeachingStaffForm
-        key={`${mode}-${initialValues?.id || initialValues?.staff_id || 'new'}`}
+        key={`${mode}-${initialValues?.id ?? 'new'}`}
         initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={onClose}

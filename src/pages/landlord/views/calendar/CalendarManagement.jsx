@@ -1,4 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {
   Box,
   Tabs,
@@ -20,22 +28,28 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  CircularProgress,
+  Skeleton,
   Alert,
-  Tooltip,
-  Backdrop,
   Menu,
+  InputAdornment,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   IconPlus,
   IconTrash,
   IconGripVertical,
   IconEdit,
   IconDotsVertical,
+  IconCheck,
+  IconSearch,
+  IconX,
+  IconCalendarStats,
+  IconCircleCheck,
+  IconCircleX,
+  IconStar,
 } from '@tabler/icons-react';
 import { IconFilter } from '@tabler/icons-react';
 
-import { FilterList as FilterListIcon } from '@mui/icons-material';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -46,9 +60,130 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from 'src/components/shared/ParentCard';
-import FilterSideDrawer from 'src/components/shared/FilterSideDrawer';
 import useNotification from 'src/hooks/useNotification';
 import agentApi from '@/api/landlord/landlord_api';
+
+// ─── Mini Stat Card ────────────────────────────────────────────────────────
+function MiniStat({ label, value, loading, color, icon: Icon }) {
+  return (
+    <Box
+      sx={{
+        flex: '1 1 140px',
+        minWidth: 140,
+        p: 1.25,
+        borderRadius: '10px',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 1,
+      }}
+    >
+      <Box>
+        <Typography
+          sx={{
+            fontSize: '11px',
+            fontWeight: 700,
+            color: 'text.secondary',
+            textTransform: 'uppercase',
+            letterSpacing: 0.4,
+          }}
+        >
+          {label}
+        </Typography>
+        {loading ? (
+          <Skeleton variant="text" width={50} height={28} />
+        ) : (
+          <Typography sx={{ fontSize: '20px', fontWeight: 700, color: color || 'text.primary' }}>
+            {value}
+          </Typography>
+        )}
+      </Box>
+      {Icon && (
+        <Box
+          sx={{
+            width: 34,
+            height: 34,
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            bgcolor: (theme) => {
+              const paletteKey = color ? color.split('.')[0] : 'primary';
+              return alpha(theme.palette[paletteKey]?.main ?? theme.palette.primary.main, 0.12);
+            },
+            color: color || 'primary.main',
+          }}
+        >
+          <Icon size={18} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+// ─── Inline Filter Bar (replaces the old side drawer) ─────────────────────
+function InlineFilterBar({
+  searchPlaceholder,
+  draft,
+  onDraftChange,
+  onApply,
+  onReset,
+  hasActiveFilters,
+}) {
+  return (
+    <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', mb: 2, flexWrap: 'wrap' }}>
+      <TextField
+        size="small"
+        placeholder={searchPlaceholder}
+        value={draft.search}
+        onChange={(e) => onDraftChange({ ...draft, search: e.target.value })}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onApply();
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconSearch size={16} />
+            </InputAdornment>
+          ),
+          endAdornment: draft.search ? (
+            <InputAdornment position="end">
+              <IconButton size="small" onClick={() => onDraftChange({ ...draft, search: '' })}>
+                <IconX size={14} />
+              </IconButton>
+            </InputAdornment>
+          ) : null,
+        }}
+        sx={{ minWidth: 240 }}
+      />
+      <TextField
+        size="small"
+        select
+        label="Status"
+        value={draft.status}
+        onChange={(e) => onDraftChange({ ...draft, status: e.target.value })}
+        sx={{ minWidth: 140 }}
+      >
+        <MenuItem value="">All</MenuItem>
+        <MenuItem value="active">Active</MenuItem>
+        <MenuItem value="inactive">Inactive</MenuItem>
+      </TextField>
+      <Button variant="contained" size="small" startIcon={<IconFilter size={16} />} onClick={onApply}>
+        Filter
+      </Button>
+      {hasActiveFilters && (
+        <Button size="small" onClick={onReset}>
+          Reset
+        </Button>
+      )}
+    </Box>
+  );
+}
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Calendar Management' }];
 
@@ -65,7 +200,9 @@ function ConfirmDialog({ open, title, message, onConfirm, onCancel }) {
         <Typography sx={{ pt: 1 }}>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button variant="contained" size="small" onClick={onCancel}>Cancel</Button>
+        <Button variant="contained" size="small" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button size="small" color="error" onClick={onConfirm}>
           Yes, Proceed
         </Button>
@@ -103,51 +240,34 @@ function SortableRow({ id, children, disabled }) {
 }
 
 // ─── Sessions Panel ────────────────────────────────────────────────────────
-function SessionsPanel({ isLevel1 }) {
+const SessionsPanel = forwardRef(function SessionsPanel({ isLevel1, onStatsChange }, ref) {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null); // session being edited
-  const [form, setForm] = useState({ sesname: '', status: 'active' });
+  const [form, setForm] = useState({ session_name: '', status: 'active' });
   const [errors, setErrors] = useState({});
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSession, setSelectedSession] = useState(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState({ search: '', status: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: '' });
   const [submitting, setSubmitting] = useState(false);
   const [setCurrentOpen, setSetCurrentOpen] = useState(false);
   const [reordering, setReordering] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const sessionFilterDefs = [
-    { key: 'search', label: 'Session Name', type: 'text', placeholder: 'Search by session name…' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-    {
-      key: 'is_current',
-      label: 'Current Session',
-      type: 'select',
-      options: [
-        { value: 'yes', label: 'Yes' },
-        { value: 'no', label: 'No' },
-      ],
-    },
-  ];
+  const [stats, setStats] = useState({ total: 0, active: 0, current: '—' });
 
-  const fetchSessions = useCallback(async () => {
+  // Search/status are sent to the backend as query params — never filtered
+  // client-side — so `sessions` here is already exactly what should render.
+  const fetchSessions = useCallback(async (filters) => {
     setLoading(true);
     try {
-      const res = await agentApi.get('/v1/landlord/calendar/sessions');
-      setSessions(res.data);
+      const res = await agentApi.get('/v1/landlord/calendar/sessions', { params: filters });
+      setSessions(res.data.data);
+      setStats(res.data.stats);
     } catch {
       notify.error('Failed to load sessions');
     } finally {
@@ -156,39 +276,40 @@ function SessionsPanel({ isLevel1 }) {
   }, []);
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    fetchSessions(activeFilters);
+  }, [fetchSessions, activeFilters]);
 
-  const filteredSessions = sessions.filter((session) => {
-    const matchesSearch = !activeFilters.search
-      ? true
-      : session.sesname.toLowerCase().includes(activeFilters.search.toLowerCase());
-    const matchesStatus = !activeFilters.status ? true : session.status === activeFilters.status;
-    const matchesCurrent = !activeFilters.is_current
-      ? true
-      : session.is_current === activeFilters.is_current;
-    return matchesSearch && matchesStatus && matchesCurrent;
-  });
+  // Reported up so the page-level stats row (above the tabs) can show
+  // whichever tab is active, instead of duplicating a stats row per panel.
+  useEffect(() => {
+    onStatsChange?.({ stats, loading });
+  }, [stats, loading, onStatsChange]);
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
+  const handleFilterApply = () => {
+    setActiveFilters(filterDraft);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters({});
+    setFilterDraft({ search: '', status: '' });
+    setActiveFilters({ search: '', status: '' });
   };
 
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ sesname: '', status: 'active' });
+    setForm({ session_name: '', status: 'active' });
     setErrors({});
     setCreateOpen(true);
   };
+
+  // Exposed so the parent can trigger "New Session" and a manual refresh
+  // from the tab bar / page-level stats row, instead of down here.
+  useImperativeHandle(ref, () => ({ openCreate, refresh: () => fetchSessions(activeFilters) }));
+
   const openEdit = (s) => {
     setEditTarget(s);
-    setForm({ sesname: s.sesname, status: s.status });
+    setForm({ session_name: s.session_name, status: s.status });
     setErrors({});
     setCreateOpen(true);
   };
@@ -220,10 +341,10 @@ function SessionsPanel({ isLevel1 }) {
       });
       notify.success('Session order updated successfully');
       // Refresh data to ensure consistency with backend
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch {
       notify.error('Failed to save order');
-      fetchSessions();
+      fetchSessions(activeFilters);
     } finally {
       setReordering(false);
     }
@@ -231,8 +352,8 @@ function SessionsPanel({ isLevel1 }) {
 
   const validate = () => {
     const errs = {};
-    if (!form.sesname || !/^\d{4}\/\d{4}$/.test(form.sesname))
-      errs.sesname = 'Must be YYYY/YYYY (e.g. 2024/2025)';
+    if (!form.session_name || !/^\d{4}\/\d{4}$/.test(form.session_name))
+      errs.session_name = 'Must be YYYY/YYYY (e.g. 2024/2025)';
     if (!form.status) errs.status = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -250,7 +371,7 @@ function SessionsPanel({ isLevel1 }) {
         notify.success('Session created');
       }
       closeDialog();
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch (err) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
@@ -260,31 +381,34 @@ function SessionsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (s) =>
+  const handleDeactivate = (s) => {
+    const isInactive = s.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Session',
-      message: `Delete "${s.sesname}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Session' : 'De-activate Session',
+      message: isInactive ? `Activate "${s.session_name}"?` : `De-activate "${s.session_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/sessions/${s.id}`);
-          notify.success('Session deleted');
-          fetchSessions();
+          await agentApi.put(`/v1/landlord/calendar/sessions/${s.id}/toggle-status`);
+          notify.success(isInactive ? 'Session activated' : 'Session de-activated');
+          fetchSessions(activeFilters);
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (s) => {
     handleMenuClose();
     openEdit(s);
   };
 
-  const handleDeleteClick = (s) => {
+  const handleDeactivateClick = (s) => {
     handleMenuClose();
-    handleDelete(s);
+    handleDeactivate(s);
   };
 
   const handleMenuOpen = (event, session) => {
@@ -313,7 +437,7 @@ function SessionsPanel({ isLevel1 }) {
       });
       notify.success('Current session updated');
       setSetCurrentOpen(false);
-      fetchSessions();
+      fetchSessions(activeFilters);
     } catch (err) {
       notify.error(err.response?.data?.message || 'Failed to update current session');
     } finally {
@@ -323,40 +447,19 @@ function SessionsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Academic Sessions</Typography>
-        {isLevel1 && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
-              onClick={() => setFilterDrawerOpen(true)}
-              sx={{ minWidth: 140 }}
-            >
-              Filters
-              {activeFilterCount > 0 && (
-                <Chip
-                  label={activeFilterCount}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              )}
-            </Button>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Session
-            </Button>
-          </Box>
-        )}
-      </Box>
       {!isLevel1 && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Only Level 1 agents can manage global sessions.
         </Alert>
       )}
+      <InlineFilterBar
+        searchPlaceholder="Search by session name…"
+        draft={filterDraft}
+        onDraftChange={setFilterDraft}
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+        hasActiveFilters={activeFilterCount > 0}
+      />
       {isLevel1 && sessions.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder sessions.
@@ -364,8 +467,8 @@ function SessionsPanel({ isLevel1 }) {
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <TableContainer>
-          <Table size="small">
-            <TableHead>
+          <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
+            <TableHead sx={{ bgcolor: '#f8f9fa' }}>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
                 <TableCell>S/N</TableCell>
@@ -378,13 +481,16 @@ function SessionsPanel({ isLevel1 }) {
             </TableHead>
             <TableBody>
               {loading || reordering ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <CircularProgress size={24} />
-                    {reordering && <Typography variant="body2">Order updating...</Typography>}
-                  </TableCell>
-                </TableRow>
-              ) : filteredSessions.length === 0 ? (
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : sessions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center">
                     No sessions found
@@ -392,13 +498,13 @@ function SessionsPanel({ isLevel1 }) {
                 </TableRow>
               ) : (
                 <SortableContext
-                  items={filteredSessions.map((s) => s.id)}
+                  items={sessions.map((s) => s.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {filteredSessions.map((s, idx) => (
+                  {sessions.map((s, idx) => (
                     <SortableRow key={s.id} id={s.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{s.sesname}</TableCell>
+                      <TableCell>{s.session_name}</TableCell>
                       <TableCell>{s.sort_order}</TableCell>
                       <TableCell>
                         <Chip
@@ -452,15 +558,22 @@ function SessionsPanel({ isLevel1 }) {
                             </MenuItem>
                             <MenuItem onClick={() => handleSetCurrent(s)}>
                               <IconPlus size={16} style={{ marginRight: 8 }} />
-                              Set as Current
+                              {s.is_current === 'yes' ? 'Unset as Current' : 'Set as Current'}
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(s)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {s.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(s)}>
+                                <IconCheck size={16} style={{ marginRight: 8 }} />
+                                Activate
+                              </MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(s)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -480,14 +593,14 @@ function SessionsPanel({ isLevel1 }) {
           <TextField
             fullWidth
             label="Session Name (e.g. 2024/2025)"
-            value={form.sesname}
-            error={!!errors.sesname}
-            helperText={errors.sesname}
+            value={form.session_name}
+            error={!!errors.session_name}
+            helperText={errors.session_name}
             onChange={(e) => {
-              setErrors((p) => ({ ...p, sesname: undefined }));
+              setErrors((p) => ({ ...p, session_name: undefined }));
               const raw = e.target.value;
-              if (raw.length < (form.sesname || '').length) {
-                setForm((p) => ({ ...p, sesname: raw }));
+              if (raw.length < (form.session_name || '').length) {
+                setForm((p) => ({ ...p, session_name: raw }));
                 return;
               }
               const digitsOnly = raw.replace(/[^0-9/]/g, '');
@@ -496,18 +609,18 @@ function SessionsPanel({ isLevel1 }) {
                 const firstYear = parseInt(parts[0], 10);
                 const nextYear = (firstYear + 1).toString();
                 if (parts.length === 1) {
-                  setForm((p) => ({ ...p, sesname: `${parts[0]}/${nextYear}` }));
+                  setForm((p) => ({ ...p, session_name: `${parts[0]}/${nextYear}` }));
                   return;
                 }
                 if (parts.length === 2) {
                   if (nextYear.startsWith(parts[1])) {
-                    setForm((p) => ({ ...p, sesname: digitsOnly }));
+                    setForm((p) => ({ ...p, session_name: digitsOnly }));
                   }
                   return;
                 }
               }
               if (parts.length === 1 && parts[0].length <= 4) {
-                setForm((p) => ({ ...p, sesname: parts[0] }));
+                setForm((p) => ({ ...p, session_name: parts[0] }));
               }
             }}
             margin="normal"
@@ -531,10 +644,12 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <CircularProgress size={20} />
+              <Skeleton variant="text" width={80} height={20} />
             ) : editTarget ? (
               'Save Changes'
             ) : (
@@ -554,7 +669,7 @@ function SessionsPanel({ isLevel1 }) {
         <DialogTitle>Set Current Session</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Updating current session status for <strong>{selectedSession?.sesname}</strong>
+            Updating current session status for <strong>{selectedSession?.session_name}</strong>
           </Typography>
           <TextField
             fullWidth
@@ -569,30 +684,22 @@ function SessionsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={() => setSetCurrentOpen(false)}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSetCurrentSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : 'Update Status'}
+            {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
-
-      {/* Filter Side Drawer */}
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={sessionFilterDefs}
-        title="Filter Sessions"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
-      />
     </>
   );
-}
+});
 
 // ─── Terms Panel ───────────────────────────────────────────────────────────
-function TermsPanel({ isLevel1 }) {
+const TermsPanel = forwardRef(function TermsPanel({ isLevel1, onStatsChange }, ref) {
   const [terms, setTerms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -602,31 +709,23 @@ function TermsPanel({ isLevel1 }) {
   const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedTerm, setSelectedTerm] = useState(null);
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState({ search: '', status: '' });
+  const [activeFilters, setActiveFilters] = useState({ search: '', status: '' });
   const [submitting, setSubmitting] = useState(false);
   const [reordering, setReordering] = useState(false);
   const notify = useNotification();
   const sensors = useSensors(useSensor(PointerSensor));
 
-  const termFilterDefs = [
-    { key: 'search', label: 'Term Name', type: 'text', placeholder: 'Search by term name…' },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-  ];
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
 
-  const fetchTerms = useCallback(async () => {
+  // Search/status are sent to the backend as query params — never filtered
+  // client-side — so `terms` here is already exactly what should render.
+  const fetchTerms = useCallback(async (filters) => {
     setLoading(true);
     try {
-      const res = await agentApi.get('/v1/landlord/calendar/terms');
-      setTerms(res.data);
+      const res = await agentApi.get('/v1/landlord/calendar/terms', { params: filters });
+      setTerms(res.data.data);
+      setStats(res.data.stats);
     } catch {
       notify.error('Failed to load terms');
     } finally {
@@ -635,23 +734,22 @@ function TermsPanel({ isLevel1 }) {
   }, []);
 
   useEffect(() => {
-    fetchTerms();
-  }, [fetchTerms]);
+    fetchTerms(activeFilters);
+  }, [fetchTerms, activeFilters]);
 
-  const filteredTerms = terms.filter((term) => {
-    const matchesSearch = !activeFilters.search
-      ? true
-      : term.term_name.toLowerCase().includes(activeFilters.search.toLowerCase());
-    const matchesStatus = !activeFilters.status ? true : term.status === activeFilters.status;
-    return matchesSearch && matchesStatus;
-  });
+  // Reported up so the page-level stats row (above the tabs) can show
+  // whichever tab is active, instead of duplicating a stats row per panel.
+  useEffect(() => {
+    onStatsChange?.({ stats, loading });
+  }, [stats, loading, onStatsChange]);
 
-  const handleFilterApply = (filterValues) => {
-    setActiveFilters(filterValues);
+  const handleFilterApply = () => {
+    setActiveFilters(filterDraft);
   };
 
   const handleFilterReset = () => {
-    setActiveFilters({});
+    setFilterDraft({ search: '', status: '' });
+    setActiveFilters({ search: '', status: '' });
   };
 
   const activeFilterCount = Object.values(activeFilters).filter((v) => v !== '').length;
@@ -662,6 +760,11 @@ function TermsPanel({ isLevel1 }) {
     setErrors({});
     setCreateOpen(true);
   };
+
+  // Exposed so the page-level stats row can trigger a manual refresh for
+  // whichever tab is active.
+  useImperativeHandle(ref, () => ({ openCreate, refresh: () => fetchTerms(activeFilters) }));
+
   const openEdit = (t) => {
     setEditTarget(t);
     setForm({ term_name: t.term_name, status: t.status });
@@ -696,10 +799,10 @@ function TermsPanel({ isLevel1 }) {
       });
       notify.success('Term order updated successfully');
       // Refresh data to ensure consistency with backend
-      fetchTerms();
+      fetchTerms(activeFilters);
     } catch {
       notify.error('Failed to save order');
-      fetchTerms();
+      fetchTerms(activeFilters);
     } finally {
       setReordering(false);
     }
@@ -725,7 +828,7 @@ function TermsPanel({ isLevel1 }) {
         notify.success('Term created');
       }
       closeDialog();
-      fetchTerms();
+      fetchTerms(activeFilters);
     } catch (err) {
       const serverErrors = err.response?.data?.errors || {};
       if (Object.keys(serverErrors).length) setErrors(serverErrors);
@@ -735,31 +838,34 @@ function TermsPanel({ isLevel1 }) {
     }
   };
 
-  const handleDelete = (t) =>
+  const handleDeactivate = (t) => {
+    const isInactive = t.status?.toLowerCase() === 'inactive';
+
     setConfirm({
       open: true,
-      title: 'Delete Term',
-      message: `Delete "${t.term_name}"? This cannot be undone.`,
+      title: isInactive ? 'Activate Term' : 'De-activate Term',
+      message: isInactive ? `Activate "${t.term_name}"?` : `De-activate "${t.term_name}"?`,
       onConfirm: async () => {
         setConfirm((p) => ({ ...p, open: false }));
         try {
-          await agentApi.delete(`/v1/landlord/calendar/terms/${t.id}`);
-          notify.success('Term deleted');
-          fetchTerms();
+          await agentApi.put(`/v1/landlord/calendar/terms/${t.id}/toggle-status`);
+          notify.success(isInactive ? 'Term activated' : 'Term de-activated');
+          fetchTerms(activeFilters);
         } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed to delete');
+          notify.error(err.response?.data?.message || 'Failed to update');
         }
       },
     });
+  };
 
   const handleEdit = (t) => {
     handleMenuClose();
     openEdit(t);
   };
 
-  const handleDeleteClick = (t) => {
+  const handleDeactivateClick = (t) => {
     handleMenuClose();
-    handleDelete(t);
+    handleDeactivate(t);
   };
 
   const handleMenuOpen = (event, term) => {
@@ -774,48 +880,27 @@ function TermsPanel({ isLevel1 }) {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">Academic Terms</Typography>
-        {isLevel1 && (
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" size="small" startIcon={<IconFilter />}
-              onClick={() => setFilterDrawerOpen(true)}
-              sx={{ minWidth: 140 }}
-            >
-              Filters
-              {activeFilterCount > 0 && (
-                <Chip
-                  label={activeFilterCount}
-                  size="small"
-                  color="primary"
-                  sx={{
-                    ml: 1,
-                    height: 20,
-                    minWidth: 20,
-                    fontSize: '0.75rem',
-                  }}
-                />
-              )}
-            </Button>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={openCreate}>
-              New Term
-            </Button>
-          </Box>
-        )}
-      </Box>
       {!isLevel1 && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Only Level 1 agents can manage global terms.
         </Alert>
       )}
+      <InlineFilterBar
+        searchPlaceholder="Search by term name…"
+        draft={filterDraft}
+        onDraftChange={setFilterDraft}
+        onApply={handleFilterApply}
+        onReset={handleFilterReset}
+        hasActiveFilters={activeFilterCount > 0}
+      />
       {isLevel1 && terms.length > 1 && (
         <Alert severity="info" icon={<IconGripVertical size={16} />} sx={{ mb: 2 }}>
           Drag the grip handle on the left to reorder terms.
         </Alert>
       )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
-          <Table size="small">
+        <TableContainer>
+          <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1.5 } }}>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: 32 }} />
@@ -828,13 +913,16 @@ function TermsPanel({ isLevel1 }) {
             </TableHead>
             <TableBody>
               {loading || reordering ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    <CircularProgress size={24} />
-                    {reordering && <Typography variant="body2">Order updating...</Typography>}
-                  </TableCell>
-                </TableRow>
-              ) : filteredTerms.length === 0 ? (
+                [...Array(4)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(6)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : terms.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
                     No terms found
@@ -842,10 +930,10 @@ function TermsPanel({ isLevel1 }) {
                 </TableRow>
               ) : (
                 <SortableContext
-                  items={filteredTerms.map((t) => t.id)}
+                  items={terms.map((t) => t.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {filteredTerms.map((t, idx) => (
+                  {terms.map((t, idx) => (
                     <SortableRow key={t.id} id={t.id} disabled={!isLevel1}>
                       <TableCell>{idx + 1}</TableCell>
                       <TableCell>{t.term_name}</TableCell>
@@ -882,13 +970,20 @@ function TermsPanel({ isLevel1 }) {
                               <IconEdit size={16} style={{ marginRight: 8 }} />
                               Edit
                             </MenuItem>
-                            <MenuItem
-                              onClick={() => handleDeleteClick(t)}
-                              sx={{ color: 'error.main' }}
-                            >
-                              <IconTrash size={16} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
+                            {t.status?.toLowerCase() === 'inactive' ? (
+                              <MenuItem onClick={() => handleDeactivateClick(t)}>
+                                <IconCheck size={16} style={{ marginRight: 8 }} />
+                                Activate
+                              </MenuItem>
+                            ) : (
+                              <MenuItem
+                                onClick={() => handleDeactivateClick(t)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={16} style={{ marginRight: 8 }} />
+                                De-activate
+                              </MenuItem>
+                            )}
                           </Menu>
                         </TableCell>
                       )}
@@ -935,10 +1030,12 @@ function TermsPanel({ isLevel1 }) {
           </TextField>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={closeDialog}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={closeDialog}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleSubmit} disabled={submitting}>
             {submitting ? (
-              <CircularProgress size={20} />
+              <Skeleton variant="text" width={80} height={20} />
             ) : editTarget ? (
               'Save Changes'
             ) : (
@@ -949,395 +1046,116 @@ function TermsPanel({ isLevel1 }) {
       </Dialog>
 
       <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
-
-      {/* Filter Side Drawer */}
-      <FilterSideDrawer
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        filters={termFilterDefs}
-        title="Filter Terms"
-        onApply={handleFilterApply}
-        onReset={handleFilterReset}
-      />
     </>
   );
-}
-
-// ─── Mappings Panel ────────────────────────────────────────────────────────
-function MappingsPanel() {
-  const [mappings, setMappings] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [terms, setTerms] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ session_id: '', term_id: '', status: 'active' });
-  const [errors, setErrors] = useState({});
-  const [confirm, setConfirm] = useState({ open: false, title: '', message: '', onConfirm: null });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedMapping, setSelectedMapping] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [reordering, setReordering] = useState(false);
-  const notify = useNotification();
-  const sensors = useSensors(useSensor(PointerSensor));
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [mRes, sRes, tRes] = await Promise.all([
-        agentApi.get('/v1/landlord/calendar/mappings'),
-        agentApi.get('/v1/landlord/calendar/sessions'),
-        agentApi.get('/v1/landlord/calendar/terms'),
-      ]);
-      setMappings(mRes.data);
-      setSessions(sRes.data);
-      setTerms(tRes.data);
-    } catch {
-      notify.error('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
-
-  const handleDragEnd = async ({ active, over }) => {
-    if (!over || active.id === over.id) return;
-    const reordered = arrayMove(
-      mappings,
-      mappings.findIndex((m) => m.id === active.id),
-      mappings.findIndex((m) => m.id === over.id),
-    );
-    setMappings(reordered);
-    setReordering(true);
-    try {
-      await agentApi.put('/v1/landlord/calendar/mappings/reorder', {
-        ids: reordered.map((m) => m.id),
-      });
-      notify.success('Mapping order updated successfully');
-    } catch {
-      notify.error('Failed to save order');
-      fetchAll();
-    } finally {
-      setReordering(false);
-    }
-  };
-
-  const validate = () => {
-    const errs = {};
-    if (!form.session_id) errs.session_id = 'Select a session';
-    if (!form.term_id) errs.term_id = 'Select a term';
-    if (!form.status) errs.status = 'Required';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    try {
-      setSubmitting(true);
-      await agentApi.post('/v1/landlord/calendar/mappings', form);
-      notify.success('Mapping saved');
-      setDialogOpen(false);
-      setErrors({});
-      setForm({ session_id: '', term_id: '', status: 'active' });
-      fetchAll();
-    } catch (err) {
-      notify.error(err.response?.data?.message || 'Failed to save mapping');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = (m) =>
-    setConfirm({
-      open: true,
-      title: 'Delete Mapping',
-      message: `Delete "${m.session?.sesname} / ${m.term?.term_name}"? This cannot be undone.`,
-      onConfirm: async () => {
-        setConfirm((p) => ({ ...p, open: false }));
-        try {
-          await agentApi.delete(`/v1/landlord/calendar/mappings/${m.id}`);
-          notify.success('Mapping removed');
-          fetchAll();
-        } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed');
-        }
-      },
-    });
-
-  const handleActivate = (m) =>
-    setConfirm({
-      open: true,
-      title: 'Activate Mapping',
-      message: `Activate "${m.session?.sesname} / ${m.term?.term_name}"? All others will be set to inactive.`,
-      onConfirm: async () => {
-        setConfirm((p) => ({ ...p, open: false }));
-        try {
-          await agentApi.put(`/v1/landlord/calendar/mappings/${m.id}/activate`);
-          notify.success('Mapping activated');
-          fetchAll();
-        } catch (err) {
-          notify.error(err.response?.data?.message || 'Failed');
-        }
-      },
-    });
-
-  const handleMenuOpen = (event, mapping) => {
-    setAnchorEl(event.currentTarget);
-    setSelectedMapping(mapping);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setSelectedMapping(null);
-  };
-
-  return (
-    <>
-      <Backdrop
-        sx={{
-          color: '#fff',
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          flexDirection: 'column',
-          gap: 2,
-        }}
-        open={reordering}
-      >
-        <CircularProgress color="inherit" />
-        <Typography variant="h6">Order updating...</Typography>
-      </Backdrop>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h5">My Session–Term Mappings</Typography>
-        <Button variant="contained" size="small" startIcon={<IconPlus />} onClick={() => setDialogOpen(true)}>
-          Add Mapping
-        </Button>
-      </Box>
-      <Alert severity="info" sx={{ mb: 2 }}>
-        Tenants only see the session-term pairs you've mapped here.
-        {mappings.length > 1 && <> Drag the grip handle to reorder.</>}
-      </Alert>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <TableContainer >
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 32 }} />
-                <TableCell>S/N</TableCell>
-                <TableCell>Session</TableCell>
-                <TableCell>Term</TableCell>
-                <TableCell>Order</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    <CircularProgress size={24} />
-                  </TableCell>
-                </TableRow>
-              ) : mappings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    No mappings yet. Add a session-term pair.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                <SortableContext
-                  items={mappings.map((m) => m.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {mappings.map((m, idx) => (
-                    <SortableRow key={m.id} id={m.id}>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>{m.session?.sesname}</TableCell>
-                      <TableCell>{m.term?.term_name}</TableCell>
-                      <TableCell>{m.sort_order}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={m.status.toUpperCase()}
-                          size="small"
-                          sx={{
-                            bgcolor:
-                              m.status?.toLowerCase() === 'active'
-                                ? (theme) => theme.palette.success.light
-                                : (theme) => theme.palette.error.light,
-                            color:
-                              m.status?.toLowerCase() === 'active'
-                                ? (theme) => theme.palette.success.main
-                                : (theme) => theme.palette.error.main,
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
-                        <IconButton onClick={(e) => handleMenuOpen(e, m)}>
-                          <IconDotsVertical size={18} />
-                        </IconButton>
-                        <Menu
-                          anchorEl={anchorEl}
-                          open={Boolean(anchorEl) && selectedMapping?.id === m.id}
-                          onClose={handleMenuClose}
-                        >
-                          {m.status === 'inactive' && (
-                            <MenuItem
-                              onClick={() => {
-                                handleMenuClose();
-                                handleActivate(m);
-                              }}
-                            >
-                              Activate
-                            </MenuItem>
-                          )}
-                          <MenuItem
-                            onClick={() => {
-                              handleMenuClose();
-                              handleDelete(m);
-                            }}
-                            sx={{ color: 'error.main' }}
-                          >
-                            <IconTrash size={16} style={{ marginRight: 8 }} />
-                            Delete
-                          </MenuItem>
-                        </Menu>
-                      </TableCell>
-                    </SortableRow>
-                  ))}
-                </SortableContext>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </DndContext>
-
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Session–Term Mapping</DialogTitle>
-        <DialogContent sx={{ pt: 2 }}>
-          <TextField
-            fullWidth
-            select
-            label="Session"
-            value={form.session_id}
-            error={!!errors.session_id}
-            helperText={errors.session_id}
-            onChange={(e) => {
-              setErrors((p) => ({ ...p, session_id: undefined }));
-              setForm((p) => ({ ...p, session_id: e.target.value }));
-            }}
-            margin="normal"
-          >
-            <MenuItem value="">Select Session</MenuItem>
-            {sessions.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.sesname}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            fullWidth
-            select
-            label="Term"
-            value={form.term_id}
-            error={!!errors.term_id}
-            helperText={errors.term_id}
-            onChange={(e) => {
-              setErrors((p) => ({ ...p, term_id: undefined }));
-              setForm((p) => ({ ...p, term_id: e.target.value }));
-            }}
-            margin="normal"
-          >
-            <MenuItem value="">Select Term</MenuItem>
-            {terms.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.term_name}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            fullWidth
-            select
-            label="Status"
-            value={form.status}
-            error={!!errors.status}
-            helperText={errors.status}
-            onChange={(e) => {
-              setErrors((p) => ({ ...p, status: undefined }));
-              setForm((p) => ({ ...p, status: e.target.value }));
-            }}
-            margin="normal"
-          >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button variant="contained" size="small" onClick={() => setDialogOpen(false)}>Cancel</Button>
-          <Button size="small" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? <CircularProgress size={20} /> : 'Save Mapping'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <ConfirmDialog {...confirm} onCancel={() => setConfirm((p) => ({ ...p, open: false }))} />
-    </>
-  );
-}
+});
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
+const EMPTY_STATS = { stats: {}, loading: true };
+
 const CalendarManagement = () => {
   const [tab, setTab] = useState(0);
   const agentRaw = localStorage.getItem('agent') || sessionStorage.getItem('agent');
   const agent = agentRaw ? JSON.parse(agentRaw) : null;
   const isLevel1 = !agent?.parent_id;
+  const sessionsPanelRef = useRef(null);
+  const termsPanelRef = useRef(null);
 
-  if (!isLevel1) {
-    return (
-      <>
-        <Breadcrumb title="Calendar Management" items={BCrumb} />
-        <ParentCard title="Session–Term Mappings">
-          <MappingsPanel />
-        </ParentCard>
-      </>
-    );
-  }
+  // Fed by each panel (see onStatsChange) so this one row at the very top of
+  // the page can show live totals for whichever tab is active, instead of a
+  // stats row duplicated inside every tab panel.
+  const [sessionStats, setSessionStats] = useState(EMPTY_STATS);
+  const [termStats, setTermStats] = useState(EMPTY_STATS);
+
+  const active = tab === 0 ? sessionStats : termStats;
 
   return (
     <>
       <Breadcrumb title="Calendar Management" items={BCrumb} />
-      <ParentCard>
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}
-        >
-          <Tab label="Sessions" />
-          <Tab label="Terms" />
-          {/* <Tab label="My Mappings" /> */}
-        </Tabs>
+
+      {/* Page-level live stats — reflects whichever tab is active */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+        {tab === 0 ? (
+          <>
+            <MiniStat
+              label="Total Sessions"
+              value={active.stats.total}
+              loading={active.loading}
+              icon={IconCalendarStats}
+            />
+            <MiniStat
+              label="Active"
+              value={active.stats.active}
+              loading={active.loading}
+              color="success.main"
+              icon={IconCircleCheck}
+            />
+            <MiniStat
+              label="Current Session"
+              value={active.stats.current}
+              loading={active.loading}
+              color="primary.main"
+              icon={IconStar}
+            />
+          </>
+        ) : (
+          <>
+            <MiniStat
+              label="Total Terms"
+              value={active.stats.total}
+              loading={active.loading}
+              icon={IconCalendarStats}
+            />
+            <MiniStat
+              label="Active"
+              value={active.stats.active}
+              loading={active.loading}
+              color="success.main"
+              icon={IconCircleCheck}
+            />
+            <MiniStat
+              label="Inactive"
+              value={active.stats.inactive}
+              loading={active.loading}
+              color="error.main"
+              icon={IconCircleX}
+            />
+          </>
+        )}
+      </Box>
+
+      <ParentCard sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+            sx={{ minHeight: 36, py: 0, borderBottom: 0 }}
+          >
+            <Tab label="Sessions" />
+            <Tab label="Terms" />
+          </Tabs>
+          {isLevel1 && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconPlus />}
+              onClick={() =>
+                tab === 0
+                  ? sessionsPanelRef.current?.openCreate()
+                  : termsPanelRef.current?.openCreate()
+              }
+              sx={{ mr: 1.5 }}
+            >
+              {tab === 0 ? 'New Session' : 'New Term'}
+            </Button>
+          )}
+        </Box>
         <TabPanel value={tab} index={0}>
-          <SessionsPanel isLevel1={isLevel1} />
+          <SessionsPanel ref={sessionsPanelRef} isLevel1={isLevel1} onStatsChange={setSessionStats} />
         </TabPanel>
         <TabPanel value={tab} index={1}>
-          <TermsPanel isLevel1={isLevel1} />
+          <TermsPanel ref={termsPanelRef} isLevel1={isLevel1} onStatsChange={setTermStats} />
         </TabPanel>
-        {/* <TabPanel value={tab} index={2}>
-          <MappingsPanel />
-        </TabPanel> */}
       </ParentCard>
     </>
   );

@@ -2,7 +2,7 @@ import api from '@/api/landlord/landlord_api';
 
 const aclApi = {
   getRoles: async (params) => {
-    const response = await api.get('/v1/landlord/acl/roles/get_paginated_roles', { params });
+    const response = await api.post('/v1/landlord/acl/roles/get_paginated_roles', { params });
     return response.data;
   },
 

@@ -17,6 +17,8 @@ import {
   ButtonGroup,
   TablePagination,
   Avatar,
+  Skeleton,
+  Alert,
 } from '@mui/material';
 import {
   IconSearch,
@@ -25,6 +27,7 @@ import {
   IconChevronDown,
   IconUsers,
 } from '@tabler/icons-react';
+import { statusLabel } from './StaffStatusModal';
 
 const NonTeachingStaffTab = ({
   loading,
@@ -49,7 +52,8 @@ const NonTeachingStaffTab = ({
       {/* Toolbar */}
       <Box
         sx={{
-          p: 2,
+          pb: 1.5,
+          mb: 1.5,
           borderBottom: '1px solid #f0f0f0',
           display: 'flex',
           justifyContent: 'space-between',
@@ -120,7 +124,7 @@ const NonTeachingStaffTab = ({
 
       {/* Table */}
       <TableContainer>
-        <Table>
+        <Table size="small" stickyHeader>
           <TableHead sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
@@ -136,15 +140,29 @@ const NonTeachingStaffTab = ({
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={80} height={20} /></TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Skeleton variant="circular" width={30} height={30} />
+                      <Skeleton variant="text" width={120} height={20} />
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={140} height={20} />
+                    <Skeleton variant="text" width={90} height={16} />
+                  </TableCell>
+                  <TableCell><Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                  <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                </TableRow>
+              ))
             ) : staff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 10 }}>
-                  <Typography color="textSecondary">No staff found</Typography>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <Alert severity="info" sx={{ justifyContent: 'center' }}>No staff found</Alert>
                 </TableCell>
               </TableRow>
             ) : (
@@ -158,19 +176,6 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {/* <Box
-                        sx={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: '50%',
-                          bgcolor: '#e3f2fd',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <IconUsers size={18} color="#1976d2" />
-                      </Box> */}
                       <Avatar
                         src={staffMember.user.avatar}
                         alt={staffMember.user.lname[0]}
@@ -183,7 +188,6 @@ const NonTeachingStaffTab = ({
                           flexShrink: 0,
                         }}
                       >
-                        {/* {!(staffMember.user.avatar || agent.admin_avatar) && initials} */}
                       </Avatar>
                       <Typography variant="body2">{staffMember.user?.full_name}</Typography>
                     </Box>
@@ -207,7 +211,7 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={staffMember.staff_status}
+                      label={statusLabel(staffMember.staff_status)}
                       color={getStatusColor(staffMember.staff_status)}
                       size="small"
                     />

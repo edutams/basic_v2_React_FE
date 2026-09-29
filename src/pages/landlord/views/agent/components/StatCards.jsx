@@ -1,50 +1,66 @@
 import React from 'react';
-import { Grid, Card, Box, Typography, Stack, Divider, useTheme } from '@mui/material';
+import { Grid, Card, CardContent, Box, Typography, Stack, Divider, Skeleton, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
 import PropTypes from 'prop-types';
 
-const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats = [], onIconClick, onClick }) => {
+const StatCard = ({
+  title,
+  value,
+  valueColor,
+  valueBg,
+  colorIndex = 0,
+  subStats = [],
+  onIconClick,
+  onClick,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const softColors = getStatCardColor(valueColor, colorIndex, isDark, theme);
-  const resolvedValueColor = valueColor || softColors.accentColor;
-  const resolvedValueBg = valueBg || softColors.valueBg;
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Card
       onClick={onClick}
       sx={{
+        p: '0px !important',
         height: '100%',
-        borderRadius: '16px',
-        border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${softColors.borderColor}`,
-        background: isDark ? theme.palette.background.paper : `${softColors.cardBg} !important`,
-        boxShadow: isDark
-          ? '0 6px 24px rgba(0,0,0,0.28)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick
-          ? {
-            boxShadow: isDark
-              ? '0 8px 30px rgba(0,0,0,0.35)'
-              : '0 6px 24px rgba(0,0,0,0.12)',
-            transform: 'translateY(-3px)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          }
-          : {},
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
       }}
     >
-      <Box sx={{ p: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent
+        sx={{
+          p: '14px !important',
+          '&:last-child': { pb: '14px !important' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
         {/* Header */}
-        <Box
-          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography
             variant="subtitle2"
-            fontWeight="600"
-            sx={{ color: isDark ? 'text.secondary' : 'text.primary', fontSize: '13px' }}
+            fontWeight="700"
+            sx={{ color: 'text.secondary', fontSize: '13px' }}
           >
             {title}
           </Typography>
@@ -54,46 +70,35 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
               onIconClick?.();
             }}
             sx={{
-              background: `${softColors.iconBg} !important`,
-              boxShadow: isDark
-                ? '0 4px 12px rgba(0,0,0,0.3)'
-                : `0 4px 14px ${softColors.iconGlow}`,
-              p: 0.6,
-              borderRadius: '6px',
+              width: 32,
+              height: 32,
+              borderRadius: '8px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+              color: isDark ? '#ffffff' : scheme.color,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: onIconClick ? 'pointer' : 'default',
-              flexShrink: 0,
               '&:hover': onIconClick ? { opacity: 0.85 } : {},
             }}
           >
-            <IconChartBar size={18} color={softColors.iconColor || 'white'} />
+            <IconChartBar size={18} color="currentColor" />
           </Box>
         </Box>
 
         {/* Value */}
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-          <Box
+          <Typography
+            fontWeight="800"
             sx={{
-              bgcolor: resolvedValueBg,
-              borderRadius: '10px',
-              px: 2.5,
-              py: 1.2,
+              color: isDark ? '#ffffff' : '#0f172a',
+              fontSize: '28px',
+              lineHeight: 1,
+              whiteSpace: 'nowrap',
             }}
           >
-            <Typography
-              fontWeight="800"
-              sx={{
-                color: resolvedValueColor,
-                fontSize: '28px',
-                lineHeight: 1,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {value}
-            </Typography>
-          </Box>
+            {value}
+          </Typography>
         </Box>
 
         {/* Sub stats */}
@@ -106,7 +111,7 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
                     <Divider
                       orientation="vertical"
                       flexItem
-                      sx={{ mx: 2, borderColor: softColors.borderColor }}
+                      sx={{ mx: 2, borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}
                     />
                   )}
                   <Box sx={{ flex: 1 }}>
@@ -135,12 +140,69 @@ const StatCard = ({ title, value, valueColor, valueBg, colorIndex = 0, subStats 
             </Stack>
           </>
         )}
-      </Box>
+      </CardContent>
     </Card>
   );
 };
 
-const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, accessLevel = 1 }) => {
+const StatCardSkeleton = ({ colorIndex = 0, subStatCount = 3, titleWidth = '60%', valueWidth = 80 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Card
+      sx={{
+        p: '0px !important',
+        height: '100%',
+        borderRadius: '14px',
+        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+      }}
+    >
+      <CardContent
+        sx={{
+          p: '14px !important',
+          '&:last-child': { pb: '14px !important' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Skeleton variant="text" width={titleWidth} height={16} />
+          <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+        </Box>
+        <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Skeleton variant="text" width={valueWidth} height={32} />
+        </Box>
+        {subStatCount > 0 && (
+          <Stack direction="row" spacing={0} sx={{ mt: 2 }}>
+            {[...Array(subStatCount)].map((_, i) => (
+              <Box key={i} sx={{ flex: 1 }}>
+                <Skeleton variant="text" width="70%" height={10} />
+                <Skeleton variant="text" width="50%" height={14} />
+              </Box>
+            ))}
+          </Stack>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const StatCards = ({
+  stats,
+  onTransactionClick,
+  onSubAgentClick,
+  onSchoolClick,
+  accessLevel = 1,
+  loading = false,
+  loadingTransaction = false,
+  loadingSubAgents = false,
+  loadingSchools = false,
+}) => {
   const getSubAgentLevels = () => {
     switch (accessLevel) {
       case 1:
@@ -162,9 +224,7 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, 
           { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
         ];
       case 4:
-        return [
-          { label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' },
-        ];
+        return [{ label: 'Lv5', value: stats.subAgentLevels?.lv5?.toString() || '0' }];
       case 5:
         return [];
       default:
@@ -177,49 +237,65 @@ const StatCards = ({ stats, onTransactionClick, onSubAgentClick, onSchoolClick, 
     }
   };
 
+  const showTransactionLoading = loading || loadingTransaction;
+  const showSubAgentsLoading = loading || loadingSubAgents;
+  const showSchoolsLoading = loading || loadingSchools;
+
   return (
     <Grid container spacing={2} sx={{ height: '100%', alignItems: 'stretch' }}>
       {/* Total Transaction Value */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total Transaction Value"
-          value={`₦${stats?.totalTransaction || 0}`}
-          colorIndex={2}
-          subStats={[
-            { label: 'Commission', value: `₦${stats?.commission || 0}` },
-            { label: 'Volume', value: stats?.volume || 0 },
-          ]}
-          onIconClick={onTransactionClick}
-          onClick={onTransactionClick}
-        />
+        {showTransactionLoading ? (
+          <StatCardSkeleton colorIndex={2} subStatCount={2} titleWidth="75%" valueWidth={120} />
+        ) : (
+          <StatCard
+            title="Total Transaction Value"
+            value={`₦${stats?.totalTransaction || 0}`}
+            colorIndex={2}
+            subStats={[
+              { label: 'Commission', value: `₦${stats?.commission || 0}` },
+              { label: 'Volume', value: stats?.volume || 0 },
+            ]}
+            onIconClick={onTransactionClick}
+            onClick={onTransactionClick}
+          />
+        )}
       </Grid>
 
       {/* Total Sub Agents */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total Sub Organizations"
-          value={stats.totalSubAgents}
-          colorIndex={1}
-          subStats={getSubAgentLevels()}
-          onIconClick={onSubAgentClick}
-          onClick={onSubAgentClick}
-        />
+        {showSubAgentsLoading ? (
+          <StatCardSkeleton colorIndex={1} subStatCount={accessLevel === 1 ? 4 : accessLevel === 2 ? 3 : accessLevel === 3 ? 2 : accessLevel === 4 ? 1 : 4} titleWidth="85%" valueWidth={60} />
+        ) : (
+          <StatCard
+            title="Total Sub Agents"
+            value={stats.totalSubAgents}
+            colorIndex={1}
+            subStats={getSubAgentLevels()}
+            onIconClick={onSubAgentClick}
+            onClick={onSubAgentClick}
+          />
+        )}
       </Grid>
 
       {/* Total School */}
       <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-        <StatCard
-          title="Total School"
-          value={stats.totalSchools}
-          colorIndex={0}
-          subStats={[
-            { label: 'Active', value: stats.activeSchools?.toString() || '0' },
-            { label: 'Pending', value: stats.pendingSchools?.toString() || '0' },
-            { label: 'Rejected', value: stats.rejectedSchools?.toString() || '0' },
-          ]}
-          onIconClick={onSchoolClick}
-          onClick={onSchoolClick}
-        />
+        {showSchoolsLoading ? (
+          <StatCardSkeleton colorIndex={0} subStatCount={3} titleWidth="55%" valueWidth={90} />
+        ) : (
+          <StatCard
+            title="Total School"
+            value={stats.totalSchools}
+            colorIndex={0}
+            subStats={[
+              { label: 'Active', value: stats.activeSchools?.toString() || '0' },
+              { label: 'Pending', value: stats.pendingSchools?.toString() || '0' },
+              { label: 'Rejected', value: stats.rejectedSchools?.toString() || '0' },
+            ]}
+            onIconClick={onSchoolClick}
+            onClick={onSchoolClick}
+          />
+        )}
       </Grid>
     </Grid>
   );
@@ -244,6 +320,10 @@ StatCards.propTypes = {
     }),
   }).isRequired,
   accessLevel: PropTypes.number,
+  loading: PropTypes.bool,
+  loadingTransaction: PropTypes.bool,
+  loadingSubAgents: PropTypes.bool,
+  loadingSchools: PropTypes.bool,
   onTransactionClick: PropTypes.func,
   onSubAgentClick: PropTypes.func,
   onSchoolClick: PropTypes.func,

@@ -12,7 +12,9 @@ import {
   createSubjectRecord,
   updateSubjectRecord,
   deleteSubjectRecord,
+  fetchCurriculumSetupStats,
 } from '@/api/landlord/curriculum/curriculumApi';
+import StatCard from '@/components/shared/StatCard';
 import AgentSchemeOfWork from '../scheme-of-work/AgentSchemeOfWork';
 import {
   Box,
@@ -42,7 +44,8 @@ import {
   DialogActions,
   Alert,
   Snackbar,
-  CircularProgress,
+  Portal,
+  Skeleton,
   Menu,
   MenuList,
   MenuItem as MenuItemComponent,
@@ -52,9 +55,18 @@ import {
   InputLabel,
   FormHelperText,
   Grid,
+  InputAdornment,
 } from '@mui/material';
-import { MoreVert as MoreVertIcon, Subject } from '@mui/icons-material';
-import { IconEdit, IconTrash } from '@tabler/icons-react';
+import { MoreVert as MoreVertIcon, Subject, Search as SearchIcon } from '@mui/icons-material';
+import {
+  IconEdit,
+  IconTrash,
+  IconFilter,
+  IconBooks,
+  IconSchool,
+  IconStack2,
+  IconAlertCircle,
+} from '@tabler/icons-react';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -91,6 +103,7 @@ const AgentCurriculumManager = () => {
   const [programmesList, setProgrammesList] = useState([]);
   const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [openAddSubjectModal, setOpenAddSubjectModal] = useState(false);
   const [openEditSubjectModal, setOpenEditSubjectModal] = useState(false);
   const [openDeleteSubjectDialog, setOpenDeleteSubjectDialog] = useState(false);
@@ -123,9 +136,28 @@ const AgentCurriculumManager = () => {
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  // Curriculum Setup tab's own header stat cards
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  const loadStats = async () => {
+    setStatsLoading(true);
+    try {
+      const response = await fetchCurriculumSetupStats();
+      if (response.status) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch curriculum setup stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   // Fetch data on component mount
   useEffect(() => {
     loadCurriculums();
+    loadStats();
   }, []);
 
   useEffect(() => {
@@ -136,7 +168,11 @@ const AgentCurriculumManager = () => {
       setSubjectsList([]);
       setShowSubjectBank(false);
     }
-  }, [selectedCurriculum, subjectSearch]);
+  }, [selectedCurriculum]);
+
+  const handleSearch = () => {
+    setSubjectSearch(searchInput);
+  };
 
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
@@ -216,6 +252,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum created successfully', 'success');
         handleCloseCreateModal();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to create curriculum', 'error');
       }
@@ -255,6 +292,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum updated successfully', 'success');
         handleCloseEditModal();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to update curriculum', 'error');
       }
@@ -285,6 +323,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Curriculum deleted successfully', 'success');
         handleCloseDeleteDialog();
         loadCurriculums();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to delete curriculum', 'error');
       }
@@ -403,6 +442,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject created successfully', 'success');
         handleCloseAddSubjectModal();
         loadSubjectsList();
+        loadStats();
       } else {
         if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to create subject', 'error');
@@ -456,6 +496,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject updated successfully', 'success');
         handleCloseEditSubjectModal();
         loadSubjectsList();
+        loadStats();
       } else {
         if (response.errors) handleBackendErrors(response.errors);
         showSnackbar(response.message || 'Failed to update subject', 'error');
@@ -488,6 +529,7 @@ const AgentCurriculumManager = () => {
         showSnackbar('Subject deleted successfully', 'success');
         handleCloseDeleteSubjectDialog();
         loadSubjectsList();
+        loadStats();
       } else {
         showSnackbar(response.message || 'Failed to delete subject', 'error');
       }
@@ -512,19 +554,77 @@ const AgentCurriculumManager = () => {
         </Box>
 
         {/* CONTENT */}
-        <ParentCard>
+        {/* <ParentCard > */}
           <TabPanel value={tab} index={0}>
+            <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconBooks}
+                  count={stats?.total_curricula ?? 0}
+                  label="Active Curricula"
+                  colorIndex={1}
+                  loading={statsLoading}
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconStack2}
+                  count={stats?.total_subjects ?? 0}
+                  label="Total Subjects"
+                  subtitle={
+                    stats?.subjects_missing_programme_mapping > 0
+                      ? `${stats.subjects_missing_programme_mapping} missing a programme`
+                      : 'All mapped to a programme'
+                  }
+                  colorIndex={stats?.subjects_missing_programme_mapping > 0 ? 4 : 0}
+                  loading={statsLoading}
+                  tooltip="A subject with no programme mapping silently disappears from every programme-scoped subject list."
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconSchool}
+                  count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
+                  label="Classes With Curriculum"
+                  subtitle={
+                    stats?.classes_without_curriculum > 0
+                      ? `${stats.classes_without_curriculum} still need one`
+                      : 'All classes covered'
+                  }
+                  colorIndex={2}
+                  loading={statsLoading}
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <StatCard
+                  icon={IconAlertCircle}
+                  count={stats?.curricula_never_assigned ?? 0}
+                  label="Curricula Never Assigned"
+                  subtitle={
+                    stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
+                  }
+                  colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
+                  loading={statsLoading}
+                  tooltip="A curriculum that has never been assigned to a single class in any session/term — likely worth reviewing or removing."
+                  sx={{ height: '100%' }}
+                />
+              </Grid>
+            </Grid>
+
             <Box
               sx={{
-                display: 'flex',
+                display: 'grid',
                 gap: 3,
-                flexDirection: { xs: 'column', md: 'row' },
+                gridTemplateColumns: { xs: '1fr', md: 'minmax(420px, 5fr) minmax(500px, 7fr)' },
                 width: '100%',
                 mb: 3,
               }}
             >
               {/* LEFT - Curriculum Table */}
-              <Box sx={{ flex: { md: 5 }, width: '100%', mb: 5 }}>
+              <Box >
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -534,11 +634,12 @@ const AgentCurriculumManager = () => {
                       </Button>
                     </Box>
                   }
-                  sx={{ mb: 3 }}
+                    sx={{ mb: 1, px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0 } }}
+                  
                 >
                   <Box>
-                    <TableContainer>
-                      <Table sx={{ tableLayout: 'fixed' }}>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
@@ -553,11 +654,15 @@ const AgentCurriculumManager = () => {
                         </TableHead>
                         <TableBody>
                           {loadingCurriculums ? (
-                            <TableRow>
-                              <TableCell colSpan={4} align="center">
-                                <CircularProgress size={24} />
-                              </TableCell>
-                            </TableRow>
+                            [...Array(4)].map((_, i) => (
+                              <TableRow key={i}>
+                                {[...Array(4)].map((_, j) => (
+                                  <TableCell key={j}>
+                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
                           ) : curriculumData.length > 0 ? (
                             curriculumData.map((item, i) => (
                               <TableRow key={item.id} hover>
@@ -626,7 +731,7 @@ const AgentCurriculumManager = () => {
               </Box>
 
               {/* RIGHT - Side Panels */}
-              <Box sx={{ flex: { md: 7 }, width: '100%' }}>
+              <Box>
                 {/* Subject Bank Panel */}
                 {showSubjectBank && (
                   <ParentCard
@@ -645,36 +750,75 @@ const AgentCurriculumManager = () => {
                         </Button>
                       </Box>
                     }
-                    sx={{ mb: 2 }}
+                    sx={{  px: 0, py: 0, '& .MuiCardContent-root': { py: 0,px:0 } }}
                   >
-                    <TableContainer sx={{ maxHeight: 600 }}>
+                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <TextField
                         size="small"
                         placeholder="Search subjects..."
-                        value={subjectSearch}
-                        onChange={(e) => setSubjectSearch(e.target.value)}
-                        sx={{ width: 200 }}
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSearch();
+                        }}
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                        sx={{ width: 300 }}
                       />
-                      <Table sx={{ tableLayout: 'fixed' }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<IconFilter size={16} />}
+                        onClick={handleSearch}
+                      >
+                        Filter
+                      </Button>
+                    </Box>
+                    <TableContainer
+                      sx={{
+                        maxHeight: 600,
+                        overflowX: 'auto',
+                        overflowY: 'auto',
+                        width: '100%',
+                      }}
+                    >
+                      <Table
+                      stickyHeader
+                        sx={{
+                          tableLayout: 'auto',
+                          '& .MuiTableCell-root': { py: 0.5, px: 1 },
+                        }}
+                      >
                         <TableHead>
                           <TableRow>
-                            <TableCell width="5%">S/N</TableCell>
-                            <TableCell width="10%">Subject</TableCell>
-                            <TableCell width="7%">Code</TableCell>
-                            <TableCell width="15%">Program</TableCell>
-                            <TableCell width="5%">Unit</TableCell>
-                            <TableCell width="5%">Pass Mark</TableCell>
-                            <TableCell width="12%">Status</TableCell>
-                            <TableCell width="5%">Action</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>S/N</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Subject</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Code</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Program</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Unit</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Pass Mark</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Action</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {loadingSubjects ? (
-                            <TableRow>
-                              <TableCell colSpan={7} align="center">
-                                <CircularProgress size={24} />
-                              </TableCell>
-                            </TableRow>
+                            [...Array(4)].map((_, i) => (
+                              <TableRow key={i}>
+                                {[...Array(7)].map((_, j) => (
+                                  <TableCell key={j}>
+                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
                           ) : subjectsList.length > 0 ? (
                             subjectsList.map((item, i) => (
                               <TableRow key={item.id} hover>
@@ -779,20 +923,19 @@ const AgentCurriculumManager = () => {
                               </TableRow>
                             ))
                           ) : (
-                            <TableRow>
-                              <TableCell colSpan={7} sx={{ p: 0 }}>
-                                <Alert
-                                  severity="info"
-                                  sx={{
-                                    my: 2,
-                                    width: '100%',
-                                    justifyContent: 'center',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  No subjects found. Please add a subject.
-                                </Alert>
-                              </TableCell>
+                            <TableRow>                                <TableCell colSpan={7} sx={{ p: 0 }}>
+                              <Alert
+                                severity="info"
+                                sx={{
+                                  my: 2,
+                                  width: '100%',
+                                  justifyContent: 'center',
+                                  textAlign: 'center',
+                                }}
+                              >
+                                No subjects found. Please add a subject.
+                              </Alert>
+                            </TableCell>
                             </TableRow>
                           )}
                         </TableBody>
@@ -807,7 +950,7 @@ const AgentCurriculumManager = () => {
           <TabPanel value={tab} index={1}>
             <AgentSchemeOfWork isTab={true} />
           </TabPanel>
-        </ParentCard>
+        {/* </ParentCard> */}
       </Box>
 
       {/* Action Menu */}
@@ -901,7 +1044,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseCreateModal}>Cancel</Button>
           <Button size="small" onClick={handleCreateCurriculum} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Create'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -935,7 +1078,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
           <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Update'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Update'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -957,7 +1100,7 @@ const AgentCurriculumManager = () => {
             Cancel
           </Button>
           <Button size="small" onClick={handleDeleteCurriculum} color="error" disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1103,7 +1246,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" color='inherit' onClick={handleCloseAddSubjectModal}>Cancel</Button>
           <Button size="small" onClick={handleCreateSubject} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Save Subject'}
+            {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Save Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1246,7 +1389,7 @@ const AgentCurriculumManager = () => {
         <DialogActions>
           <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal}>Cancel</Button>
           <Button size="small" onClick={handleUpdateSubject} disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Update Subject'}
+            {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Update Subject'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1272,22 +1415,28 @@ const AgentCurriculumManager = () => {
             color="inherit"
             onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
           <Button size="small" onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
-            {loadingMutation ? <CircularProgress size={24} /> : 'Delete'}
+            {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it can
+          get trapped under an open Dialog's stacking context regardless of
+          z-index. Portal escapes it to document.body, same as Dialog. */}
+      <Portal>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </PageContainer>
   );
 };

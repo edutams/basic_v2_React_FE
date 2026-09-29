@@ -39,10 +39,10 @@ const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          overflow: 'auto',
           px: { xs: 2, sm: 3, md: '30px' },
           pt: { xs: '80px', sm: '85px', md: '90px' },
-          pb: 1,
+          pb: 3,
         }}
       >
         <Typography
@@ -69,21 +69,15 @@ const Stage3ClassArms = ({ onNext, onBack, onSkip }) => {
           Setup your class arm and deactivate any class you currently do not have in your school
         </Typography>
 
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            bgcolor: '#fff',
-            borderRadius: '12px !important',
-            border: '1px solid',
-            borderColor: 'divider',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <SetUpClassesTab ref={tabRef} onSaveAndContinue={onNext} onReadyChange={setCanContinue} />
-        </Box>
+        {/* SetUpClassesTab owns its own stat cards, grouped class list, and
+            per-section Save buttons. SetupShell's footer Save & Continue
+            (via tabRef.save()) still saves everything at once when the
+            wizard moves on. */}
+        <SetUpClassesTab
+          ref={tabRef}
+          onSaveAndContinue={onNext}
+          onReadyChange={setCanContinue}
+        />
       </Box>
     </SetupShell>
   );

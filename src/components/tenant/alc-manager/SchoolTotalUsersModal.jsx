@@ -14,7 +14,7 @@ import {
   TableHead,
   TableRow,
   Paper,
-  CircularProgress,
+  Skeleton,
   Alert,
   TextField,
   InputAdornment,
@@ -247,11 +247,15 @@ const SchoolTotalUsersModal = ({ open, onClose, permission, onUserRemoved }) => 
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={permission?.id === 'all' ? 4 : 5} align="center" sx={{ py: 4 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(5)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : users.length > 0 ? (
                 users.map((item, index) => {
                   const u = item.users || item.user || item;

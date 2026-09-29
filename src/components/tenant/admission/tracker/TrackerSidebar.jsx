@@ -1,8 +1,8 @@
-import { Box, Paper, Typography, Button } from '@mui/material';
+import { Box, Paper, Typography, Button, useTheme } from '@mui/material';
 import {
   Print as PrintIcon,
-  HowToReg as EnrollIcon,
   QuestionMark as QuestionIcon,
+  Lock as LockIcon,
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
@@ -24,12 +24,24 @@ const REQUIREMENTS = [
 
 const TrackerSidebar = ({ admission }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const isAdmitted = admission?.admission_status === 'admitted';
+
+  const cardSx = {
+    borderRadius: '10px',
+    border: '1px solid',
+    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+    boxShadow: '0 1px 3px rgba(15, 23, 42, 0.04)',
+  };
+
   return (
     <Box>
-      <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, mb: 2 }}>
+      <Paper elevation={0} sx={{ ...cardSx, p: { xs: 1.5, sm: 1.75 }, mb: 1.5 }}>
         <Typography
           variant="caption"
           fontWeight={700}
+          color="text.secondary"
           sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}
           display="block"
           mb={1.5}
@@ -41,6 +53,8 @@ const TrackerSidebar = ({ admission }) => {
           <Box
             key={label}
             onClick={() => {
+              if (!isAdmitted) return;
+
               if (id === 'print_offer' && admission) {
                 window.open(`/admission-letter/${admission.id}`, '_blank');
                 return;
@@ -82,25 +96,28 @@ const TrackerSidebar = ({ admission }) => {
             sx={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: 1.5,
-              p: { xs: 1.5, sm: 2 },
-              borderRadius: 2,
-              bgcolor: 'grey.300',
+              gap: 1.25,
+              p: { xs: 1.25, sm: 1.5 },
+              borderRadius: '8px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'grey.300',
               border: '1px solid',
-              borderColor: 'primary.100',
-              mb: 1,
-              cursor: 'pointer',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'grey.300',
+              mb: 0.75,
+              cursor: isAdmitted ? 'pointer' : 'not-allowed',
+              opacity: isAdmitted ? 1 : 0.6,
               transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: 'primary.100',
-                borderColor: 'primary.main',
-                transform: 'translateY(-2px)',
-                boxShadow: 2,
-              },
+              '&:hover': isAdmitted
+                ? {
+                    bgcolor: 'primary.light',
+                    borderColor: 'primary.main',
+                    transform: 'translateY(-2px)',
+                    boxShadow: 2,
+                  }
+                : {},
               '&:active': {
-                transform: 'translateY(0)',
+                transform: isAdmitted ? 'translateY(0)' : 'none',
               },
-              '&:last-child': {
+              '&:last-of-type': {
                 mb: 0,
               },
             }}
@@ -110,14 +127,18 @@ const TrackerSidebar = ({ admission }) => {
                 width: 36,
                 height: 36,
                 borderRadius: 2,
-                bgcolor: 'grey.100',
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'grey.100',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              <Icon sx={{ color: 'text.disabled', fontSize: 20 }} />
+              {isAdmitted ? (
+                <Icon sx={{ color: 'text.secondary', fontSize: 20 }} />
+              ) : (
+                <LockIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
+              )}
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700} color="text.primary">
@@ -131,14 +152,14 @@ const TrackerSidebar = ({ admission }) => {
         ))}
       </Paper>
 
-      <Paper sx={{ borderRadius: 3, p: { xs: 2, sm: 2.5 }, bgcolor: 'info.light' }}>
+      <Paper elevation={0} sx={{ ...cardSx, p: { xs: 1.5, sm: 1.75 }, bgcolor: isDark ? theme.palette.background.paper : '#e0f2fe55' }}>
         <Box display="flex" alignItems="flex-start" gap={1.5} mb={1.5}>
           <Box
             sx={{
               width: 32,
               height: 32,
               borderRadius: '50%',
-              bgcolor: 'primary.light',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -157,7 +178,24 @@ const TrackerSidebar = ({ admission }) => {
           </Box>
         </Box>
 
-        <Button variant="contained" size="small" fullWidth sx={{ fontWeight: 600, borderRadius: 2, borderColor: 'grey.400', color: 'text.primary', bgcolor: '#fff', '&:hover': { borderColor: 'primary.main', bgcolor: '#fff' }, }}>
+        <Button
+          variant="outlined"
+          size="small"
+          fullWidth
+          sx={{
+            fontWeight: 600,
+            borderRadius: 2,
+            textTransform: 'none',
+            borderColor: 'grey.400',
+            color: 'text.primary',
+            bgcolor: isDark ? 'transparent' : '#fff',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#fff',
+              color: 'text.primary',
+            },
+          }}
+        >
           Contact Support
         </Button>
       </Paper>

@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  FormControl,
-  Select,
-  MenuItem,
   Button,
   Menu,
   ListItemIcon,
@@ -12,7 +9,6 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  Event,
   Download,
   ArrowDropDown,
   TableChart,
@@ -20,17 +16,10 @@ import {
 } from '@mui/icons-material';
 
 /**
- * Header — title + data-as-of line, session/term selectors and an
- * Excel/PDF export dropdown (mirrors the export menu used across the project).
+ * Header — title + Excel/PDF export dropdown.
+ * Session/term filtering is now automatic (active session term).
  */
 const DashboardHeader = ({
-  dataAsOf,
-  sessions,
-  selectedSession,
-  onSessionChange,
-  termsForSession,
-  selectedTerm,
-  onTermChange,
   onExportExcel,
   onExportPdf,
   exporting,
@@ -59,97 +48,9 @@ const DashboardHeader = ({
         <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
           Overview of revenue performance and collections
         </Typography>
-        {/* Data as of — commented out per request
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1 }}>
-          <Event sx={{ fontSize: 14, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            Data as of {dataAsOf}
-          </Typography>
-        </Box>
-        */}
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-        {/* Session */}
-        <FormControl size="small" sx={{ minWidth: 170 }}>
-          <Select
-            value={selectedSession}
-            onChange={(e) => onSessionChange(e.target.value)}
-            displayEmpty
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              fontWeight: 600,
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.divider },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  borderRadius: '8px',
-                  border: '1px solid #E5E7EB',
-                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
-                  mt: 0.5,
-                },
-              },
-            }}
-          >
-            {sessions.length === 0 && (
-              <MenuItem value="" sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
-                All Sessions
-              </MenuItem>
-            )}
-            {sessions.map((s) => (
-              <MenuItem key={s} value={s} sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
-                {s}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        {/* Term */}
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <Select
-            value={selectedTerm}
-            onChange={(e) => onTermChange(e.target.value)}
-            displayEmpty
-            renderValue={(v) => (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                {v && (
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-                )}
-                <Typography variant="body2" fontWeight={600}>
-                  {v || 'Select Term'}
-                </Typography>
-              </Box>
-            )}
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.divider },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb' },
-            }}
-            MenuProps={{
-              PaperProps: {
-                sx: {
-                  borderRadius: '8px',
-                  border: '1px solid #E5E7EB',
-                  boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
-                  mt: 0.5,
-                },
-              },
-            }}
-          >
-            {termsForSession.map((t) => (
-              <MenuItem key={t} value={t} sx={{ fontSize: '0.85rem', '&:hover': { bgcolor: '#F3F4F6' }, '&.Mui-selected': { bgcolor: '#EEF2FF' } }}>
-                {t}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
         <Button
           variant="outlined"
           color="inherit"

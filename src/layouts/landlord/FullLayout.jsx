@@ -2,14 +2,16 @@ import { useContext } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import Header from './vertical/header/Header';
+import ImpersonationBar from './vertical/header/ImpersonationBar';
 import Sidebar from './vertical/sidebar/Sidebar';
 import Customizer from './shared/customizer/Customizer';
 import Navigation from './horizontal/navbar/Navigation';
 import HorizontalHeader from './horizontal/header/Header';
 import ScrollToTop from '@/components/shared/ScrollToTop';
-import LoadingBar from '@/LoadingBar';
+// import LoadingBar from '@/LoadingBar';
 import DashboardFooter from '@/components/shared/DashboardFooter';
 import { CustomizerContext } from '@/context/CustomizerContext';
+import { AuthContext } from '@/context/AgentContext/auth';
 import config from '@/context/config';
 
 const MainWrapper = styled('div')(() => ({
@@ -19,25 +21,27 @@ const MainWrapper = styled('div')(() => ({
   overflowX: 'auto',
 }));
 
-const PageWrapper = styled('div')(() => ({
+const PageWrapper = styled('div')(({ theme }) => ({
   display: 'flex',
   flexGrow: 1,
   // paddingBottom: '60px',
   flexDirection: 'column',
   zIndex: 1,
-  backgroundColor: 'transparent',
+  // backgroundColor: 'transparent',
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.default : '#e4e4e4a9',
   overflowX: 'auto',
 }));
 
 const FullLayout = () => {
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
+  const { isImpersonating } = useContext(AuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
 
   const theme = useTheme();
 
   return (
     <>
-      <LoadingBar />
+      {/* <LoadingBar /> */}
 
       <MainWrapper>
         {/* ------------------------------------------- */}
@@ -53,7 +57,9 @@ const FullLayout = () => {
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            ...(activeLayout === 'vertical' && { paddingTop: '70px' }),
+            ...(activeLayout === 'vertical' && {
+              paddingTop: `${config.topbarHeight + (isImpersonating ? config.impersonationBarHeight : 0)}px`,
+            }),
             ...(isCollapse === 'mini-sidebar' && {
               [theme.breakpoints.up('lg')]: { ml: `${MiniSidebarWidth}px` },
             }),
@@ -62,7 +68,14 @@ const FullLayout = () => {
           {/* ------------------------------------------- */}
           {/* Header */}
           {/* ------------------------------------------- */}
-          {activeLayout === 'horizontal' ? <HorizontalHeader /> : <Header />}
+          {activeLayout === 'horizontal' ? (
+            <HorizontalHeader />
+          ) : (
+            <>
+              <Header />
+              <ImpersonationBar />
+            </>
+          )}
           {/* PageContent */}
           {activeLayout === 'horizontal' ? <Navigation /> : ''}
           <Container

@@ -3,11 +3,11 @@ import * as yup from 'yup';
 export const stimulationLinkValidationSchema = yup.object({
   subscriptionMode: yup
     .string()
-    .oneOf(['perTerm', 'perSession'], 'Subscription mode must be either Per Term or Per Session')
+    .oneOf(['per_term', 'per_session'], 'Subscription mode must be either Per Term or Per Session')
     .required('Subscription mode is required'),
   session: yup.string().required('Session is required'),
   term: yup.string().when('subscriptionMode', {
-    is: 'perTerm',
+    is: 'per_term',
     then: (schema) => schema.required('Term is required for Per Term mode'),
     otherwise: (schema) => schema.notRequired(),
   }),

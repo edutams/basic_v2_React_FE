@@ -16,13 +16,14 @@ import {
   TableFooter,
   TablePagination,
   Snackbar,
+  Portal,
   Alert,
   Button,
   TextField,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import api from '@/api/landlord/landlord_api';
-import { IconSchool } from '@tabler/icons-react';
+import { IconSchool, IconEye, IconEdit, IconPower } from '@tabler/icons-react';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
@@ -197,9 +198,8 @@ const MyPlan = () => {
     <PageContainer title="My Plans" description="This is the My Plans page">
       {/* <Breadcrumb title="My Plans" items={BCrumb} /> */}
       {/* <ParentCard title={<Typography variant="h5">All My Plans</Typography>}> */}
-      <Paper>
         <TableContainer>
-          <Table aria-label="my plan table" sx={{ whiteSpace: 'nowrap' }}>
+          <Table aria-label="my plan table" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
             <TableHead>
               <TableRow>
                 <TableCell>
@@ -230,11 +230,15 @@ const MyPlan = () => {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: 'center', py: 5 }}>
-                    <CircularProgress size={40} />
-                  </TableCell>
-                </TableRow>
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(8)].map((_, j) => (
+                      <TableCell key={j}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               ) : paginatedPlans.length > 0 ? (
                 paginatedPlans.map((plan, index) => {
                   const planData = plan.plan?.data ? JSON.parse(plan.plan.data) : {};
@@ -299,12 +303,15 @@ const MyPlan = () => {
                           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                         >
                           <MenuItem onClick={() => handleViewPlan(plan)}>
+                            <IconEye size={16} style={{ marginRight: 8 }} />
                             View Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleEditPlan(plan)}>
+                            <IconEdit size={16} style={{ marginRight: 8 }} />
                             Edit Plan Details
                           </MenuItem>
                           <MenuItem onClick={() => handleOpenDeactivateDialog(plan)}>
+                            <IconPower size={16} style={{ marginRight: 8 }} />
                             {plan.status === 'active' ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                         </Menu>
@@ -350,7 +357,6 @@ const MyPlan = () => {
             </TableFooter>
           </Table>
         </TableContainer>
-      </Paper>
 
       <ReusableModal
         open={openViewModal}
@@ -488,20 +494,26 @@ const MyPlan = () => {
         severity={planToDeactivate?.status === 'active' ? 'error' : 'primary'}
       />
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
+      {/* Portal — Snackbar doesn't portal itself (unlike Dialog), so it can
+          get trapped under an open Dialog's stacking context regardless of
+          z-index. Portal escapes it to document.body, same as Dialog. */}
+      <Portal>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
           onClose={() => setSnackbarOpen(false)}
-          severity={snackbarSeverity}
-          sx={{ width: '100%' }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
         >
-          {snackbarMessage}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+      </Portal>
       {/* </ParentCard> */}
     </PageContainer>
   );

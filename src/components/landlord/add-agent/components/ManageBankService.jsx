@@ -7,13 +7,15 @@ import {
   MenuItem,
   Stack,
   Alert,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from '@/components/shared/ReusableModal';
 import { saveBankService, fetchBankServices } from '@/api/landlord/bank-service/bankService';
+import useNotification from '@/hooks/useNotification';
 
 const ManageBankService = ({ open, onClose, agent, onSave }) => {
+  const notify = useNotification();
   const [bankServices, setBankServices] = useState([]);
   const [selectedService, setSelectedService] = useState('');
   const [loading, setLoading] = useState(false);
@@ -53,9 +55,11 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
         agent_id: agent?.id,
         service: { id: service.id, name: service.name },
       });
+      notify.success('Bank service updated successfully!');
       onSave?.();
       onClose();
     } catch {
+      notify.error('Failed to save bank service');
       setError('Failed to save bank service');
     } finally {
       setLoading(false);
@@ -104,7 +108,7 @@ const ManageBankService = ({ open, onClose, agent, onSave }) => {
         >
           {servicesLoading ? (
             <MenuItem disabled>
-              <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+              <Skeleton variant="text" width={120} />
             </MenuItem>
           ) : bankServices.length === 0 ? (
             <MenuItem disabled>No bank services available</MenuItem>

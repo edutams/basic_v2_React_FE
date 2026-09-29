@@ -16,6 +16,7 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
       onSaveAndContinue={onNext}
       canContinue={canContinue}
       noPadding
+      contentOverflow="auto"
       leftImage={Stage2Image}
       leftTitle="Manage your school sessions."
       leftSubtitle="Select the academic session and subscribe to get your school calendar running."
@@ -32,7 +33,7 @@ const Stage2ManageSessions = ({ onNext, onBack, onSkip }) => {
           </Typography>
         </Box>
 
-        <Box sx={{ px: 2, flex: 1, minHeight: 0, overflow: { xs: 'visible', sm: 'hidden' } }}>
+        <Box sx={{ px: 2, flex: 1, minHeight: 0, overflow: { xs: 'visible', sm: 'auto' } }}>
           <SetCalendarTab onSaveAndContinue={onNext} onReadyChange={setCanContinue} />
         </Box>
       </Box>

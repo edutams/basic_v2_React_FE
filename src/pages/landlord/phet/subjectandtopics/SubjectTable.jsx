@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Box,
-  Typography,
   TextField,
   TableContainer,
   Table,
@@ -12,37 +11,51 @@ import {
   TableBody,
   TableFooter,
   TablePagination,
-  Paper,
   Chip,
   Button,
   IconButton,
   Menu,
   MenuItem,
   InputAdornment,
-  Alert
+  Alert,
+  Skeleton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
-  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
+import { IconList, IconRefresh, IconBooks, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import ParentCard from '../../../../components/shared/ParentCard';
+import MiniStat from '@/components/shared/stats/MiniStat';
 
-const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSubjectAction }) => {
+const SubjectTable = ({
+  subjects = [],
+  stats,
+  onSelect,
+  selectedId,
+  onAddSubject,
+  onSubjectAction,
+  loading = false,
+  onFetch,
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const filteredSubjects = subjects.filter((subj) =>
-    subj.subject_name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // `subjects` is already exactly what the backend returned for the current
+  // search term — no client-side re-filtering here, only client-side paging
+  // over that already-scoped list.
+  const paginatedSubjects = subjects.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const paginatedSubjects = filteredSubjects.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage,
-  );
+  // Reset to page 1 whenever the underlying list changes (new search results,
+  // a row added/removed) so pagination never points past the end.
+  useEffect(() => {
+    setPage(0);
+  }, [subjects]);
 
   const handleMenuOpen = (event, subject) => {
     setAnchorEl(event.currentTarget);
@@ -59,51 +72,83 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
     handleMenuClose();
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setPage(0);
+  const handleFetch = () => {
+    onFetch?.(searchTerm);
   };
-
-  const hasActiveFilters = searchTerm !== '';
 
   return (
     <ParentCard
       title={
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Manage Subjects</Typography>
-          <Button variant="contained" size="small" onClick={onAddSubject}>Add New Subject</Button>
+        <Box display="flex" flexDirection="column" gap={1.5}>
+          {stats && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <MiniStat label="Total Subjects" value={stats.total} loading={loading} icon={IconBooks} />
+              <MiniStat
+                label="Active"
+                value={stats.active}
+                loading={loading}
+                color="success.main"
+                icon={IconCircleCheck}
+              />
+              <MiniStat
+                label="Inactive"
+                value={stats.inactive}
+                loading={loading}
+                color="error.main"
+                icon={IconCircleX}
+              />
+            </Box>
+          )}
+
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            gap={1}
+            flexWrap="wrap"
+          >
+            <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+              <TextField
+                placeholder="Search subjects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleFetch();
+                }}
+                size="small"
+                sx={{ minWidth: 200 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+              {onFetch && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleFetch}
+                  startIcon={<IconRefresh size={16} />}
+                >
+                  Fetch
+                </Button>
+              )}
+            </Box>
+            <Button variant="contained" size="small" onClick={onAddSubject} sx={{ whiteSpace: 'nowrap' }}>
+              Add New Subject
+            </Button>
+          </Box>
         </Box>
       }
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       <Box sx={{ p: 0 }}>
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="Search subjects..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setPage(0);
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          {hasActiveFilters && (
-            <Button variant="contained" size="small" onClick={clearFilters} sx={{ height: 'fit-content' }}>
-              Clear Filters
-            </Button>
-          )}
-        </Box>
-
-        <Box>
           <TableContainer>
-            <Table sx={{ whiteSpace: 'nowrap' }}>
+            <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
@@ -115,9 +160,25 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedSubjects.length > 0 ? (
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      {[...Array(4)].map((_, j) => (
+                        <TableCell key={j}>
+                          <Skeleton variant="text" width={j === 0 ? 30 : j === 3 ? 40 : 100} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : paginatedSubjects.length > 0 ? (
                   paginatedSubjects.map((subject, index) => (
-                    <TableRow key={subject.id || index} hover>
+                    <TableRow
+                      key={subject.id || index}
+                      hover
+                      selected={subject.id === selectedId}
+                      onClick={() => onSelect(subject)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                       <TableCell>{subject.subject_name}</TableCell>
                       <TableCell>
@@ -158,12 +219,15 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                               handleMenuClose();
                             }}
                           >
+                            <IconList size={16} style={{ marginRight: 8 }} />
                             Manage Topics
                           </MenuItem>
                           <MenuItem onClick={() => handleAction('edit', subject)}>
+                            <EditIcon fontSize="small" sx={{ mr: 1 }} />
                             Edit Subject
                           </MenuItem>
-                          <MenuItem onClick={() => handleAction('delete', subject)}>
+                          <MenuItem onClick={() => handleAction('delete', subject)} sx={{ color: 'error.main' }}>
+                            <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                             Delete Subject
                           </MenuItem>
                         </Menu>
@@ -185,7 +249,7 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
                   <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     colSpan={4}
-                    count={filteredSubjects.length}
+                    count={subjects.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={(_, newPage) => setPage(newPage)}
@@ -198,7 +262,6 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
               </TableFooter>
             </Table>
           </TableContainer>
-        </Box>
       </Box>
     </ParentCard>
   );
@@ -206,10 +269,17 @@ const SubjectTable = ({ subjects = [], onSelect, selectedId, onAddSubject, onSub
 
 SubjectTable.propTypes = {
   subjects: PropTypes.array.isRequired,
+  stats: PropTypes.shape({
+    total: PropTypes.number,
+    active: PropTypes.number,
+    inactive: PropTypes.number,
+  }),
   onSelect: PropTypes.func.isRequired,
   selectedId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   onAddSubject: PropTypes.func.isRequired,
   onSubjectAction: PropTypes.func,
+  loading: PropTypes.bool,
+  onFetch: PropTypes.func,
 };
 
 export default SubjectTable;

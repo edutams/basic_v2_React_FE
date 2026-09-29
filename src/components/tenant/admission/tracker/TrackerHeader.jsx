@@ -1,7 +1,36 @@
-import { Box, Avatar, Typography,Chip } from '@mui/material';
-import { CheckCircle as CheckCircleIcon } from '@mui/icons-material';
+import { Box, Avatar, Typography, Chip, useTheme } from '@mui/material';
+import {
+  CheckCircle as CheckCircleIcon,
+  Schedule as ScheduleIcon,
+  Cancel as CancelIcon,
+} from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
+// Solid hex tokens instead of theme.palette.warning/success — the theme's
+// "warning" is a pale gold (#fdc90f) that reads as washed-out for text,
+// matching the darker set used across the rest of the reworked admission UI.
+const STAGE_COLOR = {
+  done: '#16a34a',
+  active: '#d97706',
+  locked: '#94a3b8',
+};
+
+/**
+ * Overall status → accent color + icon, same convention as ApplicationCard
+ * on the list page, so a card colored amber there stays amber here.
+ */
+const statusMeta = (rawStatus) => {
+  const status = (rawStatus || 'pending').toLowerCase();
+
+  if (status === 'admitted') {
+    return { color: '#16a34a', bg: '#dcfce7', label: 'Admitted', icon: CheckCircleIcon };
+  }
+  if (status === 'declined') {
+    return { color: '#dc2626', bg: '#fee2e2', label: 'Declined', icon: CancelIcon };
+  }
+
+  return { color: '#d97706', bg: '#fef3c7', label: 'Pending', icon: ScheduleIcon };
+};
 
 const buildStages = (admission) => {
   const hasEntranceExam = admission?.admission_batch?.has_entrance_exam;
@@ -16,7 +45,7 @@ const buildStages = (admission) => {
       key: 'application',
       label: 'Application',
       sub: isSubmitted ? 'Complete' : 'In Progress',
-      subColor: isSubmitted ? 'success.dark' : 'warning.main',
+      subColor: isSubmitted ? STAGE_COLOR.done : STAGE_COLOR.active,
       done: isSubmitted,
       active: !isSubmitted
     }
@@ -27,7 +56,7 @@ const buildStages = (admission) => {
       key: 'entrance_exam',
       label: 'Entrance Exam',
       sub: isExamDone ? 'Complete' : (isSubmitted ? 'In Progress' : 'Locked'),
-      subColor: isExamDone ? 'success.dark' : (isSubmitted ? 'warning.main' : 'text.disabled'),
+      subColor: isExamDone ? STAGE_COLOR.done : (isSubmitted ? STAGE_COLOR.active : STAGE_COLOR.locked),
       done: isExamDone,
       active: !isExamDone && isSubmitted
     });
@@ -37,7 +66,7 @@ const buildStages = (admission) => {
     key: 'admitted',
     label: 'Admitted',
     sub: isAdmitted ? 'Complete' : (isExamDone || !hasEntranceExam && isSubmitted ? 'Pending' : 'Locked'),
-    subColor: isAdmitted ? 'success.dark' : (isExamDone || !hasEntranceExam && isSubmitted ? 'warning.main' : 'text.disabled'),
+    subColor: isAdmitted ? STAGE_COLOR.done : (isExamDone || !hasEntranceExam && isSubmitted ? STAGE_COLOR.active : STAGE_COLOR.locked),
     done: isAdmitted,
     active: !isAdmitted && (isExamDone || !hasEntranceExam && isSubmitted)
   });
@@ -46,7 +75,7 @@ const buildStages = (admission) => {
     key: 'print_form',
     label: 'Print Form',
     sub: isPrinted ? 'Complete' : (isAdmitted ? 'Pending' : 'Locked'),
-    subColor: isPrinted ? 'success.dark' : (isAdmitted ? 'warning.main' : 'error.dark'),
+    subColor: isPrinted ? STAGE_COLOR.done : (isAdmitted ? STAGE_COLOR.active : STAGE_COLOR.locked),
     done: isPrinted,
     active: !isPrinted && isAdmitted
   });
@@ -55,7 +84,7 @@ const buildStages = (admission) => {
     key: 'enrollment',
     label: 'Enrollment',
     sub: isEnrolled ? 'Complete' : (isPrinted ? 'Pending' : 'Locked'),
-    subColor: isEnrolled ? 'success.dark' : (isPrinted ? 'warning.main' : 'error.main'),
+    subColor: isEnrolled ? STAGE_COLOR.done : (isPrinted ? STAGE_COLOR.active : STAGE_COLOR.locked),
     done: isEnrolled,
     active: !isEnrolled && isPrinted
   });
@@ -63,20 +92,21 @@ const buildStages = (admission) => {
   return stages;
 };
 
-const ProgressTracker = ({ admission }) => {
+const ProgressTracker = ({ admission, isDark }) => {
   const STAGES = buildStages(admission);
   return (
     <Box
       sx={{
-        border: '3px solid',
-        borderColor: '#BDE0C7',
-        borderRadius: 3,
-        p: { xs: 1.5, sm: 2 },
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        borderRadius: '10px',
+        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+        p: { xs: 1, sm: 1.5 },
         display: 'flex',
         alignItems: 'center',
         overflowX: 'auto',
         height: '100%',
-        minHeight: 80,
+        minHeight: 84,
       }}
     >
       {STAGES.map((stage, i) => {
@@ -90,7 +120,7 @@ const ProgressTracker = ({ admission }) => {
               flexDirection: 'column',
               alignItems: 'center',
               flex: 1,
-              minWidth: { xs: 52, sm: 64 },
+              minWidth: { xs: 56, sm: 68 },
               position: 'relative',
             }}
           >
@@ -102,7 +132,7 @@ const ProgressTracker = ({ admission }) => {
                   left: 0,
                   width: '50%',
                   height: 2,
-                  bgcolor: done || active ? 'success.dark' : 'grey.300',
+                  bgcolor: done || active ? STAGE_COLOR.done : 'grey.300',
                   zIndex: 0,
                 }}
               />
@@ -115,7 +145,7 @@ const ProgressTracker = ({ admission }) => {
                   right: 0,
                   width: '50%',
                   height: 2,
-                  bgcolor: done ? 'success.dark' : 'grey.300',
+                  bgcolor: done ? STAGE_COLOR.done : 'grey.300',
                   zIndex: 0,
                 }}
               />
@@ -128,9 +158,9 @@ const ProgressTracker = ({ admission }) => {
                 borderRadius: '50%',
                 zIndex: 1,
                 position: 'relative',
-                bgcolor: done || active ? 'success.dark' : 'grey.200',
+                bgcolor: done || active ? STAGE_COLOR.done : 'grey.200',
                 border: '2px solid',
-                borderColor: done || active ? 'success.dark' : 'grey.300',
+                borderColor: done || active ? STAGE_COLOR.done : 'grey.300',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -169,8 +199,7 @@ const ProgressTracker = ({ admission }) => {
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: 0.3,
-                // color: active ? 'warning.main' : stage.subColor,
-                color: 'success.dark',
+                color: stage.subColor,
               }}
             >
               {stage.sub}
@@ -191,67 +220,111 @@ const TrackerHeader = ({
   dob,
   admission,
   form_number
-}) => (
-  <Box
-    sx={{
-      display: 'flex',
-      flexDirection: { xs: 'column', md: 'row' },
-      alignItems: { xs: 'flex-start', md: 'center' },
-      gap: { xs: 2, md: 3 },
-      background: 'linear-gradient(90deg, #FFF9ED 0%, #FFEFEC 100%)',
-      borderRadius: 3,
-      p: { xs: 2, sm: 3 },
-      width: '100%',
-      boxSizing: 'border-box',
-      mb: 3,
-    }}
-  >
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-      <Avatar
-        src={photo}
-        sx={{
-          width: { xs: 64, sm: 100 },
-          height: { xs: 64, sm: 100 },
-          border: '3px solid',
-          borderColor: 'primary.light',
-          flexShrink: 0,
-        }}
-      />
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="subtitle1" fontWeight={800} noWrap>{name}</Typography>
-       
-        <Typography variant="body2" fontWeight={500}>Gender : {gender}</Typography>
-        <Typography variant="body2" fontWeight={500}>DoB : {  dob}</Typography>
-      <Chip
-  label={`Form No: ${form_number}`}
-  color="primary"
-  size="small"
-  sx={{
-    fontWeight: 600,
-    borderRadius: 2,
-  }}
-/>
-         <Typography variant="body2" color="success.dark" fontWeight={600}>
-          Intending Class : {intendingClass}
-        </Typography>
-        {/* <Typography variant="caption" color="warning.dark">Parent Address:</Typography> */}
-        {/* <Typography variant="caption" color="text.secondary" display="block">{address}</Typography> */}
-      </Box>
-    </Box>
+}) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const meta = statusMeta(admission?.admission_status);
+  const StatusIcon = meta.icon;
 
+  return (
     <Box
       sx={{
-        ml: { xs: 0, md: 'auto' },
-        flexShrink: 0,
-        width: { xs: '100%', md: '55%' },
+        position: 'relative',
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'flex-start', md: 'center' },
+        gap: { xs: 2.5, md: 3 },
+        bgcolor: isDark ? theme.palette.background.paper : `${meta.bg}55`,
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
+        borderRadius: '10px',
         overflow: 'hidden',
-        minWidth: 0,
+        p: { xs: 1.5, sm: 2 },
+        pl: { xs: 2.25, sm: 2.75 },
+        width: '100%',
+        boxSizing: 'border-box',
+        mb: 2,
       }}
     >
-      <ProgressTracker admission={admission} />
+      {/* Status accent rail */}
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 5,
+          bgcolor: meta.color,
+        }}
+      />
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0, minWidth: 0 }}>
+        <Box
+          sx={{
+            p: '3px',
+            borderRadius: '50%',
+            border: '2.5px solid',
+            borderColor: meta.color,
+            flexShrink: 0,
+          }}
+        >
+          <Avatar
+            src={photo}
+            sx={{
+              width: { xs: 68, sm: 92 },
+              height: { xs: 68, sm: 92 },
+            }}
+          />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Typography variant="subtitle1" fontWeight={800} noWrap>
+              {name}
+            </Typography>
+            <Chip
+              icon={<StatusIcon sx={{ fontSize: '13px !important', color: `${meta.color} !important` }} />}
+              label={meta.label}
+              size="small"
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                height: 22,
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#ffffff',
+                color: meta.color,
+                border: '1px solid',
+                borderColor: meta.color,
+              }}
+            />
+          </Box>
+          <Typography variant="body2" fontWeight={500} color="text.secondary" sx={{ mt: 0.5 }}>
+            Gender : {gender} &nbsp;·&nbsp; DoB : {dob}
+          </Typography>
+          <Typography variant="body2" fontWeight={700} sx={{ color: '#16a34a', mt: 0.25 }}>
+            Intending Class : {intendingClass}
+          </Typography>
+          <Chip
+            label={`Form No: ${form_number}`}
+            color="primary"
+            size="small"
+            sx={{ fontWeight: 600, borderRadius: 2, mt: 1 }}
+          />
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          ml: { xs: 0, md: 'auto' },
+          flexShrink: 0,
+          width: { xs: '100%', md: '55%' },
+          overflow: 'hidden',
+          minWidth: 0,
+        }}
+      >
+        <ProgressTracker admission={admission} isDark={isDark} />
+      </Box>
     </Box>
-  </Box>
-);
+  );
+};
 
 TrackerHeader.propTypes = {
   name: PropTypes.string.isRequired,

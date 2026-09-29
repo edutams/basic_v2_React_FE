@@ -12,9 +12,15 @@ import useTenantAuth from '@/hooks/useTenantAuth';
 const InitialSetup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshTenantInfo } = useTenantAuth();
+  const { refreshTenantInfo, tenantInfo } = useTenantAuth();
 
-  const stage = parseInt(searchParams.get('stage') || '1', 10);
+  // Same resume logic as SetupWelcome.handleStartSetup — this is a second,
+  // independent entry point (anyone landing on /school-profile with no
+  // ?stage= at all, e.g. a stale link), so it needs the same fallback
+  // rather than always defaulting to 1. An explicit ?stage= in the URL
+  // (including the Back button navigating to an earlier stage) always wins.
+  const resumeStage = Math.min(5, Math.max(1, (tenantInfo?.onboarding_stage || 0) + 1));
+  const stage = parseInt(searchParams.get('stage') || String(resumeStage), 10);
   const isEditMode = searchParams.get('edit') === 'true';
 
   const currentStage = isEditMode ? Math.min(stage, 5) : stage;

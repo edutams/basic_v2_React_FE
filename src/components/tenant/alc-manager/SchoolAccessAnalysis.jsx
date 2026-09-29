@@ -12,7 +12,7 @@ const SchoolAccessAnalysis = () => {
   };
 
   return (
-    <Paper sx={{ p: 2 }}>
+    <Paper sx={{ p: 1.5 }}>
       <Box
         sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
         display="flex"
@@ -35,13 +35,13 @@ const SchoolAccessAnalysis = () => {
 
       <Box data-tour="acl-analysis-content">
         {subActiveTab === 'Role Based' && (
-          <Box sx={{ p: 2 }} data-tour="acl-analysis-role">
+          <Box sx={{ pt: 1 }} data-tour="acl-analysis-role">
             <SchoolRoleBasedAccess />
           </Box>
         )}
 
         {subActiveTab === 'Permission Based' && (
-          <Box sx={{ p: 2 }} data-tour="acl-analysis-permission">
+          <Box sx={{ pt: 1 }} data-tour="acl-analysis-permission">
             <SchoolPermissionBased />
           </Box>
         )}

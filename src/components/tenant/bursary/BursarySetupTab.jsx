@@ -26,6 +26,9 @@ import {
   ListItemText,
   Alert,
   Divider,
+  CircularProgress,
+  TablePagination,
+  Skeleton,
 } from '@mui/material';
 import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
 import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
@@ -83,6 +86,7 @@ const BursarySetupTab = ({
   selectedSessionTerm,
   setSelectedSessionTerm,
   onStatsChange,
+  onLoadingChange,
   showSnackbar,
 }) => {
   const notify = useNotification();
@@ -111,10 +115,12 @@ const BursarySetupTab = ({
   });
 
   const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [instalments, setInstalments] = useState([]);
+  const [instalmentsLoading, setInstalmentsLoading] = useState(true);
 
   const [settings, setSettings] = useState({});
-  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsLoading, setSettingsLoading] = useState(true);
   const [savingCode, setSavingCode] = useState(null);
 
   const [resultSettings, setResultSettings] = useState({
@@ -124,6 +130,7 @@ const BursarySetupTab = ({
     compulsory_pay_method: '',
     optional_pay_method: '',
   });
+  const [resultSettingsLoading, setResultSettingsLoading] = useState(true);
   const [savingResultSettings, setSavingResultSettings] = useState(false);
 
   const [categoryPage, setCategoryPage] = useState(1);
@@ -133,6 +140,7 @@ const BursarySetupTab = ({
   const [instalmentMeta, setInstalmentMeta] = useState(null);
 
   const loadResultSettings = async () => {
+    setResultSettingsLoading(true);
     try {
       const res = await fetchResultPaymentSettings();
 
@@ -149,20 +157,26 @@ const BursarySetupTab = ({
       }
     } catch (err) {
       notify.info(err?.response?.data?.message);
+    } finally {
+      setResultSettingsLoading(false);
     }
   };
 
   const loadCategories = async (page = 1) => {
+    setCategoriesLoading(true);
     try {
       const res = await fetchPaymentCategories(page);
       setCategories(res.data?.data || []);
       setCategoryMeta(res.data || null);
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Failed to load categories', 'error');
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
   const loadInstalments = async (page = 1) => {
+    setInstalmentsLoading(true);
     try {
       const res = await fetchInstallments(page);
       const mapped = (res.data?.data || []).map((i) => ({
@@ -173,6 +187,8 @@ const BursarySetupTab = ({
       setInstalmentMeta(res.data);
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Failed to load instalments', 'error');
+    } finally {
+      setInstalmentsLoading(false);
     }
   };
 
@@ -208,6 +224,12 @@ const BursarySetupTab = ({
       activeInstalments: instalments.filter((i) => i.status === 'active').length,
     });
   }, [categories, instalments]);
+
+  // The stat cards live in the parent (BursarySetup) — report combined
+  // loading state up so they can skeleton until both sources settle.
+  useEffect(() => {
+    onLoadingChange?.(categoriesLoading || instalmentsLoading);
+  }, [categoriesLoading, instalmentsLoading]);
 
   useEffect(() => {
     loadCategories(categoryPage);
@@ -257,11 +279,11 @@ const BursarySetupTab = ({
     }
   };
 
-  const handleBursarySessionTermChange = async (termId) => {
-    setSelectedSessionTerm(termId);
+  const handleSetActiveSessionTerm = async () => {
+    if (!selectedSessionTerm) return;
     setSavingCode('active_ses_term');
     try {
-      const res = await setActiveSessionTerm(termId);
+      const res = await setActiveSessionTerm(selectedSessionTerm);
       showSnackbar(res.message || 'Bursary session term updated successfully');
     } catch {
       showSnackbar('Failed to update bursary session term', 'error');
@@ -383,31 +405,62 @@ const BursarySetupTab = ({
 
   return (
     <>
-      <Stack spacing={3}>
-        <ParentCard>
-          {/* Session Term */}
-          <Box mb={3}>
-            <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Set Bursary Active Session Term
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={1.5}>
-              This determines which session term bursary fees are being collected for.
-            </Typography>
-            <TextField
-              select
-              label="Select Session Term"
-              value={selectedSessionTerm}
-              onChange={(e) => handleBursarySessionTermChange(e.target.value)}
-              size="small"
-              disabled={savingCode === 'active_ses_term'}
-              sx={{ minWidth: 280 }}
-            >
-              {sessionTerms.map((term) => (
-                <MenuItem key={term.id} value={term.id}>
-                  {term.label}
-                </MenuItem>
-              ))}
-            </TextField>
+      <Stack spacing={2}>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
+          <Box
+            mb={3}
+            display="flex"
+            flexDirection={{ xs: 'column', md: 'row' }}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            gap={2}
+          >
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
+                Set Bursary Active Session Term
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                This determines which session term bursary fees are being collected for.
+              </Typography>
+            </Box>
+
+            <Box display="flex" alignItems="center" gap={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
+              <TextField
+                select
+                label="Select Session Term"
+                value={selectedSessionTerm}
+                onChange={(e) => setSelectedSessionTerm(e.target.value)}
+                size="small"
+                disabled={savingCode === 'active_ses_term'}
+                sx={{ minWidth: 280, width: { xs: '100%', sm: 280 } }}
+              >
+                {sessionTerms.map((term) => (
+                  <MenuItem key={term.id} value={term.id}>
+                    {term.label}
+                    {term.status === 'active' ? ' (Active)' : ''}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  savingCode === 'active_ses_term' ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <IconCheck size={16} />
+                  )
+                }
+                onClick={handleSetActiveSessionTerm}
+                disabled={savingCode === 'active_ses_term' || !selectedSessionTerm}
+              >
+                Set
+              </Button>
+            </Box>
           </Box>
 
           <Divider sx={{ mb: 3 }} />
@@ -437,13 +490,29 @@ const BursarySetupTab = ({
             </Box>
           </Box>
 
-          <Grid container spacing={3}>
+          {settingsLoading ? (
+            <Grid container spacing={2}>
+              {[0, 1, 2].map((i) => (
+                <Grid key={i} size={{ xs: 12, md: 4 }}>
+                  <Box sx={{ border: '2px solid #c7c9cbff', borderRadius: 3, p: 2, height: '100%' }}>
+                    <Skeleton variant="text" width="60%" height={22} sx={{ mb: 2 }} />
+                    {[0, 1].map((j) => (
+                      <Box key={j} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
+                        <Skeleton variant="text" width="50%" height={18} />
+                        <Skeleton variant="text" width="80%" height={14} />
+                      </Box>
+                    ))}
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+          <Grid container spacing={2}>
             {/* Collection Method */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -494,8 +563,7 @@ const BursarySetupTab = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -546,8 +614,7 @@ const BursarySetupTab = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Box
                 sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "2px solid #c7c9cbff",
                   borderRadius: 3,
                   p: 2,
                   height: '100%',
@@ -594,11 +661,27 @@ const BursarySetupTab = ({
               </Box>
             </Grid>
           </Grid>
+          )}
         </ParentCard>
 
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 6 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
             <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+                '& .MuiCardContent-root': {
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  p: 1.5,
+                  '&:last-child': { pb: 1.5 },
+                },
+              }}
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Box display="flex" alignItems="center" gap={1.5}>
@@ -632,8 +715,8 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer variant="outlined">
-                <Table size="small">
+              <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -648,6 +731,18 @@ const BursarySetupTab = ({
                     </TableRow>
                   </TableHead>
                   <TableBody>
+                    {categoriesLoading ? (
+                      [...Array(4)].map((_, index) => (
+                        <TableRow key={`cat-skel-${index}`}>
+                          <TableCell><Skeleton variant="text" width={16} /></TableCell>
+                          <TableCell><Skeleton variant="text" width="70%" /></TableCell>
+                          <TableCell><Skeleton variant="text" width="90%" /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={24} height={24} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                    <>
                     {categories.map((category, index) => (
                       <TableRow key={category.id} hover>
                         <TableCell>{index + 1}</TableCell>
@@ -690,35 +785,48 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     )}
+                    </>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
+
               {/* Categories Pagination */}
-              {categoryMeta && (
-                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
-                  <Typography variant="caption" color="text.secondary">
-                    {categoryMeta.total > 0
-                      ? `${categoryMeta.from}–${categoryMeta.to} of ${categoryMeta.total}`
-                      : ''}
-                  </Typography>
-                  <Button variant="contained" size="small" disabled={!categoryMeta.prev_page_url} onClick={() => setCategoryPage((p) => p - 1)}
-                  >
-                    Prev
-                  </Button>
-                  <Button variant="contained" size="small" disabled={!categoryMeta.next_page_url} onClick={() => setCategoryPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </Box>
-              )}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={categoryMeta?.total || categories.length}
+                rowsPerPage={categoryMeta?.per_page || 10}
+                page={(categoryPage || 1) - 1}
+                onPageChange={(_, newPage) => {
+                  const nextPage = newPage + 1;
+                  setCategoryPage(nextPage);
+                  loadCategories(nextPage);
+                }}
+              />
             </ParentCard>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex' }}>
             <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+                '& .MuiCardContent-root': {
+                  flexGrow: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  p: 1.5,
+                  '&:last-child': { pb: 1.5 },
+                },
+              }}
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box display="flex" alignItems="center" gap={1}>
                     <Box
                       sx={{
                         width: 40,
@@ -749,8 +857,8 @@ const BursarySetupTab = ({
                 </Box>
               }
             >
-              <TableContainer variant="outlined">
-                <Table size="small">
+              <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
+                <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -764,6 +872,17 @@ const BursarySetupTab = ({
                     </TableRow>
                   </TableHead>
                   <TableBody>
+                    {instalmentsLoading ? (
+                      [...Array(3)].map((_, index) => (
+                        <TableRow key={`inst-skel-${index}`}>
+                          <TableCell><Skeleton variant="text" width={16} /></TableCell>
+                          <TableCell><Skeleton variant="text" width="60%" /></TableCell>
+                          <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ mx: 'auto' }} /></TableCell>
+                          <TableCell align="center"><Skeleton variant="circular" width={24} height={24} sx={{ mx: 'auto' }} /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                    <>
                     {instalments.map((instalment, index) => (
                       <TableRow key={instalment.id} hover>
                         <TableCell>{index + 1}</TableCell>
@@ -805,32 +924,34 @@ const BursarySetupTab = ({
                         </TableCell>
                       </TableRow>
                     )}
+                    </>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
+
               {/* Instalments Pagination */}
-              {instalmentMeta && (
-                <Box display="flex" justifyContent="flex-end" alignItems="center" gap={1} mt={1.5}>
-                  <Typography variant="caption" color="text.secondary">
-                    {instalmentMeta.total > 0
-                      ? `${instalmentMeta.from}–${instalmentMeta.to} of ${instalmentMeta.total}`
-                      : ''}
-                  </Typography>
-                  <Button variant="contained" size="small" disabled={!instalmentMeta.prev_page_url} onClick={() => setInstalmentPage((p) => p - 1)}
-                  >
-                    Prev
-                  </Button>
-                  <Button variant="contained" size="small" disabled={!instalmentMeta.next_page_url} onClick={() => setInstalmentPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </Box>
-              )}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={instalmentMeta?.total || instalments.length}
+                rowsPerPage={instalmentMeta?.per_page || 10}
+                page={(instalmentPage || 1) - 1}
+                onPageChange={(_, newPage) => {
+                  const nextPage = newPage + 1;
+                  setInstalmentPage(nextPage);
+                  loadInstalments(nextPage);
+                }}
+              />
             </ParentCard>
           </Grid>
         </Grid>
 
-        <ParentCard>
+        <ParentCard
+          sx={{
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
+        >
           <Box display="flex" alignItems="flex-start" gap={2} mb={2}>
             <Box
               sx={{
@@ -876,6 +997,9 @@ const BursarySetupTab = ({
                 When on, unpaid students will see a payment prompt instead of their results.
               </Typography>
             </Box>
+            {resultSettingsLoading ? (
+              <Skeleton variant="rounded" width={34} height={20} sx={{ borderRadius: 10 }} />
+            ) : (
             <Switch
               checked={resultSettings.pay_condition === 'yes'}
               onChange={(e) => {
@@ -893,6 +1017,7 @@ const BursarySetupTab = ({
               }}
               color="primary"
             />
+            )}
           </Box>
 
           {/* Expanded options when switch is ON */}

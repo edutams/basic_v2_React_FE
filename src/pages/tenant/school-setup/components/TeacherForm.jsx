@@ -84,8 +84,9 @@ const TeacherForm = ({
                   name: cls.class_name,
                   class_code: cls.class_code || cls.class_name,
                   programme_code: programme.programme_code || '',
-                  display_name: `${programme.programme_code || ''} - ${cls.class_code || cls.class_name
-                    }`,
+                  display_name: `${programme.programme_code || ''} - ${
+                    cls.class_code || cls.class_name
+                  }`,
                   class_arms: cls.class_arms,
                 });
               }
@@ -343,10 +344,10 @@ const TeacherForm = ({
                 disabled={!formik.values.class_id}
               >
                 {classArms.map((arm, index) => {
-                  const armLabel = arm.arm_names
-                    ? typeof arm.arm_names === 'string'
-                      ? arm.arm_names
-                      : arm.arm_names[0]
+                  const armLabel = arm.class_arm_names
+                    ? typeof arm.class_arm_names === 'string'
+                      ? arm.class_arm_names
+                      : arm.class_arm_names[0]
                     : arm.arm_name || arm.name || `Arm ${index + 1}`;
                   return (
                     <MenuItem key={arm?.id || `arm-${index}`} value={arm?.id || index}>
@@ -381,11 +382,19 @@ const TeacherForm = ({
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-        <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={isLoading}>
+        <Button
+          variant="contained"
+          size="small"
+          color="inherit"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
           Cancel
         </Button>
         {/* disabled={isLoading || !formik.isValid} */}
-        <Button size="small" type="submit">{isLoading ? 'Saving...' : submitText}</Button>
+        <Button size="small" type="submit">
+          {isLoading ? 'Saving...' : submitText}
+        </Button>
       </Box>
     </Box>
   );

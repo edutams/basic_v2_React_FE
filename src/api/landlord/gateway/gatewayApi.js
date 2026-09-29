@@ -3,6 +3,8 @@ import agentApi from '@/api/landlord/landlord_api';
 const gatewayApi = {
   getAll: (params = {}) => agentApi.get('/v1/landlord/gateways', { params }),
 
+  getStats: () => agentApi.get('/v1/landlord/gateways/stats'),
+
   create: (data) => agentApi.post('/v1/landlord/gateways', data),
 
   update: (id, data) => agentApi.put(`/v1/landlord/gateways/${id}`, data),

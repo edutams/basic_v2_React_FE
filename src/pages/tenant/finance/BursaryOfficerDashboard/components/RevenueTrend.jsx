@@ -214,8 +214,8 @@ const RevenueTrend = ({
       {/* Header */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2,
+          px: 1,
+          py: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -269,7 +269,7 @@ const RevenueTrend = ({
           {/* {renderSubPicker()} */}
         </Box>
       </Box>
-      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+      <Box sx={{ mx: 1, borderTop: '1px solid #E5E7EB' }} />
 
       {/* Bar chart */}
       <Box sx={{ width: '100%', height: 260, px: 1.5, pt: 1 }}>

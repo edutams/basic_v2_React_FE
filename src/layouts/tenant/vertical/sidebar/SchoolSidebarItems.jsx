@@ -26,7 +26,18 @@ import {
   IconCreditCard,
   IconSchool,
   IconBox,
-  // Add more icons as needed
+  IconTool,
+  IconClipboardCheck,
+  IconCloudUpload,
+  IconArrowsShuffle,
+  IconEdit,
+  IconFileText,
+  IconTable,
+  IconChartBar,
+  IconFileAnalytics,
+  IconId,
+  IconMessageCircle,
+  IconMail,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -45,7 +56,25 @@ const iconMapper = {
   UsersPay: IconUsers,
   Package: IconBox,
   Report: IconChartPie,
-  // Add more mappings here when needed
+  Subscription: IconCreditCard,
+  History: IconTimeline,
+  UsersCog: IconUserCircle,
+  Book: IconBook,
+  ListCheck: IconListCheck,
+  Circle: IconCircle,
+  AppWindow: IconAppWindow,
+  ClipboardList: IconClipboardList,
+  Tool: IconTool,
+  ClipboardCheck: IconClipboardCheck,
+  CloudUpload: IconCloudUpload,
+  Shuffle: IconArrowsShuffle,
+  Edit: IconEdit,
+  FileText: IconFileText,
+  Table: IconTable,
+  FileAnalytics: IconFileAnalytics,
+  Id: IconId,
+  MessageCircle: IconMessageCircle,
+  Mail: IconMail,
 };
 
 const SchoolSidebarItems = () => {

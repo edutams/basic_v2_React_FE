@@ -12,10 +12,10 @@ import {
   TableRow,
   useTheme,
   LinearProgress,
+  Alert
 } from '@mui/material';
 import { TableChart, InfoOutlined } from '@mui/icons-material';
 import { formatCurrency } from '../constants';
-import SessionSelect from './SessionSelect';
 
 /**
  * Outstanding Balance by Class — table of per-class expected/collected/outstanding
@@ -26,9 +26,6 @@ const CollectionMatrix = ({
   totals,
   totalEfficiency,
   onRowClick,
-  session = 'This Session',
-  sessions = [],
-  onSessionChange,
 }) => {
   const theme = useTheme();
   const displayMatrix = matrix;
@@ -63,8 +60,8 @@ const CollectionMatrix = ({
       {/* Header */}
       <Box
         sx={{
-          px: 2.5,
-          py: 2,
+          px: 1,
+          py: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -77,9 +74,9 @@ const CollectionMatrix = ({
           </Typography>
           <InfoOutlined sx={{ fontSize: 14, color: '#9CA3AF', ml: 0.5 }} />
         </Box>
-        <SessionSelect value={session} options={sessions} onChange={onSessionChange} />
+
       </Box>
-      <Box sx={{ mx: 2.5, borderTop: '1px solid #E5E7EB' }} />
+      <Box sx={{ mx: 1, borderTop: '1px solid #E5E7EB' }} />
 
       <TableContainer sx={{ flexGrow: 1 }}>
         <Table sx={{ minWidth: 700 }}>
@@ -152,11 +149,11 @@ const CollectionMatrix = ({
                           borderRadius: 4,
                           bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                           '& .MuiLinearProgress-bar': {
-                            bgcolor: row.efficiency >= 80 
+                            bgcolor: row.efficiency >= 80
                               ? theme.palette.success.main
                               : row.efficiency >= 50
-                              ? theme.palette.warning.main
-                              : theme.palette.error.main,
+                                ? theme.palette.warning.main
+                                : theme.palette.error.main,
                             borderRadius: 4,
                           },
                         }}
@@ -168,9 +165,9 @@ const CollectionMatrix = ({
             ) : (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Alert severity="info" sx={{ justifyContent: 'center' }}>
                     No collection data available
-                  </Typography>
+                  </Alert>
                 </TableCell>
               </TableRow>
             )}
@@ -220,8 +217,8 @@ const CollectionMatrix = ({
                         bgcolor: parseFloat(totalEfficiency || computedEfficiency) >= 80
                           ? theme.palette.success.main
                           : parseFloat(totalEfficiency || computedEfficiency) >= 50
-                          ? theme.palette.warning.main
-                          : theme.palette.error.main,
+                            ? theme.palette.warning.main
+                            : theme.palette.error.main,
                         borderRadius: 4,
                       },
                     }}

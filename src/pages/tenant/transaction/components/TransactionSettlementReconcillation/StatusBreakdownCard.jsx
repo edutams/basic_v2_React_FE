@@ -48,8 +48,8 @@ const StatusBreakdownCard = ({ items = [], title }) => {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 2,
-              p: 2,
+              gap: 1.5,
+              p: 1.5,
               borderRadius: 1,
               bgcolor: isDark ? 'rgba(255,255,255,0.04)' : '#f8fafc',
               border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,

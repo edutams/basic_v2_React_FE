@@ -80,6 +80,10 @@ const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) =>
     loadData();
   };
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <StandardModal
       open={open}
@@ -87,8 +91,8 @@ const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) =>
       maxWidth="lg"
       title={`Revenues — ${rowData?.bank_name || ''} (${rowData?.account_number || ''})`}
     >
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
@@ -132,29 +136,29 @@ const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) =>
             <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Revenue Code</TableCell>
-                  <TableCell>Revenue Name</TableCell>
-                  <TableCell>No. of Transactions</TableCell>
-                  <TableCell>Expected (₦)</TableCell>
-                  <TableCell>Settled (₦)</TableCell>
-                  <TableCell>Outstanding (₦)</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Revenue Code</TableCell>
+                  <TableCell sx={thCell}>Revenue Name</TableCell>
+                  <TableCell sx={thCell}>No. of Transactions</TableCell>
+                  <TableCell sx={thCell}>Expected (₦)</TableCell>
+                  <TableCell sx={thCell}>Settled (₦)</TableCell>
+                  <TableCell sx={thCell}>Outstanding (₦)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 3 }}>
                       No revenues found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.revenue_code ?? '—'}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{row.revenue_name}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_code ?? '—'}</TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.revenue_name}</TableCell>
+                      <TableCell sx={tdCell}>
                         {onOpenRevenueTransactions ? (
                           <Link
                             component="button"
@@ -175,12 +179,13 @@ const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) =>
                           row.transaction_count
                         )}
                       </TableCell>
-                      <TableCell>{fmt(row.expected_amount)}</TableCell>
-                      <TableCell sx={{ color: 'success.main', fontWeight: 600 }}>
+                      <TableCell sx={tdCell}>{fmt(row.expected_amount)}</TableCell>
+                      <TableCell sx={{ ...tdCell, color: 'success.main', fontWeight: 600 }}>
                         {fmt(row.settled_amount)}
                       </TableCell>
                       <TableCell
                         sx={{
+                          ...tdCell,
                           color: Number(row.outstanding_amount) > 0 ? 'error.main' : 'success.main',
                           fontWeight: 600,
                         }}
@@ -200,7 +205,7 @@ const RevenuesModal = ({ open, onClose, rowData, onOpenRevenueTransactions }) =>
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mt: 2,
+            mt: 1.5,
           }}
         >
           <Typography variant="body2" color="text.secondary">

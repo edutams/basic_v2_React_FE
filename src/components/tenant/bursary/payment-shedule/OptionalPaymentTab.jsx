@@ -35,11 +35,13 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Close as CloseIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import EditOptionalPaymentModal from './EditOptionalPaymentModal';
 import {
   fetchTermsBySessionTerm,
   fetchPaymentSchedules,
+  fetchClasses,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const OptionalPaymentTab = ({
@@ -65,6 +67,16 @@ const OptionalPaymentTab = ({
   const [scheduleData, setScheduleData] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  // Every class in the school — cross-referenced against each payment
+  // item's own schedules below so a class that's never had a price set
+  // for it still shows up as a dashed "not set" chip, same as Compulsory.
+  const [allClasses, setAllClasses] = useState([]);
+
+  useEffect(() => {
+    fetchClasses()
+      .then((res) => setAllClasses(Array.isArray(res?.data) ? res.data : []))
+      .catch(() => showSnackbar?.('Failed to load classes', 'error'));
+  }, []);
 
   // Load payment schedules when term or sessionId changes
   const loadPaymentSchedules = async (searchTerm = '') => {
@@ -86,13 +98,13 @@ const OptionalPaymentTab = ({
           // Group schedules by payment name and collect options
           const schedules = paymentName.payschedules || [];
 
-          const classesSet = new Set();
+          const scheduledClassIds = new Set();
           const optionsArray = [];
           let totalAmount = 0;
 
           schedules.forEach((schedule) => {
             const className = schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`;
-            classesSet.add(className);
+            scheduledClassIds.add(schedule.class_id);
 
             // If schedule has options, use them; otherwise create option from schedule amount
             if (schedule.options && schedule.options.length > 0) {
@@ -115,6 +127,19 @@ const OptionalPaymentTab = ({
             }
           });
 
+          const scheduledClasses = schedules.map((schedule) => ({
+            id: schedule.class_id,
+            name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
+            scheduled: true,
+          }));
+          const unscheduledClasses = allClasses
+            .filter((cls) => !scheduledClassIds.has(cls.id))
+            .map((cls) => ({
+              id: cls.id,
+              name: cls.class_code || cls.class_name || `Class ${cls.id}`,
+              scheduled: false,
+            }));
+
           return {
             id: paymentName.id,
             paymentName: paymentName.name,
@@ -123,7 +148,7 @@ const OptionalPaymentTab = ({
             totalTypes: optionsArray.length,
             totalAmount: `₦${totalAmount.toLocaleString()}`,
             category: categoryLabel || 'N/A',
-            classes: Array.from(classesSet).join(', ') || 'All Classes',
+            classes: [...scheduledClasses, ...unscheduledClasses],
             status: 'Active',
             payschedules: schedules,
             hasInvoices: schedules.some(s => s.invoices_count > 0),
@@ -144,7 +169,7 @@ const OptionalPaymentTab = ({
   };
   useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey]);
+  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey, allClasses]);
 
   const [detailsDialog, setDetailsDialog] = useState({
     open: false,
@@ -301,14 +326,7 @@ const OptionalPaymentTab = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" fontWeight={600} textAlign="center" sx={{ width: '100%' }}>
-          Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.display_term.display_name} ({categoryLabel || '...'})
-        </Typography>
-      </Alert>
-
-      <ParentCard>
+      <Paper sx={{ p: 1.5 }}>
         <Box
           mb={3}
           display="flex"
@@ -336,7 +354,7 @@ const OptionalPaymentTab = ({
             {terms.map((term, idx) => (
               <Tab
                 key={idx}
-                label={term.display_term.display_name}
+                label={term.term?.term_name}
                 sx={{ textTransform: 'none', fontWeight: 600 }}
                 icon={
                   <Box
@@ -411,7 +429,7 @@ const OptionalPaymentTab = ({
         </Stack>
 
         <TableContainer variant="outlined" sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 800 }}>
+          <Table size="small" sx={{ minWidth: 800 }} stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -473,18 +491,24 @@ const OptionalPaymentTab = ({
                       sx={{
                         bgcolor: 'primary.light',
                         color: 'primary.main',
+                        cursor: 'pointer',
                       }}
                     />
                   </TableCell>
                   <TableCell>
-                    {(schedule.classes?.split(',') || []).map((cls, index) => (
+                    {(schedule.classes || []).map((cls) => (
                       <Chip
-                        key={index}
-                        label={cls.trim()}
+                        key={cls.id}
+                        label={cls.name}
                         size="small"
+                        variant={cls.scheduled ? 'filled' : 'outlined'}
+                        icon={cls.scheduled ? undefined : <AddIcon sx={{ fontSize: 14, color: 'error.main !important' }} />}
                         sx={{
-                          bgcolor: 'primary.light',
-                          color: 'primary.main',
+                          bgcolor: cls.scheduled ? 'primary.light' : 'transparent',
+                          color: cls.scheduled ? 'primary.main' : 'error.main',
+                          border: cls.scheduled ? 'none' : '1.5px dashed',
+                          borderColor: cls.scheduled ? 'transparent' : 'error.main',
+                          cursor: 'pointer',
                           mr: 0.5,
                           mb: 0.5,
                         }}
@@ -535,7 +559,7 @@ const OptionalPaymentTab = ({
             </TableFooter>
           </Table>
         </TableContainer>
-      </ParentCard>
+      </Paper>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>
@@ -615,14 +639,23 @@ const OptionalPaymentTab = ({
               <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
                 Classes
               </Typography>
-              <Chip
-                label={detailsDialog.schedule?.classes}
-                size="small"
-                sx={{
-                  bgcolor: 'primary.light',
-                  color: 'primary.main',
-                }}
-              />
+              {(detailsDialog.schedule?.classes || []).map((cls) => (
+                <Chip
+                  key={cls.id}
+                  label={cls.name}
+                  size="small"
+                  variant={cls.scheduled ? 'filled' : 'outlined'}
+                  icon={cls.scheduled ? undefined : <AddIcon sx={{ fontSize: 14, color: 'error.main !important' }} />}
+                  sx={{
+                    bgcolor: cls.scheduled ? 'primary.light' : 'transparent',
+                    color: cls.scheduled ? 'primary.main' : 'error.main',
+                    border: cls.scheduled ? 'none' : '1.5px dashed',
+                    borderColor: cls.scheduled ? 'transparent' : 'error.main',
+                    mr: 0.5,
+                    mb: 0.5,
+                  }}
+                />
+              ))}
             </Box>
 
             <Box>

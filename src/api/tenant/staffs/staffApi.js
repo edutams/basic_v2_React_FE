@@ -6,6 +6,13 @@ const staffApi = {
     return response.data;
   },
 
+  // School-wide staff counts for the stat cards — independent of whichever
+  // tab/page/filter is currently being viewed.
+  getCounts: async () => {
+    const response = await tenantApi.get('/school_setup/staff/counts');
+    return response.data;
+  },
+
   getSingle: async (id) => {
     const response = await tenantApi.get(`/school_setup/staff/${id}`);
     return response.data;
@@ -23,6 +30,18 @@ const staffApi = {
 
   delete: async (id) => {
     const response = await tenantApi.delete(`/school_setup/staff/${id}`);
+    return response.data;
+  },
+
+  // Dedicated status-change endpoint — separate from the generic `update`
+  // edit form, so every status change gets its own clean history entry.
+  updateStatus: async (id, data) => {
+    const response = await tenantApi.post(`/school_setup/staff/${id}/status`, data);
+    return response.data;
+  },
+
+  getStatusHistory: async (id) => {
+    const response = await tenantApi.get(`/school_setup/staff/${id}/status-history`);
     return response.data;
   },
 

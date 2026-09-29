@@ -22,10 +22,9 @@ const PlanForm = ({ actionType, selectedPlan, onSubmit, onCancel, loading = fals
   const [errors, setErrors] = useState({});
 
   const studentLimitOptions = [
-    { value: '1-50', label: '1-50' },
-    { value: '51-99', label: '51-99' },
-    { value: '100-199', label: '100-199' },
-    { value: '200 and Above', label: '200 and Above' },
+    { value: '0 - 99', label: '0-99' },
+    { value: '100 - 199', label: '100-199' },
+    { value: '200 and above', label: '200 and above' },
   ];
 
   const statusOptions = [

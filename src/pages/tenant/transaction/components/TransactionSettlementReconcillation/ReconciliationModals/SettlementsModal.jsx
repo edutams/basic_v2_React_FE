@@ -84,6 +84,10 @@ const SettlementsModal = ({ open, onClose, rowData }) => {
     loadData();
   };
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <StandardModal
       open={open}
@@ -91,8 +95,8 @@ const SettlementsModal = ({ open, onClose, rowData }) => {
       maxWidth="lg"
       title={`Settlements — ${rowData?.bank_name || ''} (${rowData?.account_number || ''})`}
     >
-      <Box sx={{ p: 3 }}>
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
@@ -136,34 +140,34 @@ const SettlementsModal = ({ open, onClose, rowData }) => {
             <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Settlement ID</TableCell>
-                  <TableCell>Amount (₦)</TableCell>
-                  <TableCell>Date Paid</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>No. of Transactions</TableCell>
-                  <TableCell>No. of Revenue</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Settlement ID</TableCell>
+                  <TableCell sx={thCell}>Amount (₦)</TableCell>
+                  <TableCell sx={thCell}>Date Paid</TableCell>
+                  <TableCell sx={thCell}>Status</TableCell>
+                  <TableCell sx={thCell}>No. of Transactions</TableCell>
+                  <TableCell sx={thCell}>No. of Revenue</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 3 }}>
                       No settlements found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   data.map((row, index) => (
                     <TableRow key={row.id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell sx={{ wordBreak: 'break-all', maxWidth: 200 }}>
+                      <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                      <TableCell sx={{ ...tdCell, wordBreak: 'break-all', maxWidth: 200 }}>
                         {row.settlement_id ?? row.id}
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{fmt(row.amount)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{fmt(row.amount)}</TableCell>
+                      <TableCell sx={tdCell}>
                         {row.date_paid ? dayjs(row.date_paid).format('YYYY-MM-DD') : '—'}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>
                         <Typography
                           variant="body2"
                           fontWeight={600}
@@ -173,8 +177,8 @@ const SettlementsModal = ({ open, onClose, rowData }) => {
                           {row.status}
                         </Typography>
                       </TableCell>
-                      <TableCell>{row.transaction_count ?? '—'}</TableCell>
-                      <TableCell>{row.revenue_count ?? '—'}</TableCell>
+                      <TableCell sx={tdCell}>{row.transaction_count ?? '—'}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_count ?? '—'}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -188,7 +192,7 @@ const SettlementsModal = ({ open, onClose, rowData }) => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mt: 2,
+            mt: 1.5,
           }}
         >
           <Typography variant="body2" color="text.secondary">

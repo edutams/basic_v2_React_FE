@@ -11,39 +11,39 @@ import {
   Button,
   TextField,
   MenuItem,
-  IconButton,
-  CircularProgress,
+  Skeleton,
   Chip,
   Grid,
   Alert,
 } from '@mui/material';
-import { IconTrash } from '@tabler/icons-react';
+import { IconTrash, IconSearch } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
 import {
   fetchProgrammes,
-  fetchSubjectsByProgramme,
   fetchClassArmsByProgramme,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchCurrentSession, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
 const SubjectTeacherAllocation = () => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState([]);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const [sessions, setSessions] = useState([]);
+  const [sessionTerms, setSessionTerms] = useState([]);
   const [programmes, setProgrammes] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [availableClasses, setAvailableClasses] = useState([]);
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [activeSessionTermId, setActiveSessionTermId] = useState(null);
 
-  // Filters
+  // Filters — nothing here re-fetches the table on its own; only the Fetch
+  // button does. Session -> Term -> Programme -> Class Arm, in that order.
+  const [selectedSession, setSelectedSession] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedProgramme, setSelectedProgramme] = useState('');
-  const [selectedProgram, setSelectedProgram] = useState('');
   const [selectedClassArm, setSelectedClassArm] = useState('');
 
   // Confirmation Dialog
@@ -56,34 +56,28 @@ const SubjectTeacherAllocation = () => {
 
   const initData = async () => {
     try {
-      // Fetch all subscribed session terms
-      const termsRes = await fetchSessionTerms();
-      if (termsRes.status) {
-        const terms = termsRes.data || [];
-        setSessionTerms(terms);
+      const [sessionsRes, progsRes, staffRes] = await Promise.all([
+        fetchTenantSessions({ pagination: false }),
+        fetchProgrammes(),
+        staffApi.getAll({ staff_type: 'teaching' }),
+      ]);
 
-        // Find active term
-        const activeTerm = terms.find((t) => t.status?.toUpperCase() === 'ACTIVE');
-        if (activeTerm) {
-          setActiveSessionTermId(activeTerm.id);
-          setSelectedTerm(activeTerm.id);
-        } else if (terms.length > 0) {
-          setActiveSessionTermId(terms[0].id);
-          setSelectedTerm(terms[0].id);
-        }
-      }
+      const allSessions = sessionsRes.data || [];
+      setSessions(allSessions);
+      setTeachers(staffRes.data || []);
 
-      const progsRes = await fetchProgrammes();
       const progs = progsRes.data || [];
       setProgrammes(progs);
-      if (progs.length > 0) {
-        handleProgrammeChange(progs[0].id);
+
+      const activeSession = allSessions.find((s) => s.status === 'active') || allSessions[0];
+      if (activeSession) {
+        setSelectedSession(activeSession.id);
+        await loadTermsForSession(activeSession.id);
       }
 
-      // Fetch teaching staff
-      const staffRes = await staffApi.getAll({ staff_type: 'teaching' });
-      if (staffRes.status) {
-        setTeachers(staffRes.data || []);
+      if (progs.length > 0) {
+        setSelectedProgramme(progs[0].id);
+        await loadClassArmsForProgramme(progs[0].id);
       }
     } catch (error) {
       notify.error('Failed to initialize data');
@@ -91,66 +85,62 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const handleTermChange = (termId) => {
-    setSelectedTerm(termId);
-    if (selectedProgramme && selectedClassArm) {
-      fetchAllocations(selectedProgramme, selectedClassArm, termId);
+  const loadTermsForSession = async (sessionId) => {
+    try {
+      const termsRes = await fetchSessionTerms(sessionId);
+      const terms = termsRes.data || [];
+      setSessionTerms(terms);
+
+      const activeTerm = terms.find((t) => t.status === 'active') || terms[0];
+      setSelectedTerm(activeTerm ? activeTerm.id : '');
+    } catch (error) {
+      notify.error('Failed to fetch terms for the selected session');
+    }
+  };
+
+  const loadClassArmsForProgramme = async (progId) => {
+    try {
+      const classArmsRes = await fetchClassArmsByProgramme(progId);
+      setAvailableClasses(classArmsRes.data || []);
+      setSelectedClassArm('');
+    } catch (error) {
+      notify.error('Failed to fetch class arms');
+    }
+  };
+
+  const handleSessionChange = async (sessionId) => {
+    setSelectedSession(sessionId);
+    setSelectedTerm('');
+    setSessionTerms([]);
+    if (sessionId) {
+      await loadTermsForSession(sessionId);
     }
   };
 
   const handleProgrammeChange = async (progId) => {
     setSelectedProgramme(progId);
+    setAvailableClasses([]);
+    setSelectedClassArm('');
     if (progId) {
-      try {
-        const subjectsRes = await fetchSubjectsByProgramme(progId);
-        setSubjects(subjectsRes.data || []);
-
-        // Fetch class arms for this programme
-        const classArmsRes = await fetchClassArmsByProgramme(progId);
-        const arms = classArmsRes.data || [];
-        setAvailableClasses(arms);
-
-        // Auto-select the first class arm
-        const firstArmId = arms.length > 0 ? arms[0].id : '';
-        setSelectedClassArm(firstArmId);
-        fetchAllocations(progId, firstArmId, selectedTerm);
-      } catch (error) {
-        notify.error('Failed to fetch subjects');
-      }
-    } else {
-      setSubjects([]);
-      setAllocations([]);
-      setAvailableClasses([]);
-      setSelectedClassArm('');
+      await loadClassArmsForProgramme(progId);
     }
   };
 
-  const handleClassArmChange = (classArmId) => {
-    setSelectedClassArm(classArmId);
-    if (selectedProgramme && classArmId) {
-      fetchAllocations(selectedProgramme, classArmId, selectedTerm);
+  const fetchAllocations = async () => {
+    if (!selectedProgramme || !selectedTerm || !selectedClassArm) {
+      notify.error('Select a session, term, programme, and class first');
+      return;
     }
-  };
-
-  const fetchAllocations = async (progId, classArmId = null, termId = null) => {
-    if (!progId) return;
 
     setLoading(true);
+    setHasFetched(true);
     try {
-      const params = {
-        programme_id: progId,
-        session_term_id: termId || selectedTerm || activeSessionTermId,
-      };
-
-      if (classArmId) {
-        params.class_arm_id = classArmId;
-      }
-
-      const response = await allocationApi.getSubjectTeacherAllocations(params);
-
-      if (response.status) {
-        setAllocations(response.data || []);
-      }
+      const response = await allocationApi.getSubjectTeacherAllocations({
+        programme_id: selectedProgramme,
+        session_term_id: selectedTerm,
+        class_arm_id: selectedClassArm,
+      });
+      setAllocations(response.data || []);
     } catch (error) {
       notify.error('Failed to fetch allocations');
       console.error(error);
@@ -159,15 +149,13 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const handleTeacherChange = (index, teacherId) => {
-    const teacher = teachers.find((t) => t.id === teacherId);
+  const handleTeacherChange = (index, teacherUserId) => {
+    const teacher = teachers.find((t) => t.user_id === teacherUserId);
     const updatedAllocations = [...allocations];
     updatedAllocations[index] = {
       ...updatedAllocations[index],
-      teacher_id: teacherId,
-      teacher_name: teacher
-        ? `${teacher.user?.fname} ${teacher.user?.lname} (${teacher.staff_id})`
-        : '',
+      teacher_id: teacherUserId,
+      teacher_name: teacher ? teacher.user.full_name : '',
     };
     setAllocations(updatedAllocations);
   };
@@ -182,15 +170,12 @@ const SubjectTeacherAllocation = () => {
 
     try {
       if (allocationToDelete.allocation_id) {
-        // Remove from backend
         const response = await allocationApi.removeSubjectTeacherAllocation(
           allocationToDelete.allocation_id,
         );
         if (response.status) {
           notify.success('Allocation removed successfully');
-          if (selectedProgramme && selectedClassArm) {
-            fetchAllocations(selectedProgramme, selectedClassArm);
-          }
+          fetchAllocations();
         }
       } else {
         const updatedAllocations = allocations.map((a) =>
@@ -214,32 +199,28 @@ const SubjectTeacherAllocation = () => {
       return;
     }
 
-    if (!activeSessionTermId) {
-      notify.error('No active session term found');
+    if (!selectedTerm) {
+      notify.error('No session term selected');
       return;
     }
 
     try {
-      // Prepare allocations data
       const allocationsData = allocations
-        .filter((a) => a.teacher_id) // Only send allocations with teachers
+        .filter((a) => a.teacher_id)
         .map((a) => ({
           subject_id: a.subject_id,
           user_id: a.teacher_id,
         }));
 
       const response = await allocationApi.saveSubjectTeacherAllocations({
-        session_term_id: selectedTerm || activeSessionTermId,
+        session_term_id: selectedTerm,
         class_arm_id: selectedClassArm,
         allocations: allocationsData,
       });
 
       if (response.status) {
         notify.success('Subject teacher allocations saved successfully');
-        // Refresh allocations
-        if (selectedProgramme) {
-          fetchAllocations(selectedProgramme, selectedClassArm);
-        }
+        fetchAllocations();
       }
     } catch (error) {
       notify.error(error.response?.data?.message || 'Failed to save allocations');
@@ -249,31 +230,48 @@ const SubjectTeacherAllocation = () => {
 
   return (
     <Box>
-      {/* Description */}
-      <Alert severity="info" sx={{ mb: 3, color: '#000000', backgroundColor: '#FFFAE6' }}>
+      <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
         Select from the list of subjects below and allocate a teacher to the subject
       </Alert>
 
-      {/* Filters Row */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      {/* Filters Row: Session -> Term -> Programme -> Class Arm -> Fetch */}
+      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <TextField
             select
             size="small"
-            label="Session Term"
-            value={selectedTerm}
-            onChange={(e) => handleTermChange(e.target.value)}
+            label="Session"
+            value={selectedSession}
+            onChange={(e) => handleSessionChange(e.target.value)}
             fullWidth
           >
-            {sessionTerms.map((term) => (
-              <MenuItem key={term.id} value={term.id}>
-                {term.display_name}
+            {sessions.map((session) => (
+              <MenuItem key={session.id} value={session.id}>
+                {session.session_name}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <TextField
+            select
+            size="small"
+            label="Term"
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            fullWidth
+            disabled={!selectedSession}
+          >
+            {sessionTerms.map((term) => (
+              <MenuItem key={term.id} value={term.id}>
+                {term.term?.term_name || term.term_name}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <TextField
             select
             size="small"
@@ -291,22 +289,36 @@ const SubjectTeacherAllocation = () => {
           </TextField>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <TextField
             select
             size="small"
-            label="Available Classes"
+            label="Class"
             value={selectedClassArm}
-            onChange={(e) => handleClassArmChange(e.target.value)}
+            onChange={(e) => setSelectedClassArm(e.target.value)}
             fullWidth
+            disabled={!selectedProgramme}
           >
             <MenuItem value="">Select Class</MenuItem>
             {availableClasses.map((cls) => (
               <MenuItem key={cls.id} value={cls.id}>
-                {cls.programme_class?.class?.class_name} {cls.arm_names}
+                {cls.programme_class.class.class_name} - {cls.class_arm_names}
               </MenuItem>
             ))}
           </TextField>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            startIcon={<IconSearch size={16} />}
+            onClick={fetchAllocations}
+            sx={{ height: '40px' }}
+          >
+            Fetch
+          </Button>
         </Grid>
       </Grid>
 
@@ -323,16 +335,21 @@ const SubjectTeacherAllocation = () => {
           </TableHead>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 10 }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={140} height={28} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width="100%" height={36} /></TableCell>
+                  <TableCell><Skeleton variant="rounded" width={130} height={24} /></TableCell>
+                </TableRow>
+              ))
             ) : allocations.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 10 }}>
                   <Typography color="textSecondary">
-                    Select a programme to view subject allocations
+                    {hasFetched
+                      ? 'No subject allocations found for these filters'
+                      : 'Select a session, term, programme, and class, then click Fetch'}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -357,8 +374,8 @@ const SubjectTeacherAllocation = () => {
                       >
                         <MenuItem value="">Select Teacher</MenuItem>
                         {teachers.map((teacher) => (
-                          <MenuItem key={teacher.id} value={teacher.id}>
-                            {teacher.user?.fname} {teacher.user?.lname} ({teacher.staff_id})
+                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                            {teacher.user.full_name} ({teacher.staff_id})
                           </MenuItem>
                         ))}
                       </TextField>
@@ -391,9 +408,12 @@ const SubjectTeacherAllocation = () => {
       {/* Save Button */}
       {allocations.length > 0 && (
         <Box sx={{ mt: 3, display: 'flex', justifyContent: 'right' }}>
-          <Button variant="contained" size="small" onClick={handleSaveAll}>Save All</Button>
+          <Button variant="contained" size="small" onClick={handleSaveAll}>
+            Save All
+          </Button>
         </Box>
       )}
+
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         open={confirmOpen}

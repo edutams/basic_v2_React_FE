@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 // import * as React from 'react';
 import PageContainer from 'src/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 
-import { Grid, Paper, Typography, Chip, useTheme } from '@mui/material';
+import { Grid, Paper, Typography, Chip, Skeleton, useTheme, Button } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -33,20 +33,9 @@ import PlanDistributionModal from './components/PlanDistributionModal';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
 import { usePermissions } from '@/context/AgentContext/permissions';
-import { getStatCardColor } from '@/utils/statCardColors';
+import agentApi from '@/api/landlord/organizations/agent';
 
-const planSeries = [40, 15, 35, 10];
-
-const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-
-const planData = [
-  { name: 'Freemium', value: 40, color: '#EC468C' },
-  { name: 'Basic', value: 15, color: '#7987FF' },
-  { name: 'Basic +', value: 35, color: '#FFA5CB' },
-  { name: 'Basic ++', value: 10, color: '#8B48E3' },
-];
-
-const planColors = planData.map((p) => p.color);
+const PLAN_DISTRIBUTION_COLORS = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#2ca87f'];
 
 const BCrumb = [
   {
@@ -84,16 +73,51 @@ function a11yProps(index) {
 const EduTier = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
 
   const [value, setValue] = React.useState(0);
+  const planRef = useRef(null);
   const [openPlanDistributionModal, setOpenPlanDistributionModal] = useState(false);
   const [openTotalSchoolModal, setOpenTotalSchoolModal] = useState(false);
   const [openTotalTransactionModal, setOpenTotalTransactionModal] = useState(false);
   const { can } = usePermissions();
+
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+
+  // Extracted so it can also be called after a plan is created/updated/
+  // deleted elsewhere on this page — those stat cards otherwise only ever
+  // reflected the data as of the initial page load, requiring a full reload
+  // to pick up a just-created plan.
+  const fetchAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await agentApi.getAnalytics();
+      if (response.status === true && response.data) {
+        setAnalytics(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch analytics', error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -118,7 +142,7 @@ const EduTier = () => {
         id: 'plan',
         label: 'Plan',
         icon: <IconArticle size="22" />,
-        component: <PlanTab />,
+        component: <PlanTab ref={planRef} onPlanChanged={fetchAnalytics} />,
       });
     }
     if (can('landlord.plan.my_plan')) {
@@ -130,7 +154,7 @@ const EduTier = () => {
       });
     }
     return tabs;
-  }, [can]);
+  }, [can, fetchAnalytics]);
 
   return (
     <PageContainer title="Subscription" description="this is Subscription page">
@@ -141,17 +165,25 @@ const EduTier = () => {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(3,1fr)' },
           gap: 2,
-          mb: 3,
+          mb: 2,
         }}
       >
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -167,25 +199,23 @@ const EduTier = () => {
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor0.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                color: isDark ? '#fff' : s0.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenTotalTransactionModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box
             sx={{
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -194,19 +224,35 @@ const EduTier = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
-              0
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}>
+              {analyticsLoading ? (
+                <Skeleton variant="text" width={80} />
+              ) : (
+                `₦${(analytics?.transactionVolume ?? 0).toLocaleString()}`
+              )}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">Commission</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>100,000,000</Typography>
+              <Typography variant="caption" color="text.secondary">Paid</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? (
+                  <Skeleton variant="text" width={70} />
+                ) : (
+                  `₦${(analytics?.transactionVolume ?? 0).toLocaleString()}`
+                )}
+              </Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
-              <Typography variant="caption" color="text.secondary">Volume</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>304,043,000</Typography>
+              <Typography variant="caption" color="text.secondary">Pending</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? (
+                  <Skeleton variant="text" width={70} />
+                ) : (
+                  `₦${(analytics?.transactionPending ?? 0).toLocaleString()}`
+                )}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -257,11 +303,19 @@ const EduTier = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -273,27 +327,27 @@ const EduTier = () => {
             }}
           >
             <Typography variant="subtitle1" fontWeight={700}>
-              Subscriptions
+              Schools
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor1.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                '&:hover': { opacity: 0.85 },
               }}
+              onClick={() => setOpenTotalSchoolModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box
             sx={{
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
@@ -302,19 +356,23 @@ const EduTier = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
-              0
+            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}>
+              {analyticsLoading ? <Skeleton variant="text" width={40} /> : (analytics?.totalSchools ?? 0)}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
-              <Typography variant="caption" color="text.secondary">Primary School</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
+              <Typography variant="caption" color="text.secondary">Active</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? <Skeleton variant="text" width={30} /> : (analytics?.activeSchools ?? 0)}
+              </Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor }} />
+            <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
             <Box>
-              <Typography variant="caption" color="text.secondary">Secondary School</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>0</Typography>
+              <Typography variant="caption" color="text.secondary">Pending</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 600 }}>
+                {analyticsLoading ? <Skeleton variant="text" width={30} /> : (analytics?.pendingSchools ?? 0)}
+              </Typography>
             </Box>
           </Box>
         </Paper>
@@ -412,11 +470,19 @@ const EduTier = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark ? '0 6px 24px rgba(0,0,0,0.28)' : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '14px',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -432,30 +498,40 @@ const EduTier = () => {
             </Typography>
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: statColor3.iconBg,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setOpenPlanDistributionModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
           <Box sx={{ height: 140, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
-            <ReusablePieChart
-              series={planSeries}
-              colors={planColors}
-              labels={planLabels}
-              height={150}
-              hideCard
-            />
+            {analyticsLoading ? (
+              <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+            ) : (analytics?.planDistribution ?? []).length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ width: '100%', textAlign: 'center' }}>
+                No active plan assignments yet.
+              </Typography>
+            ) : (
+              <ReusablePieChart
+                // Remounts once the real labels/series arrive — ApexCharts
+                // donut charts don't reliably pick up a change in the number
+                // of series/labels on an already-mounted instance.
+                key={analytics.planDistribution.map((p) => p.label).join('|')}
+                series={analytics.planDistribution.map((p) => p.total)}
+                colors={PLAN_DISTRIBUTION_COLORS}
+                labels={analytics.planDistribution.map((p) => p.label)}
+                height={150}
+                hideCard
+              />
+            )}
           </Box>
         </Paper>
 
@@ -538,30 +614,53 @@ const EduTier = () => {
         </Paper> */}
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={12}>
           <BlankCard>
-            <Box sx={{ width: '100%', overflowX: 'auto' }}>
-              <Tabs
-                value={value}
-                onChange={handleChange}
-                scrollButtons="auto"
-                variant="scrollable"
-                aria-label="basic tabs example"
-              >
-                {availableTabs.map((tab, idx) => (
-                  <Tab
-                    key={tab.id}
-                    iconPosition="start"
-                    icon={tab.icon}
-                    label={tab.label}
-                    {...a11yProps(idx)}
-                  />
-                ))}
-              </Tabs>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+              }}
+            >
+              <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                <Tabs
+                  value={value}
+                  onChange={handleChange}
+                  scrollButtons="auto"
+                  variant="scrollable"
+                  aria-label="basic tabs example"
+                >
+                  {availableTabs.map((tab, idx) => (
+                    <Tab
+                      key={tab.id}
+                      iconPosition="start"
+                      icon={tab.icon}
+                      label={tab.label}
+                      {...a11yProps(idx)}
+                    />
+                  ))}
+                </Tabs>
+              </Box>
+
+              {/* Tab-specific action — shown only while the Plan tab is
+                  active, instead of living inside that tab's own card
+                  header. */}
+              {availableTabs[value]?.id === 'plan' && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => planRef.current?.openAddModal()}
+                  sx={{ minWidth: 120, mr: 2, flexShrink: 0 }}
+                >
+                  Add New Plan
+                </Button>
+              )}
             </Box>
             <Divider />
-            <CardContent>
+            <CardContent sx={{ p: 0 }}>
               {availableTabs.map((tab, idx) => (
                 <TabPanel key={tab.id} value={value} index={idx}>
                   {tab.component}
@@ -575,11 +674,14 @@ const EduTier = () => {
       <PlanDistributionModal
         open={openPlanDistributionModal}
         onClose={() => setOpenPlanDistributionModal(false)}
+        planDistribution={analytics?.planDistribution ?? []}
+        totalOrganizations={analytics?.totalOrganizations ?? 0}
       />
 
       <TotalSchoolModal
         open={openTotalSchoolModal}
         onClose={() => setOpenTotalSchoolModal(false)}
+        stats={analytics}
       />
 
       <TotalTransactionModal

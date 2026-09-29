@@ -10,19 +10,20 @@ import {
   Stack,
   Tabs,
   Tab,
+  Button,
   useTheme,
-  CircularProgress,
+  Skeleton,
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-} from '@mui/icons-material';
-import { getStatCardColor } from '@/utils/statCardColors';
+import { People as PeopleIcon, SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
+import { usePermissions } from '@/context/TenantContext/permissions';
 
 import SingleArmView from './components/SingleArmView';
 import MultipleArmView from './components/MultipleArmView';
 import ClassEnrollmentCard from './components/ClassEnrollmentCard';
 import EnrollmentBreakdownModal from './components/EnrollmentBreakdownModal';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import { migrateStudents } from '@/api/tenant/term-migration/termMigrationApi';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -30,24 +31,35 @@ const BCrumb = [
   { title: 'Class Register' },
 ];
 
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
 const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const colors = getStatCardColor('primary', 0, isDark, theme);
+  const scheme = schemeMap[0];
 
   return (
     <Paper
       elevation={0}
       sx={{
-        p: 2,
-        borderRadius: '16px',
-        background: isDark ? theme.palette.background.paper : colors.cardBg,
-        border: isDark
-          ? '1px solid rgba(255,255,255,0.12)'
-          : `1px solid ${colors.borderColor}`,
-        boxShadow: isDark
-          ? '0 10px 30px rgba(0,0,0,0.35)'
-          : '0 4px 20px rgba(0,0,0,0.07)',
+        p: '14px',
+        borderRadius: '14px',
+        bgcolor: '#ffffff',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        },
         height: '100%',
         maxHeight: 250,
         position: 'relative',
@@ -55,7 +67,6 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
       <Box
@@ -64,7 +75,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           right: -15,
           bottom: -15,
           opacity: 0.08,
-          color: colors.accentColor,
+          color: scheme.color,
         }}
       >
         <PeopleIcon sx={{ fontSize: 130 }} />
@@ -74,7 +85,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
         <Typography
           variant="caption"
           sx={{
-            color: isDark ? 'rgba(255,255,255,0.7)' : colors.accentColor,
+            color: isDark ? 'rgba(255,255,255,0.7)' : scheme.color,
             textTransform: 'uppercase',
             letterSpacing: 0.5,
             fontWeight: 700,
@@ -83,7 +94,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
           Total Student
         </Typography>
         {loading ? (
-          <CircularProgress size={20} sx={{ mt: 0.5 }} />
+          <Skeleton variant="text" width={60} height={40} sx={{ my: 0.5 }} />
         ) : (
           <Typography
             variant="h3"
@@ -92,7 +103,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               my: 0.5,
               lineHeight: 1,
               fontSize: { xs: 26, md: 32 },
-              color: isDark ? '#fff' : colors.accentColor,
+              color: isDark ? '#fff' : scheme.color,
             }}
           >
             {totalStudentsCount.toLocaleString()}
@@ -101,7 +112,7 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
       </Box>
 
       <Box sx={{ zIndex: 1 }}>
-        <Stack direction="row" spacing={3}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography
               variant="caption"
@@ -119,10 +130,14 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? '...' : maleCount.toLocaleString()}
+              {loading ? (
+                <Skeleton variant="text" width={35} height={28} />
+              ) : (
+                maleCount.toLocaleString()
+              )}
             </Typography>
           </Box>
-          <Box>
+          <Box sx={{ textAlign: 'right' }}>
             <Typography
               variant="caption"
               sx={{
@@ -139,7 +154,11 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
               fontWeight={700}
               sx={{ color: isDark ? '#fff' : '#1a1a1a', lineHeight: 1.1 }}
             >
-              {loading ? '...' : femaleCount.toLocaleString()}
+              {loading ? (
+                <Skeleton variant="text" width={35} height={28} sx={{ ml: 'auto' }} />
+              ) : (
+                femaleCount.toLocaleString()
+              )}
             </Typography>
           </Box>
         </Stack>
@@ -149,10 +168,12 @@ const TotalStudentsCard = ({ totalStudentsCount, maleCount, femaleCount, loading
 };
 
 const ClassRegister = () => {
+  const { can } = usePermissions();
   const [activeTab, setActiveTab] = useState(0);
   const [selectedEnrollmentClass, setSelectedEnrollmentClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [classFilterData, setClassFilterData] = useState(null);
+  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
   const [totalStudentsCount, setTotalStudentsCount] = useState(0);
   const [maleCount, setMaleCount] = useState(0);
@@ -205,10 +226,13 @@ const ClassRegister = () => {
   }, [fetchEnrollmentStats, fetchEnrollmentBreakdown]);
 
   return (
-    <PageContainer title="Class Register" description="Manage class register and student enrollments">
+    <PageContainer
+      title="Class Register"
+      description="Manage class register and student enrollments"
+    >
       <Breadcrumb title="Class Register" items={BCrumb} />
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         <Grid size={{ xs: 12, lg: 2 }}>
           <TotalStudentsCard
             totalStudentsCount={totalStudentsCount}
@@ -227,8 +251,21 @@ const ClassRegister = () => {
       </Grid>
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: 1,
+              borderColor: 'divider',
+              width: '100%',
+            }}
+          >
             <Tabs
               value={activeTab}
               onChange={(_, v) => setActiveTab(v)}
@@ -246,6 +283,16 @@ const ClassRegister = () => {
               <Tab label="Single Arm View" />
               <Tab label="Multiple Arm View" />
             </Tabs>
+
+            {can('manage.class_manager.class_register.bulk_register') && (
+              <Button
+                variant="contained"
+                startIcon={<MigrateIcon />}
+                onClick={() => setMigrateModalOpen(true)}
+              >
+                Migrate Students from Previous Term
+              </Button>
+            )}
           </Box>
         }
       >
@@ -258,12 +305,31 @@ const ClassRegister = () => {
             }}
           />
         )}
-        {activeTab === 1 && <MultipleArmView />}
+        {activeTab === 1 && (
+          <MultipleArmView
+            onEnrollmentChange={() => {
+              fetchEnrollmentStats();
+              fetchEnrollmentBreakdown();
+            }}
+          />
+        )}
       </ParentCard>
 
       <EnrollmentBreakdownModal
         selectedClass={selectedEnrollmentClass}
         onClose={() => setSelectedEnrollmentClass(null)}
+      />
+
+      <TermMigrationModal
+        open={migrateModalOpen}
+        onClose={() => setMigrateModalOpen(false)}
+        title="Migrate Students to New Term"
+        description="Carries every currently-enrolled student forward from the term you pick into the term you're moving to — same class, curriculum and everything. Only works within the same session; moving into a new session is promotion, handled separately."
+        migrateFn={migrateStudents}
+        onSuccess={() => {
+          fetchEnrollmentStats();
+          fetchEnrollmentBreakdown();
+        }}
       />
     </PageContainer>
   );

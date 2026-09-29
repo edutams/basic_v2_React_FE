@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
+  Skeleton,
   Chip,
   Alert,
 } from '@mui/material';
@@ -52,12 +52,16 @@ import {
   IconPlus,
   IconCheck,
   IconX,
+  IconEdit,
+  IconTrash,
+  IconEye,
 } from '@tabler/icons-react';
 import { landlordSchemeApi } from '@/api/landlord/scheme-of-work/schemeOfWorkApi';
 import {
   fetchProgrammes,
   fetchClassesByProgramme,
   fetchSubjectsByProgramme,
+  fetchSubjectsByClass,
   fetchSubjects,
   fetchCurriculums,
 } from '@/api/landlord/curriculum/curriculumApi';
@@ -67,7 +71,7 @@ import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 
 const BCrumb = [
   {
-    to: '/agent',
+    to: '/dashboard',
     title: 'Agent Dashboard',
   },
   { title: 'Scheme Of Work' },
@@ -82,7 +86,12 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
   const [terms, setTerms] = useState([]);
   const [activeTerm, setActiveTerm] = useState('');
   const [rows, setRows] = useState([]);
-  const [analytics, setAnalytics] = useState({ total_topics: 0, total_subtopics: 0 });
+  const [analytics, setAnalytics] = useState({
+    total_topics: 0,
+    total_subtopics: 0,
+    total_lesson_content: 0,
+    total_video_content: 0,
+  });
 
   // Filter options
   const [programmes, setProgrammes] = useState([]);
@@ -166,18 +175,21 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     initData();
   }, []);
 
-  // Fetch subjects when curriculum changes
+  // Selecting a Curriculum directly (independent of Class) should still
+  // populate the Subject dropdown — scoped to the selected Programme too,
+  // when one is picked, so this doesn't reintroduce the cross-programme
+  // duplicate-subject bug the class-level scoping above was fixing.
   useEffect(() => {
-    if (curriculum) {
-      fetchSubjects(curriculum)
-        .then((subjectsRes) => {
-          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
-        })
-        .catch((error) => {
-          console.error('Failed to fetch subjects:', error);
-        });
-    }
-  }, [curriculum]);
+    if (!curriculum) return;
+
+    fetchSubjects(curriculum, programme || null)
+      .then((subjectsRes) => {
+        setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+      })
+      .catch((error) => {
+        console.error('Failed to fetch subjects', error);
+      });
+  }, [curriculum, programme]);
 
   const initData = async () => {
     try {
@@ -204,8 +216,19 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       } catch (error) {
         console.error('Failed to fetch classes', error);
       }
+    } else if (key === 'classLevel') {
+      try {
+        // Scope subjects to the selected class + programme, not the whole
+        // curriculum — two different programmes under the same curriculum
+        // can each have their own "Math", and a class can now have a
+        // different curriculum assigned per programme too.
+        const subjectsRes = await fetchSubjectsByClass(val, programme);
+        setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+      } catch (error) {
+        console.error('Failed to fetch subjects', error);
+      }
     }
-  }, []);
+  }, [programme]);
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -582,13 +605,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     },
     {
       label: 'Lesson Content',
-      count: '0',
+      count: analytics.total_lesson_content,
       icon: IconFileDescription,
       colorIndex: 2,
     },
     {
       label: 'Video Content',
-      count: '0',
+      count: analytics.total_video_content,
       icon: IconVideo,
       colorIndex: 3,
     },
@@ -603,7 +626,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       {!isTab && <Breadcrumb title="Scheme Of Work" items={BCrumb} />}
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         {statCards.map((stat, i) => (
           <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <StatCard
@@ -836,7 +859,17 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.length > 0 ? (
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j} sx={{ border: '1px solid #dee2e6' }}>
+                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : paginatedRows.length > 0 ? (
                 paginatedRows.map((row, idx) => {
                   const isFirstInWeek = idx === 0 || row.week !== paginatedRows[idx - 1].week;
                   const isFirstInTopic =
@@ -1000,13 +1033,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    {loading ? (
-                      <CircularProgress size={24} />
-                    ) : (
-                      <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                        No records found. Select filters to begin.
-                      </Alert>
-                    )}
+                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                      No records found. Select filters to begin.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               )}
@@ -1080,7 +1109,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             sx={{ mb: 2 }}
           />
           <Button variant="contained" size="small" type="submit" fullWidth disabled={savingTopic}>
-            {savingTopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+            {savingTopic ? <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} /> : null}
             Save Topic
           </Button>
         </Box>
@@ -1126,7 +1155,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             sx={{ mb: 2 }}
           />
           <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
-            {savingSubtopic ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+            {savingSubtopic ? <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} /> : null}
             Save Subtopic
           </Button>
         </Box>
@@ -1255,12 +1284,14 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
       >
         {menuType === 'topic' && [
           <MenuItem key="edit" onClick={() => handleEditTopic(selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Topic
           </MenuItem>,
           <MenuItem
             key="add-sub"
             onClick={() => handleAddSubtopic(selectedRow.topic_id, selectedRow)}
           >
+            <IconPlus size={16} style={{ marginRight: 8 }} />
             Add Subtopic
           </MenuItem>,
           <MenuItem
@@ -1268,14 +1299,17 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('topic', selectedRow.topic_id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Topic
           </MenuItem>,
         ]}
         {menuType === 'subtopic' && [
           <MenuItem key="edit" onClick={() => handleEditSubtopic(selectedRow, selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Subtopic
           </MenuItem>,
           <MenuItem key="add-lo" onClick={() => handleAddObjective(selectedRow)}>
+            <IconPlus size={16} style={{ marginRight: 8 }} />
             Add Learning Objective
           </MenuItem>,
           <MenuItem
@@ -1283,11 +1317,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('subtopic', selectedRow.sub_topic_id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Subtopic
           </MenuItem>,
         ]}
         {menuType === 'objective' && [
           <MenuItem key="edit" onClick={() => handleEditObjective(selectedRow)}>
+            <IconEdit size={16} style={{ marginRight: 8 }} />
             Edit Objective
           </MenuItem>,
           <MenuItem
@@ -1295,11 +1331,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             onClick={() => handleDeleteClick('objective', selectedRow.id)}
             sx={{ color: 'error.main' }}
           >
+            <IconTrash size={16} style={{ marginRight: 8 }} />
             Delete Objective
           </MenuItem>,
         ]}
         {menuType === 'row' && [
           <MenuItem key="view" onClick={() => handleViewDetails(selectedRow.scheme_of_work_id)}>
+            <IconEye size={16} style={{ marginRight: 8 }} />
             View Details
           </MenuItem>,
         ]}
@@ -1547,7 +1585,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <CircularProgress color="inherit" /> : <IconUpload size={16} />
+          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <Skeleton variant="text" width={16} height={16} /> : <IconUpload size={16} />
           }
             sx={{ textTransform: 'none' }}
           >
@@ -1655,7 +1693,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<CircularProgress color="inherit" />
+          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<Skeleton variant="text" width={16} height={16} />
           ) : (
             <IconDownload size={16} />
           )
@@ -1691,8 +1729,9 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
         </DialogTitle>
         <DialogContent dividers>
           {loadingDetails ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
-              <CircularProgress />
+            <Box sx={{ py: 2 }}>
+              <Skeleton variant="rounded" height={40} sx={{ mb: 2 }} />
+              <Skeleton variant="rounded" height={200} sx={{ borderRadius: 1 }} />
             </Box>
           ) : viewDetailsData ? (
             <Box ref={printRef} sx={{ p: 2 }}>

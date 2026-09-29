@@ -211,13 +211,15 @@ const PaymentReview = ({
     >
       <Box
         display="flex"
+        flexDirection={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
-        alignItems="flex-start"
-        p={2}
-        sx={{ bgcolor: 'success.light' }}
+        alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+        gap={1.5}
+        p={1.75}
+        sx={{ bgcolor: '#dcfce7', borderRadius: '8px 8px 0 0' }}
       >
         <Box display="flex" alignItems="center" gap={1}>
-          <CheckCircleIcon sx={{ color: 'success.dark', fontSize: 20 }} />
+          <CheckCircleIcon sx={{ color: '#16a34a', fontSize: 20 }} />
           <Box>
             <Typography variant="body2" fontWeight={700}>
               Payment Receipt
@@ -228,30 +230,34 @@ const PaymentReview = ({
           </Box>
         </Box>
         <Box display="flex" gap={1}>
-          <Button 
-            variant="contained" 
-            size="small" 
-            startIcon={<PrintIcon />}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<PrintIcon sx={{ fontSize: '15px !important' }} />}
             onClick={handlePrint}
             sx={{
               fontSize: 11,
-              color: 'success.dark',
-              borderColor: 'success.main',
-              ':hover': { bgcolor: 'success.main', color: '#fff' },
+              textTransform: 'none',
+              borderRadius: '8px',
+              color: '#16a34a',
+              borderColor: '#16a34a',
+              ':hover': { bgcolor: '#16a34a', color: '#fff', borderColor: '#16a34a' },
             }}
           >
             Print
           </Button>
-          <Button 
-            variant="contained" 
-            size="small" 
-            startIcon={<DownloadIcon />}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon sx={{ fontSize: '15px !important' }} />}
             onClick={handleDownload}
             sx={{
               fontSize: 11,
-              color: 'success.dark',
-              borderColor: 'success.main',
-              ':hover': { bgcolor: 'success.main', color: '#fff' },
+              textTransform: 'none',
+              borderRadius: '8px',
+              color: '#16a34a',
+              borderColor: '#16a34a',
+              ':hover': { bgcolor: '#16a34a', color: '#fff', borderColor: '#16a34a' },
             }}
           >
             Download
@@ -259,7 +265,7 @@ const PaymentReview = ({
         </Box>
       </Box>
 
-      <Box ref={receiptRef} sx={{ p: 2, bgcolor: '#f2fcf7' }}>
+      <Box ref={receiptRef} sx={{ p: 1.75, bgcolor: '#f2fcf7', borderRadius: '0 0 8px 8px' }}>
         <Grid container spacing={1.5} sx={{ mb: 2 }}>
           {receiptMeta.map(({ label, value }) => (
             <Grid key={label} size={{ xs: 6, sm: 4 }}>
@@ -278,11 +284,11 @@ const PaymentReview = ({
             <Chip
               label={status === 'successful' ? 'Successful' : 'Pending'}
               size="small"
-              sx={{ 
-                bgcolor: status === 'successful' ? '#E8F5E9' : '#FFF9C4', 
-                color: status === 'successful' ? 'success.dark' : 'warning.dark', 
-                fontWeight: 600, 
-                fontSize: 11 
+              sx={{
+                bgcolor: status === 'successful' ? '#dcfce7' : '#fef3c7',
+                color: status === 'successful' ? '#16a34a' : '#d97706',
+                fontWeight: 700,
+                fontSize: 11,
               }}
             />
           </Grid>

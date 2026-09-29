@@ -11,8 +11,9 @@ import SettlementReconcillation from './components/TransactionSettlementReconcil
 import {
   fetchTransactionValues,
   fetchRevenueTransactionValues,
+  fetchBursarySettlementValues,
+  fetchSettlementReconciliationValues,
 } from '@/api/tenant/bursary/transactionApi';
-import { set } from 'lodash';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -46,8 +47,10 @@ const TransactionManager = () => {
 
   const [tab, setTab] = useState(0);
   const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const loadStats = async () => {
+    setStatsLoading(true);
     try {
       let res;
       if (tab === 0) {
@@ -56,11 +59,19 @@ const TransactionManager = () => {
       } else if (tab === 1) {
         // Revenue Tab
         res = await fetchRevenueTransactionValues();
+      } else if (tab === 2) {
+        // Settlement Tab
+        res = await fetchBursarySettlementValues();
+      } else if (tab === 3) {
+        // Reconciliation Tab
+        res = await fetchSettlementReconciliationValues();
       }
       setStats(res?.data || res);
     } catch (err) {
       console.error('Failed to load stats', err);
       setStats(null);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -76,13 +87,14 @@ const TransactionManager = () => {
     <PageContainer title="Online Transaction" description="This is the Online transaction">
       <Box sx={{ mt: 1 }}>
         <Breadcrumb title="Online Transaction" items={BCrumb} />
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid container spacing={2} sx={{ mb: 1.5 }}>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
             <StatCard
               label="Today"
               count={`₦${(stats?.today_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={0}
+              loading={statsLoading}
             />
           </Grid>
 
@@ -92,6 +104,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_week_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={1}
+              loading={statsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
@@ -100,6 +113,7 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_month_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={2}
+              loading={statsLoading}
             />
           </Grid>
           <Grid size={{ xs: 12, lg: 3, md: 3 }}>
@@ -108,15 +122,16 @@ const TransactionManager = () => {
               count={`₦${(stats?.this_year_total || 0).toLocaleString()}`}
               icon={IconWallet}
               colorIndex={3}
+              loading={statsLoading}
             />
           </Grid>
         </Grid>
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box sx={{ mt: 1.5 }}>
         <Box
           sx={{
-            mb: 3,
+            mb: 2,
             borderBottom: 1,
             borderColor: 'divider',
             overflowX: 'auto',

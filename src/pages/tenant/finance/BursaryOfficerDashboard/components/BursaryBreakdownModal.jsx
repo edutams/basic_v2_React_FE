@@ -11,7 +11,6 @@ import {
   Chip,
   TextField,
   InputAdornment,
-  MenuItem,
   TableContainer,
   Table,
   TableHead,
@@ -26,7 +25,6 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 /**
  * Bursary dashboard breakdown modal.
@@ -49,24 +47,9 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sessionTerms, setSessionTerms] = useState([]);
-  const [termId, setTermId] = useState(sessionTermId || '');
   const searchTimer = useRef(null);
 
-  // Load session terms once (for the dropdown).
-  useEffect(() => {
-    let mounted = true;
-    fetchSessionTerms()
-      .then((res) => {
-        if (mounted && res?.status) setSessionTerms(res.data || []);
-      })
-      .catch((err) => console.error('Failed to fetch session terms:', err));
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const fetchBreakdown = (p = 0, rpp = rowsPerPage, tid = termId, term = search) => {
+  const fetchBreakdown = (p = 0, rpp = rowsPerPage, term = search) => {
     if (!open || !type) return;
 
     let cancelled = false;
@@ -79,7 +62,7 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
           page: p + 1,
           per_page: rpp,
           search: term || undefined,
-          session_term_id: tid || undefined,
+          session_term_id: sessionTermId || undefined,
         },
       })
       .then((res) => {
@@ -105,8 +88,7 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
     setPage(0);
     setSearch('');
     setSearchInput('');
-    setTermId(sessionTermId || '');
-    return fetchBreakdown(0, rowsPerPage, sessionTermId || '', '');
+    return fetchBreakdown(0, rowsPerPage, '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, type, sessionTermId]);
 
@@ -118,27 +100,20 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
     searchTimer.current = setTimeout(() => {
       setSearch(value);
       setPage(0);
-      fetchBreakdown(0, rowsPerPage, termId, value);
+      fetchBreakdown(0, rowsPerPage, value);
     }, 400);
-  };
-
-  const handleTermChange = (e) => {
-    const value = e.target.value;
-    setTermId(value);
-    setPage(0);
-    fetchBreakdown(0, rowsPerPage, value, search);
   };
 
   const handleChangePage = (_, newPage) => {
     setPage(newPage);
-    fetchBreakdown(newPage, rowsPerPage, termId, search);
+    fetchBreakdown(newPage, rowsPerPage, search);
   };
 
   const handleChangeRowsPerPage = (e) => {
     const rpp = parseInt(e.target.value, 10);
     setRowsPerPage(rpp);
     setPage(0);
-    fetchBreakdown(0, rpp, termId, search);
+    fetchBreakdown(0, rpp, search);
   };
 
   const rows = data?.rows || [];
@@ -222,13 +197,14 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
         />
       </DialogTitle>
 
-      {/* Search + session term filter */}
+      {/* Search */}
       <Box sx={{ px: 3, pt: 1, pb: 1, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           size="small"
           placeholder="Search…"
           value={searchInput}
           onChange={handleSearchChange}
+          onKeyDown={(e) => { if (e.key === 'Enter') { clearTimeout(searchTimer.current); setSearch(searchInput); setPage(0); fetchBreakdown(0, rowsPerPage, searchInput); } }}
           sx={{ flex: '1 1 220px', maxWidth: 320 }}
           InputProps={{
             startAdornment: (
@@ -238,23 +214,6 @@ const BursaryBreakdownModal = ({ open, type, onClose, sessionTermId }) => {
             ),
           }}
         />
-        <TextField
-          select
-          size="small"
-          label="Session Term"
-          value={termId}
-          onChange={handleTermChange}
-          sx={{ flex: '1 1 200px', maxWidth: 260 }}
-        >
-          <MenuItem value="">
-            <em>All session terms</em>
-          </MenuItem>
-          {sessionTerms.map((st) => (
-            <MenuItem key={st.id} value={String(st.id)}>
-              {st.session?.sesname} — {st.display_term?.display_name}
-            </MenuItem>
-          ))}
-        </TextField>
       </Box>
 
       <DialogContent dividers>

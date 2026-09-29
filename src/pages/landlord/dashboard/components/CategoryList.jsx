@@ -184,6 +184,7 @@ const CategoryList = () => {
                           handleMenuClose();
                         }}
                       >
+                        <EditIcon fontSize="small" sx={{ mr: 1 }} />
                         Edit
                       </MenuItem>
                       <MenuItem
@@ -192,7 +193,9 @@ const CategoryList = () => {
                           setOpenDeleteDialog(true);
                           handleMenuClose();
                         }}
+                        sx={{ color: 'error.main' }}
                       >
+                        <DeleteIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
                         Delete
                       </MenuItem>
                     </Menu>

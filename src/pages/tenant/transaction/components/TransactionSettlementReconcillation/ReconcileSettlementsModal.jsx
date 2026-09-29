@@ -90,6 +90,10 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
   const reconciled = Number(settlementData.reconciled_amount || 0);
   const balance = Number(settlementData.balance ?? expected - reconciled);
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   return (
     <StandardModal
       open={open}
@@ -97,7 +101,7 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
       maxWidth="lg"
       title={`Reconcile Settlements — ${settlementData.bank_name} (${settlementData.account_number})`}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 2 }}>
         <Alert severity="info" variant="outlined" sx={{ mb: 2 }}>
           <Typography variant="body2">
             Settlement is the amount received from the payment gateway into this bank account.
@@ -145,7 +149,7 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
         </Grid> */}
 
         {/* Filters */}
-        <Grid container spacing={2} alignItems="center" sx={{ mb: 3 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item xs={12} sm={3}>
             <TextField
               fullWidth
@@ -190,20 +194,20 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
             <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Settlement ID</TableCell>
-                  <TableCell>Amount (₦)</TableCell>
-                  <TableCell>Date Paid</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Transactions</TableCell>
-                  <TableCell>Revenue</TableCell>
-                  <TableCell align="center">Action</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Settlement ID</TableCell>
+                  <TableCell sx={thCell}>Amount (₦)</TableCell>
+                  <TableCell sx={thCell}>Date Paid</TableCell>
+                  <TableCell sx={thCell}>Status</TableCell>
+                  <TableCell sx={thCell}>Transactions</TableCell>
+                  <TableCell sx={thCell}>Revenue</TableCell>
+                  <TableCell sx={thCell} align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {data.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 3 }}>
                       No settlements found for this account.
                     </TableCell>
                   </TableRow>
@@ -213,15 +217,15 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
 
                     return (
                       <TableRow key={row.id} hover>
-                        <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                        <TableCell sx={{ wordBreak: 'break-all', maxWidth: 180 }}>
+                        <TableCell sx={tdCell}>{(page - 1) * 15 + index + 1}</TableCell>
+                        <TableCell sx={{ ...tdCell, wordBreak: 'break-all', maxWidth: 180 }}>
                           {row.settlement_id ?? row.id}
                         </TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{fmt(row.amount)}</TableCell>
-                        <TableCell>
+                        <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{fmt(row.amount)}</TableCell>
+                        <TableCell sx={tdCell}>
                           {row.date_paid ? dayjs(row.date_paid).format('YYYY-MM-DD') : '—'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={tdCell}>
                           <Typography
                             variant="body2"
                             fontWeight={600}
@@ -231,9 +235,9 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
                             {row.status}
                           </Typography>
                         </TableCell>
-                        <TableCell>{row.transaction_count ?? 0}</TableCell>
-                        <TableCell>{row.revenue_count ?? 0}</TableCell>
-                        <TableCell align="center">
+                        <TableCell sx={tdCell}>{row.transaction_count ?? 0}</TableCell>
+                        <TableCell sx={tdCell}>{row.revenue_count ?? 0}</TableCell>
+                        <TableCell align="center" sx={tdCell}>
                           {settled ? (
                             <Typography variant="body2" fontWeight={600} color="success.main">
                               Settled
@@ -271,7 +275,7 @@ const ReconcileSettlementsModal = ({ open, onClose, settlementData, onReconcile 
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            mt: 2,
+            mt: 1.5,
           }}
         >
           <Typography variant="body2" color="text.secondary">

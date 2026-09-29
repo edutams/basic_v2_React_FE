@@ -9,7 +9,7 @@ import {
   Box,
   TextField,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Chip,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
@@ -143,8 +143,10 @@ const SchoolDirectPermissionModal = ({ open, onClose, currentUser, onPermissionS
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-            <CircularProgress size={24} />
+          <Box sx={{ py: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} variant="text" height={40} sx={{ mb: 1, borderRadius: 1 }} />
+            ))}
           </Box>
         ) : groupedPermissions.length === 0 ? (
           <Typography variant="body2" color="textSecondary" sx={{ p: 2 }}>

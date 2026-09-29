@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -12,31 +11,59 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { IconLayoutDashboard, IconChartBar, IconSchool } from '@tabler/icons-react';
-import PageContainer from '../../../../components/container/PageContainer';
-import Breadcrumb from '../../../../layouts/landlord/shared/breadcrumb/Breadcrumb';
+import {
+  IconLayoutDashboard,
+  IconWallet,
+  IconReceipt,
+  IconCoins,
+  IconPigMoney,
+} from '@tabler/icons-react';
+import PageContainer from '@/components/container/PageContainer';
+import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import CommissionTable from './components/CommissionTable';
-import { SetCommissionModal, ChangeCommissionTypeModal } from './components/CommissionModals';
+import CommissionSummaryModal from './components/CommissionSummaryModal';
 import CommissionDetailsModal from './components/CommissionDetailsModal';
-import { mockCommissionData, mockSummaryStats } from './mockData';
+import SchoolsListModal from './components/SchoolsListModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
 import StatCard from 'src/components/shared/StatCard';
+import { getStats, getOrganizations, getCommissionSchools } from '@/api/landlord/commission/commissionApi';
+
+const formatNaira = (value) =>
+  `₦ ${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Backend returns commission_type as lowercase 'subscription'/'transaction'
+// — the table/modals display it capitalized.
+const mapOrganization = (org) => ({
+  id: org.id,
+  agentName: org.organization_name,
+  email: org.organization_email,
+  commissionTypeRaw: org.commission_type,
+  commissionType: org.commission_type === 'transaction' ? 'Transaction' : 'Subscription',
+  schools: org.schools_count,
+  commission: org.commission,
+  status: org.status,
+  earningsRaw: org.earnings,
+  earnings: formatNaira(org.earnings),
+});
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { to: '/Organization', title: 'Organization' },
+  { to: '/Organization', title: 'Agent' },
   { title: 'Manage Commission' },
 ];
 
 const CommissionManagement = () => {
-  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [value, setValue] = useState('1');
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [typeModalOpen, setTypeModalOpen] = useState(false);
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
+
+  const [schoolsModalOpen, setSchoolsModalOpen] = useState(false);
+  const [schoolsModalRows, setSchoolsModalRows] = useState([]);
+  const [schoolsModalLoading, setSchoolsModalLoading] = useState(false);
+  const [schoolsModalTitle, setSchoolsModalTitle] = useState('Schools');
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -44,12 +71,81 @@ const CommissionManagement = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  const handleMyCommissionClick = (type) => {
-    if (type === 'subscription') {
-      navigate('/agent/commission/subscription');
-    } else if (type === 'transaction') {
-      navigate('/agent/commission/transaction');
+  const organizationId = currentUser?.organization?.id || currentUser?.organization_id;
+
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let cancelled = false;
+    const fetchStats = async () => {
+      setStatsLoading(true);
+      try {
+        const res = await getStats({ organizationId });
+        if (!cancelled && res.status) setStats(res.data);
+      } catch (error) {
+        console.error('Failed to fetch commission stats', error);
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+    fetchStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
+
+  const [organizations, setOrganizations] = useState([]);
+  const [organizationsLoading, setOrganizationsLoading] = useState(true);
+
+  const fetchOrganizations = async () => {
+    setOrganizationsLoading(true);
+    try {
+      const res = await getOrganizations();
+      if (res.status) setOrganizations((res.data || []).map(mapOrganization));
+    } catch (error) {
+      console.error('Failed to fetch organizations', error);
+    } finally {
+      setOrganizationsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  // Volume is a count, not a currency figure — everything else here is a
+  // real Naira amount pulled from the organization's own SkoolPay wallet.
+  //
+  // The 3rd card swaps meaning depending on whether this agent has any
+  // sub-agents under them (subOrgs.total, from getStats() — already scoped
+  // to this agent's own subtree): with sub-agents, "Total Commission" is
+  // the aggregate across the whole subtree; with none (a leaf agent),
+  // there's nothing to total, so it shows "My Commission" — their own
+  // figure — instead.
+  const isLeafAgent = (stats?.subOrgs?.total ?? 0) === 0;
+  const summaryStats = [
+    {
+      title: 'Total Transaction Value',
+      value: formatNaira(stats?.totalTransactionValue),
+      icon: IconWallet,
+    },
+    {
+      title: 'Total Transaction Volume',
+      value: (stats?.totalTransactionVolume ?? 0).toLocaleString(),
+      icon: IconReceipt,
+    },
+    isLeafAgent
+      ? { title: 'My Commission', value: formatNaira(stats?.myCommission), icon: IconPigMoney }
+      : { title: 'Total Commission', value: formatNaira(stats?.totalCommission), icon: IconCoins },
+  ];
+
+  const handleMyCommissionClick = (type) => {
+    // Opens in a new browser tab instead of navigating away from the
+    // Commission Management tab the agent was already on.
+    const url = type === 'subscription' ? '/commission/subscription' : '/commission/transaction';
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleChangePage = (event, newPage) => {
@@ -66,39 +162,52 @@ const CommissionManagement = () => {
     setPage(0);
   };
 
-  const handleEditCommission = (Organization) => {
-    setSelectedOrganization(Organization);
-    setEditModalOpen(true);
+  const handleViewCommissions = (agent) => {
+    setSelectedOrganization(agent);
+    setSummaryModalOpen(true);
   };
 
-  const handleChangeType = (Organization) => {
-    setSelectedOrganization(Organization);
-    setTypeModalOpen(true);
-  };
-
-  const handleViewDetails = (Organization) => {
-    setSelectedOrganization(Organization);
+  const handleViewTransactions = (agent) => {
+    setSelectedOrganization(agent);
     setDetailsModalOpen(true);
   };
 
+  // Scopes the same Schools drill-down used by "Total School" on the
+  // wallet-view pages to just this one agent's own subtree — clicking the
+  // "Schools" number on a row.
+  const handleViewSchools = async (agent) => {
+    setSchoolsModalTitle(`${agent.agentName || 'Agent'}'s Schools`);
+    setSchoolsModalOpen(true);
+    setSchoolsModalLoading(true);
+    try {
+      const res = await getCommissionSchools({ organizationId: agent.id });
+      setSchoolsModalRows(res?.status ? res.data || [] : []);
+    } catch (error) {
+      console.error('Failed to fetch agent schools', error);
+      setSchoolsModalRows([]);
+    } finally {
+      setSchoolsModalLoading(false);
+    }
+  };
+
   const getFilteredData = () => {
-    if (value === '3') return mockCommissionData.filter((a) => a.commissionType === 'Subscription');
-    if (value === '4') return mockCommissionData.filter((a) => a.commissionType === 'Transaction');
-    return mockCommissionData;
+    if (value === '3') return organizations.filter((a) => a.commissionTypeRaw === 'subscription');
+    if (value === '4') return organizations.filter((a) => a.commissionTypeRaw === 'transaction');
+    return organizations;
   };
 
   const getTitle = () => {
     switch (value) {
       case '1':
-        return 'Organization Overview';
+        return 'Agent Overview';
       case '2':
-        return 'Manage Organization Commission';
+        return 'Manage Agent Commission';
       case '3':
         return 'Commission by Subscription';
       case '4':
         return 'Commission by Transaction';
       default:
-        return 'Organization Overview';
+        return 'Agent Overview';
     }
   };
 
@@ -106,25 +215,23 @@ const CommissionManagement = () => {
     <PageContainer title="Manage Commission" description="Commission management dashboard">
       <Breadcrumb title="Manage Commission" items={BCrumb} />
 
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 1.5 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          {mockSummaryStats.map((stat, index) => {
-            const colors = ['primary', 'error', 'success', 'warning'];
-            return (
-              <StatCard
-                key={index}
-                count={stat.value}
-                label={stat.title}
-                icon={stat.icon}
-                colorIndex={index}
-              />
-            );
-          })}
+          {summaryStats.map((stat, index) => (
+            <StatCard
+              key={index}
+              count={stat.value}
+              label={stat.title}
+              icon={stat.icon}
+              colorIndex={index}
+              loading={statsLoading}
+            />
+          ))}
         </Stack>
       </Box>
 
       <Box
-        mt={4}
+        mt={1.5}
         sx={{
           bgcolor: theme.palette.background.paper,
           borderRadius: '16px',
@@ -132,7 +239,7 @@ const CommissionManagement = () => {
           overflow: 'hidden',
         }}
       >
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pb: 0 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 1.5, pb: 0 }}>
           <Tabs
             value={value}
             onChange={handleTabChange}
@@ -164,17 +271,10 @@ const CommissionManagement = () => {
               icon={<IconLayoutDashboard size={18} />}
               iconPosition="start"
             />
-            <Tab
-              label="My Plan"
-              value="5"
-              icon={<IconLayoutDashboard size={18} />}
-              iconPosition="start"
-              sx={{ display: currentUser?.access_level === 1 ? 'none' : 'block' }}
-            />
           </Tabs>
         </Box>
 
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 1.5 }}>
           <Box
             sx={{
               display: 'flex',
@@ -182,7 +282,7 @@ const CommissionManagement = () => {
               alignItems: { xs: 'flex-start', sm: 'center' },
               flexDirection: { xs: 'column', sm: 'row' },
               gap: 1,
-              mb: 3,
+              mb: 1.5,
             }}
           >
             {/* Dynamic Title */}
@@ -190,9 +290,9 @@ const CommissionManagement = () => {
               {(() => {
                 switch (value) {
                   case '1':
-                    return 'Organization Overview';
+                    return 'Agent Overview';
                   case '2':
-                    return 'Manage Organization Commission';
+                    return 'Manage Agent Commission';
                   case '3':
                     return 'Commission by Subscription';
                   case '4':
@@ -211,7 +311,10 @@ const CommissionManagement = () => {
             )}
 
             {(value === '3' || value === '4') && (
-              <Button variant="contained" size="small" startIcon={<IconLayoutDashboard />}
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<IconLayoutDashboard />}
                 onClick={() =>
                   handleMyCommissionClick(value === '3' ? 'subscription' : 'transaction')
                 }
@@ -239,9 +342,9 @@ const CommissionManagement = () => {
                 <CommissionTable
                   data={paginatedData}
                   activeTab={value}
-                  onEditCommission={handleEditCommission}
-                  onChangeType={handleChangeType}
-                  onViewDetails={handleViewDetails}
+                  onViewCommissions={handleViewCommissions}
+                  onViewTransactions={handleViewTransactions}
+                  onViewSchools={handleViewSchools}
                   rowsPerPage={rowsPerPage}
                 />
                 <TablePagination
@@ -260,20 +363,22 @@ const CommissionManagement = () => {
         </Box>
       </Box>
 
-      <SetCommissionModal
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        Organization={selectedOrganization}
-      />
-      <ChangeCommissionTypeModal
-        open={typeModalOpen}
-        onClose={() => setTypeModalOpen(false)}
-        Organization={selectedOrganization}
+      <CommissionSummaryModal
+        open={summaryModalOpen}
+        onClose={() => setSummaryModalOpen(false)}
+        agent={selectedOrganization}
       />
       <CommissionDetailsModal
         open={detailsModalOpen}
         onClose={() => setDetailsModalOpen(false)}
-        Organization={selectedOrganization}
+        agent={selectedOrganization}
+      />
+      <SchoolsListModal
+        open={schoolsModalOpen}
+        onClose={() => setSchoolsModalOpen(false)}
+        title={schoolsModalTitle}
+        rows={schoolsModalRows}
+        loading={schoolsModalLoading}
       />
     </PageContainer>
   );

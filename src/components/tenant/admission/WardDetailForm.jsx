@@ -173,9 +173,9 @@ const WardDetailForm = ({
       <Typography variant="h6" fontWeight={700} mb={0.5}>
         Tell us about your ward
       </Typography>
-      <Divider sx={{ mb: 3 }} />
+      <Divider sx={{ mb: 2 }} />
 
-      <Typography variant="subtitle1" fontWeight={700} mb={2}>
+      <Typography variant="subtitle1" fontWeight={700} mb={1.5}>
         Basic information
       </Typography>
 
@@ -311,11 +311,25 @@ const WardDetailForm = ({
         </Grid>
       </Grid>
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}>
-        <Button variant="contained" size="small" color="inherit" startIcon={<ArrowBackIcon />} onClick={onBack} disabled={isLoading}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 2.5 }}>
+        <Button
+          variant="outlined"
+          size="small"
+          color="inherit"
+          startIcon={<ArrowBackIcon />}
+          onClick={onBack}
+          disabled={isLoading}
+          sx={{ textTransform: 'none' }}
+        >
           Back
         </Button>
-        <Button variant="contained" size="small" type="submit" disabled={!formik.isValid || isLoading}>
+        <Button
+          variant="contained"
+          size="small"
+          type="submit"
+          disabled={!formik.isValid || isLoading}
+          sx={{ textTransform: 'none', fontWeight: 700 }}
+        >
           {isLoading ? <CircularProgress size={20} sx={{ mr: 2 }} /> : 'Save and Continue'}
         </Button>
       </Box>

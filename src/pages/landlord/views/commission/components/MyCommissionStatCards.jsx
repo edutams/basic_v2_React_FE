@@ -1,443 +1,245 @@
 import React from 'react';
-import { Box, useTheme, Paper, Typography, Button } from '@mui/material';
-import {
-  IconAdjustments,
-  IconChartBar,
-} from '@tabler/icons-react';
-import { getStatCardColor } from '@/utils/statCardColors';
+import { Box, useTheme, Paper, Typography, Skeleton, Button } from '@mui/material';
+import { IconChartBar, IconWallet, IconArrowRight } from '@tabler/icons-react';
 
-const MyCommissionStatCards = () => {
+const schemeMap = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FEF3C7', color: '#D97706' },
+  { bg: '#FEE2E2', color: '#DC2626' },
+];
+
+const formatNaira = (value) =>
+  `₦${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const Divider = ({ isDarkMode }) => (
+  <Box
+    sx={{
+      width: '1px',
+      height: 40,
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    }}
+  />
+);
+
+const CardIcon = ({ scheme, isDarkMode, icon: Icon = IconChartBar }) => (
+  <Box
+    sx={{
+      width: 32,
+      height: 32,
+      borderRadius: '8px',
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : scheme.bg,
+      color: isDarkMode ? '#fff' : scheme.color,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}
+  >
+    <Icon size={18} color="currentColor" />
+  </Box>
+);
+
+const Badge = ({ scheme, isDarkMode, value }) => (
+  <Box
+    sx={{
+      bgcolor: isDarkMode ? 'rgba(255,255,255,0.08)' : scheme.bg,
+      borderRadius: '8px',
+      px: 3,
+      py: 1,
+      display: 'inline-flex',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+    }}
+  >
+    <Typography sx={{ fontSize: 20, fontWeight: 700, color: isDarkMode ? '#fff' : scheme.color }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
+const SplitRow = ({ left, right, isDarkMode }) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box>
+      <Typography variant="body2" color="text.secondary">
+        {left.label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }} noWrap>
+        {left.value}
+      </Typography>
+    </Box>
+
+    <Divider isDarkMode={isDarkMode} />
+
+    <Box sx={{ textAlign: 'right' }}>
+      <Typography variant="body2" color="text.secondary">
+        {right.label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }} noWrap>
+        {right.value}
+      </Typography>
+    </Box>
+  </Box>
+);
+
+const MyCommissionStatCards = ({
+  organizationName,
+  wallet,
+  subOrgs,
+  schools,
+  loading,
+  onViewTransactions,
+  onViewSubOrgs,
+  onViewSchools,
+  onSetupWallet,
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  const statColor0 = getStatCardColor(null, 0, isDarkMode, theme); // Primary
-  const statColor1 = getStatCardColor(null, 1, isDarkMode, theme); // Success
-  const statColor2 = getStatCardColor(null, 2, isDarkMode, theme); // Info
-  const statColor3 = getStatCardColor(null, 3, isDarkMode, theme); // Warning
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
+
+  const cardSx = (clickable) => ({
+    p: '10px',
+    borderRadius: '14px',
+    border: '1px solid',
+    borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    gap: 1,
+    cursor: clickable ? 'pointer' : 'default',
+    transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+    '&:hover': clickable
+      ? {
+          transform: 'translateY(-2px)',
+          borderColor: '#94a3b8',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+        }
+      : undefined,
+  });
+
+  if (loading) {
+    return (
+      <Box sx={{ mb: 1.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' }, gap: 2 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} variant="rounded" height={150} sx={{ borderRadius: '14px' }} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 1.5 }}>
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
+          alignItems: 'stretch',
           gap: 2,
-          mb: 3,
         }}
       >
-        {/* GUPSA Ogun State Card */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor0.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
-          }}
-        >
-          {/* Header */}
-          <Typography variant="h6" fontWeight={600} mb={2}>
-            GUPSA Ogun State
-          </Typography>
-
-          {/* Amount */}
-          <Box
-            sx={{
-              background: `${statColor0.valueBg} !important`,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-block',
-              mb: 1,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: statColor0.accentColor,
-              }}
-            >
-              ₦7,000,234.00
+        {/* Wallet Card — informational only, not clickable (except the
+            "Set up wallet" prompt below, when there's no wallet yet). */}
+        <Paper sx={cardSx(false)}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" fontWeight={600} noWrap>
+              {organizationName || 'My Agent'}
             </Typography>
+            <CardIcon scheme={s0} isDarkMode={isDarkMode} icon={IconWallet} />
           </Box>
 
-          {/* Account Number */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Box
-              fontWeight="600"
-              sx={{
-                background: isDarkMode ? 'rgba(255,255,255,0.1)' : statColor0.borderColor,
-                color: statColor0.accentColor,
-                px: 2,
-                py: '4px',
-                borderRadius: '5px',
-                fontSize: 10,
-              }}
-            >
-              Account Number
-            </Box>
+          <Badge scheme={s0} isDarkMode={isDarkMode} value={formatNaira(wallet?.myCommission)} />
 
-            <Typography fontSize={15} fontWeight={800}>
-              93458438484
-            </Typography>
-          </Box>
-
-          {/* Bank */}
-          <Typography fontWeight="500" sx={{ mb: 1 }}>
-            Bank : Globus
-          </Typography>
-
-          {/* Actions */}
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-            }}
-          >
+          {wallet?.accountNumber || !onSetupWallet ? (
+            <SplitRow
+              isDarkMode={isDarkMode}
+              left={{ label: 'Account Number', value: wallet?.accountNumber || '—' }}
+              right={{ label: 'Bank', value: wallet?.bankName || '—' }}
+            />
+          ) : (
             <Button
+              size="small"
               variant="outlined"
-              size="small"
-              startIcon={<IconAdjustments size={16} />}
-              sx={{
-                borderColor: statColor0.accentColor,
-                color: statColor0.accentColor,
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                '&:hover': {
-                  borderColor: statColor0.accentColor,
-                  backgroundColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(109, 40, 217, 0.08)',
-                },
-              }}
+              endIcon={<IconArrowRight size={16} />}
+              onClick={onSetupWallet}
+              sx={{ alignSelf: 'flex-start', textTransform: 'none', fontWeight: 600 }}
             >
-              View Details
+              Set up your wallet
             </Button>
-
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                backgroundColor: `${statColor0.accentColor} !important`,
-                color: '#ffffff',
-                textTransform: 'none',
-                fontWeight: 600,
-                borderRadius: '8px',
-                '&:hover': {
-                  opacity: 0.9,
-                },
-              }}
-            >
-              Withdraw
-            </Button>
-          </Box>
+          )}
         </Paper>
 
         {/* Total Transaction Card */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor1.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewTransactions}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
               Total Transaction
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '6px',
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor1.iconGlow}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color={statColor1.iconColor || '#FFFFFF'} />
-            </Box>
+            <CardIcon scheme={s1} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flex: 1,
-              height: '100%',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" sx={{ color: statColor1.accentColor }}>
-                Inflow
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor1.accentColor }}>
-                0
-              </Typography>
-            </Box>
+          {/* The headline figure here is money (how much has moved through
+              this ledger), not a transaction count — matches how SkoolPay's
+              own wallet-transaction-details-analytics reports this
+              (total_inflow/total_outflow/balance, no count field). Volume
+              is still available as `wallet.totalTransactionVolume` if a
+              count is ever needed elsewhere. */}
+          <Badge
+            scheme={s1}
+            isDarkMode={isDarkMode}
+            value={formatNaira(wallet?.totalTransactionValue)}
+          />
 
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: statColor1.borderColor,
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" sx={{ color: statColor3.accentColor }}>
-                Outflow
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500, color: statColor3.accentColor }}>
-                0
-              </Typography>
-            </Box>
-          </Box>
+          <SplitRow
+            isDarkMode={isDarkMode}
+            left={{ label: 'Inflow', value: formatNaira(wallet?.totalInflow) }}
+            right={{ label: 'Outflow', value: formatNaira(wallet?.totalOutflow) }}
+          />
         </Paper>
 
         {/* Total Sub Orgs Card */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor2.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewSubOrgs}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
-              Total Sub Orgs
+              Total Sub Agents
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '6px',
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor2.iconGlow}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color={statColor2.iconColor || '#FFFFFF'} />
-            </Box>
+            <CardIcon scheme={s2} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              background: `${statColor2.valueBg} !important`,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 4,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: statColor2.accentColor,
-              }}
-            >
-              0
-            </Typography>
-          </Box>
+          <Badge scheme={s2} isDarkMode={isDarkMode} value={subOrgs?.total ?? 0} />
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 3
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: statColor2.borderColor,
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 4
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: statColor2.borderColor,
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Level 5
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-          </Box>
+          <Typography variant="body2" color="text.secondary">
+            {(subOrgs?.total ?? 0) === 1
+              ? '1 agent is currently earning commission under you.'
+              : `${subOrgs?.total ?? 0} agents are currently earning commission under you.`}
+          </Typography>
         </Paper>
 
         {/* Total School Card */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.12)'
-              : `1px solid ${statColor3.borderColor}`,
-            background: isDarkMode ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            boxShadow: isDarkMode
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
+        <Paper sx={cardSx(true)} onClick={onViewSchools}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600}>
               Total School
             </Typography>
-
-            <Box
-              sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '6px',
-                background: `${statColor3.iconBg} !important`,
-                boxShadow: isDarkMode
-                  ? '0 4px 12px rgba(0,0,0,0.3)'
-                  : `0 4px 14px ${statColor3.iconGlow}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <IconChartBar size={18} color={statColor3.iconColor || '#FFFFFF'} />
-            </Box>
+            <CardIcon scheme={s3} isDarkMode={isDarkMode} />
           </Box>
 
-          <Box
-            sx={{
-              background: `${statColor3.valueBg} !important`,
-              borderRadius: '8px',
-              px: 3,
-              py: 1,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 4,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: statColor3.accentColor,
-              }}
-            >
-              0
-            </Typography>
-          </Box>
+          <Badge scheme={s3} isDarkMode={isDarkMode} value={schools?.total ?? 0} />
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Primary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: '1px',
-                height: 40,
-                background: statColor3.borderColor,
-              }}
-            />
-
-            <Box>
-              <Typography variant="h6" color="text.primary">
-                Secondary School
-              </Typography>
-              <Typography sx={{ fontSize: 20, fontWeight: 500 }}>
-                0
-              </Typography>
-            </Box>
-          </Box>
+          <SplitRow
+            isDarkMode={isDarkMode}
+            left={{ label: 'Primary', value: schools?.primary ?? 0 }}
+            right={{ label: 'Secondary', value: schools?.secondary ?? 0 }}
+          />
         </Paper>
       </Box>
     </Box>

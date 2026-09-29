@@ -1,6 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
 import { AuthContext } from '@/context/AgentContext/auth';
 
 import {
@@ -35,8 +34,11 @@ import {
   DialogActions,
   Tabs,
   Tab,
-  CircularProgress,
-  Divider
+  Skeleton,
+  Divider,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -46,16 +48,19 @@ import AgentModal from '@/components/landlord/add-agent/components/AgentModal';
 import EmptyTableState from '@/components/shared/EmptyTableState';
 import useTableEmptyState from '@/hooks/useTableEmptyState';
 import agentApi from '@/api/landlord/organizations/agent';
-import { getStatCardColor } from '@/utils/statCardColors';
+
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
+import { IconEye, IconLogin, IconEdit, IconBuilding, IconBuildingBank, IconCoins } from '@tabler/icons-react';
+// import { IconCreditCard } from '@tabler/icons-react'; // Manage Payment Gateway — disabled, see ActionMenuCell
+import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from './components/PlanDistributionModal';
-import LoggedInUsersModal from './components/LoggedInUsersModal';
-import ViewUsersListModal from './components/ViewUsersListModal';
+import LoginActivitiesCard from '@/components/shared/cards/LoginActivitiesCard';
 import TotalSchoolModal from './components/TotalSchoolModal';
 import TotalTransactionModal from './components/TotalTransactionModal';
+import SubscriptionModal from '@/pages/landlord/dashboard/components/SubscriptionModal';
 import ReusablePieChart from '@/components/shared/charts/ReusablePieChart';
 
 import ManageTeamTab from './components/ManageTeamTab';
@@ -91,28 +96,15 @@ const statusOptions = [
   { value: 'Active', label: 'Active' },
   { value: 'Inactive', label: 'Inactive' },
 ];
-const schoolSummary = {
+const schoolSummaryDefault = {
   total: 350,
   active: 200,
   inactive: 100,
   subAgents: 0,
-
   primary: 30,
-
   secondary: 900,
 };
-const planSeries = [40, 15, 35, 10];
-
-const planLabels = ['Freemium', 'Basic', 'Basic +', 'Basic ++'];
-
-const planData = [
-  { name: 'Freemium', value: 40, color: '#EC468C' },
-  { name: 'Basic', value: 15, color: '#7987FF' },
-  { name: 'Basic +', value: 35, color: '#FFA5CB' },
-  { name: 'Basic ++', value: 10, color: '#8B48E3' },
-];
-
-const planColors = planData.map((p) => p.color);
+const PLAN_DISTRIBUTION_COLORS = ['#EC468C', '#7987FF', '#FFA5CB', '#8B48E3', '#4CAF50', '#FF9800'];
 
 // Separate component for action menu to avoid hooks in loops
 const ActionMenuCell = ({
@@ -124,13 +116,14 @@ const ActionMenuCell = ({
   handleManagePermissions,
   handleSetCommission,
   handleManageReferral,
-  handleManageGateway,
   handleManageBankService,
+  // handleManageGateway,
   handleDeleteAgent,
   handleDeleteOrganization,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { can } = usePermissions();
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -144,8 +137,8 @@ const ActionMenuCell = ({
     <>
       <IconButton
         aria-label="more"
-        id={`action-menu-button-${agent.s_n}`}
-        aria-controls={open ? `action-menu-${agent.s_n}` : undefined}
+        id={`action-menu-button-${agent.id}`}
+        aria-controls={open ? `action-menu-${agent.id}` : undefined}
         aria-expanded={open ? 'true' : undefined}
         aria-haspopup="true"
         onClick={handleClick}
@@ -153,9 +146,9 @@ const ActionMenuCell = ({
         <MoreVertIcon />
       </IconButton>
       <Menu
-        id={`action-menu-${agent.s_n}`}
+        id={`action-menu-${agent.id}`}
         MenuListProps={{
-          'aria-labelledby': `action-menu-button-${agent.s_n}`,
+          'aria-labelledby': `action-menu-button-${agent.id}`,
         }}
         anchorEl={anchorEl}
         open={open}
@@ -163,18 +156,21 @@ const ActionMenuCell = ({
         PaperProps={{
           style: {
             maxHeight: 48 * 4.5,
-            width: '20ch',
+            width: '24ch',
           },
         }}
       >
         <MenuItem
           component="a"
-          href={`/agent/view/${agent.id}`}
+          href={`/view/${agent.id}`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={handleClose}
         >
-          View Agent Profile
+          <ListItemIcon>
+            <IconEye size={18} />
+          </ListItemIcon>
+          <ListItemText primary="View Agent Profile" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -182,7 +178,10 @@ const ActionMenuCell = ({
             handleImpersonate(agent);
           }}
         >
-          Login As Agent
+          <ListItemIcon>
+            <IconLogin size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Login As Agent" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -190,23 +189,34 @@ const ActionMenuCell = ({
             handleUpdateAgent(agent, 'update');
           }}
         >
-          Update Agent Info
+          <ListItemIcon>
+            <IconEdit size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Update Agent Info" />
         </MenuItem>
+        {can('landlord.commission.manage') && (
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              handleSetCommission(agent);
+            }}
+          >
+            <ListItemIcon>
+              <IconCoins size={18} />
+            </ListItemIcon>
+            <ListItemText primary="Update Commission" />
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             handleClose();
             handleViewSchools(agent, 'view');
           }}
         >
-          View School
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            handleManageGateway(agent);
-          }}
-        >
-          Manage Payment Gateway
+          <ListItemIcon>
+            <IconBuilding size={18} />
+          </ListItemIcon>
+          <ListItemText primary="View School" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -214,18 +224,56 @@ const ActionMenuCell = ({
             handleManageBankService(agent);
           }}
         >
-          Manage Bank Service
+          <ListItemIcon>
+            <IconBuildingBank size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Manage Bank Service" />
         </MenuItem>
+        {/* Gateway config is per-school (tenant_gateways.tenant_id), not
+            per-agent — already handled properly in the Bank Account
+            Details tab. Disabled here, kept for reference.
         <MenuItem
           onClick={() => {
             handleClose();
-            handleDeleteOrganization(agent);
+            handleManageGateway(agent);
           }}
-          sx={{ color: 'error.main' }}
         >
-          <DeleteIcon sx={{ mr: 1, fontSize: 18 }} />
-          Delete Organization
+          <ListItemIcon>
+            <IconCreditCard size={18} />
+          </ListItemIcon>
+          <ListItemText primary="Manage Payment Gateway" />
         </MenuItem>
+        */}
+        {(() => {
+          const hasSchools = (agent.tenants_count ?? 0) > 0;
+          const deleteItem = (
+            <MenuItem
+              onClick={() => {
+                if (hasSchools) return;
+                handleClose();
+                handleDeleteOrganization(agent);
+              }}
+              disabled={hasSchools}
+              sx={{ color: 'error.main' }}
+            >
+              <ListItemIcon sx={{ color: 'error.main' }}>
+                <DeleteIcon sx={{ fontSize: 18 }} />
+              </ListItemIcon>
+              <ListItemText primary="Delete Agent" />
+            </MenuItem>
+          );
+
+          // Disabled MenuItems block pointer events, so the Tooltip needs a
+          // wrapping span to still receive hover — bare disabled elements
+          // don't fire mouse events for MUI's Tooltip to anchor to.
+          return hasSchools ? (
+            <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+              <span>{deleteItem}</span>
+            </Tooltip>
+          ) : (
+            deleteItem
+          );
+        })()}
         {/* <MenuItem
           onClick={() => {
             handleClose();
@@ -233,14 +281,6 @@ const ActionMenuCell = ({
           }}
         >
           Manage Permission
-        </MenuItem> */}
-        {/* <MenuItem
-          onClick={() => {
-            handleClose();
-            handleSetCommission(agent);
-          }}
-        >
-          Update Commission
         </MenuItem> */}
         {/* <MenuItem
           onClick={() => {
@@ -258,15 +298,23 @@ const ActionMenuCell = ({
 
 import locationApi from '@/api/landlord/location/location';
 import useNotification from '@/hooks/useNotification';
+import { fetchBankServices } from '@/api/landlord/bank-service/bankService';
 
 const Agent = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const statColor0 = getStatCardColor(null, 0, isDark, theme);
-  const statColor1 = getStatCardColor(null, 1, isDark, theme);
-  const statColor2 = getStatCardColor(null, 2, isDark, theme);
-  const statColor3 = getStatCardColor(null, 3, isDark, theme);
+  const schemeMap = [
+    { bg: '#DBEAFE', color: '#2563EB' },
+    { bg: '#DCFCE7', color: '#16A34A' },
+    { bg: '#F3E8FF', color: '#9333EA' },
+    { bg: '#FEF3C7', color: '#D97706' },
+    { bg: '#FEE2E2', color: '#DC2626' },
+  ];
+  const s0 = schemeMap[0];
+  const s1 = schemeMap[1];
+  const s2 = schemeMap[2];
+  const s3 = schemeMap[3];
   const notify = useNotification();
 
   const [tab, setTab] = useState(0);
@@ -276,6 +324,17 @@ const Agent = () => {
 
   const [impersonateConfirmOpen, setImpersonateConfirmOpen] = useState(false);
   const [agentToImpersonate, setAgentToImpersonate] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analytics, setAnalytics] = useState({
+    totalAgents: 0,
+    totalSubAgents: 0,
+    totalSchools: 0,
+    planDistribution: [],
+  });
+
+  // Subscription stats
+  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
 
   // Revenue Trend Mock Data
   const revenueSeries = [
@@ -299,9 +358,19 @@ const Agent = () => {
     'Dec',
   ];
 
-  // Plan Distribution Mock Data
-  const planSeries = [65, 52, 39, 25];
-  const planLabels = ['Freemium', 'Basic', 'Basic+', 'Basic++'];
+  const schoolSummary = {
+    total: analytics?.totalSchools ?? schoolSummaryDefault.total,
+    active: analytics?.activeSchools ?? schoolSummaryDefault.active,
+    inactive: analytics?.inactiveSchools ?? schoolSummaryDefault.inactive,
+    subAgents: analytics?.totalSubAgents ?? schoolSummaryDefault.subAgents,
+    primary: analytics?.primarySchools ?? schoolSummaryDefault.primary,
+    secondary: analytics?.secondarySchools ?? schoolSummaryDefault.secondary,
+    subscriptions: analytics?.subscriptions ?? 0,
+    pending: analytics?.pendingSchools ?? 0,
+    rejected: analytics?.rejectedSchools ?? 0,
+  };
+
+  const planDistribution = analytics?.planDistribution ?? [];
 
   const [agentLevel, setAgentLevel] = useState('');
   const [country, setCountry] = useState('');
@@ -311,12 +380,10 @@ const Agent = () => {
 
   // Modal States
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [isLoggedInUsersModalOpen, setIsLoggedInUsersModalOpen] = useState(false);
-  const [isViewUsersListModalOpen, setIsViewUsersListModalOpen] = useState(false);
-  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState(null);
   const [selectedSchoolForUsers, setSelectedSchoolForUsers] = useState('');
   const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [openSubscriptionModal, setOpenSubscriptionModal] = useState(false);
 
   // const [referer, setReferer] = useState(''); // Removed
   const [search, setSearch] = useState('');
@@ -342,17 +409,22 @@ const Agent = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [data, setData] = useState([]);
   const [tableLoading, setTableLoading] = useState(false);
-  const [loginActivities, setLoginActivities] = useState([]);
-  const [loginActivitiesLoading, setLoginActivitiesLoading] = useState(true);
-  const [selectedUserFilters, setSelectedUserFilters] = useState(null);
-  const [analytics, setAnalytics] = useState({
-    totalAgents: 0,
-    totalSubAgents: 0,
-    totalSchools: 0,
-  });
+
+  // Bank service names for the table's "Bank Service" column — the row
+  // data only carries bank_service_id (organizations.bank_service_id),
+  // same field ManageBankService's "Current Bank Service" display
+  // resolves against.
+  const [bankServices, setBankServices] = useState([]);
+  useEffect(() => {
+    fetchBankServices()
+      .then((res) => setBankServices(res.data?.data || []))
+      .catch(() => setBankServices([]));
+  }, []);
+  const bankServiceName = (id) => bankServices.find((s) => s.id === id)?.name || null;
 
   useEffect(() => {
     const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
       try {
         const response = await agentApi.getAnalytics();
         if (response.status === true && response.data) {
@@ -360,28 +432,39 @@ const Agent = () => {
         }
       } catch (error) {
         console.error('Failed to fetch analytics', error);
+      } finally {
+        setAnalyticsLoading(false);
       }
     };
     fetchAnalytics();
   }, [refreshKey]);
 
+  // Fetch subscription stats
   useEffect(() => {
-    const fetchLoginActivities = async () => {
+    const fetchSubscriptionStats = async () => {
+      setSubscriptionStatsLoading(true);
       try {
-        const res = await activityLogApi.getLoginActivities30Days();
-        if (res.status) {
-          setLoginActivities(res.data);
+        const res = await agentApi.getSubscriptionStatsBySchoolType();
+        if (res.status && res.data) {
+          setSubscriptionStats(res.data);
         }
-      } catch (error) {
-        console.error('Failed to fetch login activities', error);
+      } catch (e) {
+        console.error('Failed to fetch subscription stats', e);
       } finally {
-        setLoginActivitiesLoading(false);
+        setSubscriptionStatsLoading(false);
       }
     };
-    fetchLoginActivities();
+    fetchSubscriptionStats();
   }, [refreshKey]);
 
   useEffect(() => {
+    // Organization tab only — this table's data was previously fetched once
+    // on mount and never again, so switching away and back to this tab (the
+    // Manage Team tab unmounts/remounts on every switch, this one doesn't)
+    // showed stale data with no loading skeleton. Refetching whenever this
+    // tab becomes active keeps both tabs' behavior consistent.
+    if (tab !== 0) return;
+
     const fetchData = async () => {
       setTableLoading(true);
       try {
@@ -434,7 +517,7 @@ const Agent = () => {
       }
     };
     fetchData();
-  }, [refreshKey, page, rowsPerPage]);
+  }, [refreshKey, page, rowsPerPage, tab]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [agentToDelete, setAgentToDelete] = useState(null);
@@ -620,7 +703,12 @@ const Agent = () => {
 
   const handleRefresh = (newData) => {
     setData((prevData) => {
-      const existingIndex = prevData.findIndex((item) => item.s_n === newData.s_n);
+      // Match by id, not s_n — s_n is just a positional display number
+      // (page * rowsPerPage + index) that a background refetch can
+      // reassign while a modal is open, which made an update land here
+      // with a now-stale s_n that no longer matched any row and got
+      // appended as a duplicate instead of replacing the real one.
+      const existingIndex = prevData.findIndex((item) => item.id === newData.id);
 
       if (existingIndex !== -1) {
         const updatedData = [...prevData];
@@ -668,17 +756,20 @@ const Agent = () => {
     setIsModalOpen(true);
   };
 
-  const handleManageGateway = (agentData) => {
-    setSelectedAgent(agentData);
-    setActionType('manageGateway');
-    setIsModalOpen(true);
-  };
-
   const handleManageBankService = (agentData) => {
     setSelectedAgent(agentData);
     setActionType('manageBankService');
     setIsModalOpen(true);
   };
+
+  // Gateway management is a per-school concept (tenant_gateways.tenant_id),
+  // not per-agent — proper gateway management already exists at the school
+  // level (Bank Account Details tab). Disabled here, kept for reference.
+  // const handleManageGateway = (agentData) => {
+  //   setSelectedAgent(agentData);
+  //   setActionType('manageGateway');
+  //   setIsModalOpen(true);
+  // };
 
   const handleChangeColorScheme = (agentData) => {
     setSelectedAgent(agentData);
@@ -693,7 +784,7 @@ const Agent = () => {
 
   const handleConfirmDelete = () => {
     if (agentToDelete) {
-      const updatedData = data.filter((agent) => agent.s_n !== agentToDelete.s_n);
+      const updatedData = data.filter((agent) => agent.id !== agentToDelete.id);
       setData(updatedData);
 
       setDeleteDialogOpen(false);
@@ -712,18 +803,18 @@ const Agent = () => {
     try {
       const res = await agentApi.deleteOrganization(selectedAgent.id);
       if (res.status) {
-        notify.success('Organization deleted successfully!');
+        notify.success('Agent deleted successfully!');
         // Refresh the data
         setRefreshKey((prevData) => prevData + 1);
       } else {
-        notify.error(res.message || 'Failed to delete organization');
+        notify.error(res.message || 'Failed to delete agent');
       }
     } catch (e) {
       // Check if the error response contains a message from the backend
       if (e.response && e.response.data && e.response.data.message) {
         notify.error(e.response.data.message);
       } else {
-        notify.error('Failed to delete organization');
+        notify.error('Failed to delete agent');
       }
     } finally {
       setDeleteConfirmOpen(false);
@@ -768,7 +859,7 @@ const Agent = () => {
           'Impersonation successful',
           `You are now impersonating ${agentToImpersonate.organization_name}`,
         );
-        navigate('/agent');
+        navigate('/dashboard');
       } else {
         alert(result.error || 'Impersonation failed');
       }
@@ -783,7 +874,7 @@ const Agent = () => {
 
   const handleAgentUpdate = (updatedAgent) => {
     setData((prevData) =>
-      prevData.map((agent) => (agent.s_n === updatedAgent.s_n ? updatedAgent : agent)),
+      prevData.map((agent) => (agent.id === updatedAgent.id ? updatedAgent : agent)),
     );
   };
 
@@ -798,43 +889,67 @@ const Agent = () => {
   };
 
   const handleEdit = (row) => {
-    setEditRowId(row.s_n);
+    setEditRowId(row.id);
     setEditedData({ ...row });
   };
 
   const handleSave = (rowId) => {
     if (editedData) {
-      setData(data.map((item) => (item.s_n === editedData.s_n ? editedData : item)));
+      setData(data.map((item) => (item.id === editedData.id ? editedData : item)));
       setEditRowId(null);
       setEditedData(null);
     }
   };
 
   return (
-    <PageContainer title="Organization Page" description="This is the Organization page">
-      <Box sx={{ mt: 1 }}>
-        <Breadcrumb title="Organization" items={BCrumb} />
-      </Box>
+    <PageContainer title="Agent Page" description="This is the Agent page">
+      <Breadcrumb title="Agent" items={BCrumb} />
 
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' },
           gap: 2,
-          mb: 3,
+          // mb: 3,
         }}
       >
+        {analyticsLoading ? (
+          [...Array(4)].map((_, i) => (
+            <Paper key={i} elevation={0} sx={{ p: '10px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Skeleton variant="text" width={120} height={24} />
+                <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
+              </Box>
+              <Skeleton variant="rounded" width={60} height={36} sx={{ borderRadius: 1, mb: 2 }} />
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {[...Array(3)].map((_, j) => (
+                  <Box key={j} sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={14} />
+                    <Skeleton variant="text" width="40%" height={20} />
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+          ))
+        ) : (
+        <>
         {/* Total School */}
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor0.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor0.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+            p: '10px !important',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -851,35 +966,39 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor0.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor0.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                color: isDark ? '#fff' : s0.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsSchoolModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 5,
+              mb: 2,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor0.accentColor }}>
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : s0.color,
+              }}
+            >
               {analytics.totalSchools ?? 0}
             </Typography>
           </Box>
@@ -889,27 +1008,29 @@ const Agent = () => {
               <Typography variant="caption" color="text.secondary">
                 Approved
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.activeSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.activeSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Pending
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.pendingSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.pendingSchools ?? 0}</Typography>
             </Box>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor0.borderColor, mx: 1.5 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
+            />
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Rejected
               </Typography>
-              <Typography fontWeight={600}>
-                {analytics.rejectedSchools ?? 0}
-              </Typography>
+              <Typography fontWeight={600}>{analytics.rejectedSchools ?? 0}</Typography>
             </Box>
           </Box>
         </Paper>
@@ -918,13 +1039,19 @@ const Agent = () => {
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor1.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor1.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '10px !important',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -941,36 +1068,44 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor1.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor1.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                color: isDark ? '#fff' : s1.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
-              onClick={() => setIsPlanModalOpen(true)}
+              onClick={() => setOpenSubscriptionModal(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box
             sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.7)',
+              background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
               borderRadius: 1,
               px: 2,
               py: 0.75,
               display: 'inline-flex',
               alignItems: 'center',
-              mb: 5,
+              mb: 2,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : statColor1.accentColor }}>
-              {schoolSummary.total}
+            <Typography
+              sx={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: isDark ? '#ffffff' : s1.color,
+              }}
+            >
+              {subscriptionStatsLoading ? (
+                <Skeleton variant="text" width={30} />
+              ) : (
+                subscriptionStats.total
+              )}
             </Typography>
           </Box>
 
@@ -984,114 +1119,65 @@ const Agent = () => {
           >
             <Box>
               <Typography variant="caption" color="text.secondary">
-                Primary
+                Active
               </Typography>
               <Typography fontWeight={600}>
-                {schoolSummary.primary}
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
               </Typography>
             </Box>
 
-            <Divider orientation="vertical" flexItem sx={{ borderColor: statColor1.borderColor, mx: 2 }} />
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 2 }}
+            />
 
             <Box>
               <Typography variant="caption" color="text.secondary">
                 Secondary
               </Typography>
               <Typography fontWeight={600}>
-                {schoolSummary.secondary}
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
+              </Typography>
+            </Box>
+
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ borderColor: '#E5E7EB', mx: 2 }}
+            />
+
+            <Box>
+              <Typography variant="caption" color="text.secondary">
+                Primary
+              </Typography>
+              <Typography fontWeight={600}>
+                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
               </Typography>
             </Box>
           </Box>
         </Paper>
 
         {/* Login Activities */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor2.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor2.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 5,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700}>
-              Login Activities
-            </Typography>
-
-            <Box
-              sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor2.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor2.iconGlow}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
-              }}
-              onClick={() => setIsLoggedInUsersModalOpen(true)}
-            >
-              <IconChartBar size={18} color="#FFFFFF" />
-            </Box>
-          </Box>
-
-          <Box sx={{ pb: 0 }}>
-            {loginActivitiesLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <CircularProgress size={24} />
-              </Box>
-            ) : (
-              (loginActivities.length > 0 ? loginActivities : [
-                { label: 'Staffs', value: 0 },
-                { label: 'Agents', value: 0 },
-                { label: 'Total', value: 0 },
-              ]).map((item, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    py: 0.5,
-                    borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'}`,
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : statColor2.accentColor }}>
-                    {item.value}
-                  </Typography>
-                </Box>
-              ))
-            )}
-          </Box>
-        </Paper>
+        <LoginActivitiesCard />
 
         {/* Plan Distribution */}
         <Paper
           elevation={0}
           sx={{
-            p: 3,
-            borderRadius: '16px',
-            background: isDark ? theme.palette.background.paper : `${statColor3.cardBg} !important`,
-            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : `1px solid ${statColor3.borderColor}`,
-            boxShadow: isDark
-              ? '0 6px 24px rgba(0,0,0,0.28)'
-              : '0 4px 20px rgba(0,0,0,0.07)',
+                  p: '10px !important',
+            borderRadius: '14px',
+            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+            cursor: 'pointer',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            },
           }}
         >
           <Box
@@ -1108,27 +1194,25 @@ const Agent = () => {
 
             <Box
               sx={{
-                width: 30,
-                height: 30,
-                borderRadius: 1,
-                background: `${statColor3.iconBg} !important`,
-                boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : `0 4px 14px ${statColor3.iconGlow}`,
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                color: isDark ? '#fff' : s3.color,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
-                '&:hover': { opacity: 0.85 },
               }}
               onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="#FFFFFF" />
+              <IconChartBar size={18} color="currentColor" />
             </Box>
           </Box>
 
           <Box sx={{ width: '100%' }}>
             <Box
               sx={{
-                height: 160,
+                height: 150,
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
@@ -1136,20 +1220,28 @@ const Agent = () => {
                 overflow: 'hidden',
               }}
             >
-              <ReusablePieChart
-                series={planSeries}
-                colors={planColors}
-                labels={planLabels}
-                height={160}
-                width="100%"
-                hideCard
-              />
+              {analyticsLoading ? (
+                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+              ) : planDistribution.length > 0 ? (
+                <ReusablePieChart
+                  series={planDistribution.map((p) => p.total)}
+                  colors={PLAN_DISTRIBUTION_COLORS}
+                  labels={planDistribution.map((p) => p.label)}
+                  height={150}
+                  width="100%"
+                  hideCard
+                />
+              ) : (
+                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+              )}
             </Box>
           </Box>
-        </Paper>
+        </Paper>  
+        </>
+        )}
       </Box>
 
-      <Box sx={{ mt: 3 }}>
+      <Box >
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={tab}
@@ -1159,7 +1251,7 @@ const Agent = () => {
             indicatorColor="primary"
           >
             <Tab
-              label="Organizations"
+              label="Agents"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
@@ -1176,27 +1268,14 @@ const Agent = () => {
                 direction="row"
                 spacing={1}
                 alignItems="center"
-                justifyContent="space-between"
+                justifyContent="flex-end"
                 sx={{ width: '100%' }}
               >
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 24,
-                      height: 24,
-                      bgcolor: '#2ca87f',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                    }}
-                  >
-                    <IconSchool size={16} />
-                  </Box>
-                  <Typography variant="h5">List of Organizations</Typography>
-                </Stack>
-                <Button variant="contained" size="small" startIcon={<AddIcon />}
+               
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
                   onClick={() => setIsRegisterModalOpen(true)}
                   sx={{
                     fontSize: {
@@ -1212,93 +1291,89 @@ const Agent = () => {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Add New Organization
+                  Add New Agent
+                </Button>
+                 <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconAdjustmentsHorizontal />}
+                  onClick={() => setFilterDrawerOpen(true)}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    px: 2.5,
+                    borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
+                    fontWeight: activeFilterCount > 0 ? 700 : 400,
+                  }}
+                >
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <Box
+                      component="span"
+                      sx={{
+                        ml: 1,
+                        px: 0.8,
+                        py: 0.1,
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        borderRadius: '10px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {activeFilterCount}
+                    </Box>
+                  )}
                 </Button>
               </Stack>
             }
-          >
-            {/* Filter Button */}
-            <Box
-              sx={{
-                mb: 2,
-                display: 'flex',
-                gap: 2,
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-              }}
+              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
             >
-              <Button variant="contained" size="small" startIcon={<IconAdjustmentsHorizontal />}
-                onClick={() => setFilterDrawerOpen(true)}
-                sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2.5,
-                  borderColor: activeFilterCount > 0 ? 'primary.main' : 'divider',
-                  fontWeight: activeFilterCount > 0 ? 700 : 400,
-                }}
-              >
-                Filters
-                {activeFilterCount > 0 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      ml: 1,
-                      px: 0.8,
-                      py: 0.1,
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {activeFilterCount}
-                  </Box>
-                )}
-              </Button>
-            </Box>
-
-            <TableContainer >
-              <Table>
+            <TableContainer>
+              <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                 <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <Typography variant="h6">S/N</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Organization Details</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Admin Details</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Access Level</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Sub Organization</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Total School</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Primary Color</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Status</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="h6">Action</Typography>
-                    </TableCell>
+                  <TableRow sx={{ bgcolor: '#f8f9fa' }}>
+                    {[
+                      'S/N',
+                      'Agent Details',
+                      'Admin Details',
+                      'Access Level',
+                      'Sub Agents',
+                      'Total School',
+                      'Commission',
+                      'Bank Service',
+                      'Primary Color',
+                      'Status',
+                      'Action',
+                    ].map((label) => (
+                      <TableCell key={label}>
+                        <Typography
+                          sx={{
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            color: 'text.secondary',
+                            textTransform: 'uppercase',
+                            letterSpacing: 0.4,
+                          }}
+                        >
+                          {label}
+                        </Typography>
+                      </TableCell>
+                    ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {tableLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
+                    [...Array(4)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(10)].map((_, j) => (
+                          <TableCell key={j}>
+                            <Skeleton variant="text" width={j === 0 ? 30 : 60} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   ) : !emptyState.isEmpty ? (
                     filteredData.map((agent) => {
                       const initials = (agent.organizationName || 'NA')
@@ -1310,11 +1385,11 @@ const Agent = () => {
                       const fullName = `${agent.fname || ''} ${agent.lname || ''}`.trim();
                       const adminInitials = fullName
                         ? fullName
-                          .split(' ')
-                          .slice(0, 2)
-                          .map((w) => w[0])
-                          .join('')
-                          .toUpperCase()
+                            .split(' ')
+                            .slice(0, 2)
+                            .map((w) => w[0])
+                            .join('')
+                            .toUpperCase()
                         : 'NA';
                       const level = Number(agent.access_level);
                       const colorMap = {
@@ -1332,7 +1407,7 @@ const Agent = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            {editRowId === agent.s_n ? (
+                            {editRowId === agent.id ? (
                               <TextField
                                 value={editedData?.organizationName || ''}
                                 onChange={(e) => handleChange(e, 'organizationName', agent)}
@@ -1482,6 +1557,16 @@ const Agent = () => {
                             </Stack>
                           </TableCell>
                           <TableCell>
+                            <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
+                              {agent.commission != null ? `${agent.commission}%` : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
+                              {agent.bank_service_id ? (bankServiceName(agent.bank_service_id) || 'Configured') : '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
                             <Box
                               sx={{
                                 width: 24,
@@ -1494,7 +1579,7 @@ const Agent = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            {editRowId === agent.s_n ? (
+                            {editRowId === agent.id ? (
                               <Select
                                 value={editedData?.status || ''}
                                 onChange={(e) => handleChange(e, 'status', agent)}
@@ -1540,8 +1625,8 @@ const Agent = () => {
                               handleManagePermissions={handleManagePermissions}
                               handleSetCommission={handleSetCommission}
                               handleManageReferral={handleManageReferral}
-                              handleManageGateway={handleManageGateway}
                               handleManageBankService={handleManageBankService}
+                              // handleManageGateway={handleManageGateway}
                               handleDeleteAgent={handleDeleteAgent}
                               handleDeleteOrganization={handleDeleteOrganization}
                             />
@@ -1551,7 +1636,7 @@ const Agent = () => {
                     })
                   ) : (
                     <EmptyTableState
-                      colSpan={10}
+                      colSpan={12}
                       message={emptyState.message}
                       description={emptyState.description}
                       type={emptyState.type}
@@ -1614,14 +1699,20 @@ const Agent = () => {
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={() => {
-              setImpersonateConfirmOpen(false);
-              setAgentToImpersonate(null);
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={() => {
+                setImpersonateConfirmOpen(false);
+                setAgentToImpersonate(null);
+              }}
             >
               Cancel
             </Button>
-            <Button size="small" onClick={handleConfirmedImpersonate}>Yes, Login As</Button>
+            <Button size="small" onClick={handleConfirmedImpersonate}>
+              Yes, Login As
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -1652,17 +1743,22 @@ const Agent = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle sx={{ fontWeight: 600 }}>Delete Organization</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{selectedAgent?.organizationName || 'this organization'}</strong>? This action
+              <strong>{selectedAgent?.organizationName || 'this agent'}</strong>? This action
               cannot be undone. This can only be done if no schools are attached to this
-              organization.
+              agent.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-            <Button variant="contained" size="small" color="inherit" onClick={handleCancelDeleteOrganization}>
+            <Button
+              variant="contained"
+              size="small"
+              color="inherit"
+              onClick={handleCancelDeleteOrganization}
+            >
               Cancel
             </Button>
             <Button size="small" color="error" onClick={handleConfirmDeleteOrganization}>
@@ -1680,42 +1776,8 @@ const Agent = () => {
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
         />
-        <LoggedInUsersModal
-          open={isLoggedInUsersModalOpen}
-          onClose={() => setIsLoggedInUsersModalOpen(false)}
-          onViewUserList={(row, filters) => {
-            setSelectedTenantForUsers(row);
-            setSelectedUserFilters(filters);
-            setIsViewUsersListModalOpen(true);
-          }}
-          stats={loginActivities}
-          usersData={data.flatMap(agent =>
-            (agent.tenants || []).map(tenant => ({
-              id: tenant.id,
-              school: tenant.tenant_name,
-              url: (agent.organization_domain || agent.organizationDomain)
-                ? `https://${tenant.tenant_short_name}.${agent.organization_domain || agent.organizationDomain}`
-                : (tenant.tenant_short_name ? `https://${tenant.tenant_short_name}` : ''),
-              agent: agent.organizationName || agent.organization_name,
-              accessLevel: 'Level ' + (agent.access_level || 2),
-              date: tenant.created_at,
-              stats: tenant.login_activities || {
-                Teacher: 0,
-                Student: 0,
-                SPA: 0,
-                Total: 0
-              }
-            }))
-          )}
-        />
-        <ViewUsersListModal
-          open={isViewUsersListModalOpen}
-          onClose={() => setIsViewUsersListModalOpen(false)}
-          schoolId={selectedTenantForUsers?.id}
-          schoolName={selectedTenantForUsers?.school}
-          filters={selectedUserFilters}
-        />
-        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} />
+        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
+        <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
 
         {/* Filter Side Drawer */}
         <FilterSideDrawer

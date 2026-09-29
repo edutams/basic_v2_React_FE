@@ -72,7 +72,7 @@ const LearnerDashboard = () => {
             const match = terms.find(
               (st) =>
                 String(st.session?.id || st.session_id) === String(activeData.session_id) &&
-                String(st.display_term?.id || st.term_id) === String(activeData.term_id),
+                String(st.term?.id || st.term_id) === String(activeData.term_id),
             );
             defaultId = match ? String(match.id) : String(terms[0].id);
           } else {
@@ -136,20 +136,20 @@ const LearnerDashboard = () => {
           />
         </Box>
 
-        {/* Right Sidebar (Activity Log) — stretches to match left column height */}
+        {/* Right Sidebar (Quick Actions + Activity Log) */}
         <Box
           sx={{
-            width: { xs: '100%', lg: 310 },
+            width: { xs: '100%', lg: 320 },
             flexShrink: 0,
             display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
           }}
         >
+          <QuickActions />
           <RightPanel />
         </Box>
       </Box>
-
-      {/* Bottom Quick Actions Section (Full width underneath main section) */}
-      <QuickActions />
 
       {/* Stat-card breakdown modal — its own term dropdown defaults to the
           active term (the same term the stat cards reflect), and the learner

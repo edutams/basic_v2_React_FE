@@ -91,7 +91,7 @@ const ParentRow = ({ parent, onClick, showRemove, onRemove }) => {
 const AddLearnerModal = ({
   open,
   onClose,
-  classId,
+  programme_class_id,
   className,
   onSave,
   isLoading = false,
@@ -108,9 +108,9 @@ const AddLearnerModal = ({
   const [parentSearching, setParentSearching] = useState(false);
   const [linkedParents, setLinkedParents] = useState([]);
 
-  // load flat class list when no classId is pre-supplied
+  // load flat class list when no programme_class_id is pre-supplied
   useEffect(() => {
-    if (classId || !open) return;
+    if (programme_class_id || !open) return;
     getClassesWithDivisions()
       .then((data) => {
         const flat = [];
@@ -119,7 +119,8 @@ const AddLearnerModal = ({
             (prog.classes || []).forEach((cls) => {
               if (cls.status === 'active') {
                 flat.push({
-                  id: cls.id,
+                  // id: cls.id, pivot_
+                  id: cls.pivot?.id,
                   label: `${prog.programme_code} - ${cls.class_code}`,
                 });
               }
@@ -129,9 +130,9 @@ const AddLearnerModal = ({
         setAllClasses(flat);
       })
       .catch(console.error);
-  }, [open, classId]);
+  }, [open, programme_class_id]);
 
-  // load arms whenever the effective classId changes
+  // load arms whenever the effective programme_class_id changes
   const fetchArms = async (id) => {
     if (!id) {
       setClassArms([]);
@@ -146,32 +147,32 @@ const AddLearnerModal = ({
   };
 
   useEffect(() => {
-    if (classId) fetchArms(classId);
-  }, [classId]);
+    if (programme_class_id) fetchArms(programme_class_id);
+  }, [programme_class_id]);
 
   const formik = useFormik({
     initialValues:
       isEdit && initialValues
         ? {
-          learner_id: initialValues.learner_id ?? '',
-          class_id: initialValues.class_id ?? classId ?? '',
-          class_arm_id: initialValues.class_arm_id ?? '',
-          last_name: initialValues.last_name ?? '',
-          first_name: initialValues.first_name ?? '',
-          middle_name: initialValues.middle_name ?? '',
-          gender: initialValues.gender ?? '',
-          date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
-        }
+            learner_id: initialValues.learner_id ?? '',
+            programme_class_id: initialValues.programme_class_id ?? programme_class_id ?? '',
+            class_arm_id: initialValues.class_arm_id ?? '',
+            last_name: initialValues.last_name ?? '',
+            first_name: initialValues.first_name ?? '',
+            middle_name: initialValues.middle_name ?? '',
+            gender: initialValues.gender ?? '',
+            date_of_birth: initialValues.date_of_birth ? dayjs(initialValues.date_of_birth) : null,
+          }
         : {
-          learner_id: '',
-          class_id: classId || '',
-          class_arm_id: '',
-          last_name: '',
-          first_name: '',
-          middle_name: '',
-          gender: '',
-          date_of_birth: null,
-        },
+            learner_id: '',
+            programme_class_id: programme_class_id || '',
+            class_arm_id: '',
+            last_name: '',
+            first_name: '',
+            middle_name: '',
+            gender: '',
+            date_of_birth: null,
+          },
     enableReinitialize: true,
     onSubmit: (values) => {
       onSave(
@@ -189,13 +190,13 @@ const AddLearnerModal = ({
       setParentSearch('');
       setParentResults([]);
       setLinkedParents([]);
-      const effectiveClassId = isEdit ? initialValues?.class_id : classId;
+      const effectiveClassId = isEdit ? initialValues?.programme_class_id : programme_class_id;
       if (effectiveClassId) fetchArms(effectiveClassId);
     }
   }, [open]);
 
   const handleClassChange = (e) => {
-    formik.setFieldValue('class_id', e.target.value);
+    formik.setFieldValue('programme_class_id', e.target.value);
     formik.setFieldValue('class_arm_id', '');
     fetchArms(e.target.value);
   };
@@ -228,12 +229,12 @@ const AddLearnerModal = ({
     formik.values.last_name &&
     formik.values.first_name &&
     formik.values.gender &&
-    formik.values.class_id &&
+    formik.values.programme_class_id &&
     formik.values.class_arm_id;
 
   const renderTitle = () => {
     if (isEdit) return 'Edit Learner';
-    return classId ? (
+    return programme_class_id ? (
       <>
         Add New Learner —{' '}
         <Typography component="span" color="primary" fontWeight={600}>
@@ -326,13 +327,13 @@ const AddLearnerModal = ({
             </Box>
 
             <Box sx={{ flex: '1 1 45%' }}>
-              {/* Class dropdown — only shown when classId is not pre-supplied */}
-              {!classId && (
+              {/* Class dropdown — only shown when programme_class_id is not pre-supplied */}
+              {!programme_class_id && (
                 <Box sx={{ mb: 3 }}>
                   <FormControl fullWidth>
                     <InputLabel>Class</InputLabel>
                     <Select
-                      value={formik.values.class_id}
+                      value={formik.values.programme_class_id}
                       onChange={handleClassChange}
                       label="Class"
                     >
@@ -356,12 +357,12 @@ const AddLearnerModal = ({
               value={formik.values.class_arm_id}
               onChange={formik.handleChange}
               label="Arm"
-              disabled={!formik.values.class_id}
+              disabled={!formik.values.programme_class_id}
             >
               <MenuItem value="">Select Arm</MenuItem>
               {classArms.map((arm) => (
                 <MenuItem key={arm.id} value={arm.id}>
-                  {arm.display_name || arm.arm_names || `Arm ${arm.id}`}
+                  {arm.display_name || arm.class_arm_names || `Arm ${arm.id}`}
                 </MenuItem>
               ))}
             </Select>
@@ -405,7 +406,13 @@ const AddLearnerModal = ({
                       },
                     }}
                   />
-                  <Button variant="contained" size="small" onClick={handleParentSearch} disabled={parentSearching} sx={{ whiteSpace: 'nowrap', minWidth: 80 }}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleParentSearch}
+                    disabled={parentSearching}
+                    sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
+                  >
                     {parentSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
                   </Button>
                 </Box>
@@ -516,7 +523,7 @@ const AddLearnerModal = ({
 AddLearnerModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  classId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  programme_class_id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   className: PropTypes.string,
   onSave: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,

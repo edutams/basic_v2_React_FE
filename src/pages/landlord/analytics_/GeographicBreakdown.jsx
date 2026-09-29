@@ -1,7 +1,7 @@
 import {
   Box,
   Typography,
-  CircularProgress,
+  Skeleton,
   Table,
   TableHead,
   TableBody,
@@ -20,8 +20,8 @@ const GeographicBreakdown = ({ data, loading }) => {
 
   if (loading)
     return (
-      <Box display="flex" justifyContent="center" py={8}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        <Skeleton variant="rounded" height={200} sx={{ borderRadius: 1 }} />
       </Box>
     );
   if (!data) return null;

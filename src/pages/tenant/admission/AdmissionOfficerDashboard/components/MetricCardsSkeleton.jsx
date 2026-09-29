@@ -17,13 +17,12 @@ const MetricCardsSkeleton = () => {
           <Paper
             elevation={0}
             sx={{
-              p: 2,
+              p: 1,
               borderRadius: '16px',
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
               background: isDark ? theme.palette.background.paper : '#fff',
-              border: '1px rgba(69, 67, 67, 1) solid',
               boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.35)' : '0 4px 20px rgba(0,0,0,0.07)',
             }}
           >
@@ -44,7 +43,7 @@ const MetricCardsSkeleton = () => {
                 pt: 1.5,
               }}
             >
-              <Skeleton variant="text" width="45%" height={24} />
+              <Skeleton variant="text" width="45%" height={22} />
               <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
                 <Skeleton variant="text" width={70} height={10} />
                 <Skeleton variant="text" width={70} height={10} />

@@ -11,7 +11,7 @@ const FinancialMetricsSkeleton = () => {
   const isDark = theme.palette.mode === 'dark';
 
   const cardSx = {
-    p: 2,
+    p: 1,
     borderRadius: '16px',
     height: '100%',
     display: 'flex',

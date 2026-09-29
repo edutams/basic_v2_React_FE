@@ -119,7 +119,7 @@ const PackageManagement = ({
     <PageContainer title="Packages" description="Manage packages and their modules">
       {/* <Breadcrumb title="Packages" items={BCrumb} /> */}
 
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
           <PackageTable
             packages={packages}

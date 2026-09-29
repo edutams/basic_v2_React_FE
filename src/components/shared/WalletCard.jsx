@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, Skeleton } from '@mui/material';
 import { CopyAll as CopyIcon } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
@@ -90,7 +90,7 @@ const WalletCard = ({
             fontSize: 13,
           }}
         >
-          {loading ? <CircularProgress size={12} color="inherit" /> : balance}
+          {loading ? <Skeleton variant="text" width={60} height={16} sx={{ bgcolor: 'rgba(255,255,255,0.3)' }} /> : balance}
         </Box>
 
         <Typography

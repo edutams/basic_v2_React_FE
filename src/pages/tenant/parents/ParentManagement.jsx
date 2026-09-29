@@ -13,7 +13,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TableFooter,
   TablePagination,
   Paper,
   IconButton,
@@ -35,6 +34,7 @@ import {
   DialogContent,
   DialogActions,
   Avatar,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -53,6 +53,7 @@ import {
   IconLink,
   IconSquareToggle,
   IconTrash,
+  IconWallet,
 } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -64,6 +65,7 @@ import ParentModal from '@/components/tenant/parents/ParentModal';
 import UploadParentModal from '@/components/tenant/parents/UploadParentModal';
 import LinkWardModal from '@/components/tenant/parents/LinkWardModal';
 import ViewWardsModal from '@/components/tenant/parents/ViewWardsModal';
+import ParentWalletModal from '@/components/tenant/parents/ParentWalletModal';
 import StatCard from 'src/components/shared/StatCard';
 import { useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from '../../../context/TenantContext/auth';
@@ -85,6 +87,7 @@ const ParentManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [classId, setClassId] = useState('');
 
@@ -114,6 +117,15 @@ const ParentManagement = () => {
   const [viewWardsModalOpen, setViewWardsModalOpen] = useState(false);
   const [viewWardsGuardian, setViewWardsGuardian] = useState(null);
 
+  // wallet & transactions modal (read-only)
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [walletModalGuardian, setWalletModalGuardian] = useState(null);
+
+  const handleApplySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(0);
+  };
+
   const fetchParents = useCallback(async () => {
     try {
       setLoading(true);
@@ -124,7 +136,7 @@ const ParentManagement = () => {
         ...(classId && { class_id: classId }),
       });
       setRows(res?.data?.data ?? []);
-      setTotal(res?.data?.total ?? 0);
+      setTotal(res?.data?.meta?.total ?? 0);
     } catch {
       notify.error('Failed to fetch parents');
     } finally {
@@ -229,6 +241,12 @@ const ParentManagement = () => {
     handleMenuClose();
   };
 
+  const handleOpenWalletModal = (row) => {
+    setWalletModalGuardian(row);
+    setWalletModalOpen(true);
+    handleMenuClose();
+  };
+
   const handleToggleStatus = (row) => {
     handleMenuClose();
     setParentToToggle(row);
@@ -296,6 +314,7 @@ const ParentManagement = () => {
   const hasFilters = search !== '' || classId !== '';
 
   const resetFilters = () => {
+    setSearchInput('');
     setSearch('');
     setClassId('');
     setPage(0);
@@ -313,7 +332,7 @@ const ParentManagement = () => {
       <Breadcrumb title="Parent Management" items={BCrumb} />
 
       {/* ── Stat Cards ── */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.total}
@@ -340,6 +359,10 @@ const ParentManagement = () => {
       </Box>
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -381,15 +404,13 @@ const ParentManagement = () => {
         }
       >
         {/* ── filters ── */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search by name, email or phone"
-            value={search}
+            value={searchInput}
             size="small"
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
             slotProps={{
               input: {
                 startAdornment: (
@@ -406,11 +427,20 @@ const ParentManagement = () => {
                 md: 350,
               },
             }}
-
           />
 
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleApplySearch}
+            sx={{ height: 40, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+          >
+            Search
+          </Button>
+
           {hasFilters && (
-            <Button variant="contained" size="small" onClick={resetFilters} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button variant="outlined" color="primary" size="small" onClick={resetFilters} sx={{ height: 40, width: { xs: '100%', sm: 'auto' } }}>
               Clear Filters
             </Button>
           )}
@@ -418,7 +448,7 @@ const ParentManagement = () => {
 
         <Box>
           <TableContainer>
-            <Table>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>
@@ -432,11 +462,24 @@ const ParentManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Skeleton variant="circular" width={36} height={36} />
+                          <Skeleton variant="text" width={140} height={20} />
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center"><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell>
+                        <Skeleton variant="text" width={120} height={20} />
+                        <Skeleton variant="text" width={90} height={16} />
+                      </TableCell>
+                      <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
                 ) : rows.length > 0 ? (
                   rows.map((row, index) => (
                     <TableRow key={row.user_id}>
@@ -531,6 +574,10 @@ const ParentManagement = () => {
                             <IconUser size={18} style={{ marginRight: 8 }} />
                             Login As Parent
                           </MenuItem>
+                          <MenuItem onClick={() => handleOpenWalletModal(row)}>
+                            <IconWallet size={18} style={{ marginRight: 8 }} />
+                            View Wallet & Transactions
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenEdit(row)}>
                             <IconEdit size={18} style={{ marginRight: 8 }} />
                             Edit
@@ -556,7 +603,7 @@ const ParentManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={6} align="center">
                       <Alert
                         severity="info"
                         sx={{
@@ -574,23 +621,19 @@ const ParentManagement = () => {
                   </TableRow>
                 )}
               </TableBody>
-
-              <TableFooter>
-                <TableRow>
-                  <TablePagination
-                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
-                    count={total}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                  />
-                </TableRow>
-              </TableFooter>
             </Table>
+            <TablePagination
+              component="div"
+              rowsPerPageOptions={[5, 10, 25, 50, 100]}
+              count={total}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+            />
           </TableContainer>
         </Box>
       </ParentCard>
@@ -718,6 +761,12 @@ const ParentManagement = () => {
         open={viewWardsModalOpen}
         onClose={() => setViewWardsModalOpen(false)}
         guardian={viewWardsGuardian}
+      />
+
+      <ParentWalletModal
+        open={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        guardian={walletModalGuardian}
       />
     </PageContainer>
   );

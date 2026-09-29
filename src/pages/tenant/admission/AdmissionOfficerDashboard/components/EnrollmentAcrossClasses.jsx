@@ -18,7 +18,7 @@ import { BLUE, GREEN } from '../constants';
  * The class dropdown filters the chart via the enrollment-insights endpoint.
  */
 const EnrollmentAcrossClasses = ({ byClass, classes = [], selectedClass = 'all', onClassChange }) => (
-  <CardShell sx={{ p: 2.5, height: 'auto' }}>
+  <CardShell sx={{ p: 1, height: 'auto' }}>
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: 12.5 }}>
         Enrollment Across Classes

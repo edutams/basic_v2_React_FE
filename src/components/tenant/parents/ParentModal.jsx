@@ -39,7 +39,10 @@ const ParentModal = ({
       }
       onClose();
     } catch (error) {
-      notify.error(error.response?.data?.message || 'Failed to save parent');
+      const apiError = error.response?.data;
+      const firstErrorKey = apiError?.errors ? Object.keys(apiError.errors)[0] : null;
+      const firstErrorMessage = firstErrorKey ? apiError.errors[firstErrorKey][0] : null;
+      notify.error(firstErrorMessage || apiError?.message || 'Failed to save parent');
     }
   };
 

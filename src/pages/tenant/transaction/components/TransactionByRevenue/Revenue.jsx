@@ -16,6 +16,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   IconButton,
   InputAdornment,
   TextField,
@@ -35,6 +36,7 @@ import {
   revenueTransactionAmount,
 } from '@/api/tenant/bursary/transactionApi';
 import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import tenantApi from '@/api/tenant/tenant_api';
 import RevenueTransactionsModal from './RevenueTransactionsModal';
 
 const Revenue = () => {
@@ -45,8 +47,8 @@ const Revenue = () => {
   const [chartType] = useState('bar');
 
   const [tableData, setTableData] = useState([]);
-  const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [page, setPage] = useState(0); // zero-based for TablePagination
+  const [perPage, setPerPage] = useState(15);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -70,6 +72,10 @@ const Revenue = () => {
 
   const format = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
+  /* Shared compact cell styles */
+  const thCell = { fontWeight: 600, color: isDark ? '#94a3b8' : '#475569', py: 0.75, px: 1.5 };
+  const tdCell = { py: 0.5, px: 1.5 };
+
   const buildFilters = useCallback(
     (extra = {}) => ({
       from: fromDate || null,
@@ -77,28 +83,32 @@ const Revenue = () => {
       session_id: sessionId || null,
       term_id: termId || null,
       search: search || null,
-      page,
-      per_page: 15,
+      page: page + 1, // API is 1-based
+      per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, sessionId, termId, search, page],
+    [fromDate, toDate, sessionId, termId, search, page, perPage],
   );
 
-  const loadTable = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await revenueTransactionAmount({ filters: buildFilters() });
-      if (res.success) {
-        setTableData(res.data);
-        setLastPage(res.last_page);
-        setTotalCount(res.total);
+  const loadTable = useCallback(
+    async (targetPage = page, targetPerPage = perPage) => {
+      setLoading(true);
+      try {
+        const res = await revenueTransactionAmount({
+          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage }),
+        });
+        if (res.success) {
+          setTableData(res.data);
+          setTotalCount(res.total);
+        }
+      } catch (err) {
+        console.error('Failed to fetch revenue table', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch revenue table', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [buildFilters]);
+    },
+    [buildFilters],
+  );
 
   const loadAnalytics = useCallback(async () => {
     try {
@@ -124,13 +134,11 @@ const Revenue = () => {
     fetchSessions()
       .then((res) => setSessions(res.data || res || []))
       .catch(console.error);
-    loadTable();
     loadAnalytics();
   }, []);
 
   useEffect(() => {
     loadAnalytics();
-    loadTable();
   }, [sessionId, termId]);
 
   // useEffect(() => {
@@ -147,10 +155,21 @@ const Revenue = () => {
       .catch(console.error);
   }, [sessionId]);
 
+  useEffect(() => {
+    loadTable(page, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, perPage, sessionId, termId]);
+
   const handleFetch = () => {
-    setPage(1);
-    loadTable();
+    setPage(0);
+    loadTable(0, perPage);
     loadAnalytics();
+  };
+
+  const handleChangePage = (_e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setPerPage(parseInt(e.target.value, 10));
+    setPage(0);
   };
 
   const handleDownloadCSV = async () => {
@@ -234,6 +253,10 @@ const Revenue = () => {
       />
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -257,7 +280,7 @@ const Revenue = () => {
           </Box>
         }
       >
-        <Grid container spacing={3} sx={{ mb: 3, mt: 3 }} alignItems="center">
+        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
           <Grid size={{ xs: 12, md: 2 }}>
             <TextField
               fullWidth
@@ -291,7 +314,7 @@ const Revenue = () => {
                 <MenuItem value="">-- All session --</MenuItem>
                 {sessions.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.sesname}
+                    {s.session_name}
                   </MenuItem>
                 ))}
               </Select>
@@ -352,32 +375,32 @@ const Revenue = () => {
             variant="outlined"
             sx={{ borderRadius: 2 }}
           >
-            <Table>
+            <Table size="small">
               <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
-                  <TableCell>#</TableCell>
-                  <TableCell>Revenue Code</TableCell>
-                  <TableCell>Revenue name</TableCell>
-                  <TableCell>No of Transaction</TableCell>
-                  <TableCell>Amount (₦)</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Action</TableCell>
+                  <TableCell sx={thCell}>#</TableCell>
+                  <TableCell sx={thCell}>Revenue Code</TableCell>
+                  <TableCell sx={thCell}>Revenue name</TableCell>
+                  <TableCell sx={thCell}>No of Transaction</TableCell>
+                  <TableCell sx={thCell}>Amount (₦)</TableCell>
+                  <TableCell sx={thCell}>Category</TableCell>
+                  <TableCell sx={thCell}>Action</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {tableData?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
                       No revenue records found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   tableData?.map((row, index) => (
                     <TableRow key={row.bursary_payment_id} hover>
-                      <TableCell>{(page - 1) * 15 + index + 1}</TableCell>
-                      <TableCell>{row.revenue_code}</TableCell>
-                      <TableCell>{row.revenue_name}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_code}</TableCell>
+                      <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Link
                           component="button"
                           underline="hover"
@@ -389,15 +412,15 @@ const Revenue = () => {
                           {row.no_of_trns}
                         </Link>
                       </TableCell>{' '}
-                      <TableCell>{format(row.amount)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                      <TableCell sx={tdCell}>
                         <Chip
                           label={row.category}
                           size="small"
                           color={row.category === 'compulsory' ? 'success' : 'warning'}
                         />
                       </TableCell>
-                      <TableCell align="right">
+                      <TableCell align="right" sx={tdCell}>
                         <IconButton
                           size="small"
                           onClick={(e) => {
@@ -413,22 +436,17 @@ const Revenue = () => {
                 )}
               </TableBody>
             </Table>
+            <TablePagination
+              component="div"
+              count={totalCount}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={perPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[10, 15, 25, 50]}
+            />
           </TableContainer>
         )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            Showing {tableData?.length} of {totalCount} revenue lines
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button size="small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button size="small" disabled={page >= lastPage} onClick={() => setPage((p) => p + 1)}>
-              Next
-            </Button>
-          </Box>
-        </Box>
 
         <Menu
           anchorEl={anchorEl}

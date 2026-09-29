@@ -24,6 +24,7 @@ import {
   Alert,
   Tabs,
   Tab,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -45,7 +46,7 @@ import {
 } from '@/api/tenant/bursary/paymentNameApi';
 import ReusableModal from '@/components/shared/ReusableModal';
 
-const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
+const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayOption }) => {
   const [paymentNames, setPaymentNames] = useState([]);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(0);
@@ -127,7 +128,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
         page: pg,
         search,
         per_page,
-        pay_type: currentTab
+        pay_type: currentTab,
       });
       setPaymentNames(res.data?.data || []);
       setMeta(res.data);
@@ -154,6 +155,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     setModalOpen(true);
   };
 
+  // Lets a link from elsewhere (e.g. "no optional payments set up yet")
+  // land here with the Add modal already open and the right type preselected,
+  // instead of the admin having to find "Add New" and the dropdown themselves.
+  useEffect(() => {
+    if (autoOpenAdd) {
+      handleAddPayment();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoOpenAdd]);
+
   const handleEditPayment = (payment) => {
     setEditingPayment(payment);
     setModalOpen(true);
@@ -166,6 +177,10 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
     <>
       <Stack spacing={3}>
         <ParentCard
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
           title={
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Box>
@@ -189,7 +204,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           }
         >
           {/* Tabs for Bursary and Admission */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: -1.5 }}>
             <Tabs value={currentTab} onChange={handleTabChange}>
               <Tab
                 label="Bursary Payments"
@@ -204,7 +219,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
             </Tabs>
           </Box>
 
-          <Box display="flex" gap={2} mb={3} flexWrap="wrap">
+          <Box display="flex" gap={1.5} alignItems="center" mb={2} flexWrap="wrap">
             <TextField
               placeholder="Search Payment Items"
               size="small"
@@ -251,9 +266,9 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           </Box>
 
           <TableContainer variant="outlined">
-            <Table>
+            <Table size="small">
               <TableHead>
-                <TableRow >
+                <TableRow>
                   <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>
@@ -270,7 +285,19 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paymentNames.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                      <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : paymentNames.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} align="center">
                       <Alert
@@ -302,7 +329,9 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                             size="small"
                             sx={{
                               bgcolor:
-                                payment.pay_option === 'OPTIONAL' ? 'warning.light' : 'primary.light',
+                                payment.pay_option === 'OPTIONAL'
+                                  ? 'warning.light'
+                                  : 'primary.light',
                               color:
                                 payment.pay_option === 'OPTIONAL' ? 'warning.dark' : 'primary.dark',
                               fontWeight: 600,
@@ -311,7 +340,9 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                           />
                         ) : (
                           <Chip
-                            label={payment.application_stage?.replace('-', ' ').toUpperCase() || 'N/A'}
+                            label={
+                              payment.application_stage?.replace('-', ' ').toUpperCase() || 'N/A'
+                            }
                             size="small"
                             sx={{
                               bgcolor:
@@ -349,7 +380,10 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
                       {/* Fee Bearer */}
                       <TableCell>
                         <Chip
-                          label={(payment.fee_bearer === 'client' ? 'Parent' : 'School').toUpperCase()}
+                          label={(payment.fee_bearer === 'client'
+                            ? 'Parent'
+                            : 'School'
+                          ).toUpperCase()}
                           size="small"
                           sx={{
                             bgcolor:
@@ -427,44 +461,19 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
           }}
           sx={{ color: selectedPayment?.status === 'active' ? 'error.main' : 'success.main' }}
         >
-          <ReusableModal
-            open={confirmStatusModal.open}
-            onClose={() => setConfirmStatusModal({ open: false, payment: null })}
-            title={
-              confirmStatusModal.payment?.status === 'active'
-                ? 'Deactivate Payment Name'
-                : 'Activate Payment Name'
-            }
-            size="small"
-            showCloseButton
-            showDivider
-          >
-            <Stack spacing={3}>
-              <Typography variant="body2">
-                Are you sure you want to{' '}
-                <strong>
-                  {confirmStatusModal.payment?.status === 'active' ? 'deactivate' : 'activate'}
-                </strong>{' '}
-                <strong>"{confirmStatusModal.payment?.name}"</strong>?
-              </Typography>
-              <Stack direction="row" spacing={2} justifyContent="flex-end">
-                <Button variant="contained" size="small" onClick={() => setConfirmStatusModal({ open: false, payment: null })}
-                  disabled={actionLoading}
-                >
-                  Cancel
-                </Button>
-                <Button size="small" color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'} onClick={handleToggleStatus} disabled={actionLoading}>
-                  {actionLoading
-                    ? 'Updating...'
-                    : confirmStatusModal.payment?.status === 'active'
-                      ? 'Deactivate'
-                      : 'Activate'}
-                </Button>
-              </Stack>
-            </Stack>
-          </ReusableModal>
+          <ListItemIcon>
+            {selectedPayment?.status === 'active' ? <IconX size={18} /> : <IconCheck size={18} />}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedPayment?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </ListItemText>
         </MenuItem>
-        <MenuItem onClick={() => selectedPayment && handleEditPayment(selectedPayment)}>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedPayment) handleEditPayment(selectedPayment);
+          }}
+        >
           <ListItemIcon>
             <IconEdit size={18} />
           </ListItemIcon>
@@ -472,11 +481,58 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh }) => {
         </MenuItem>
       </Menu>
 
+      <ReusableModal
+        open={confirmStatusModal.open}
+        onClose={() => setConfirmStatusModal({ open: false, payment: null })}
+        title={
+          confirmStatusModal.payment?.status === 'active'
+            ? 'Deactivate Payment Name'
+            : 'Activate Payment Name'
+        }
+        size="small"
+        showCloseButton
+        showDivider
+      >
+        <Stack spacing={3}>
+          <Typography variant="body2">
+            Are you sure you want to{' '}
+            <strong>
+              {confirmStatusModal.payment?.status === 'active' ? 'deactivate' : 'activate'}
+            </strong>{' '}
+            <strong>"{confirmStatusModal.payment?.name}"</strong>?
+          </Typography>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => setConfirmStatusModal({ open: false, payment: null })}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="small"
+              color={confirmStatusModal.payment?.status === 'active' ? 'error' : 'success'}
+              onClick={handleToggleStatus}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? 'Updating...'
+                : confirmStatusModal.payment?.status === 'active'
+                  ? 'Deactivate'
+                  : 'Activate'}
+            </Button>
+          </Stack>
+        </Stack>
+      </ReusableModal>
+
       <PaymentNameModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         onSave={handleSavePayment}
         paymentName={editingPayment}
+        defaultPayOption={!editingPayment ? defaultPayOption : undefined}
+        defaultPayType={!editingPayment ? currentTab : undefined}
       />
     </>
   );

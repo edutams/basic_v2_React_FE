@@ -15,7 +15,6 @@ import {
   TableBody,
   TableFooter,
   TablePagination,
-  Paper,
   IconButton,
   Menu,
   MenuItem,
@@ -35,6 +34,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Skeleton,
 } from '@mui/material';
 
 import {
@@ -56,7 +56,7 @@ import LinkParentModal from '@/components/tenant/learners/LinkParentModal';
 import ViewParentsModal from '@/components/tenant/learners/ViewParentsModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
@@ -65,6 +65,7 @@ const LearnerManagement = () => {
   const notify = useNotification();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { impersonateStudent } = useContext(TenantAuthContext);
 
@@ -76,6 +77,7 @@ const LearnerManagement = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [programmeClassId, setProgrammeClassId] = useState('');
 
@@ -83,6 +85,11 @@ const LearnerManagement = () => {
 
   const [stats, setStats] = useState({ total: 0, active: 0, graduate: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+
+  const handleApplySearch = () => {
+    setSearch(searchInput.trim());
+    setPage(0);
+  };
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -114,6 +121,15 @@ const LearnerManagement = () => {
   const [uploadLearnerOpen, setUploadLearnerOpen] = useState(false);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [downloadClassId, setDownloadClassId] = useState('');
+
+  // Auto-open Add Learner modal when navigated from Quick Actions
+  useEffect(() => {
+    if (location.state?.openAdd) {
+      setAddLearnerOpen(true);
+      // Clear the state so it doesn't re-open on back navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const fetchLearners = useCallback(async () => {
     try {
@@ -324,6 +340,7 @@ const LearnerManagement = () => {
   const hasFilters = search !== '' || programmeClassId !== '';
 
   const resetFilters = () => {
+    setSearchInput('');
     setSearch('');
     setProgrammeClassId('');
     setPage(0);
@@ -331,7 +348,7 @@ const LearnerManagement = () => {
 
   const getClassArmLabel = (learner) => {
     const arm = learner.class_arm;
-    const armNames = arm?.arm_names;
+    const armNames = arm?.class_arm_names;
     const armLabel = Array.isArray(armNames) ? armNames.filter(Boolean).join(', ') : armNames || '';
     const className = arm?.programme_class?.class?.class_name || '';
     return [className, armLabel].filter(Boolean).join(' ') || '—';
@@ -342,7 +359,7 @@ const LearnerManagement = () => {
       <Breadcrumb title="Learner Management" items={BCrumb} />
 
       {/* Stats */}
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.total}
@@ -369,6 +386,10 @@ const LearnerManagement = () => {
       </Box>
 
       <ParentCard
+        sx={{
+          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+        }}
         title={
           <Box
             sx={{
@@ -426,15 +447,13 @@ const LearnerManagement = () => {
         }
       >
         {/* Filters */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search by name, learner ID or email"
-            value={search}
+            value={searchInput}
             size="small"
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleApplySearch()}
             slotProps={{
               input: {
                 startAdornment: (
@@ -472,12 +491,23 @@ const LearnerManagement = () => {
             </Select>
           </FormControl>
 
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={handleApplySearch}
+            sx={{ height: 40, px: 2.5, width: { xs: '100%', sm: 'auto' } }}
+          >
+            Search
+          </Button>
+
           {hasFilters && (
             <Button
-              variant="contained"
+              variant="outlined"
+              color="primary"
               size="small"
               onClick={resetFilters}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              sx={{ height: 40, width: { xs: '100%', sm: 'auto' } }}
             >
               Clear Filters
             </Button>
@@ -486,7 +516,7 @@ const LearnerManagement = () => {
 
         <Box>
           <TableContainer>
-            <Table>
+            <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
                   <TableCell>S/N</TableCell>
@@ -500,11 +530,21 @@ const LearnerManagement = () => {
 
               <TableBody>
                 {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <CircularProgress size={24} />
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Skeleton variant="circular" width={36} height={36} />
+                          <Skeleton variant="text" width={140} height={20} />
+                        </Box>
+                      </TableCell>
+                      <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                    </TableRow>
+                  ))
                 ) : rows.length > 0 ? (
                   rows.map((row, index) => (
                     <TableRow key={row.id}>

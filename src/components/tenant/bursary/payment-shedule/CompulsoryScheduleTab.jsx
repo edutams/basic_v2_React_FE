@@ -28,6 +28,7 @@ import {
   TableFooter,
   TablePagination,
   Tooltip,
+  Skeleton,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -47,6 +48,7 @@ import EditPaymentItemModal from './EditPaymentItemModal';
 import {
   fetchTermsBySessionTerm,
   fetchPaymentSchedules,
+  fetchClasses,
   deletePaymentSchedule,
   deletePaymentSchedulesByPaymentName,
   togglePaymentScheduleStatus,
@@ -75,6 +77,11 @@ const CompulsoryScheduleTab = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [scheduleData, setScheduleData] = useState([]);
+  // Every class in the school — cross-referenced against each payment
+  // item's own payschedules below so a class that's never had a schedule
+  // entered for it still shows up as a clickable "add" chip, instead of
+  // silently not appearing at all.
+  const [allClasses, setAllClasses] = useState([]);
 
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -128,6 +135,12 @@ const CompulsoryScheduleTab = ({
     loadData();
   }, [sessionId, termId]);
 
+  useEffect(() => {
+    fetchClasses()
+      .then((res) => setAllClasses(Array.isArray(res?.data) ? res.data : []))
+      .catch(() => showSnackbar?.('Failed to load classes', 'error'));
+  }, []);
+
   const loadPaymentSchedules = async (searchTerm = '') => {
     if (!sessionId || !selectedTermId || !categoryId) return;
     try {
@@ -144,7 +157,7 @@ const CompulsoryScheduleTab = ({
       // Transform the data to match expected structure
       if (data?.data && Array.isArray(data.data)) {
         const transformedData = data.data.map((paymentName) => {
-          const classes =
+          const scheduledClasses =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.class_id,
               name: schedule.my_class?.class_code || schedule.my_class?.class_name || `Class ${schedule.class_id}`,
@@ -154,6 +167,24 @@ const CompulsoryScheduleTab = ({
               status: schedule.status,
               invoices_count: schedule.invoices_count || 0,
             })) || [];
+
+          // Classes with no payschedule row at all for this payment item
+          // never show up above — without this, they'd silently not
+          // render anything (not even a clickable "add" chip), instead of
+          // telling the bursar this payment still needs to be set for them.
+          const scheduledIds = new Set(scheduledClasses.map((c) => c.id));
+          const unscheduledClasses = allClasses
+            .filter((cls) => !scheduledIds.has(cls.id))
+            .map((cls) => ({
+              id: cls.id,
+              name: cls.class_code || cls.class_name || `Class ${cls.id}`,
+              amount: 0,
+              schedule_id: null,
+              bursary_installment_id: null,
+              status: null,
+              invoices_count: 0,
+            }));
+          const classes = [...scheduledClasses, ...unscheduledClasses];
 
           return {
             payment_name: {
@@ -187,7 +218,7 @@ const CompulsoryScheduleTab = ({
 
   useEffect(() => {
     loadPaymentSchedules();
-  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey]);
+  }, [sessionId, selectedTermId, categoryId, scheduleRefreshKey, allClasses]);
 
   const [schedules, setSchedules] = useState({});
 
@@ -453,18 +484,7 @@ const CompulsoryScheduleTab = ({
 
   return (
     <Stack spacing={3}>
-      <Alert severity="info" sx={{ mb: 2, textAlign: 'center', justifyContent: 'center' }}>
-        <Typography variant="body2" fontWeight={600}>
-          Payment Schedules for {sessionLabel || '...'} -{' '}
-          {terms[currentTerm]?.display_term?.display_name ||
-            terms[currentTerm]?.name ||
-            terms[currentTerm]?.term_name ||
-            (loadingTerms ? 'Loading...' : '')}{' '}
-          ({categoryLabel || '...'})
-        </Typography>
-      </Alert>
-
-      <ParentCard>
+      <Paper sx={{ p: 1.5 }}>
         <Box
           display="flex"
           flexDirection={{ xs: 'column', md: 'row' }}
@@ -481,7 +501,7 @@ const CompulsoryScheduleTab = ({
             {terms.map((term, idx) => (
               <Tab
                 key={idx}
-                label={term.display_term.display_name}
+                label={term.term?.term_name}
                 sx={{ textTransform: 'none', fontWeight: 600 }}
                 icon={
                   <Box
@@ -566,7 +586,7 @@ const CompulsoryScheduleTab = ({
         </Box>
 
         <TableContainer variant="outlined">
-          <Table>
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
@@ -578,160 +598,187 @@ const CompulsoryScheduleTab = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedSchedules.map((schedule, index) => (
-                <TableRow key={index} hover>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={600}>
-                      {schedule.payment_name.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {schedule.missingCount > 0 && (
-                      <Typography variant="caption" color="error.main" display="block" mb={1}>
-                        You are yet to set payment for all classes
-                      </Typography>
-                    )}
-                    <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
-                      {schedule.classes && schedule.classes.length > 0 ? (
-                        schedule.classes.map((cls) => {
-                          // Skip null/invalid classes
-                          if (!cls || !cls.id || !cls.name) return null;
-
-                          const hasAmount = !!cls.amount && cls.amount > 0;
-                          return (
-                            <Chip
-                              key={cls.id}
-                              label={
-                                <Tooltip title="Click to set or edit payment amount">
-                                  <span>
-                                    {hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}
-                                  </span>
-                                </Tooltip>
-                              }
-                              size="small"
-                              onClick={(e) => {
-                                // Prevent bubbling if clicking on delete icon
-                                if (e.target.closest('.MuiChip-deleteIcon')) {
-                                  return;
-                                }
-
-                                if (cls.invoices_count > 0) {
-                                  showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
-                                  return;
-                                }
-
-                                // Open modal to set/edit amount for this class
-                                setPaymentModal({
-                                  open: true,
-                                  payment: {
-                                    className: cls.name,
-                                    classId: cls.id,
-                                    paymentName: schedule.payment_name.name,
-                                    bursaryPaymentNameId: schedule.payment_name.id,
-                                    scheduleId: cls.schedule_id,
-                                    amount: cls.amount || '',
-                                    bursary_installment_id: cls.bursary_installment_id || '',
-                                  },
-                                  isEdit: hasAmount,
-                                });
-                              }}
-                              onDelete={
-                                hasAmount
-                                  ? (e) => {
-                                    e.stopPropagation();
-                                    if (cls.invoices_count > 0) {
-                                      showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
-                                      return;
-                                    }
-                                    handleClassActionClick(schedule, cls, 'delete');
-                                  }
-                                  : undefined
-                              }
-                              deleteIcon={
-                                hasAmount ? (
-                                  <Box
-                                    onClick={(e) => e.stopPropagation()}
-                                    sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                                  >
-                                    <Tooltip
-                                      title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
-                                    >
-                                      <Switch
-                                        size="small"
-                                        checked={cls.status === 'active'}
-                                        onChange={(e) => {
-                                          e.stopPropagation();
-                                          handleClassActionClick(schedule, cls, 'toggle');
-                                        }}
-                                        sx={{
-                                          color: hasAmount
-                                            ? schedule.status === 'inactive'
-                                              ? 'white'
-                                              : '#5CB979'
-                                            : 'grey.300',
-                                        }}
-                                      />
-                                    </Tooltip>
-                                    <Tooltip title="Delete class schedule">
-                                      <DeleteIcon sx={{ fontSize: 14 }} />
-                                    </Tooltip>
-                                  </Box>
-                                ) : (
-                                  <Tooltip title="Add payment for this class">
-                                    <AddIcon sx={{ fontSize: 14 }} />
-                                  </Tooltip>
-                                )
-                              }
-                              sx={{
-                                bgcolor: hasAmount
-                                  ? cls.status === 'inactive'
-                                    ? 'error.main'
-                                    : '#5CB979'
-                                  : 'grey.300',
-
-                                color: hasAmount ? 'white' : 'text.secondary',
-                                fontWeight: 600,
-                                fontSize: 11,
-                                cursor: 'pointer',
-
-                                transition: 'all 0.2s ease',
-
-                                '&:hover': {
-                                  transform: 'scale(1.03)',
-                                  backgroundColor: hasAmount
-                                    ? cls.status === 'inactive'
-                                      ? 'error.dark'
-                                      : '#5CB979'
-                                    : 'grey.400',
-                                },
-
-                                '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {
-                                  color: 'inherit',
-                                },
-                              }}
-                            />
-                          );
-                        })
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          No classes assigned
-                        </Typography>
-                      )}
-                      {schedule.missingCount > 0 && (
-                        <Typography variant="caption" color="text.secondary">
-                          {schedule.missingCount} missing
-                        </Typography>
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
-                      <MoreVertIcon />
-                    </IconButton>
+              {loadingTerms ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton variant="text" width={20} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
+                    <TableCell>
+                      <Box display="flex" gap={1}>
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                        <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: '12px' }} />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))
+              ) : paginatedSchedules.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>No payment schedules found</Alert>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                paginatedSchedules.map((schedule, index) => (
+                  <TableRow key={index} hover>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {schedule.payment_name.name}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {schedule.missingCount > 0 && (
+                        <Typography variant="caption" color="error.main" display="block" mb={1}>
+                          You are yet to set payment for all classes
+                        </Typography>
+                      )}
+                      <Box display="flex" flexWrap="wrap" gap={1} alignItems="center">
+                        {schedule.classes && schedule.classes.length > 0 ? (
+                          schedule.classes.map((cls) => {
+                            // Skip null/invalid classes
+                            if (!cls || !cls.id || !cls.name) return null;
+
+                            const hasAmount = !!cls.amount && cls.amount > 0;
+                            return (
+                              <Chip
+                                key={cls.id}
+                                variant={hasAmount ? 'filled' : 'outlined'}
+                                icon={
+                                  hasAmount ? undefined : (
+                                    <AddIcon sx={{ fontSize: 14, color: 'error.main !important' }} />
+                                  )
+                                }
+                                label={
+                                  <Tooltip title="Click to set or edit payment amount">
+                                    <span>{hasAmount ? `${cls.name} - [${cls.amount} ₦]` : cls.name}</span>
+                                  </Tooltip>
+                                }
+                                size="small"
+                                onClick={(e) => {
+                                  // Prevent bubbling if clicking on delete icon
+                                  if (e.target.closest('.MuiChip-deleteIcon')) {
+                                    return;
+                                  }
+
+                                  if (cls.invoices_count > 0) {
+                                    showSnackbar?.(`Cannot edit: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                    return;
+                                  }
+
+                                  // Open modal to set/edit amount for this class
+                                  setPaymentModal({
+                                    open: true,
+                                    payment: {
+                                      className: cls.name,
+                                      classId: cls.id,
+                                      paymentName: schedule.payment_name.name,
+                                      bursaryPaymentNameId: schedule.payment_name.id,
+                                      scheduleId: cls.schedule_id,
+                                      amount: cls.amount || '',
+                                      bursary_installment_id: cls.bursary_installment_id || '',
+                                    },
+                                    isEdit: hasAmount,
+                                  });
+                                }}
+                                onDelete={
+                                  hasAmount
+                                    ? (e) => {
+                                      e.stopPropagation();
+                                      if (cls.invoices_count > 0) {
+                                        showSnackbar?.(`Cannot delete: attached to ${cls.invoices_count} invoice(s)`, 'warning');
+                                        return;
+                                      }
+                                      handleClassActionClick(schedule, cls, 'delete');
+                                    }
+                                    : undefined
+                                }
+                                deleteIcon={
+                                  hasAmount ? (
+                                    <Box
+                                      onClick={(e) => e.stopPropagation()}
+                                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                                    >
+                                      <Tooltip
+                                        title={cls.status === 'active' ? 'Deactivate' : 'Activate'}
+                                      >
+                                        <Switch
+                                          size="small"
+                                          checked={cls.status === 'active'}
+                                          onChange={(e) => {
+                                            e.stopPropagation();
+                                            handleClassActionClick(schedule, cls, 'toggle');
+                                          }}
+                                          sx={{
+                                            color: hasAmount
+                                              ? schedule.status === 'inactive'
+                                                ? 'white'
+                                                : '#5CB979'
+                                              : 'grey.300',
+                                          }}
+                                        />
+                                      </Tooltip>
+                                      <Tooltip title="Delete class schedule">
+                                        <DeleteIcon sx={{ fontSize: 14 }} />
+                                      </Tooltip>
+                                    </Box>
+                                  ) : undefined
+                                }
+                                sx={{
+                                  bgcolor: hasAmount
+                                    ? cls.status === 'inactive'
+                                      ? 'error.main'
+                                      : '#5CB979'
+                                    : 'transparent',
+
+                                  borderRadius: '16px',
+                                  border: hasAmount ? 'none' : '1.5px dashed',
+                                  borderColor: hasAmount ? 'transparent' : 'error.main',
+
+                                  color: hasAmount ? 'white' : 'error.main',
+                                  fontWeight: 600,
+                                  fontSize: 11,
+                                  cursor: 'pointer',
+
+                                  transition: 'all 0.2s ease',
+
+                                  '&:hover': {
+                                    transform: 'scale(1.03)',
+                                    backgroundColor: hasAmount
+                                      ? cls.status === 'inactive'
+                                        ? 'error.dark'
+                                        : '#5CB979'
+                                      : 'error.light',
+                                  },
+
+                                  '& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover': {
+                                    color: 'inherit',
+                                  },
+                                }}
+                              />
+                            );
+                          })
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            No classes assigned
+                          </Typography>
+                        )}
+                        {schedule.missingCount > 0 && (
+                          <Typography variant="caption" color="text.secondary">
+                            {schedule.missingCount} missing
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, schedule)}>
+                        <MoreVertIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
             <TableFooter>
               <TableRow>
@@ -748,7 +795,7 @@ const CompulsoryScheduleTab = ({
             </TableFooter>
           </Table>
         </TableContainer>
-      </ParentCard>
+      </Paper>
       {/* Action Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuOption onClick={handleEditSchedule}>

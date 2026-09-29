@@ -44,6 +44,11 @@ const anim = (name, duration = '0.55s', delay = '0s') =>
  *  - saving       : disables the Save & Continue button while true
  *  - backLabel    : optional override for the Back button label
  *  - noPadding    : removes px/pt from the content area (for stages with their own layout)
+ *  - contentOverflow : overrides the content area's overflow (defaults to hidden on
+ *                   desktop when noPadding — for stages managing their own internal
+ *                   scroll region). Pass 'auto' for a stage whose content, like a
+ *                   reused component built for a normally-scrolling page, can be
+ *                   taller than the fixed viewport and needs to actually scroll here.
  *  - children     : the stage content rendered in the right panel
  */
 const SetupShell = ({
@@ -57,6 +62,7 @@ const SetupShell = ({
   canContinue = true,
   backLabel,
   noPadding = false,
+  contentOverflow,
   leftVariant = 'light',
   leftImage,
   leftTitle = 'Build a smarter school experience in minutes.',
@@ -410,8 +416,8 @@ const SetupShell = ({
         <Box
           sx={{
             flex: 1,
-            overflow: noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto',
-            overflowY: noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto',
+            overflow: contentOverflow ?? (noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto'),
+            overflowY: contentOverflow ?? (noPadding ? { xs: 'auto', sm: 'hidden' } : 'auto'),
             px: noPadding ? 0 : { xs: 2, sm: 3, md: '60px' },
             pt: noPadding ? 0 : { xs: '80px', sm: '85px', md: '90px' },
             pb: noPadding ? 0 : 2,

@@ -30,9 +30,9 @@ export const createSchool = async (schoolData) => {
   }
 };
 
-export const getSchools = async () => {
+export const getSchools = async (params = {}) => {
   try {
-    const res = await api.get('/v1/landlord/get-tenants');
+    const res = await api.get('/v1/landlord/get-tenants', { params });
     return res.data?.data;
   } catch (error) {
     console.error('Error fetching schools:', error);
@@ -128,9 +128,9 @@ export const deleteSchoolDivision = async (id) => {
 
 // ── Prospective Tenant (School Applications) ──────────────────────────────
 
-export const getProspectiveTenants = async () => {
+export const getProspectiveTenants = async (params = {}) => {
   try {
-    const res = await api.get('/v1/landlord/prospective-tenants/get-prospective-tenants');
+    const res = await api.get('/v1/landlord/prospective-tenants/get-prospective-tenants', { params });
     return res.data?.data;
   } catch (error) {
     throw error.response?.data || error;

@@ -69,9 +69,9 @@ const ModuleManagement = ({ modules = [], onModuleUpdate, isLoading = false }) =
     <PageContainer title="Modules" description="Manage system modules and their configurations">
       {/* <Breadcrumb title="Modules" items={BCrumb} /> */}
 
-      <Box sx={{ mt: 2 }}>
+      {/* <Box sx={{ mt: 2 }}> */}
         <ModuleTable modules={modules} onModuleAction={handleModuleAction} isLoading={isLoading} />
-      </Box>
+      {/* </Box> */}
 
       <ModuleModal
         open={moduleModalOpen}

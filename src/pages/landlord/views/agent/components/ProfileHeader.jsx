@@ -8,7 +8,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
   return (
     <Card
       sx={{
-        p: { xs: 3, sm: 3.5 },
+        p: { xs: 2, sm: 1 },
         height: '100%',
         borderRadius: '16px',
         overflow: 'hidden',
@@ -96,7 +96,8 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             textTransform: 'none',
             borderRadius: '10px',
             fontWeight: 600,
-            fontSize: '14px',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
             py: 1,
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             '&:hover': {
@@ -118,7 +119,8 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             textTransform: 'none',
             borderRadius: '10px',
             fontWeight: 600,
-            fontSize: '14px',
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
             py: 1,
             boxShadow: 'none',
             backdropFilter: 'blur(10px)',

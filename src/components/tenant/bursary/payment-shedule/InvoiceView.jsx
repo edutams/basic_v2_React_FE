@@ -24,6 +24,7 @@ import {
   DescriptionOutlined as InvoiceIcon,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
+import ParentCard from '@/components/shared/ParentCard';
 
 const InvoiceView = () => {
   const { session_term_id, class_id, category_id } = useParams();
@@ -180,37 +181,49 @@ const InvoiceView = () => {
   };
 
   return (
-    <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
-      {/* ── Header ── */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Box>
-          <Typography variant="h6" fontWeight={700}>
-            View Class Invoice{' '}
-            <Box component="span" color="primary.main">
-              {className} {sessionLabel} {termLabel}
-            </Box>
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            {studentsData.length} student(s)
-          </Typography>
+    <ParentCard
+      title={
+        <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1.5}>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>
+              View Class Invoice{' '}
+              <Box component="span" color="primary.main">
+                {className} {sessionLabel} {termLabel}
+              </Box>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {studentsData.length} student(s)
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PrintIcon />}
+              onClick={handlePrintAll}
+              disabled={studentsData.length === 0}
+              sx={{ fontWeight: 600 }}
+            >
+              Print All
+            </Button>
+            {/* Extreme right, same convention as the invoice list page. */}
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ArrowBackIcon />}
+              onClick={handleBack}
+              sx={{ flexShrink: 0 }}
+            >
+              Back
+            </Button>
+          </Stack>
         </Box>
-        <Box display="flex" gap={1}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<PrintIcon />}
-            onClick={handlePrintAll}
-            disabled={studentsData.length === 0}
-            sx={{ fontWeight: 600 }}
-          >
-            Print All
-          </Button>
-          <Button variant="contained" size="small" onClick={handleBack}>
-            Back
-          </Button>
-        </Box>
-      </Box>
-
+      }
+      sx={{
+        '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+        '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+      }}
+    >
       {/* ── Print All Container ── */}
       <style>
         {`
@@ -595,7 +608,7 @@ const InvoiceView = () => {
           );
         })}
       </Box>
-    </Stack>
+    </ParentCard>
   );
 };
 

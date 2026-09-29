@@ -1,19 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Alert,
-  Button,
-  Stack,
-} from '@mui/material';
-import {
-  Save as SaveIcon,
-} from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
+import { Box, CircularProgress, Typography, Alert, Button, Stack } from '@mui/material';
+import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
 const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+  const navigate = useNavigate();
   // ── Data States ───────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
   const [learners, setLearners] = useState([]);
@@ -33,8 +26,11 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
     setError('');
     try {
       const [subjRes, learnerRes] = await Promise.all([
-        subjectRegistrationApi.getOptionalSubjects(classLevel, { programme_id: programme || undefined }),
+        subjectRegistrationApi.getOptionalSubjects(classLevel, {
+          programme_id: programme || undefined,
+        }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
+          programme_id: programme || undefined,
           session_id: session || undefined,
           term_id: termId || undefined,
         }),
@@ -47,12 +43,15 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       if (learnerRes.data?.data) {
         const learnerData = learnerRes.data.data;
         const transformed = learnerData.map((l) => ({
-          id: l.student_reg_id,
+          id: l.student_registration_id,
           name: l.name,
+          admissionNo: l.admission_no,
+          avatar: l.avatar,
+          gender: l.gender,
           registered: {},
         }));
         learnerData.forEach((l) => {
-          const learner = transformed.find((t) => t.id === l.student_reg_id);
+          const learner = transformed.find((t) => t.id === l.student_registration_id);
           if (learner) {
             (l.registered_subjects || []).forEach((rs) => {
               learner.registered[rs.subject_id] = true;
@@ -62,7 +61,9 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
         setLearners(transformed);
 
         const orig = {};
-        transformed.forEach((l) => { orig[l.id] = { ...l.registered }; });
+        transformed.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
         setOriginalRegistered(orig);
         setPendingChanges({});
       }
@@ -116,10 +117,12 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes);
+      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
       setPendingChanges({});
       const orig = {};
-      learners.forEach((l) => { orig[l.id] = { ...l.registered }; });
+      learners.forEach((l) => {
+        orig[l.id] = { ...l.registered };
+      });
       setOriginalRegistered(orig);
     } catch (e) {
       console.error('Save failed:', e);
@@ -130,10 +133,52 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
     }
   };
 
+  const registerAll = (subjectId) => {
+    setLearners((prev) =>
+      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: true } })),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      learners.forEach((l) => {
+        const key = `${l.id}_${subjectId}`;
+        const origState = originalRegistered[l.id]?.[subjectId] ?? false;
+        if (!origState) {
+          next[key] = true;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
+  const unregisterAll = (subjectId) => {
+    setLearners((prev) =>
+      prev.map((l) => ({ ...l, registered: { ...l.registered, [subjectId]: false } })),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      learners.forEach((l) => {
+        const key = `${l.id}_${subjectId}`;
+        const origState = originalRegistered[l.id]?.[subjectId] ?? false;
+        if (origState) {
+          next[key] = false;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
   return (
     <Box>
       {error && (
-        <Typography color="error" variant="body2" sx={{ mb: 2 }}>{error}</Typography>
+        <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
       {loading ? (
@@ -141,14 +186,30 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
           <CircularProgress size={32} />
         </Box>
       ) : subjects.length === 0 ? (
-        <Alert severity="info">
-          No subjects have been created for this class. Please go to the Curriculum step to create subjects before registering learners.
+        <Alert
+          severity="info"
+          sx={{ alignItems: 'center' }}
+          action={
+            <Button
+              variant="contained"
+              color="info"
+              size="small"
+              onClick={() => navigate('/curriculum-setup')}
+            >
+              Go to Curriculum
+            </Button>
+          }
+        >
+          No subjects have been created for this class. Please go to the Curriculum step to create
+          subjects before registering learners.
         </Alert>
       ) : (
         <SubjectMatrixTable
           subjects={subjects}
           learners={learners}
           onToggle={toggleRegistration}
+          onRegisterAll={registerAll}
+          onUnregisterAll={unregisterAll}
         />
       )}
 

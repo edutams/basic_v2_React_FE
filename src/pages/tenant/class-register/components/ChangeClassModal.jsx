@@ -52,14 +52,17 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     loadEnrollmentData();
   }, [open]);
 
-  const getClsKey = (cls) => (cls?.programme_class_id ? String(cls.programme_class_id) : `${cls?.programme_id}_${cls?.class_id}`);
+  const getClsKey = (cls) =>
+    cls?.programme_class_id
+      ? String(cls.programme_class_id)
+      : `${cls?.programme_id}_${cls?.class_id}`;
 
   // ── Pre-select current class/arm on open ──────────────────
   useEffect(() => {
     if (open && student) {
       // Find which class entry contains the student's current arm
       const currentClassEntry = enrollmentData.find((cls) =>
-        (cls.arms || []).some((arm) => Number(arm.arm_id) === Number(student.class_arm_id))
+        (cls.arms || []).some((arm) => Number(arm.arm_id) === Number(student.class_arm_id)),
       );
       setSelectedClassId(currentClassEntry ? getClsKey(currentClassEntry) : '');
       setSelectedArmId(student.class_arm_id || '');
@@ -69,7 +72,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
 
   // ── Arms for the selected class ───────────────────────────
   const selectedClassEntry = enrollmentData.find(
-    (cls) => getClsKey(cls) === String(selectedClassId)
+    (cls) => getClsKey(cls) === String(selectedClassId),
   );
   const armOptions = (selectedClassEntry?.arms || []).map((arm) => ({
     armId: arm.arm_id,
@@ -92,7 +95,7 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
     setSaving(true);
     setError('');
     try {
-      await classRegisterApi.changeStudentClass(student?.student_reg_id, {
+      await classRegisterApi.changeStudentClass(student?.student_registration_id, {
         class_arm_id: selectedArmId,
       });
       if (onSuccess) onSuccess();
@@ -189,11 +192,16 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                     ? `${displayName} (${cls.programme_code})`
                     : displayName;
                   const isCurrentClass = (cls.arms || []).some(
-                    (arm) => Number(arm.arm_id) === Number(student?.class_arm_id)
+                    (arm) => Number(arm.arm_id) === Number(student?.class_arm_id),
                   );
                   return (
                     <MenuItem key={key} value={key}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        width="100%"
+                      >
                         <Typography variant="body2" fontWeight={isCurrentClass ? 700 : 400}>
                           {label}
                         </Typography>
@@ -236,13 +244,16 @@ const ChangeClassModal = ({ open, onClose, student, onSuccess }) => {
                         fontWeight: opt.isCurrent ? 700 : 400,
                         bgcolor: opt.isCurrent
                           ? (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(25, 118, 210, 0.15)'
-                                : '#e3f2fd'
+                              theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.15)' : '#e3f2fd'
                           : 'transparent',
                       }}
                     >
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        width="100%"
+                      >
                         <Typography variant="body2" fontWeight={opt.isCurrent ? 700 : 400}>
                           {opt.armName} ({opt.count} students)
                         </Typography>

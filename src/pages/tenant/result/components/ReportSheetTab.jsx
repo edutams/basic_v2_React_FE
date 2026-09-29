@@ -288,6 +288,7 @@ const ReportSheetTab = () => {
         report={buildReportProp(report)}
         sessionTerm={{
           label: `${termInfo?.session_name || report.session_term?.session_name || ''} - ${termInfo?.term_name || report.session_term?.term_name || ''}`,
+          term_id: termInfo?.term_id ?? report.session_term?.term_id ?? null,
           closing_date: report.session_term?.end_date || '',
           resumption_date: '',
         }}

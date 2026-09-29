@@ -2,6 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -139,12 +140,14 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                   <p style={{ margin: '4px 0' }}>{report.teacherComment}</p>
                 </td>
               </tr>
-              <tr>
-                <td style={{ padding: '4px 8px' }}>
-                  <h6 style={{ margin: '4px 0', textDecoration: 'underline' }}><strong>Promotion Status</strong></h6>
-                  <p style={{ margin: '4px 0' }}>Promoted to {className}</p>
-                </td>
-              </tr>
+              {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+                <tr>
+                  <td style={{ padding: '4px 8px' }}>
+                    <h6 style={{ margin: '4px 0', textDecoration: 'underline' }}><strong>Promotion Status</strong></h6>
+                    <p style={{ margin: '4px 0' }}>{promotionLine(report, className)}</p>
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td style={{ padding: '4px 8px' }}>
                   <p style={{ margin: '4px 0', fontWeight: 700 }}>No. of times school opened: {report.attendance?.opened} times</p>

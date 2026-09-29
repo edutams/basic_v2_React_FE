@@ -85,7 +85,40 @@ export const buildReportProp = (report) => {
     grade_settings: report.grade_settings || [],
     pass_mark: report.pass_mark,
     publish: report.result_publish,
+    // Third-term promotion fields (see promotionLine below).
+    promotion_recommendation: report.promotion_recommendation || '',
+    next_class_name: report.next_class_name || '',
   };
+};
+
+/**
+ * Third-term promotion line for the report-card templates, mirroring basic
+ * v1's Promotion Status block. Returns null unless the recommendation is
+ * set (only happens on the third term), so templates can hide the block
+ * entirely for terms 1 and 2.
+ */
+export const promotionLine = (report, className = '') => {
+  const recommendation = (report?.promotion_recommendation || '').toLowerCase();
+  if (!recommendation) return null;
+
+  switch (recommendation) {
+    case 'promoted':
+      return report?.next_class_name
+        ? `Promoted to ${report.next_class_name}`
+        : `Promoted to ${className || 'the next class'}`;
+    case 'promoted on trial':
+      return report?.next_class_name
+        ? `Promoted on trial to ${report.next_class_name}`
+        : 'Promoted on trial';
+    case 'not promoted':
+      return className ? `Not promoted, to repeat ${className}` : 'Not promoted';
+    case 'advised to repeat':
+      return className ? `Advised to repeat ${className}` : 'Advised to repeat';
+    case 'graduated':
+      return 'Graduated';
+    default:
+      return recommendation;
+  }
 };
 
 // Grade scale for the templates' key tables (from configured grade settings).

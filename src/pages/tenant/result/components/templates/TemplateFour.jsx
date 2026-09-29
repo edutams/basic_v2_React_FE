@@ -2,6 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -150,11 +151,13 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
             <p style={{ marginTop: 8 }}><strong>Principal's Comment:</strong> {report.adminComment}</p>
           </div>
 
-          {/* Promotion Status */}
-          <div style={{ marginTop: 12, border: '2px solid #000', padding: '8px 12px' }}>
-            <u><strong>Promotion Status</strong></u>
-            <p>Promoted to {className}</p>
-          </div>
+          {/* Promotion Status — only on the third term report card */}
+          {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+            <div style={{ marginTop: 12, border: '2px solid #000', padding: '8px 12px' }}>
+              <u><strong>Promotion Status</strong></u>
+              <p>{promotionLine(report, className)}</p>
+            </div>
+          )}
           <div style={{ marginTop: 8 }}>
             <p><strong>No. of times school opened:</strong> {report.attendance.opened} times</p>
             <p><strong>Total number of times present:</strong> {report.attendance.present} times</p>

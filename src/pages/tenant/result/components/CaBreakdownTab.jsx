@@ -176,6 +176,12 @@ const CaBreakdownTab = () => {
     });
   }, [payload, selectedCaIndex]);
 
+  // True when at least one subject has an uploaded CA total for the selected
+  // CA type — drives the "no scores yet" notice and hides the print/totals.
+  const hasAnyScore = subjectRows.some(
+    (s) => s.ca?.total !== null && s.ca?.total !== undefined,
+  );
+
   const totalScore = caConfig
     ? subjectRows.reduce((sum, s) => sum + Number(s.ca?.total || 0), 0)
     : 0;
@@ -280,7 +286,7 @@ const CaBreakdownTab = () => {
             ? `CA Report — ${student.class_name} ${student.arm_name} • ${student.lname} ${student.fname}`
             : 'Student C.A Scores'}
         </Typography>
-        {caConfig && (
+        {caConfig && hasAnyScore && (
           <Button variant="contained" size="small" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
             Print C.A Result
           </Button>
@@ -373,7 +379,9 @@ const CaBreakdownTab = () => {
         </Grid>
         {caOptions.length === 0 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
-            No CA types are configured for this session/term. Configure marks in Result Setup first.
+            {isSelfMode
+              ? 'Continuous assessment has not been set up for this term yet. Please check back later or contact your school.'
+              : 'No CA types are configured for this session/term. Configure marks in Result Setup first.'}
           </Alert>
         )}
       </Box>
@@ -381,6 +389,13 @@ const CaBreakdownTab = () => {
       {/* ── Subjects Table ──────────────────────────────────── */}
       {caConfig && (
         <Box sx={{ p: 3 }}>
+          {!hasAnyScore && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {isSelfMode
+                ? 'No CA scores have been uploaded yet for this term. Your scores will appear here once your teachers upload them.'
+                : 'No CA scores have been uploaded for this student yet.'}
+            </Alert>
+          )}
           <TableContainer sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
             <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -436,14 +451,16 @@ const CaBreakdownTab = () => {
           </TableContainer>
 
           {/* ── Total & Average ────────────────────────────── */}
-          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
-            <Typography variant="h6" fontWeight={700} color="primary">
-              Total Score: {totalScore}
-            </Typography>
-            <Typography variant="h6" fontWeight={700} color="primary">
-              Average Score: {average}
-            </Typography>
-          </Box>
+          {hasAnyScore && (
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
+              <Typography variant="h6" fontWeight={700} color="primary">
+                Total Score: {totalScore}
+              </Typography>
+              <Typography variant="h6" fontWeight={700} color="primary">
+                Average Score: {average}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
 
@@ -457,7 +474,7 @@ const CaBreakdownTab = () => {
       )}
 
       {/* ── Bottom Print Button (chrome — hidden when printing) ── */}
-      {caConfig && (
+      {caConfig && hasAnyScore && (
         <Box className="ca-no-print" sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider' }}>
           <Button variant="contained" size="small" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
             Print C.A Result

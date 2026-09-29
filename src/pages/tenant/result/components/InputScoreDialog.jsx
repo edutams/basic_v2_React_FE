@@ -185,7 +185,9 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     setExamScoreErrors(newErrors);
   };
 
-  const handleSave = async (studentIndex) => {
+  // Persist one student's scores. Resolves with a success message, or null
+  // when the row was empty or the API call failed (errors toast in-dialog).
+  const saveRow = async (studentIndex) => {
     const student = students[studentIndex];
     const hasFilledCA = student.ca_details?.some((ca) =>
       getEntities(ca).some((ent) => ent.score !== '' && ent.score !== undefined)
@@ -193,7 +195,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     const hasFilledExam = student.examScores !== '';
 
     if (!hasFilledCA && !hasFilledExam) {
-      return;
+      return null;
     }
 
     const updated = [...students];
@@ -211,14 +213,14 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
         session_id: filter?.session_id,
         term_id: filter?.term_id,
       });
-      showSnackbar(`Scores saved for ${student.fullname}`);
-      onSaved?.();
+      return `Scores saved for ${student.fullname}`;
     } catch (err) {
       console.error('Failed to save score:', err);
       showSnackbar(
         err?.response?.data?.message || `Failed to save scores for ${student.fullname}`,
         'error'
       );
+      return null;
     } finally {
       setStudents((prev) => prev.map((s, si) => (si === studentIndex ? { ...s, loading: false } : s)));
     }
@@ -229,8 +231,24 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     onClose();
   };
 
-  const handleSaveAll = () => {
-    students.forEach((_, si) => handleSave(si));
+  // Save closes the modal and lets the parent refresh its score data — the
+  // success toast is shown by the parent (this dialog's own snackbar would
+  // unmount with it).
+  const handleSave = async (studentIndex) => {
+    const message = await saveRow(studentIndex);
+    if (message) {
+      handleClose();
+      onSaved?.(message);
+    }
+  };
+
+  const handleSaveAll = async () => {
+    const results = await Promise.all(students.map((_, si) => saveRow(si)));
+    const savedCount = results.filter(Boolean).length;
+    if (savedCount > 0) {
+      handleClose();
+      onSaved?.(`Scores saved for ${savedCount} student(s)`);
+    }
   };
 
   const esc = (v) => String(v ?? '')

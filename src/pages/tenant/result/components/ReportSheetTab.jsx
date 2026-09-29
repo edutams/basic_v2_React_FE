@@ -416,7 +416,7 @@ const ReportSheetTab = () => {
           Students List — {selectedClassArm ? (className || 'Selected class') : 'Select a class'}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {selectedClassArm && (
+          {/* {selectedClassArm && (
             <Tooltip title="Open the performance analytics for this class arm">
               <Button
                 variant="outlined"
@@ -428,7 +428,7 @@ const ReportSheetTab = () => {
                 Analytics
               </Button>
             </Tooltip>
-          )}
+          )} */}
           {students.filter((s) => s.has_result).length > 0 && (
             <Button
               variant="contained"
@@ -680,7 +680,7 @@ const ReportSheetTab = () => {
             setActionMenuRow(null);
             if (row) {
               navigate(
-                `/result-cabreakdown?student_registration_id=${row.student_registration_id}` +
+                `/result-ca_breakdown?student_registration_id=${row.student_registration_id}` +
                 `&session_term_id=${selectedSessionTerm}&class_arm_id=${selectedClassArm}`
               );
             }

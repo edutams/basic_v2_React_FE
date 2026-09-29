@@ -147,9 +147,9 @@ const CommunicationsPage = Loadable(
 // sidebar, staff via the Student Dossier / score sheet deep links. The learner
 // permission exists under two spellings across seeded databases.
 const CA_BREAKDOWN_ACCESS = [
-  'result.client.cabreakdown',
-  'result.dossier.view',
-  'result.admin.view.scoresheet',
+  'result.client.ca_breakdown',
+  'result.view_dossier',
+  'result.admin.view_score_sheet',
 ];
 
 const TenantRoutes = [
@@ -492,7 +492,7 @@ const TenantRoutes = [
       {
         path: 'result-setup',
         element: (
-          <TenantProtectedRoute permission="result.admin.setup">
+          <TenantProtectedRoute permission="result.admin.manage_result_setup">
             <ResultModule />
           </TenantProtectedRoute>
         ),
@@ -500,7 +500,7 @@ const TenantRoutes = [
       {
         path: 'score-manager',
         element: (
-          <TenantProtectedRoute permission="result.admin.upload.score">
+          <TenantProtectedRoute permission="result.admin.upload_score">
             <ScoreManagerPage />
           </TenantProtectedRoute>
         ),
@@ -508,7 +508,7 @@ const TenantRoutes = [
       {
         path: 'result-upload',
         element: (
-          <TenantProtectedRoute permission="result.admin.upload.score">
+          <TenantProtectedRoute permission="result.admin.upload_score">
             <UploadScoresPage />
           </TenantProtectedRoute>
         ),
@@ -532,26 +532,13 @@ const TenantRoutes = [
       {
         path: 'result-scoresheet',
         element: (
-          <TenantProtectedRoute permission="result.admin.view.scoresheet">
+          <TenantProtectedRoute permission="result.admin.view_score_sheet">
             <ScoreSheetPage />
           </TenantProtectedRoute>
         ),
       },
       {
-        // Learner Continuous Assessment. The permission has been seeded under
-        // two spellings across environments (`result.client.cabreakdown` in
-        // live databases / basic v1, `result.client.ca_breakdown` in newer
-        // seeders) — accept either, plus the staff permissions that deep-link
-        // into this page from the Student Dossier and the score sheet.
         path: 'result-ca_breakdown',
-        element: (
-          <TenantProtectedRoute anyOf={CA_BREAKDOWN_ACCESS}>
-            <CaBreakdownPage />
-          </TenantProtectedRoute>
-        ),
-      },
-      {
-        path: 'result-cabreakdown',
         element: (
           <TenantProtectedRoute anyOf={CA_BREAKDOWN_ACCESS}>
             <CaBreakdownPage />
@@ -561,7 +548,7 @@ const TenantRoutes = [
       {
         path: 'result-analytics',
         element: (
-          <TenantProtectedRoute permission="result.admin.analytics.view">
+          <TenantProtectedRoute permission="result.admin.view_analytics">
             <PerformanceAnalyticsPage />
           </TenantProtectedRoute>
         ),
@@ -569,7 +556,7 @@ const TenantRoutes = [
       {
         path: 'result-sheet',
         element: (
-          <TenantProtectedRoute permission="result.admin.broadsheet.view">
+          <TenantProtectedRoute permission="result.admin.view_broadsheet">
             <ResultSheetPage />
           </TenantProtectedRoute>
         ),
@@ -577,7 +564,7 @@ const TenantRoutes = [
       {
         path: 'result-broadsheet',
         element: (
-          <TenantProtectedRoute permission="result.admin.school_broadsheet.view">
+          <TenantProtectedRoute permission="result.admin.view_school_broadsheet">
             <BroadsheetPage />
           </TenantProtectedRoute>
         ),
@@ -585,7 +572,7 @@ const TenantRoutes = [
       {
         path: 'result-summary',
         element: (
-          <TenantProtectedRoute permission="result.admin.summary.view">
+          <TenantProtectedRoute permission="result.admin.view_summary">
             <SummarySheetPage />
           </TenantProtectedRoute>
         ),
@@ -593,7 +580,7 @@ const TenantRoutes = [
       {
         path: 'result-reportsheet',
         element: (
-          <TenantProtectedRoute permission="result.dossier.view">
+          <TenantProtectedRoute permission="result.view_dossier">
             <ReportSheetPage />
           </TenantProtectedRoute>
         ),
@@ -601,7 +588,7 @@ const TenantRoutes = [
       {
         path: 'result-reportcard',
         element: (
-          <TenantProtectedRoute permission="result.client.reportsheet">
+          <TenantProtectedRoute permission="result.client.view_report_sheet">
             <ReportCardPage />
           </TenantProtectedRoute>
         ),
@@ -609,7 +596,7 @@ const TenantRoutes = [
       {
         path: 'result-comment-bank',
         element: (
-          <TenantProtectedRoute permission="result.admin.comment_bank.index">
+          <TenantProtectedRoute permission="result.admin.manage_comment_bank">
             <CommentBankPage />
           </TenantProtectedRoute>
         ),
@@ -617,7 +604,7 @@ const TenantRoutes = [
       {
         path: 'result-messaging',
         element: (
-          <TenantProtectedRoute permission="result.admin.messaging.index">
+          <TenantProtectedRoute permission="result.admin.manage_result_messaging">
             <MessagingPage />
           </TenantProtectedRoute>
         ),

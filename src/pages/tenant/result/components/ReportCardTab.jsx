@@ -1,8 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Button, FormControl, InputLabel, Select, MenuItem,
-  Chip, useTheme, CircularProgress, Alert, Snackbar, Avatar,
+  Box,
+  Typography,
+  Paper,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  useTheme,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Avatar,
 } from '@mui/material';
 import { IconPrinter, IconChartBar, IconArrowLeft, IconClipboardCheck } from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
@@ -42,9 +54,9 @@ const ReportCardTab = () => {
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  // The route is permission-gated to `result.client.reportsheet` (students);
+  // The route is permission-gated to `result.client.view_report_sheet` (students);
   // a staff member landing here is pointed at the admin Student Dossier.
-  const isLearner = can('result.client.reportsheet');
+  const isLearner = can('result.client.view_report_sheet');
   const roleName = useMemo(() => {
     const list = Array.isArray(roles) ? roles : [];
     return list.map((r) => (typeof r === 'string' ? r : r?.name));
@@ -70,7 +82,7 @@ const ReportCardTab = () => {
         setSelectedSessionTerm((prev) =>
           prev && regs.some((r) => String(r.session_term_id) === String(prev))
             ? prev
-            : (body.data?.default_session_term_id ?? '')
+            : (body.data?.default_session_term_id ?? ''),
         );
         if (regs.length === 0) {
           setError('No student registration found for your account. Please contact your school.');
@@ -122,16 +134,20 @@ const ReportCardTab = () => {
       }
     };
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedSessionTerm]);
 
   const selectedRegistration = registrations.find(
-    (r) => String(r.session_term_id) === String(selectedSessionTerm)
+    (r) => String(r.session_term_id) === String(selectedSessionTerm),
   );
 
   const sessionTermLabel = report?.session_term
     ? `${report.session_term.session_name} - ${report.session_term.term_name}`
-    : [selectedRegistration?.session_name, selectedRegistration?.term_name].filter(Boolean).join(' - ');
+    : [selectedRegistration?.session_name, selectedRegistration?.term_name]
+        .filter(Boolean)
+        .join(' - ');
 
   const className = report?.class_arm
     ? [report.class_arm.class_name, report.class_arm.arm_name].filter(Boolean).join(' ')
@@ -155,16 +171,31 @@ const ReportCardTab = () => {
   // ── Staff safety net: this page is for learners ─────────────
   if (!isLearner && !isLearnerRole) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 5, textAlign: 'center' }}>
-          <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+          <IconClipboardCheck
+            size={48}
+            color={isDark ? '#fff' : '#94a3b8'}
+            style={{ marginBottom: 12 }}
+          />
           <Typography variant="h6" color="text.secondary" fontWeight={600}>
             Report Card is available to learners.
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
             Use the Student Dossier to view a class list and any student&apos;s dossier.
           </Typography>
-          <Button variant="contained" startIcon={<IconArrowLeft size={16} />} onClick={() => navigate('/result-reportsheet')}>
+          <Button
+            variant="contained"
+            startIcon={<IconArrowLeft size={16} />}
+            onClick={() => navigate('/result-reportsheet')}
+          >
             Open Student Dossier
           </Button>
         </Box>
@@ -174,7 +205,14 @@ const ReportCardTab = () => {
 
   if (loadingRegs) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 6, textAlign: 'center' }}>
           <CircularProgress size={36} />
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
@@ -187,7 +225,14 @@ const ReportCardTab = () => {
 
   if (error && registrations.length === 0) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 4 }}>
           <Alert severity="error">{error}</Alert>
         </Box>
@@ -198,9 +243,35 @@ const ReportCardTab = () => {
   return (
     <>
       {/* ── Term selector + actions ─────────────────────────── */}
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB', mb: 2 }}>
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flex: 1, minWidth: 260 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              flex: 1,
+              minWidth: 260,
+            }}
+          >
             <FormControl size="small" sx={{ minWidth: 240 }}>
               <InputLabel>Session-Term</InputLabel>
               <Select
@@ -209,7 +280,9 @@ const ReportCardTab = () => {
                 onChange={(e) => setSelectedSessionTerm(e.target.value)}
               >
                 {registrations.length === 0 && (
-                  <MenuItem value="" disabled>-- No terms --</MenuItem>
+                  <MenuItem value="" disabled>
+                    -- No terms --
+                  </MenuItem>
                 )}
                 {registrations.map((r) => (
                   <MenuItem key={r.session_term_id} value={r.session_term_id}>
@@ -286,9 +359,25 @@ const ReportCardTab = () => {
       {/* ── Report card ─────────────────────────────────────── */}
       <Paper
         elevation={0}
-        sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB', overflow: 'hidden' }}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          overflow: 'hidden',
+        }}
       >
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Avatar
               src={report?.student?.avatar || undefined}
@@ -342,7 +431,10 @@ const ReportCardTab = () => {
           )}
         </Box>
 
-        <Box sx={{ p: { xs: 1, sm: 2, md: 3 }, overflow: 'auto', width: '100%', maxWidth: '100%' }} ref={printRef}>
+        <Box
+          sx={{ p: { xs: 1, sm: 2, md: 3 }, overflow: 'auto', width: '100%', maxWidth: '100%' }}
+          ref={printRef}
+        >
           {loadingReport ? (
             <Box sx={{ p: 6, textAlign: 'center' }}>
               <CircularProgress size={36} />
@@ -351,10 +443,19 @@ const ReportCardTab = () => {
               </Typography>
             </Box>
           ) : report ? (
-            <ReportCardView report={report} className={className} sessionTermLabel={sessionTermLabel} getTemplateIndexForSample={getTemplateIndexForSample} />
+            <ReportCardView
+              report={report}
+              className={className}
+              sessionTermLabel={sessionTermLabel}
+              getTemplateIndexForSample={getTemplateIndexForSample}
+            />
           ) : (
             <Box sx={{ p: 5, textAlign: 'center' }}>
-              <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+              <IconClipboardCheck
+                size={48}
+                color={isDark ? '#fff' : '#94a3b8'}
+                style={{ marginBottom: 12 }}
+              />
               <Typography variant="h6" color="text.secondary" fontWeight={600}>
                 {selectedSessionTerm
                   ? 'No report card available for this term yet.'
@@ -368,8 +469,21 @@ const ReportCardTab = () => {
         </Box>
 
         {report && (
-          <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider' }}>
-            <Button size="small" variant="contained" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              borderTop: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<IconPrinter size={16} />}
+              onClick={handlePrint}
+            >
               Print Report Card
             </Button>
           </Box>
@@ -383,7 +497,10 @@ const ReportCardTab = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         sx={{ zIndex: (t) => t.zIndex.modal + 9999 }}
       >
-        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -3,7 +3,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Chip, Button, TextField, Grid, Tabs, Tab, IconButton, Snackbar, Alert,
   Switch, FormControl, InputLabel, Select, MenuItem, Dialog, DialogTitle, DialogContent,
-  DialogActions, Menu, useTheme, Stack,
+  DialogActions, Menu, useTheme, Stack, Tooltip,
 } from '@mui/material';
 import {
   IconSettings, IconTemplate, IconMoodSmile, IconMessageCircle, IconAward,
@@ -39,7 +39,7 @@ const ResultSetupTab = () => {
 
   const [innerTab, setInnerTab] = useState(0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
-  const [gradeStats, setGradeStats] = useState({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
+  const [gradeStats, setGradeStats] = useState({ total_grades: 0, has_config: false, pass_mark: '—', subjects: 0, mark_range: '—' });
   const [gradeStatsLoading, setGradeStatsLoading] = useState(false);
   const [promotionStats, setPromotionStats] = useState({ total_rules: 0, programmes: 0, subject_types: 0, total_subjects: 0, pass_mark: '—' });
   const [promotionStatsLoading, setPromotionStatsLoading] = useState(false);
@@ -140,7 +140,7 @@ const ResultSetupTab = () => {
   // ── Fetch grade config stats when session term changes ──────
   const fetchGradeStats = useCallback(async () => {
     if (!currentSessionTermId) {
-      setGradeStats({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
+      setGradeStats({ total_grades: 0, has_config: false, pass_mark: '—', subjects: 0, mark_range: '—' });
       return;
     }
 
@@ -148,7 +148,7 @@ const ResultSetupTab = () => {
     try {
       const res = await resultSetupApi.getGradeConfigStats(currentSessionTermId);
       if (res.data.status) {
-        setGradeStats(res.data.data);
+        setGradeStats({ has_config: false, ...res.data.data });
       }
     } catch (err) {
       console.error('Failed to fetch grade stats:', err);
@@ -320,33 +320,48 @@ const ResultSetupTab = () => {
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconSettings size={16} />}
-              disabled={!currentSessionTermId || syncingConfig}
-              onClick={async () => {
-                setSyncingConfig(true);
-                try {
-                  const res = await resultSetupApi.syncConfig();
-                  if (res.data.status) {
-                    showSnackbar(res.data.message);
-                    // Re-pull the grade/mark config so copied values show immediately.
-                    setSyncRefreshKey((k) => k + 1);
-                    fetchGradeStats();
-                  } else {
-                    showSnackbar(res.data.message || 'Failed to sync config', 'error');
-                  }
-                } catch (err) {
-                  showSnackbar(err?.response?.data?.message || 'Failed to sync config', 'error');
-                } finally {
-                  setSyncingConfig(false);
-                }
-              }}
+          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Tooltip
+              title={
+                !currentSessionTermId
+                  ? 'Select a session term first'
+                  : gradeStats.has_config
+                    ? 'This term already has a grading scale and mark configuration — sync is disabled to protect them from being overwritten'
+                    : 'Copy the previous term\'s grading scale, mark configuration and pass mark into this term'
+              }
             >
-              {syncingConfig ? 'Syncing…' : 'Sync previous Term Config to New Term'}
-            </Button>
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<IconSettings size={16} />}
+                  disabled={!currentSessionTermId || syncingConfig || gradeStats.has_config}
+                  onClick={async () => {
+                    setSyncingConfig(true);
+                    try {
+                      // Sync the SELECTED term (active or not) — the backend
+                      // copies from the nearest term created before it.
+                      const res = await resultSetupApi.syncConfig(currentSessionTermId);
+                      if (res.data.status) {
+                        showSnackbar(res.data.message);
+                        // Re-pull the grade/mark config so copied values show immediately.
+                        setSyncRefreshKey((k) => k + 1);
+                        fetchGradeStats();
+                      } else {
+                        showSnackbar(res.data.message || 'Failed to sync config', 'error');
+                      }
+                    } catch (err) {
+                      showSnackbar(err?.response?.data?.message || 'Failed to sync config', 'error');
+                    } finally {
+                      setSyncingConfig(false);
+                    }
+                  }}
+                >
+                  {syncingConfig ? 'Syncing…' : 'Sync previous Term Config to New Term'}
+                </Button>
+              </span>
+            </Tooltip>
           </Box>
           <GradeConfiguration sessionTermId={currentSessionTermId} refreshKey={syncRefreshKey} />
         </Paper>

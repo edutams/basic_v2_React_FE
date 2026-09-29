@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Box, Grid, Typography, Paper, TextField, List, ListItem, ListItemAvatar, ListItemText,
-  Avatar, Chip, IconButton, InputAdornment, Snackbar, Alert, CircularProgress, useTheme, Divider,
+  Avatar, Chip, IconButton, InputAdornment, Snackbar, Alert, CircularProgress, useTheme, Divider, Button,
 } from '@mui/material';
-import { IconSend, IconSearch, IconTrash, IconPaperclip } from '@tabler/icons-react';
+import { IconSend, IconSearch, IconTrash, IconPaperclip, IconPencilPlus } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 
@@ -21,16 +21,19 @@ const ChatTab = () => {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showAllUsers, setShowAllUsers] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const bottomRef = useRef(null);
   const fileRef = useRef(null);
 
   const showSnack = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  const loadUsers = useCallback(async (q = '') => {
+  // showAllUsers toggles between "conversations" (default — only users the
+  // caller has chatted with) and the full directory for starting new chats.
+  const loadUsers = useCallback(async (q = '', showAllUsers = false) => {
     setLoadingUsers(true);
     try {
-      const res = await communicationApi.chatUsers(q);
+      const res = await communicationApi.chatUsers(q, showAllUsers);
       setUsers(Array.isArray(res.data) ? res.data : []);
     } catch {
       setUsers([]);
@@ -113,15 +116,31 @@ const ChatTab = () => {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search users…"
+              placeholder={showAllUsers ? 'Search all users…' : 'Search conversations…'}
               value={search}
-              onChange={(e) => { setSearch(e.target.value); loadUsers(e.target.value); }}
+              onChange={(e) => { setSearch(e.target.value); loadUsers(e.target.value, showAllUsers); }}
               InputProps={{
                 startAdornment: <InputAdornment position="start"><IconSearch size={16} /></InputAdornment>,
               }}
               sx={{ mb: 1 }}
             />
-            <Typography variant="caption" color="text.secondary">Users</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">
+                {showAllUsers ? 'All users' : 'Conversations'}
+              </Typography>
+              <Button
+                size="small"
+                startIcon={<IconPencilPlus size={14} />}
+                onClick={() => {
+                  const next = !showAllUsers;
+                  setShowAllUsers(next);
+                  loadUsers(search, next);
+                }}
+                sx={{ textTransform: 'none', fontSize: '0.75rem' }}
+              >
+                {showAllUsers ? 'Back to chats' : 'New chat'}
+              </Button>
+            </Box>
             {loadingUsers ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}><CircularProgress size={22} /></Box>
             ) : (

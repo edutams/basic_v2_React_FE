@@ -18,6 +18,12 @@ const resultSheetApi = {
   // POST /result-sheet/comment { student_registration_id, type: 'teacher'|'hos', comment }
   saveComment: (data) => tenantApi.post('/result-sheet/comment', data),
 
+  // Generate class-teacher / HoS comments for a whole class arm from the
+  // current user's comment bank (student average → score-range grade,
+  // domain average → band, gender-aware).
+  // POST /result-sheet/generate-comments { class_arm_id, session_term_id, type? }
+  generateComments: (data) => tenantApi.post('/result-sheet/generate-comments', data),
+
   // POST /result-sheet/promotion { student_registration_id, promotion_recommendation?, next_class_arm_id? }
   savePromotion: (data) => tenantApi.post('/result-sheet/promotion', data),
 

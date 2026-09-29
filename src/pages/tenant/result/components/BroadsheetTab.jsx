@@ -5,7 +5,7 @@ import {
   Card, Button, Avatar, TablePagination, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Snackbar, Alert as MuiAlert, Stack, CircularProgress,
 } from '@mui/material';
-import { IconCheck, IconX, IconMessage, IconEdit, IconArrowsHorizontal, IconUsers, IconBook, IconChartBar, IconAward } from '@tabler/icons-react';
+import { IconCheck, IconX, IconMessage, IconEdit, IconArrowsHorizontal, IconUsers, IconBook, IconChartBar, IconAward, IconWand } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
@@ -103,6 +103,7 @@ const BroadsheetTab = () => {
   const [scoreForm, setScoreForm] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [filterError, setFilterError] = useState('');
+  const [generatingComments, setGeneratingComments] = useState(false);
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
@@ -317,6 +318,35 @@ const BroadsheetTab = () => {
   };
 
   const closeCommentDialog = () => setCommentDialog({ open: false, student: null, mode: 'teacher' });
+
+  // One-click comment generation for the whole class arm: the backend
+  // picks a template from the current user's comment bank (student average
+  // → score-range grade, domain average → band, gender-aware) and writes
+  // it to student_registrations. Existing manual comments are overwritten
+  // — the button lives next to the comment column it fills.
+  const handleGenerateComments = async () => {
+    if (!sheet?.class_arm?.id || !sheet?.session_term?.id) return;
+    setGeneratingComments(true);
+    try {
+      const res = await resultSheetApi.generateComments({
+        class_arm_id: sheet.class_arm.id,
+        session_term_id: sheet.session_term.id,
+        type: 'both',
+      });
+      if (res.data?.status) {
+        // Refetch so the new comments show in the grid immediately.
+        refetch();
+        showSnackbar(res.data?.message || 'Comments generated successfully');
+      } else {
+        showSnackbar(res.data?.message || 'Failed to generate comments', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to generate comments:', err);
+      showSnackbar(err?.response?.data?.message || 'Failed to generate comments', 'error');
+    } finally {
+      setGeneratingComments(false);
+    }
+  };
 
   const handleSaveComment = async () => {
     const { student, mode } = commentDialog;
@@ -741,6 +771,25 @@ const BroadsheetTab = () => {
               <Button variant="outlined" color="secondary" size="small" onClick={handlePostRecommendations} disabled={loading}>
                 Post Recommendation
               </Button>
+            </Box>
+          )}
+
+          {/* ── Comment tools (termly broadsheet only — comments live
+              on student_registrations per session-term) ────────── */}
+          {showData && sheet && sheet.mode === 'term' && (
+            <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Tooltip title="Fill the class teacher and head-of-school comment columns for every student from your comment bank — each student's average picks the score range and their attendance/affective/psychomotor average picks the band. Existing comments are overwritten.">
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  size="small"
+                  startIcon={<IconWand size={16} />}
+                  onClick={handleGenerateComments}
+                  disabled={generatingComments}
+                >
+                  {generatingComments ? <CircularProgress size={14} color="inherit" /> : 'Generate Comments'}
+                </Button>
+              </Tooltip>
             </Box>
           )}
 

@@ -482,7 +482,7 @@ const ScoreSheetTab = () => {
     }
     if (sessionTermId) params.set('session_term_id', sessionTermId);
     if (selectedClassArm) params.set('class_arm_id', selectedClassArm);
-    window.open(`/result-cabreakdown?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    window.open(`/result-ca_breakdown?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
   const viewResult = (student) => {

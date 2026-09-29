@@ -14,6 +14,20 @@ const resultSheetApi = {
   // POST /result-sheet/term-cumulative { class_arm_id, session_id, search? }
   getTermCumulative: (data) => tenantApi.post('/result-sheet/term-cumulative', data),
 
+  // ── Publishing ──────────────────────────────────────────────
+  // Two-stage flow: the School Portal Admin approves first (stage 1),
+  // then the Head of School publishes (stage 2). Server rejects a HOS
+  // publish until the SPA approval exists.
+  // POST /result-sheet/publish/spa { class_arm_id, session_term_id }
+  publishSpa: (data) => tenantApi.post('/result-sheet/publish/spa', data),
+
+  // POST /result-sheet/publish/hos { class_arm_id, session_term_id }
+  publishHos: (data) => tenantApi.post('/result-sheet/publish/hos', data),
+
+  // Clears both stages at once.
+  // POST /result-sheet/publish/unpublish { class_arm_id, session_term_id }
+  unpublish: (data) => tenantApi.post('/result-sheet/publish/unpublish', data),
+
   // ── Comments & promotion ────────────────────────────────────
   // POST /result-sheet/comment { student_registration_id, type: 'teacher'|'hos', comment }
   saveComment: (data) => tenantApi.post('/result-sheet/comment', data),

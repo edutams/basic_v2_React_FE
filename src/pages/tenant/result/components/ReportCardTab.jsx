@@ -155,6 +155,15 @@ const ReportCardTab = () => {
 
   const schoolName = schoolInfo?.tenant_name || schoolInfo?.name || '';
 
+  // ── Publish gate (basic v1  pattern) ─────────────
+  // Learners only see their report card once the School Portal Admin has
+  // approved AND the Head of School has published the results; until then
+  // the card body is replaced by a notice naming the missing stage(s).
+  const spaApproved = report?.result_publish?.spa_publish === 'yes';
+  const hosPublished = report?.result_publish?.head_of_school_publish === 'yes';
+  const fullyPublished = spaApproved && hosPublished;
+  const publishBlocked = Boolean(report) && !fullyPublished;
+
   const handlePrint = () => {
     if (!printNode(printRef.current, 'Report Card')) {
       showSnackbar('Pop-up blocked. Allow pop-ups to print your report card.', 'warning');
@@ -165,7 +174,7 @@ const ReportCardTab = () => {
     const params = new URLSearchParams();
     if (selectedSessionTerm) params.set('session_term_id', selectedSessionTerm);
     if (selectedRegistration?.id) params.set('student_registration_id', selectedRegistration.id);
-    navigate(`/result-cabreakdown?${params.toString()}`);
+    navigate(`/result-ca_breakdown?${params.toString()}`);
   };
 
   // ── Staff safety net: this page is for learners ─────────────
@@ -299,7 +308,7 @@ const ReportCardTab = () => {
                 sx={{ fontWeight: 600 }}
               />
             )}
-            {report?.summary?.overall_position && (
+            {!publishBlocked && report?.summary?.overall_position && (
               <Chip
                 size="small"
                 color="primary"
@@ -308,7 +317,7 @@ const ReportCardTab = () => {
                 sx={{ fontWeight: 700 }}
               />
             )}
-            {report?.summary?.average_score != null && (
+            {!publishBlocked && report?.summary?.average_score != null && (
               <Chip
                 size="small"
                 color="success"
@@ -329,7 +338,7 @@ const ReportCardTab = () => {
             >
               C.A Breakdown
             </Button>
-            {report && (
+            {report && !publishBlocked && (
               <Button
                 size="small"
                 variant="contained"
@@ -399,34 +408,26 @@ const ReportCardTab = () => {
           </Box>
           {report && (
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`Subjects: ${report.summary?.subjects_taken ?? 0}`}
-              />
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`Total: ${report.summary?.total_score ?? 0}`}
-              />
-              {report.result_publish && (
-                <Chip
-                  size="small"
-                  color={
-                    report.result_publish.spa_publish === 'yes' ||
-                    report.result_publish.head_of_school_publish === 'yes'
-                      ? 'success'
-                      : 'default'
-                  }
-                  variant="outlined"
-                  label={
-                    report.result_publish.spa_publish === 'yes' ||
-                    report.result_publish.head_of_school_publish === 'yes'
-                      ? 'Published'
-                      : 'Not published yet'
-                  }
-                />
+              {!publishBlocked && (
+                <>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`Subjects: ${report.summary?.subjects_taken ?? 0}`}
+                  />
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`Total: ${report.summary?.total_score ?? 0}`}
+                  />
+                </>
               )}
+              <Chip
+                size="small"
+                color={fullyPublished ? 'success' : 'default'}
+                variant="outlined"
+                label={fullyPublished ? 'Published' : 'Not published yet'}
+              />
             </Box>
           )}
         </Box>
@@ -441,6 +442,27 @@ const ReportCardTab = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                 Loading your report card...
               </Typography>
+            </Box>
+          ) : publishBlocked ? (
+            <Box sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gap: 2 }}>
+              {!spaApproved && (
+                <Alert severity="warning">
+                  <Typography variant="subtitle2" fontWeight={900}>
+                    SPA Approval Notification
+                  </Typography>
+                  This report card is not available at the moment because the School
+                  Portal Admin has not approved all the scores.
+                </Alert>
+              )}
+              {!hosPublished && (
+                <Alert severity="warning">
+                  <Typography variant="subtitle2" fontWeight={900}>
+                    HoS Approval Notification
+                  </Typography>
+                  This report card is not available at the moment because the Head of
+                  School has not published all the scores.
+                </Alert>
+              )}
             </Box>
           ) : report ? (
             <ReportCardView
@@ -468,7 +490,7 @@ const ReportCardTab = () => {
           )}
         </Box>
 
-        {report && (
+        {report && !publishBlocked && (
           <Box
             sx={{
               p: 2,

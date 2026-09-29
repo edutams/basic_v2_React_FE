@@ -10,7 +10,7 @@ import MarkConfigDialog from './MarkConfigDialog';
 import PassMarkDialog from './PassMarkDialog';
 import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 
-const GradeConfiguration = ({ sessionTermId }) => {
+const GradeConfiguration = ({ sessionTermId, refreshKey = 0 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -47,6 +47,11 @@ const GradeConfiguration = ({ sessionTermId }) => {
       setLoading(false);
     }
   }, [sessionTermId]);
+
+  // Re-fetch when the parent signals that a sync changed the config.
+  useEffect(() => {
+    fetchConfigurations();
+  }, [fetchConfigurations, refreshKey]);
 
   useEffect(() => {
     fetchConfigurations();

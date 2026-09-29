@@ -744,7 +744,6 @@ const ClassLedger = () => {
                     setTermId('');
                   }}
                 >
-                  <MenuItem value="">Current</MenuItem>
                   {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
                       {s.session_name}
@@ -760,10 +759,8 @@ const ClassLedger = () => {
                   label="Term"
                   size="small"
                   value={termId}
-                  disabled={!sessionId}
                   onChange={(e) => setTermId(e.target.value)}
                 >
-                  <MenuItem value="">Current</MenuItem>
                   {terms.map((t) => (
                     <MenuItem key={t.id} value={t.id}>
                       {t.term_name}

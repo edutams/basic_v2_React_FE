@@ -2,6 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine } from '../reportCardUtils';
 
 const cellBorder = { border: '2px solid #1a1a1a' };
 const innerCellBorder = { border: '1px solid #1a1a1a' };
@@ -155,12 +156,14 @@ const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) =>
                   <Typography variant="body2" sx={{ mt: 0.5 }}>{report.adminComment}</Typography>
                 </TableCell>
               </TableRow>
-              <TableRow>
-                <TableCell style={innerCellBorder}>
-                  <u><strong>Promotion Status</strong></u>
-                  <Typography variant="body2" sx={{ mt: 0.5 }}>Promoted to {className}</Typography>
-                </TableCell>
-              </TableRow>
+              {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+                <TableRow>
+                  <TableCell style={innerCellBorder}>
+                    <u><strong>Promotion Status</strong></u>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>{promotionLine(report, className)}</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
               <TableRow>
                 <TableCell style={innerCellBorder}>
                   <strong>No. of times school opened:</strong> {report.attendance.opened} times<br />

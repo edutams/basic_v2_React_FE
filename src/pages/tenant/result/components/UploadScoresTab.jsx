@@ -277,6 +277,14 @@ const UploadScoresTab = () => {
     fetchAllocations();
   };
 
+  // InputScoreDialog closes itself after a successful save and hands the
+  // success message here: toast it and refresh the score-card endpoint so
+  // the upload-progress cards reflect the new counts immediately.
+  const handleScoreSaved = (message) => {
+    if (message) showSnackbar(message);
+    fetchAllocations();
+  };
+
   const handleProceedActionSelection = (action, allocation) => {
     setActionSelectionDialog({ open: false, allocation: null });
     if (action === 'download') {
@@ -773,6 +781,7 @@ const UploadScoresTab = () => {
         onClose={() => setInputScoreDialog({ open: false, allocation: null })}
         allocation={inputScoreDialog.allocation}
         filter={{ ...filter, session_term_id: sessionTermId }}
+        onSaved={handleScoreSaved}
       />
 
       <Snackbar

@@ -62,6 +62,8 @@ const ResultSetupTab = () => {
   const [signaturePreview, setSignaturePreview] = useState({ open: false, src: '' });
   const [signatureFile, setSignatureFile] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null, action: '', label: '' });
+  const [syncingConfig, setSyncingConfig] = useState(false);
+  const [syncRefreshKey, setSyncRefreshKey] = useState(0);
 
   const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
@@ -136,29 +138,28 @@ const ResultSetupTab = () => {
   }, [innerTab, selectedDivisionId, fetchActiveTemplate]);
 
   // ── Fetch grade config stats when session term changes ──────
-  useEffect(() => {
+  const fetchGradeStats = useCallback(async () => {
     if (!currentSessionTermId) {
       setGradeStats({ total_grades: 0, pass_mark: '—', subjects: 0, mark_range: '—' });
       return;
     }
 
-    let cancelled = false;
-    const loadStats = async () => {
-      setGradeStatsLoading(true);
-      try {
-        const res = await resultSetupApi.getGradeConfigStats(currentSessionTermId);
-        if (!cancelled && res.data.status) {
-          setGradeStats(res.data.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch grade stats:', err);
-      } finally {
-        if (!cancelled) setGradeStatsLoading(false);
+    setGradeStatsLoading(true);
+    try {
+      const res = await resultSetupApi.getGradeConfigStats(currentSessionTermId);
+      if (res.data.status) {
+        setGradeStats(res.data.data);
       }
-    };
-    loadStats();
-    return () => { cancelled = true; };
+    } catch (err) {
+      console.error('Failed to fetch grade stats:', err);
+    } finally {
+      setGradeStatsLoading(false);
+    }
   }, [currentSessionTermId]);
+
+  useEffect(() => {
+    fetchGradeStats();
+  }, [fetchGradeStats]);
 
   // ── Fetch promotion stats on mount ──────────────────────────
   const fetchPromotionStats = useCallback(async () => {
@@ -319,28 +320,35 @@ const ResultSetupTab = () => {
           />
         </Stack>
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <SessionTermSelector onSessionTermChange={setCurrentSessionTermId} />          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
             <Button
               variant="outlined"
               size="small"
               startIcon={<IconSettings size={16} />}
-              disabled={!currentSessionTermId}
+              disabled={!currentSessionTermId || syncingConfig}
               onClick={async () => {
+                setSyncingConfig(true);
                 try {
                   const res = await resultSetupApi.syncConfig();
                   if (res.data.status) {
                     showSnackbar(res.data.message);
+                    // Re-pull the grade/mark config so copied values show immediately.
+                    setSyncRefreshKey((k) => k + 1);
+                    fetchGradeStats();
+                  } else {
+                    showSnackbar(res.data.message || 'Failed to sync config', 'error');
                   }
-                } catch {
-                  showSnackbar('Failed to sync config', 'error');
+                } catch (err) {
+                  showSnackbar(err?.response?.data?.message || 'Failed to sync config', 'error');
+                } finally {
+                  setSyncingConfig(false);
                 }
               }}
             >
-              Sync previous Term Config to New Term
+              {syncingConfig ? 'Syncing…' : 'Sync previous Term Config to New Term'}
             </Button>
           </Box>
-          <GradeConfiguration sessionTermId={currentSessionTermId} />
+          <GradeConfiguration sessionTermId={currentSessionTermId} refreshKey={syncRefreshKey} />
         </Paper>
       </InnerTabPanel>
 

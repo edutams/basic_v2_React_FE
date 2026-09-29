@@ -15,6 +15,29 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
+import { usePermissions } from '@/context/TenantContext/permissions';
+
+// Confirmation copy for the three publish actions.
+const PUBLISH_CONFIRM = {
+  spa: {
+    title: 'Approve this broadsheet?',
+    body: 'Acting as the School Portal Admin: totals, positions and points are frozen onto the student records. Any later score change will revoke this approval.',
+    confirm: 'Approve',
+    color: 'primary',
+  },
+  hos: {
+    title: 'Publish this broadsheet?',
+    body: 'Acting as the Head of School: report cards and the class dossier become visible as published. Only unpublishing can undo this.',
+    confirm: 'Publish',
+    color: 'success',
+  },
+  unpublish: {
+    title: 'Unpublish this broadsheet?',
+    body: 'Both the SPA approval and the Head of School publish are cleared, and the broadsheet goes back to awaiting approval.',
+    confirm: 'Unpublish',
+    color: 'error',
+  },
+};
 
 // Display value: null / undefined / '' render as '-' (0 is a valid score).
 const displayScore = (value) => (value === 0 || value ? value : '-');
@@ -48,6 +71,7 @@ const truncateComment = (text) => {
 };
 
 // Comment cell: truncated preview + click/hover tooltip with the full text.
+/* eslint-disable react/prop-types */
 const CommentCell = ({ value }) => {
   const full = value || '';
   return (
@@ -69,10 +93,12 @@ const CommentCell = ({ value }) => {
     </TableCell>
   );
 };
+/* eslint-enable react/prop-types */
 
 const BroadsheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { can } = usePermissions();
 
   // ── Dropdown data ───────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -113,12 +139,15 @@ const BroadsheetTab = () => {
 
     const loadDropdowns = async () => {
       try {
-        const [sessRes, progRes, activeRes, stRes, classStructuresRes] = await Promise.all([
+        // NOTE: fetchClassStructures() deliberately runs OUTSIDE this
+        // Promise.all — it requires the `class.structure.index` permission
+        // (admins only), so for teachers it 403s and would otherwise reject
+        // the whole batch and leave every filter dropdown empty.
+        const [sessRes, progRes, activeRes, stRes] = await Promise.all([
           fetchSessions(),
           fetchProgrammes(),
           fetchActiveTenantSessionTerm(),
           fetchSessionTerms(),
-          fetchClassStructures(),
         ]);
 
         if (cancelled) return;
@@ -136,19 +165,6 @@ const BroadsheetTab = () => {
           : [];
         setProgrammes(programmesData);
 
-        // Every arm in the school — only used by the promotion "Next Class" picker
-        const armsList = [];
-        (classStructuresRes?.data ?? []).forEach((division) => {
-          (division.programmes ?? []).forEach((prog) => {
-            (prog.classes ?? []).forEach((cls) => {
-              (cls.class_arms ?? []).forEach((arm) => {
-                armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id, class_name: cls.class_name });
-              });
-            });
-          });
-        });
-        setAllArms(armsList);
-
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         activeSessionTermRef.current = activeSessionTerm;
 
@@ -164,6 +180,29 @@ const BroadsheetTab = () => {
         if (!cancelled) showSnackbar('Failed to load filter options', 'error');
       }
     };
+
+    // Every arm in the school — only used by the promotion "Next Class"
+    // picker, which admins see. Teachers lack `class.structure.index`, so
+    // the 403 is expected and handled: the picker just stays empty for them.
+    fetchClassStructures()
+      .then((res) => {
+        if (cancelled) return;
+        const armsList = [];
+        (res?.data ?? []).forEach((division) => {
+          (division.programmes ?? []).forEach((prog) => {
+            (prog.classes ?? []).forEach((cls) => {
+              (cls.class_arms ?? []).forEach((arm) => {
+                armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id, class_name: cls.class_name });
+              });
+            });
+          });
+        });
+        setAllArms(armsList);
+      })
+      .catch((err) => {
+        // 403 for non-admin roles is normal here — don't alert the user.
+        console.warn('Class structure not available for this role:', err?.response?.status ?? err);
+      });
 
     loadDropdowns();
     getTenantInfo()
@@ -258,6 +297,40 @@ const BroadsheetTab = () => {
   const refetch = useCallback(() => {
     if (loadedQuery) loadSheet(loadedQuery.payload, loadedQuery.mode);
   }, [loadedQuery, loadSheet]);
+
+  // ── Publishing ──────────────────────────────────────────────
+  const [publishing, setPublishing] = useState(null);
+  const [publishConfirm, setPublishConfirm] = useState({ open: false, action: null });
+
+  const closePublishConfirm = () => setPublishConfirm({ open: false, action: null });
+
+  const handlePublishAction = async (action) => {
+    const payload = {
+      class_arm_id: Number(filters.class_arm_id),
+      session_term_id: Number(sessionTermId),
+    };
+
+    setPublishing(action);
+    try {
+      const res =
+        action === 'spa'
+          ? await resultSheetApi.publishSpa(payload)
+          : action === 'hos'
+            ? await resultSheetApi.publishHos(payload)
+            : await resultSheetApi.unpublish(payload);
+
+      showSnackbar(res?.data?.message || 'Broadsheet publish status updated');
+      refetch();
+    } catch (err) {
+      showSnackbar(
+        err?.response?.data?.message || 'Failed to update broadsheet publish status',
+        'error'
+      );
+    } finally {
+      setPublishing(null);
+      closePublishConfirm();
+    }
+  };
 
   const handleFilter = () => {
     if (activeTab === 0) {
@@ -763,6 +836,77 @@ const BroadsheetTab = () => {
             </Box>
           </Box>
 
+          {/* ── Publish status (termly broadsheet only — the cumulative
+              response carries no result_publish) ──────────────────── */}
+          {showData && sheet && sheet.mode === 'term' && sheet.result_publish && (
+            <Box sx={{ mb: 2 }}>
+              {sheet.result_publish.head_of_school_publish === 'yes' ? (
+                <Alert
+                  severity="success"
+                  sx={{ borderRadius: '10px' }}
+                  action={
+                    can('result.admin.unpublish_broadsheet') ? (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => setPublishConfirm({ open: true, action: 'unpublish' })}
+                        disabled={Boolean(publishing)}
+                      >
+                        {publishing === 'unpublish' ? <CircularProgress size={14} color="inherit" /> : 'Unpublish'}
+                      </Button>
+                    ) : null
+                  }
+                >
+                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
+                  This broadsheet has been APPROVED and PUBLISHED by the Head of School.
+                </Alert>
+              ) : sheet.result_publish.spa_publish === 'yes' ? (
+                <Alert
+                  severity="info"
+                  sx={{ borderRadius: '10px' }}
+                  action={
+                    can('result.admin.hos_publish_broadsheet') ? (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        onClick={() => setPublishConfirm({ open: true, action: 'hos' })}
+                        disabled={Boolean(publishing)}
+                      >
+                        {publishing === 'hos' ? <CircularProgress size={14} color="inherit" /> : 'Publish this Broadsheet'}
+                      </Button>
+                    ) : null
+                  }
+                >
+                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
+                  Approved by the School Portal Admin — awaiting the Head of School&apos;s final approval.
+                </Alert>
+              ) : (
+                <Alert
+                  severity="warning"
+                  sx={{ borderRadius: '10px' }}
+                  action={
+                    can('result.admin.spa_publish_broadsheet') ? (
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="primary"
+                        onClick={() => setPublishConfirm({ open: true, action: 'spa' })}
+                        disabled={Boolean(publishing)}
+                      >
+                        {publishing === 'spa' ? <CircularProgress size={14} color="inherit" /> : 'Approve Broadsheet'}
+                      </Button>
+                    ) : null
+                  }
+                >
+                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
+                  This broadsheet is ready for approval by the School Portal Admin.
+                </Alert>
+              )}
+            </Box>
+          )}
+
           {showData && showPromotionButtons && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Button variant="outlined" color="primary" size="small" onClick={handleRecommendPromotions} disabled={loading}>
@@ -916,6 +1060,9 @@ const BroadsheetTab = () => {
                     ) : visibleStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
                       const resultMap = {};
                       (row.results || []).forEach((r) => { resultMap[r.subject_id] = r; });
+                      // No uploaded scores yet → comments can't be written, so
+                      // the Add/Edit menu is disabled (scores first, then comments).
+                      const hasNoResults = (row.results || []).length === 0 || (row.results || []).every((r) => !r.has_result);
                       return (
                         <TableRow key={row.student_registration_id} hover>
                           <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', borderRight: `1px solid ${borderColor}`, minWidth: { xs: 150, sm: 250 }, p: { xs: 0.5, sm: 1 } }}>
@@ -1025,9 +1172,20 @@ const BroadsheetTab = () => {
                           <CommentCell value={row.class_teachers_comment} />
                           <CommentCell value={row.hos_comment} />
                           <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
-                            <Button size="small" variant="contained" color="primary" sx={{ fontSize: 12, px: 1, minWidth: 0, textTransform: 'none' }} onClick={(e) => handleAddEditClick(e, row)}>
-                              Add/Edit
-                            </Button>
+                            <Tooltip title={hasNoResults ? 'No scores uploaded for this student yet — upload scores before adding comments' : 'Add or edit comments and scores'}>
+                              <span>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="primary"
+                                  sx={{ fontSize: 12, px: 1, minWidth: 0, textTransform: 'none' }}
+                                  onClick={(e) => handleAddEditClick(e, row)}
+                                  disabled={hasNoResults}
+                                >
+                                  Add/Edit
+                                </Button>
+                              </span>
+                            </Tooltip>
                             <Menu anchorEl={addEditMenu.anchorEl} open={Boolean(addEditMenu.anchorEl) && addEditMenu.rowId === row.student_registration_id} onClose={closeAddEditMenu}>
                               <MenuItem dense onClick={() => { closeAddEditMenu(); handleOpenComment(row, 'teacher'); }}>
                                 <IconMessage size={16} style={{ marginRight: 8 }} /> Class Teacher
@@ -1073,6 +1231,34 @@ const BroadsheetTab = () => {
           )}
         </Box>
       </Card>
+
+      {/* ── Publish confirmation ────────────────────────────── */}
+      <Dialog
+        open={publishConfirm.open}
+        onClose={closePublishConfirm}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{PUBLISH_CONFIRM[publishConfirm.action]?.title}</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary">
+            {PUBLISH_CONFIRM[publishConfirm.action]?.body}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closePublishConfirm} disabled={Boolean(publishing)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={PUBLISH_CONFIRM[publishConfirm.action]?.color || 'primary'}
+            onClick={() => handlePublishAction(publishConfirm.action)}
+            disabled={Boolean(publishing)}
+          >
+            {publishing ? <CircularProgress size={16} color="inherit" /> : PUBLISH_CONFIRM[publishConfirm.action]?.confirm}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Comment Dialog ──────────────────────────────────── */}
       <Dialog open={commentDialog.open} onClose={closeCommentDialog} maxWidth="sm" fullWidth>

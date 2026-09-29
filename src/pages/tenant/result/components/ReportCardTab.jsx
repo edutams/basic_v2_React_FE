@@ -553,6 +553,7 @@ const ReportCardView = ({ report, className, sessionTermLabel, getTemplateIndexF
       report={buildReportProp(report)}
       sessionTerm={{
         label: sessionTermLabel,
+        term_id: report.session_term?.term_id ?? null,
         closing_date: report.session_term?.end_date || '',
         resumption_date: '',
       }}

@@ -3,8 +3,13 @@ import tenantApi from '@/api/tenant/tenant_api';
 const BASE = '/communication';
 
 const communicationApi = {
-  // Chats
-  chatUsers: (search = '') => tenantApi.post(`${BASE}/chats/users`, { filters: search }),
+  // Chats — filters.search matches the backend's getUsers() input shape;
+  // all=1 fetches the full directory for starting brand-new chats.
+  chatUsers: (search = '', all = false) =>
+    tenantApi.post(`${BASE}/chats/users`, {
+      filters: { search },
+      ...(all ? { all: 1 } : {}),
+    }),
   chatMessages: (receiverId) => tenantApi.get(`${BASE}/chats/get_messages`, { params: { id: receiverId } }),
   chatCreate: (receiverId, message) => tenantApi.post(`${BASE}/chats/create`, { receiverId, message }),
   chatFile: (fileData, receiverId) => tenantApi.post(`${BASE}/chats/file`, { fileData, receiverId }),

@@ -2,6 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #999' };
 
@@ -157,7 +158,9 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
             </SectionCard>
             <SectionCard title="STATUS">
               <Table size="small"><TableBody>
-                <TableRow><TableCell>Promotion</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>Promoted to {className}</TableCell></TableRow>
+                {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+                  <TableRow><TableCell>Promotion</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{promotionLine(report, className)}</TableCell></TableRow>
+                )}
                 <TableRow><TableCell>This Term Ends</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || '2026-07-12'}</TableCell></TableRow>
                 <TableRow><TableCell>Next Term Begins</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>
                 <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>

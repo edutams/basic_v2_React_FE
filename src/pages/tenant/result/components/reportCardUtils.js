@@ -28,11 +28,117 @@ export const ordinalSuffix = (n) => {
   return s[(v - 20) % 10] || s[v] || s[0];
 };
 
+// ── Signatures (comment nomenclatures) ────────────────────────
+// The dossier payload carries the school's active comment
+// nomenclatures (position + uploaded signature). Each template slot is
+// filled by matching the position name, so the printed signature is the
+// one the school configured instead of a hardcoded image.
+const HEAD_OF_SCHOOL_PATTERN = /head of school|principal|head teacher|proprietor|chief instructor/i;
+const CLASS_TEACHER_PATTERN = /class teacher|classmaster|class master|form teacher|form master/i;
+
+const DEFAULT_HOS_LABEL = "Head of School's Signature";
+const DEFAULT_TEACHER_LABEL = "Class Teacher's Signature";
+
+// "Principal's" → "Principal's Signature"; anything already naming a
+// signature is left alone.
+const signatureLabel = (entry, fallback) => {
+  const name = (entry?.position_name || '').trim();
+  if (!name) return fallback;
+  return /signature/i.test(name) ? name : `${name} Signature`;
+};
+
+export const resolveSignatures = (list = []) => {
+  const active = (list || []).filter((s) => s && (s.status ?? 'active') === 'active');
+  const withImage = active.filter((s) => s.signature);
+  const match = (pattern) => withImage.find((s) => pattern.test(s.position_name || '')) || null;
+
+  const headOfSchool = match(HEAD_OF_SCHOOL_PATTERN);
+  const classTeacher = match(CLASS_TEACHER_PATTERN);
+
+  return {
+    list: active,
+    head_of_school: headOfSchool
+      ? { ...headOfSchool, label: signatureLabel(headOfSchool, DEFAULT_HOS_LABEL) }
+      : null,
+    class_teacher: classTeacher
+      ? { ...classTeacher, label: signatureLabel(classTeacher, DEFAULT_TEACHER_LABEL) }
+      : null,
+  };
+};
+
+// ── Cognitive Domain columns ───────────────────────────────────
+// The templates' subject tables are driven by the mark configuration
+// (how many CAs, what each is worth), not by a fixed 2-test layout —
+// a school on CA 30 / Exam 70 gets 30 and 70, not the 20 / 80 that used
+// to be hardcoded in every template.
+
+// `ca_content` arrives as a list, but older payloads still carry the raw
+// {"ca1": {...}, "ca2": {...}} object (or its JSON string) — read all three.
+const caContentList = (markConfig) => {
+  let raw = markConfig?.ca_content;
+  if (!raw) return [];
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch (error) {
+      return [];
+    }
+  }
+  if (Array.isArray(raw)) return raw;
+  return typeof raw === 'object' ? Object.values(raw) : [];
+};
+
+// "Exam (70%)" — the configured weight, plain text when unconfigured.
+export const pctLabel = (label, max) => {
+  const value = Number(max);
+  return value ? `${label} (${value}%)` : label;
+};
+
+// Same, without the percent sign — the transposed templates print the
+// obtainable marks as bare numbers (20, 80, 100).
+export const withWeight = (label, max) => {
+  const value = Number(max);
+  return value ? `${label} (${value})` : label;
+};
+
+// One CA column per configured CA, keyed to the `ca1..caN` values the
+// subjects carry. Falls back to whatever the stored results contain when
+// the term has no mark configuration yet.
+export const caColumnsFor = (report, subjects = []) => {
+  const caContent = caContentList(report?.mark_config);
+  if (caContent.length > 0) {
+    return caContent.map((c, idx) => ({
+      key: `ca${idx + 1}`,
+      name: c?.display_name || `CA ${idx + 1}`,
+      max: Number(c?.max_score || 0),
+    }));
+  }
+
+  const first = subjects[0] || {};
+  return Object.keys(first)
+    .filter((key) => /^ca\d+$/.test(key))
+    .sort((a, b) => Number(a.slice(2)) - Number(b.slice(2)))
+    .map((key, idx) => ({
+      key,
+      name: first[`${key}_name`] || `CA ${idx + 1}`,
+      max: Number(first[`${key}_max`] || 0),
+    }));
+};
+
+// CA total for one subject: the server-computed `ca_total`, falling back to
+// adding the individual CA scores when it is missing.
+export const caTotal = (subject) => {
+  if (subject?.ca_total !== null && subject?.ca_total !== undefined) return subject.ca_total;
+  const keys = Object.keys(subject || {}).filter((key) => /^ca\d+$/.test(key));
+  if (keys.length === 0) return null;
+  return keys.reduce((sum, key) => sum + Number(subject[key] || 0), 0);
+};
+
 // Build the `report` prop consumed by the result templates out of the
 // dossier API payload (see ResultDossierController::studentReport).
 export const buildReportProp = (report) => {
   if (!report) return null;
-  const caContent = report.mark_config?.ca_content || [];
+  const caContent = caContentList(report.mark_config);
   const perCaNames = caContent.map((c) => c?.display_name || 'CA');
 
   const subjects = (report.subjects || []).map((s) => {
@@ -57,9 +163,16 @@ export const buildReportProp = (report) => {
     return subject;
   });
 
+  const caColumns = caColumnsFor(report, subjects);
+
   return {
     subjects,
     ca_names: perCaNames,
+    // Column layout + weights for the Cognitive Domain tables.
+    ca_columns: caColumns,
+    ca_max: Number(report.mark_config?.ca_max_score || 0),
+    exam_max: Number(report.mark_config?.exam_max_score || 0),
+    no_of_ca: report.mark_config?.no_of_ca ?? caColumns.length,
     class_population: report.summary?.class_population ?? 0,
     position: report.summary?.overall_position || '-',
     total_score: report.summary?.total_score ?? 0,
@@ -83,6 +196,8 @@ export const buildReportProp = (report) => {
       end_date: report.session_term?.end_date || null,
     },
     grade_settings: report.grade_settings || [],
+    // Signatories resolved from comment_nomenclatures (see above).
+    signatures: resolveSignatures(report.comment_nomenclatures),
     pass_mark: report.pass_mark,
     publish: report.result_publish,
     // Third-term promotion fields (see promotionLine below).

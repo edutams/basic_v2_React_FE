@@ -46,12 +46,12 @@ const displayScore = (value) => (value === 0 || value ? value : '-');
 
 // Fallback grade scale — used only when the school has no configured grade settings
 const defaultGradeScale = [
-  { min: 75, max: 100, grade: 'A', remark: 'Excellent' },
-  { min: 65, max: 74, grade: 'B', remark: 'Good' },
-  { min: 55, max: 64, grade: 'C+', remark: 'Above Average' },
-  { min: 45, max: 54, grade: 'C', remark: 'Average' },
-  { min: 35, max: 44, grade: 'D', remark: 'Fair' },
-  { min: 0, max: 34, grade: 'F', remark: 'Fail' },
+  { min_score: 75, max_score: 100, grade: 'A', remark: 'Excellent' },
+  { min_score: 65, max_score: 74, grade: 'B', remark: 'Good' },
+  { min_score: 55, max_score: 64, grade: 'C+', remark: 'Above Average' },
+  { min_score: 45, max_score: 54, grade: 'C', remark: 'Average' },
+  { min_score: 35, max_score: 44, grade: 'D', remark: 'Fair' },
+  { min_score: 0, max_score: 34, grade: 'F', remark: 'Fail' },
 ];
 
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };

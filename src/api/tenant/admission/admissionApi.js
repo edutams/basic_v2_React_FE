@@ -50,6 +50,15 @@ export const getOpenBatches = () =>
   api.get('/admission/open-batches');
 
 // Admission Applications
+
+// Creates a bare draft Admission the instant a parent confirms a batch —
+// before Ward Details even renders — so the application (and its id) exists
+// from the very first click and can be resumed from any device.
+export const createDraftAdmission = async (admissionBatchId) => {
+  const response = await api.post('/admission/applications/draft', { admission_batch_id: admissionBatchId });
+  return response.data;
+};
+
 export const createAdmissionApplication = async (data, isFormData = false) => {
   const config = isFormData ? {
     headers: {

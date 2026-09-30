@@ -16,7 +16,7 @@ import {
   Snackbar,
   Avatar,
 } from '@mui/material';
-import { IconPrinter, IconChartBar, IconArrowLeft, IconClipboardCheck } from '@tabler/icons-react';
+import { IconPrinter, IconChartBar, IconArrowLeft, IconClipboardCheck, IconLock } from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -48,6 +48,7 @@ const ReportCardTab = () => {
   const [loadingRegs, setLoadingRegs] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState('');
+  const [paymentRequired, setPaymentRequired] = useState(false);
   const [schoolInfo, setSchoolInfo] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -112,6 +113,7 @@ const ReportCardTab = () => {
     const load = async () => {
       setLoadingReport(true);
       setError('');
+      setPaymentRequired(false);
       try {
         const res = await resultDossierApi.getMyReport({
           session_term_id: Number(selectedSessionTerm),
@@ -128,7 +130,11 @@ const ReportCardTab = () => {
         if (cancelled) return;
         console.error('Failed to load learner report card:', err);
         setReport(null);
-        setError(err?.response?.data?.message || 'Failed to load your report card.');
+        if (err?.response?.data?.reason === 'payment_required') {
+          setPaymentRequired(true);
+        } else {
+          setError(err?.response?.data?.message || 'Failed to load your report card.');
+        }
       } finally {
         if (!cancelled) setLoadingReport(false);
       }
@@ -442,6 +448,24 @@ const ReportCardTab = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                 Loading your report card...
               </Typography>
+            </Box>
+          ) : paymentRequired ? (
+            <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
+              <IconLock size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+              <Alert severity="warning" sx={{ textAlign: 'left', mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight={900}>
+                  Payment Required
+                </Typography>
+                You must clear your outstanding fees before you can view your results for
+                this term.
+              </Alert>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => navigate('/pay-school-fees')}
+              >
+                Go to Payments
+              </Button>
             </Box>
           ) : publishBlocked ? (
             <Box sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gap: 2 }}>

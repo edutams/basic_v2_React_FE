@@ -307,6 +307,7 @@ const StatCards = ({ overview = {}, loading = false, onCardClick }) => {
                     }}
                   >
                     {wallet.account_no}
+                    {wallet.bank_name && ` (${wallet.bank_name})`}
                   </Typography>
                   {wallet.account_name && (
                     <Typography sx={{ fontSize: '0.6rem', color: '#9CA3AF', mt: 0.1 }}>

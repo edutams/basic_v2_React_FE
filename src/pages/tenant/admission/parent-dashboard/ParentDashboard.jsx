@@ -185,9 +185,11 @@ const ParentDashboard2 = () => {
     if (!stillThere) setSelectedWard(wards[0]);
   }, [wards]);
 
-  const handleApply = (batch) => {
+  const handleApply = (batch, draft) => {
     setAdmissionModalOpen(false);
-    navigate('/admission/new-application', { state: { batch } });
+    navigate('/admission/new-application', {
+      state: { batch, ward: draft, resumeApplication: true },
+    });
   };
 
   return (
@@ -245,6 +247,7 @@ const ParentDashboard2 = () => {
           <ParentWalletAccount
             totalPayable={finance?.outstanding}
             accountNumber={finance?.walletAccount}
+            bankName={finance?.walletBankName}
             walletBalance={finance?.walletBalance}
             parentName={[user?.fname, user?.lname].filter(Boolean).join(' ')}
           />

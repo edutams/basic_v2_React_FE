@@ -7,7 +7,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import WalletTransactionsModal from './wallet-transactions-modal';
 
-const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, parentName }) => {
+const ParentWalletAccount = ({ totalPayable = 0, accountNumber, bankName, walletBalance, parentName }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
@@ -94,6 +94,7 @@ const ParentWalletAccount = ({ totalPayable = 0, accountNumber, walletBalance, p
               </Typography>
               <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
                 {accountNumber}
+                {bankName && ` (${bankName})`}
               </Typography>
             </Box>
             {walletBalance != null && (

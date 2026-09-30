@@ -1356,6 +1356,7 @@ const PayInvoice = () => {
                             sx={{ display: 'block' }}
                           >
                             Wallet No: {wallet.wallet_no}
+                            {wallet.bank_name && ` (${wallet.bank_name})`}
                           </Typography>
                           {walletInsufficient && (
                             <Chip
@@ -1538,6 +1539,7 @@ const PayInvoice = () => {
                       sx={{ display: 'block' }}
                     >
                       Wallet No: {wallet.wallet_no}
+                      {wallet.bank_name && ` (${wallet.bank_name})`}
                     </Typography>
                   </Box>
                 </Box>

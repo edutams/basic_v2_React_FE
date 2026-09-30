@@ -100,6 +100,9 @@ const WalletTransactions = Loadable(
   lazy(() => import('@/pages/tenant/transaction/wallet/WalletTransactions')),
 );
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
+const PaymentHistory = Loadable(
+  lazy(() => import('@/pages/tenant/finance/bursary/PaymentHistory')),
+);
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
 const SubjectRegistration = Loadable(
   lazy(() => import('@/pages/tenant/subject-registration/SubjectRegistration')),
@@ -460,6 +463,17 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="walet_manager.transactions.index">
             <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        // bursary_manager.payment_history.index is shared across staff,
+        // parent, and student roles (see FinanceModuleSeeder) — the actual
+        // "who may view whom" scoping happens in PaymentHistoryController.
+        path: 'bursary/payment-history',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.payment_history.index">
+            <PaymentHistory />
           </TenantProtectedRoute>
         ),
       },

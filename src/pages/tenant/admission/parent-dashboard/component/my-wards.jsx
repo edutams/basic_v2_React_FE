@@ -246,6 +246,7 @@ const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
                   }}
                 >
                   {ward.walletAccount}
+                  {ward.walletBankName && ` (${ward.walletBankName})`}
                 </Typography>
               </Box>
               {ward.walletBalance != null && (

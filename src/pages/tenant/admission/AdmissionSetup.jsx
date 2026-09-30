@@ -209,6 +209,18 @@ const STD_NUM_OPTIONS = [
   { key: '[:stdNum_5]', label: '5 digits', example: '00001' },
 ];
 
+// Drops any segment that isn't a real format token — a stray "on" (or
+// anything else) can never survive into what's shown or saved, regardless
+// of what put it there in the first place.
+const sanitizeCodeFormat = (value) => {
+  const validTokens = new Set(['[:shortname]', '[:year]', ...STD_NUM_OPTIONS.map((o) => o.key)]);
+
+  return (value || '')
+    .split('/')
+    .filter((token) => validTokens.has(token))
+    .join('/');
+};
+
 const FORMAT_PRESETS = [
   { label: 'Shortname / Year / Seq', value: '[:shortname]/[:year]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
   { label: 'Year / Shortname / Seq', value: '[:year]/[:shortname]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
@@ -347,7 +359,7 @@ const AdmissionSetup = () => {
       const savedShortName = res?.data?.school_short_name ?? '';
 
       // Put the full format directly into the input field
-      setCodeFormatInput(savedFormat);
+      setCodeFormatInput(sanitizeCodeFormat(savedFormat));
       setSchoolShortName(savedShortName || '');
 
       // Detect which student number is selected
@@ -503,7 +515,7 @@ const AdmissionSetup = () => {
   };
 
   // Get the complete format string — everything is already in the input
-  const getFullCodeFormat = () => codeFormatInput.trim();
+  const getFullCodeFormat = () => sanitizeCodeFormat(codeFormatInput.trim());
 
   const handleShortNameChange = (e) => {
     const value = e.target.value.toUpperCase();
@@ -1205,6 +1217,7 @@ const AdmissionSetup = () => {
                                               </Typography>
                                               <Radio
                                                 checked={isSelected}
+                                                value={opt.key}
                                                 size="small"
                                                 sx={{ p: 0, '&.Mui-checked': { color: 'primary.main' } }}
                                               />

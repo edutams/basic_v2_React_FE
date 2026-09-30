@@ -7,7 +7,8 @@ import {
   FormControl,
   Select,
   MenuItem,
-  CircularProgress,
+  Skeleton,
+  Stack,
   useTheme,
 } from '@mui/material';
 import {
@@ -24,7 +25,11 @@ import PageContainer from '@/components/container/PageContainer';
 import AdmissionBatchModal from '@/components/tenant/admission/AdmissionBatchModal';
 import ApplicationCard from '@/components/tenant/admission/status/ApplicationCard';
 import { getAllMyAdmissionApplication } from '@/api/tenant/admission/admissionApi';
-import { fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessionTerms,
+  fetchTenantSessions,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
 import { useNotification } from 'src/hooks/useNotification';
 
 /**
@@ -79,6 +84,42 @@ const SummaryPill = ({ icon: Icon, label, value, color, bg }) => {
   );
 };
 
+/**
+ * Placeholder matching ApplicationCard's general shape (avatar, name,
+ * info-row grid, progress rail, action button) so the loading state doesn't
+ * jump/reflow once real cards render in.
+ */
+const ApplicationCardSkeleton = () => (
+  <Paper sx={{ borderRadius: 3, p: 3 }}>
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+      <Skeleton variant="circular" width={48} height={48} />
+      <Box sx={{ flex: 1 }}>
+        <Skeleton variant="text" width="60%" height={24} />
+        <Skeleton variant="text" width="40%" height={18} />
+      </Box>
+      <Skeleton variant="rounded" width={72} height={24} />
+    </Stack>
+    <Stack spacing={1.5} sx={{ mb: 2.5 }}>
+      <Stack direction="row" spacing={1.5}>
+        <Skeleton variant="rounded" width={32} height={32} />
+        <Box sx={{ flex: 1 }}>
+          <Skeleton variant="text" width="40%" height={14} />
+          <Skeleton variant="text" width="70%" height={18} />
+        </Box>
+      </Stack>
+      <Stack direction="row" spacing={1.5}>
+        <Skeleton variant="rounded" width={32} height={32} />
+        <Box sx={{ flex: 1 }}>
+          <Skeleton variant="text" width="40%" height={14} />
+          <Skeleton variant="text" width="70%" height={18} />
+        </Box>
+      </Stack>
+    </Stack>
+    <Skeleton variant="rounded" width="100%" height={6} sx={{ mb: 2.5 }} />
+    <Skeleton variant="rounded" width="100%" height={36} />
+  </Paper>
+);
+
 const MyApplication = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,47 +129,81 @@ const MyApplication = () => {
 
   const [batchModalOpen, setBatchModalOpen] = useState(false);
   const [applications, setApplications] = useState([]);
-  const [selectedSessionTerm, setSelectedSessionTerm] = useState('all');
-  const [sessionTerms, setSessionTerms] = useState([{ id: 'all', label: 'All Sessions' }]);
+
+  const [sessions, setSessions] = useState([{ id: 'all', label: 'All Sessions' }]);
+  const [terms, setTerms] = useState([{ id: 'all', label: 'All Terms' }]);
+  const [selectedSessionId, setSelectedSessionId] = useState('all');
+  const [selectedTermId, setSelectedTermId] = useState('all');
 
   const [loading, setLoading] = useState(true);
-  const [sessionTermsLoading, setSessionTermsLoading] = useState(true);
+  const [termsLoading, setTermsLoading] = useState(false);
 
-  // Load session terms for filter
+  // Load every session the tenant has, plus the currently active
+  // session+term (to preselect both filters on first load) in parallel.
   useEffect(() => {
-    const loadSessionTerms = async () => {
-      setSessionTermsLoading(true);
+    const loadSessionsAndActive = async () => {
       try {
-        const response = await fetchSessionTerms();
-        const sess_terms = [
+        const [sessionsRes, activeRes] = await Promise.all([
+          fetchTenantSessions({ pagination: false }),
+          fetchActiveTenantSessionTerm().catch(() => null),
+        ]);
+
+        setSessions([
           { id: 'all', label: 'All Sessions' },
-          ...response.data.map((sterm) => ({
-            id: sterm.id,
-            label:
-              `${sterm.session?.session_name || ''} ${sterm.term?.term_name || ''}`.trim(),
-          })),
-        ];
-        setSessionTerms(sess_terms);
+          ...(sessionsRes?.data || []).map((s) => ({ id: s.id, label: s.session_name })),
+        ]);
+
+        const active = activeRes?.data;
+        if (active?.session_id) {
+          setSelectedSessionId(active.session_id);
+          setSelectedTermId(active.term_id ?? 'all');
+        }
       } catch (error) {
-        console.error('Failed to load session terms:', error);
-        notify.error('Failed to load session terms');
-      } finally {
-        setSessionTermsLoading(false);
+        console.error('Failed to load sessions:', error);
+        notify.error('Failed to load sessions');
       }
     };
 
-    loadSessionTerms();
+    loadSessionsAndActive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load applications
+  // Load the terms that belong to the selected session (a term's name repeats
+  // across every session, so the Term filter only makes sense scoped to one).
+  useEffect(() => {
+    if (selectedSessionId === 'all') {
+      setTerms([{ id: 'all', label: 'All Terms' }]);
+      setSelectedTermId('all');
+      return;
+    }
+
+    const loadTerms = async () => {
+      setTermsLoading(true);
+      try {
+        const response = await fetchSessionTerms(selectedSessionId);
+        setTerms([
+          { id: 'all', label: 'All Terms' },
+          ...response.data.map((st) => ({ id: st.term_id, label: st.term?.term_name || '—' })),
+        ]);
+      } catch (error) {
+        console.error('Failed to load terms:', error);
+        notify.error('Failed to load terms');
+      } finally {
+        setTermsLoading(false);
+      }
+    };
+
+    loadTerms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSessionId]);
+
+  // Load every application once — filtering by session/term happens
+  // client-side below, so switching filters never needs another round trip.
   useEffect(() => {
     const loadApplications = async () => {
-      if (!selectedSessionTerm) return;
-
       setLoading(true);
       try {
-        const sessionTermId = selectedSessionTerm === 'all' ? null : selectedSessionTerm;
-        const response = await getAllMyAdmissionApplication(sessionTermId);
+        const response = await getAllMyAdmissionApplication();
         const apps = response?.data || [];
 
         // Transform backend data to match ApplicationCard expectations
@@ -152,7 +227,7 @@ const MyApplication = () => {
           form_submit_status: app.form_submit_status,
           admission_status: app.admission_status,
           image: app.passport_photo || null,
-          // Keep original data for navigation
+          // Keep original data for navigation and session/term filtering
           _original: app,
         }));
 
@@ -166,22 +241,41 @@ const MyApplication = () => {
     };
 
     loadApplications();
-  }, [selectedSessionTerm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const handleApplyAdmission = (batch) => {
-    navigate('/admission/new-application', { state: { batch } });
+  const filteredApplications = useMemo(() => {
+    if (selectedSessionId === 'all' && selectedTermId === 'all') {
+      return applications;
+    }
+
+    return applications.filter((app) => {
+      const sessionTerm = app._original?.admission_batch?.session_term;
+      if (!sessionTerm) return false;
+
+      const sessionMatch = selectedSessionId === 'all' || sessionTerm.session_id === selectedSessionId;
+      const termMatch = selectedTermId === 'all' || sessionTerm.term_id === selectedTermId;
+
+      return sessionMatch && termMatch;
+    });
+  }, [applications, selectedSessionId, selectedTermId]);
+
+  const handleApplyAdmission = (batch, draft) => {
+    navigate('/admission/new-application', {
+      state: { batch, ward: draft, resumeApplication: true },
+    });
   };
 
   const summary = useMemo(() => {
-    const submitted = applications.filter((a) => a.form_submit_status === 'yes').length;
-    const admitted = applications.filter((a) => (a.admission_status || '').toLowerCase() === 'admitted').length;
-    const pending = applications.filter((a) => {
+    const submitted = filteredApplications.filter((a) => a.form_submit_status === 'yes').length;
+    const admitted = filteredApplications.filter((a) => (a.admission_status || '').toLowerCase() === 'admitted').length;
+    const pending = filteredApplications.filter((a) => {
       const status = (a.admission_status || 'pending').toLowerCase();
       return status !== 'admitted' && status !== 'declined';
     }).length;
 
-    return { total: applications.length, submitted, admitted, pending };
-  }, [applications]);
+    return { total: filteredApplications.length, submitted, admitted, pending };
+  }, [filteredApplications]);
 
   return (
     <PageContainer title="My Applications" description="View all admission applications">
@@ -200,24 +294,50 @@ const MyApplication = () => {
           <Typography variant="body2" color="text.secondary">
             {loading
               ? 'Loading...'
-              : `${applications.length} application${applications.length !== 1 ? 's' : ''} found`}
+              : `${filteredApplications.length} application${filteredApplications.length !== 1 ? 's' : ''} found`}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <Select
-              value={selectedSessionTerm}
-              onChange={(e) => setSelectedSessionTerm(e.target.value)}
-              sx={{ borderRadius: '10px' }}
-            >
-              {sessionTerms.map((st) => (
-                <MenuItem key={st.id} value={st.id}>
-                  {st.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              p: 0.75,
+              borderRadius: '12px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#eef2f9',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+            }}
+          >
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <Select
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                sx={{ borderRadius: '8px', bgcolor: 'background.paper' }}
+              >
+                {sessions.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 140 }} disabled={selectedSessionId === 'all' || termsLoading}>
+              <Select
+                value={selectedTermId}
+                onChange={(e) => setSelectedTermId(e.target.value)}
+                sx={{ borderRadius: '8px', bgcolor: 'background.paper' }}
+              >
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
 
           <Button
             variant="contained"
@@ -252,7 +372,7 @@ const MyApplication = () => {
       </Box>
 
       {/* Summary strip */}
-      {!loading && applications.length > 0 && (
+      {!loading && filteredApplications.length > 0 && (
         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 3 }}>
           <SummaryPill icon={AssignmentIcon} label="Total" value={summary.total} color="#2563eb" bg="#dbeafe" />
           <SummaryPill icon={TaskAltIcon} label="Submitted" value={summary.submitted} color="#0284c7" bg="#e0f2fe" />
@@ -264,11 +384,17 @@ const MyApplication = () => {
       {/* Application cards */}
       {loading ? (
         <Box
-          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 420px))',
+            gap: 3,
+          }}
         >
-          <CircularProgress />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ApplicationCardSkeleton key={i} />
+          ))}
         </Box>
-      ) : applications.length === 0 ? (
+      ) : filteredApplications.length === 0 ? (
         <Paper
           sx={{
             borderRadius: 3,
@@ -318,7 +444,7 @@ const MyApplication = () => {
             gap: 3,
           }}
         >
-          {applications.map((app) => (
+          {filteredApplications.map((app) => (
             <ApplicationCard key={app.id} app={app} />
           ))}
         </Box>

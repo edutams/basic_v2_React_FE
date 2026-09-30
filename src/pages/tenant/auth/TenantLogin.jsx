@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography, Button, Alert } from '@mui/material';
 import { InfoOutlined } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
@@ -13,6 +14,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ParentForm from '@/components/tenant/parents/ParentForm';
 import guardianApi from '@/api/tenant/guardians/parentApi';
+import { fetchLandingStatus } from '@/api/tenant/public/publicApi';
 
 const cardStyle = {
   p: 3,
@@ -71,6 +73,47 @@ const TenantLogin = () => {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const recaptchaRef = useRef(null);
+  const navigate = useNavigate();
+
+  // Pre-login landing state — whether admission is open and whether a
+  // recent term's result has been published — drives the three cards below.
+  // Defaults to "nothing to show yet" so the cards never claim something is
+  // open/out before the real state has loaded (or if the call fails).
+  const [landingStatus, setLandingStatus] = useState({
+    admission: { open: false, batch_count: 0 },
+    result: { published: false, session_term_label: null },
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchLandingStatus()
+      .then((res) => {
+        if (!cancelled && res?.data) {
+          setLandingStatus(res.data);
+        }
+      })
+      .catch(() => {
+        // Leave the safe "closed/not out" default in place on failure.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // A prospective/existing parent checking a result or an admission
+  // status doesn't have a session yet — send them to the login form and
+  // let AuthTenantLogin's existing post-login redirect (location.state.from)
+  // land them on the real page once authenticated.
+  const goToLoginThenRedirect = (pathname) => {
+    setView('login');
+    navigate('/login', { state: { from: { pathname } } });
+  };
+
+  const admissionOpen = landingStatus.admission?.open ?? false;
+  const resultPublished = landingStatus.result?.published ?? false;
+  const resultTermLabel = landingStatus.result?.session_term_label;
 
   const handleAdmissionSubmit = async (values) => {
     if (!captchaToken) {
@@ -159,7 +202,7 @@ const TenantLogin = () => {
                 sx={{ justifyContent: 'center', maxWidth: 1100, margin: '0 auto' }}
               >
                 <Grid item xs={12} sm={6} md={4}>
-                  <Box sx={[cardStyle1, cardStyle]}>
+                  <Box sx={[cardStyle1, cardStyle, ...(admissionOpen ? [] : [{ opacity: 0.6 }])]}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconCircle>
                         <SchoolIcon fontSize="small" />
@@ -167,9 +210,13 @@ const TenantLogin = () => {
                       <Typography variant="h6">2026/2027 Admission</Typography>
                     </Box>
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
-                      NOW OPEN
+                      {admissionOpen ? 'NOW OPEN' : 'CLOSED'}
                     </Typography>
-                    <Button variant="contained" size="small" onClick={() => setView('apply')}
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={!admissionOpen}
+                      onClick={() => setView('apply')}
                       sx={[
                         buttonStyle,
                         {
@@ -187,17 +234,25 @@ const TenantLogin = () => {
                 </Grid>
 
                 <Grid item xs={12} sm={6} md={4}>
-                  <Box sx={[cardStyle2, cardStyle]}>
+                  <Box sx={[cardStyle2, cardStyle, ...(resultPublished ? [] : [{ opacity: 0.6 }])]}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <IconCircle>
                         <SchoolIcon fontSize="small" />
                       </IconCircle>
-                      <Typography variant="h6">2026/2027 Result</Typography>
+                      <Typography variant="h6">
+                        {resultPublished && resultTermLabel ? resultTermLabel : '2026/2027'} Result
+                      </Typography>
                     </Box>
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
-                      IS OUT
+                      {resultPublished ? 'IS OUT' : 'NOT OUT YET'}
                     </Typography>
-                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={!resultPublished}
+                      onClick={() => goToLoginThenRedirect('/result-reportcard')}
+                      sx={[buttonStyle, { background: '#C2B07AA8', color: '#fff' }]}
+                    >
                       Check Result
                     </Button>
                   </Box>
@@ -214,7 +269,12 @@ const TenantLogin = () => {
                     <Typography variant="h4" fontWeight="bold" textAlign="center">
                       STATUS
                     </Typography>
-                    <Button variant="contained" size="small" sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => goToLoginThenRedirect('/admission_manager/my_applications')}
+                      sx={[buttonStyle, { background: '#0f81de', color: '#fff' }]}
+                    >
                       Check Admission
                     </Button>
                   </Box>

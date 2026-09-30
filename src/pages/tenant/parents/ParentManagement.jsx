@@ -305,10 +305,14 @@ const ParentManagement = () => {
 
   const handleUploadTemplate = async (file) => {
     const res = await guardianApi.uploadTemplate(file);
-    const message = res?.data?.message || 'Upload complete';
+    let message = res?.data?.message || 'Upload complete';
+    const warnings = res?.data?.data?.warnings || [];
+    if (warnings.length) {
+      message += `\n\n${warnings.join('\n')}`;
+    }
     fetchParents();
     fetchStats();
-    return message;
+    return { message, hasWarnings: warnings.length > 0 };
   };
 
   const hasFilters = search !== '' || classId !== '';

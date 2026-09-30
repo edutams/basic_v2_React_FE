@@ -650,16 +650,19 @@ const ClassTeacherAllocation = () => {
         confirmText="Remove"
       />
 
-      {/* Already-a-class-teacher-elsewhere warning — warn, don't block */}
+      {/* Already-a-class-teacher-elsewhere notice — purely informational,
+          never blocks the assignment. Worded carefully so it doesn't read
+          as an error: a teacher covering more than one class (even across
+          programmes) is a perfectly normal setup. */}
       <ConfirmationDialog
         open={conflictDialog.open}
         onClose={undoConflictedTeacherChange}
         onConfirm={() => setConflictDialog((prev) => ({ ...prev, open: false }))}
-        title="Teacher already assigned elsewhere"
-        message={`${conflictDialog.teacherName} is already the class teacher of ${conflictDialog.className} this term. You can still proceed if this teacher is meant to cover both classes.`}
-        severity="warning"
-        confirmText="Proceed anyway"
-        cancelText="Undo"
+        title="Just confirming — this teacher already covers another class"
+        message={`${conflictDialog.teacherName} is already set as the class teacher for ${conflictDialog.className} this term. That's completely fine if they're meant to cover both classes — this isn't an error, just a check before saving.`}
+        severity="info"
+        confirmText="Yes, this is intentional"
+        cancelText="No, undo this"
       />
     </Box>
   );

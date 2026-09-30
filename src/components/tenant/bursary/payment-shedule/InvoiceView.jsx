@@ -88,6 +88,13 @@ const InvoiceView = () => {
     );
   };
 
+  const handleProceedToPay = (student) => {
+    window.open(
+      `/class-ledger/${student.invoice_number}/${student?.student?.user_id}/pay-invoice`,
+      '_blank',
+    );
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
@@ -348,6 +355,7 @@ const InvoiceView = () => {
                         fontSize={15}
                       >
                         Wallet No -: {student?.student?.wallet_no}
+                        {student?.student?.bank_name && ` (${student.student.bank_name})`}
                       </Typography>
                     </Box>
                   )}
@@ -380,7 +388,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">
+                <Button variant="contained" size="small" onClick={() => handleProceedToPay(student)}>
                   Proceed to Pay
                 </Button>
                 <Button
@@ -593,7 +601,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">
+                <Button variant="contained" size="small" onClick={() => handleProceedToPay(student)}>
                   Proceed to Pay
                 </Button>
                 <Button

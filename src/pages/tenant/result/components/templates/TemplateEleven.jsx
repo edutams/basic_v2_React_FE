@@ -17,6 +17,7 @@ const responsiveCSS = `
 `;
 
 const TemplateEleven = ({ student, report, sessionTerm, className, gradeScale }) => {
+  const hosSignature = report?.signatures?.head_of_school;
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
     <div style={{ fontFamily: 'Times New Roman, serif', color: '#000', fontSize: '14px', minWidth: 900 }}>
@@ -181,9 +182,9 @@ const TemplateEleven = ({ student, report, sessionTerm, className, gradeScale })
           {/* Signature */}
           <div>
             <div style={{ height: 60, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <img src={signatureImg} alt="Head of School's Signature" style={{ height: 60, objectFit: 'contain' }} />
+              <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 60, objectFit: 'contain' }} />
             </div>
-            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Head of School's Signature</strong></div>
+            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
             <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
           </div>

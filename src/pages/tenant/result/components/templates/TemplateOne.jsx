@@ -35,6 +35,7 @@ const responsiveCSS = `
 `;
 
 const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) => {
+  const hosSignature = report?.signatures?.head_of_school;
   const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
 
   return (
@@ -269,9 +270,9 @@ const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) =>
               <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '2px solid #000' }}><strong>Percentage</strong><br />{avg}%</TableCell></TableRow>
               <TableRow><TableCell style={{ textAlign: 'center' }}>
                 <div style={{ height: 50, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <img src={signatureImg} alt="Head of School's Signature" style={{ height: 50, objectFit: 'contain' }} />
+                  <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 50, objectFit: 'contain' }} />
                 </div>
-                <div style={{ borderTop: '1px solid #000', paddingTop: 2, marginTop: 4 }}><strong>Head of School's Signature</strong></div>
+                <div style={{ borderTop: '1px solid #000', paddingTop: 2, marginTop: 4 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
                 <div style={{ marginTop: 8, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
                 <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
               </TableCell></TableRow>

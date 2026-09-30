@@ -27,6 +27,8 @@ const responsiveCSS = `
 `;
 
 const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) => {
+  const hosSignature = report?.signatures?.head_of_school;
+  const classTeacherSignature = report?.signatures?.class_teacher;
   const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
 
   return (
@@ -331,6 +333,9 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             </div>
             <div style={{ flex: '0 0 120px' }}>
               <p><strong>Signature:</strong></p>
+              {classTeacherSignature && (
+                <img src={classTeacherSignature.signature} alt={classTeacherSignature.label} style={{ height: 40, objectFit: 'contain' }} />
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
@@ -340,6 +345,9 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             </div>
             <div style={{ flex: '0 0 120px' }}>
               <p><strong>Signature/Stamp:</strong></p>
+              {hosSignature && (
+                <img src={hosSignature.signature} alt={hosSignature.label} style={{ height: 40, objectFit: 'contain' }} />
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
@@ -357,10 +365,10 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
 
         <div>
           <div style={{ height: 80, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={signatureImg} alt="Head of School's Signature" style={{ height: 80, objectFit: 'contain' }} />
+            <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 80, objectFit: 'contain' }} />
           </div>
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>
-            <strong>Head of School's Signature</strong>
+            <strong>{hosSignature?.label || "Head of School's Signature"}</strong>
           </div>
           <div style={{ marginTop: 20, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>

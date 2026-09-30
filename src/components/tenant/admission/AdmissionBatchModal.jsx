@@ -248,11 +248,12 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
-                  <TableCell sx={{ fontWeight: 600, width: '15%' }}>Session Term</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '30%' }}>Application Batch</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '30%' }}>Closing Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '20%' }}>Classes</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee Required</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: '13%' }}>Session Term</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '20%' }}>Application Batch</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '18%' }}>Division / Programme</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '15%' }}>Closing Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '17%' }}>Classes</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '17%' }}>Fee Required</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
                     Action
                   </TableCell>
@@ -279,6 +280,22 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
 
                       <TableCell>
                         <Typography variant="body2">{batch.batch_name}</Typography>
+                      </TableCell>
+                      <TableCell>
+                        {batch?.programme ? (
+                          <>
+                            <Typography variant="body2" fontWeight={600}>
+                              {batch.programme.division?.division_name || '—'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {batch.programme.programme_name}
+                            </Typography>
+                          </>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                            All divisions
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">{batch.closing_date}</Typography>

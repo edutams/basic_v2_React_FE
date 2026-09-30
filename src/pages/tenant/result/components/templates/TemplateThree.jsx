@@ -2,7 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine } from '../reportCardUtils';
+import { promotionLine, caTotal } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -27,6 +27,8 @@ const responsiveCSS = `
 `;
 
 const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) => {
+  const hosSignature = report?.signatures?.head_of_school;
+  const classTeacherSignature = report?.signatures?.class_teacher;
   const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
 
   return (
@@ -106,21 +108,21 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             <TableBody>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Cont. Assess. Scores</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>20</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.ca_max || ''}</TableCell>
                 {report.subjects.map((s, i) => (
-                  <TableCell key={i} style={innerCellBorder} align="center">{(s.ca1 ?? 0) + (s.ca2 ?? 0)}</TableCell>
+                  <TableCell key={i} style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                 ))}
               </TableRow>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Exam Scores</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>80</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.exam_max || ''}</TableCell>
                 {report.subjects.map((s, i) => (
                   <TableCell key={i} style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                 ))}
               </TableRow>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Weighted Average</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>100</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.ca_max + report.exam_max || 100}</TableCell>
                 {report.subjects.map((s, i) => (
                   <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                 ))}
@@ -331,6 +333,9 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             </div>
             <div style={{ flex: '0 0 120px' }}>
               <p><strong>Signature:</strong></p>
+              {classTeacherSignature && (
+                <img src={classTeacherSignature.signature} alt={classTeacherSignature.label} style={{ height: 40, objectFit: 'contain' }} />
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
@@ -340,6 +345,9 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             </div>
             <div style={{ flex: '0 0 120px' }}>
               <p><strong>Signature/Stamp:</strong></p>
+              {hosSignature && (
+                <img src={hosSignature.signature} alt={hosSignature.label} style={{ height: 40, objectFit: 'contain' }} />
+              )}
             </div>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
@@ -357,10 +365,10 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
 
         <div>
           <div style={{ height: 80, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={signatureImg} alt="Head of School's Signature" style={{ height: 80, objectFit: 'contain' }} />
+            <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 80, objectFit: 'contain' }} />
           </div>
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>
-            <strong>Head of School's Signature</strong>
+            <strong>{hosSignature?.label || "Head of School's Signature"}</strong>
           </div>
           <div style={{ marginTop: 20, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>

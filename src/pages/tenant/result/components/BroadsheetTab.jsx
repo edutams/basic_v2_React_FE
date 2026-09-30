@@ -57,6 +57,8 @@ const normalizeEntities = (entities) => {
 };
 
 // Grade/remark for an average against the school's configured scale.
+// The backend already returns a resolved `remark` per row (term + division
+// scoped) — this stays as the fallback for cached payloads.
 const remarkFor = (average, gradeSettings = []) => {
   if (average === null || average === undefined || !gradeSettings.length) return '-';
   const found = gradeSettings.find((g) => average >= g.min_score && average <= g.max_score);
@@ -686,7 +688,7 @@ const BroadsheetTab = () => {
         cwa ?? '',
         isCumulative ? (row.all_term_overall_class_position ?? '') : (row.position ?? ''),
         row.total_subjects ?? '',
-        remarkFor(cwa, gradeSettings),
+        row.remark ?? remarkFor(cwa, gradeSettings),
         ...(showPromotionButtons ? [row.promotion_recommendation || '', armName] : []),
         row.class_teachers_comment || '',
         row.hos_comment || '',
@@ -1115,7 +1117,7 @@ const BroadsheetTab = () => {
                           </TableCell>
                           <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}>{row.total_subjects ?? '-'}</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}>
-                            {remarkFor(activeTab === 0 ? row.student_average : row.all_term_average, gradeSettings)}
+                            {row.remark ?? remarkFor(activeTab === 0 ? row.student_average : row.all_term_average, gradeSettings)}
                           </TableCell>
                           {showPromotionButtons && (
                             <>

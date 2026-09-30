@@ -733,6 +733,7 @@ const ResultSetupTab = () => {
               const response = await resultSetupApi.saveCommentNomenclature({
                 id: signatureDialog.id,
                 position_name: signatureDialog.positionName,
+                status: nomenclature.find(n => n.id === signatureDialog.id)?.status,
                 signature: signatureFile,
               });
               if (response.data.status) {

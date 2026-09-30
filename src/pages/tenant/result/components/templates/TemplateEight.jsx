@@ -2,7 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine } from '../reportCardUtils';
+import { promotionLine, caTotal, pctLabel } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #999' };
 
@@ -45,6 +45,7 @@ const responsiveCSS = `
 `;
 
 const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) => {
+  const hosSignature = report?.signatures?.head_of_school;
   const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
   const affectiveAvg = Object.values(report.affective).length ? Math.round(Object.values(report.affective).reduce((a, b) => a + b, 0) / Object.values(report.affective).length) : 0;
   const psychomotorAvg = Object.values(report.psychomotor).length ? Math.round(Object.values(report.psychomotor).reduce((a, b) => a + b, 0) / Object.values(report.psychomotor).length) : 0;
@@ -112,12 +113,13 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                   <TableHead>
                     <TableRow>
                       <TableCell style={{ ...innerCellBorder, width: '30%', fontWeight: 700 }}>Subject</TableCell>
-                      {report.subjects[0]?.ca1 !== undefined && (
-                        <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Test 1 (10%)</div></TableCell>
-                      )}
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Test 2 (10%)</div></TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Average (20%)</div></TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Exam (80%)</div></TableCell>
+                      {report.ca_columns.map((col) => (
+                        <TableCell key={col.key} style={{ ...innerCellBorder, textAlign: 'center' }}>
+                          <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel(col.name, col.max)}</div>
+                        </TableCell>
+                      ))}
+                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Average', report.ca_max)}</div></TableCell>
+                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Total(100%)</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700, verticalAlign: 'bottom' }}>Grade</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700, verticalAlign: 'bottom' }}>Remark</TableCell>
@@ -127,9 +129,10 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                     {report.subjects.map((s, i) => (
                       <TableRow key={i}>
                         <TableCell style={innerCellBorder}>{s.subject_name}</TableCell>
-                        {report.subjects[0]?.ca1 !== undefined && <TableCell style={innerCellBorder} align="center">{s.ca1 ?? '-'}</TableCell>}
-                        <TableCell style={innerCellBorder} align="center">{s.ca2 ?? '-'}</TableCell>
-                        <TableCell style={innerCellBorder} align="center">{s.total ? Math.round(s.total / 2) : '-'}</TableCell>
+                        {report.ca_columns.map((col) => (
+                          <TableCell key={col.key} style={innerCellBorder} align="center">{s[col.key] ?? '-'}</TableCell>
+                        ))}
+                        <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                         <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                         <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                         <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</TableCell>
@@ -199,9 +202,9 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
 
           <div style={{ marginTop: 4 }}>
             <div style={{ height: 50, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <img src={signatureImg} alt="Head of School's Signature" style={{ height: 50, objectFit: 'contain' }} />
+              <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 50, objectFit: 'contain' }} />
             </div>
-            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Head of School's Signature</strong></div>
+            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
             <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
           </div>

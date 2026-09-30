@@ -6,13 +6,16 @@ import {
   getAdmissionApplication,
 } from '@/api/tenant/admission/admissionApi';
 
-const STORAGE_KEY = 'admission_form_draft';
-
 /**
- * Custom hook for managing admission form state with persistence
- * Saves form data to localStorage and syncs with backend
+ * Custom hook for managing admission form state, fully backed by the
+ * server — no browser-local persistence. A draft Admission row already
+ * exists (created by AdmissionBatchModal the instant "Apply Now" was
+ * confirmed) by the time this hook ever runs, so the admission id and every
+ * saved field come from `existingAdmission`/the backend, which is what
+ * makes resuming from a different device work: there's no local-only state
+ * that could be missing on a new browser/device.
  * @param {Object} selectedBatch - The selected admission batch
- * @param {Object} existingAdmission - Existing admission data to resume (optional)
+ * @param {Object} existingAdmission - The admission record to load (its own draft, or one being resumed)
  */
 export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
   const [admissionId, setAdmissionId] = useState(null);
@@ -65,123 +68,30 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
 
   useEffect(() => {
     const loadAdmissionData = async () => {
-
-      const savedDraft = localStorage.getItem(STORAGE_KEY);
-
-      let parsedDraft = null;
-
-      if (savedDraft) {
-        try {
-          parsedDraft = JSON.parse(savedDraft);
-        } catch (error) {
-          console.error('[useAdmissionForm] Invalid localStorage draft');
-        }
-      }
-
-      /**
-       * ─────────────────────────────────────────────
-       * PRIORITY 1: existingAdmission (fresh state)
-       * ─────────────────────────────────────────────
-       */
-      if (existingAdmission) {
-
-        const transformedData =
-          transformAdmissionToFormData(existingAdmission);
-
-        setAdmissionId(existingAdmission.id);
-        setCurrentStage(existingAdmission.admission_stage || 0);
-        setFormData(transformedData);
-
-        const draft = {
-          admissionId: existingAdmission.id,
-          currentStage: existingAdmission.admission_stage || 0,
-          formData: transformedData,
-          selectedBatchId:
-            existingAdmission.admission_batch_id ||
-            existingAdmission.admission_batch?.id,
-          timestamp: new Date().toISOString(),
-        };
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-
-        parsedDraft = draft; // keep in memory for consistency
-      }
-
-      /**
-       * ─────────────────────────────────────────────
-       * PRIORITY 2: localStorage / persisted draft
-       * ─────────────────────────────────────────────
-       */
-      if (!existingAdmission && parsedDraft) {
-        console.log('[useAdmissionForm] Using localStorage draft');
-
-        setAdmissionId(parsedDraft.admissionId);
-        setCurrentStage(parsedDraft.currentStage || 0);
-        setFormData(
-          parsedDraft.formData || {
-            wardData: null,
-            academicData: null,
-            documentsData: null,
-          }
-        );
-      }
-
-      /**
-       * ─────────────────────────────────────────────
-       * PRIORITY 3: backend refresh (if admission exists)
-       * ─────────────────────────────────────────────
-       */
-      const admissionIdToFetch =
-        existingAdmission?.id || parsedDraft?.admissionId;
-
-      if (!admissionIdToFetch) {
-        console.log('[useAdmissionForm] No admissionId found');
+      if (!existingAdmission?.id) {
         return;
       }
+
+      // Load what we already have immediately (no loading flicker), then
+      // refresh from the backend below to pick up anything saved from
+      // another device/tab since this object was fetched.
+      setAdmissionId(existingAdmission.id);
+      setCurrentStage(existingAdmission.admission_stage || 0);
+      setFormData(transformAdmissionToFormData(existingAdmission));
 
       try {
         setIsLoading(true);
 
-        console.log(
-          '[useAdmissionForm] Fetching fresh data:',
-          admissionIdToFetch
-        );
-
-        const response =
-          await getAdmissionApplication(admissionIdToFetch);
-
+        const response = await getAdmissionApplication(existingAdmission.id);
         const freshAdmission = response?.data;
 
         if (!freshAdmission) return;
 
-        const transformedData =
-          transformAdmissionToFormData(freshAdmission);
-
         setAdmissionId(freshAdmission.id);
         setCurrentStage(freshAdmission.admission_stage || 0);
-        setFormData(transformedData);
-
-        const updatedDraft = {
-          admissionId: freshAdmission.id,
-          currentStage: freshAdmission.admission_stage || 0,
-          formData: transformedData,
-          selectedBatchId:
-            freshAdmission.admission_batch_id ||
-            freshAdmission.admission_batch?.id,
-          timestamp: new Date().toISOString(),
-        };
-
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(updatedDraft)
-        );
-
-        console.log('[useAdmissionForm] Synced fresh data');
+        setFormData(transformAdmissionToFormData(freshAdmission));
       } catch (error) {
-        console.error(
-          '[useAdmissionForm] API fetch failed:',
-          error
-        );
+        console.error('[useAdmissionForm] Failed to refresh admission from backend:', error);
       } finally {
         setIsLoading(false);
       }
@@ -189,21 +99,9 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
 
     loadAdmissionData();
   }, [existingAdmission, transformAdmissionToFormData]);
-  // Save draft to localStorage whenever it changes
-  const saveDraft = useCallback((data = null, batchId = null, stage = null) => {
-    const draft = {
-      admissionId,
-      currentStage: stage !== null ? stage : currentStage,
-      formData: data || formData,
-      selectedBatchId: batchId || selectedBatch?.id,
-      timestamp: new Date().toISOString(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
-  }, [admissionId, currentStage, formData, selectedBatch]);
 
-  // Clear draft from localStorage
+  // Reset in-memory state after final submit.
   const clearDraft = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
     setAdmissionId(null);
     setCurrentStage(0);
     setFormData({
@@ -319,7 +217,10 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
         };
       }
 
-      // Save to backend
+      // Save to backend — admissionId is normally already set (the draft
+      // was created up front by AdmissionBatchModal), so this is almost
+      // always an update; the create branch only remains as a fallback for
+      // an admission that somehow arrived here without an id yet.
       let response;
       if (admissionId) {
         response = await updateAdmissionApplication(admissionId, payload, isFormData);
@@ -391,12 +292,6 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
       // Update state with merged data
       setFormData(mergedFormData);
 
-      // Get the batch ID from backend response to save with draft
-      const batchIdFromBackend = backendData.admission_batch_id || backendData.admission_batch?.id;
-
-      // Save merged data to localStorage with batch ID and current step
-      saveDraft(mergedFormData, batchIdFromBackend, step);
-
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Failed to save step data:', error);
@@ -414,7 +309,7 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [admissionId, formData, selectedBatch, saveDraft]);
+  }, [admissionId, formData, selectedBatch]);
 
   // Update admission stage only (for payment/document steps)
   const updateStage = useCallback(async (stage) => {
@@ -424,7 +319,6 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
     try {
       await updateAdmissionStage(admissionId, stage);
       setCurrentStage(stage);
-      saveDraft(null, null, stage); // Pass the stage value explicitly
       return { success: true };
     } catch (error) {
       console.error('Failed to update stage:', error);
@@ -435,7 +329,7 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
     } finally {
       setIsLoading(false);
     }
-  }, [admissionId, saveDraft]);
+  }, [admissionId]);
 
   // Submit final application
   const submitApplication = useCallback(async () => {
@@ -467,6 +361,5 @@ export const useAdmissionForm = (selectedBatch, existingAdmission = null) => {
     updateStage,
     submitApplication,
     clearDraft,
-    saveDraft,
   };
 };

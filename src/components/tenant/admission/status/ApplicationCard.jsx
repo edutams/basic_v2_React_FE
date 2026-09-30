@@ -243,7 +243,7 @@ const ApplicationCard = ({ app }) => {
                 fontWeight={800}
                 sx={{ lineHeight: 1.25, fontSize: { xs: '1.05rem', sm: '1.15rem' }, wordBreak: 'break-word' }}
               >
-                {app.surname} {app.first_name}
+                {app.surname || app.first_name ? `${app.surname || ''} ${app.first_name || ''}`.trim() : 'New Application (Draft)'}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                 Form No. {app.applicationNo || '—'}

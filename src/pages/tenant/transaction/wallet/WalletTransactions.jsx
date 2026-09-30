@@ -91,7 +91,10 @@ const WalletTransactions = () => {
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <Typography variant="caption">Wallet Account</Typography>
 
-                        <Typography fontWeight={700}>{wallet?.wallet_account_no}</Typography>
+                        <Typography fontWeight={700}>
+                          {wallet?.wallet_account_no}
+                          {wallet?.bank_name && ` (${wallet.bank_name})`}
+                        </Typography>
                       </Grid>
 
                       <Grid size={{ xs: 12, sm: 6 }}>

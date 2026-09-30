@@ -94,7 +94,10 @@ const WalletTransactionsModal = ({ open, onClose }) => {
                   <Typography variant="caption" color="text.secondary">
                     Wallet Account
                   </Typography>
-                  <Typography fontWeight={700}>{wallet.wallet_account_no}</Typography>
+                  <Typography fontWeight={700}>
+                    {wallet.wallet_account_no}
+                    {wallet.bank_name && ` (${wallet.bank_name})`}
+                  </Typography>
                 </Box>
                 <Box textAlign="right">
                   <Typography variant="caption" color="text.secondary">

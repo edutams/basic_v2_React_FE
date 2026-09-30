@@ -320,6 +320,7 @@ const TransactionDetailModal = ({ open, transactionId, onClose }) => {
             {txData.wallet_account_no && (
               <SectionCard icon={WalletIcon} title="Wallet Details" color="#059669" isDark={isDark}>
                 <InfoRow label="Wallet Account No." value={txData.wallet_account_no} mono />
+                {txData.bank_name && <InfoRow label="Bank Name" value={txData.bank_name} />}
               </SectionCard>
             )}
 

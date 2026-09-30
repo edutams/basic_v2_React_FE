@@ -1006,6 +1006,7 @@ const NewApplication = () => {
         <AdmissionBatchModal
           open={batchModalOpen}
           onClose={() => setBatchModalOpen(false)}
+          createDraftOnApply={false}
           onApply={(newBatch) => {
             // console.log('User manually changed batch to:', newBatch);
             setSelectedBatch(newBatch);

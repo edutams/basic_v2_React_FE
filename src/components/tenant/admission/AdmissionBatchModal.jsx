@@ -23,11 +23,11 @@ import {
 import { School as SchoolIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import { useNotification } from 'src/hooks/useNotification';
-import { getOpenBatches } from '@/api/tenant/admission/admissionApi';
+import { getOpenBatches, createDraftAdmission } from '@/api/tenant/admission/admissionApi';
 import { getFeeSummary } from '@/utils/feeSummary';
 
 // ── Confirmation dialog ───────────────────────────────────────────────────────
-const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
+const ConfirmApplyDialog = ({ batch, onConfirm, onCancel, submitting }) => {
   if (!batch) return null;
 
   const feeSummary = batch?.pre_application_payments
@@ -185,12 +185,19 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
           size="small"
           onClick={onCancel}
           color="inherit"
+          disabled={submitting}
           sx={{ fontWeight: 600 }}
         >
           Cancel
         </Button>
-        <Button size="small" onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
-          Yes, Apply Now
+        <Button
+          size="small"
+          onClick={onConfirm}
+          disabled={submitting}
+          startIcon={submitting ? <CircularProgress size={14} /> : null}
+          sx={{ fontWeight: 700, px: 3 }}
+        >
+          {submitting ? 'Starting...' : 'Yes, Apply Now'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -198,12 +205,19 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
 };
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-const AdmissionBatchModal = ({ open, onClose, onApply }) => {
+// createDraftOnApply: true for the "Apply Now" flow (a genuinely new
+// application, so a draft Admission row must be created). NewApplication.jsx
+// also reuses this modal for its "Change Admission Batch" action, mid-form
+// on an application that already has a draft — that flow passes false so it
+// doesn't spawn a second, orphaned draft; the batch change just updates
+// local state, and admission_batch_id gets persisted on the next step save.
+const AdmissionBatchModal = ({ open, onClose, onApply, createDraftOnApply = true }) => {
   const notify = useNotification();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [confirmBatch, setConfirmBatch] = useState(null); // batch pending confirmation
+  const [creatingDraft, setCreatingDraft] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -228,10 +242,32 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
     }
   };
 
-  const handleConfirmed = () => {
-    onApply(confirmBatch);
-    setConfirmBatch(null);
-    onClose();
+  const handleConfirmed = async () => {
+    if (!createDraftOnApply) {
+      onApply(confirmBatch);
+      setConfirmBatch(null);
+      onClose();
+      return;
+    }
+
+    // "Apply Now" always means a brand-new application. The admission row
+    // (and its id) is created here, before the form has even rendered, so
+    // the application exists in the backend from the very first click —
+    // not just once a step is completed. That's what makes it resumable
+    // from a different device: there's no local-only state to lose.
+    setCreatingDraft(true);
+    try {
+      const res = await createDraftAdmission(confirmBatch.id);
+      const draft = res?.data;
+      onApply(confirmBatch, draft);
+      setConfirmBatch(null);
+      onClose();
+    } catch (error) {
+      console.error('Failed to start application:', error);
+      notify.error('Failed to start application. Please try again.');
+    } finally {
+      setCreatingDraft(false);
+    }
   };
 
   return (
@@ -393,6 +429,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
           batch={confirmBatch}
           onConfirm={handleConfirmed}
           onCancel={() => setConfirmBatch(null)}
+          submitting={creatingDraft}
         />
       )}
     </>

@@ -2,7 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine } from '../reportCardUtils';
+import { promotionLine, caTotal, withWeight } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -111,19 +111,19 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
                 </TableHead>
                 <TableBody>
                   <TableRow>
-                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>Continous Assessment Score (20)</TableCell>
+                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>{withWeight('Continous Assessment Score', report.ca_max)}</TableCell>
                     {report.subjects.map((s, i) => (
-                      <TableCell key={i} style={innerCellBorder} align="center">{(s.ca1 ?? 0) + (s.ca2 ?? 0)}</TableCell>
+                      <TableCell key={i} style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>Examination Score (80)</TableCell>
+                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>{withWeight('Examination Score', report.exam_max)}</TableCell>
                     {report.subjects.map((s, i) => (
                       <TableCell key={i} style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>Total Score (100)</TableCell>
+                    <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>{withWeight('Total Score', report.ca_max + report.exam_max)}</TableCell>
                     {report.subjects.map((s, i) => (
                       <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                     ))}

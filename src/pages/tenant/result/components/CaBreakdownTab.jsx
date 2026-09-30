@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Button, Grid, FormControl, InputLabel, Select, MenuItem, Avatar, useTheme,
   CircularProgress, Alert, Snackbar,
 } from '@mui/material';
-import { IconPrinter } from '@tabler/icons-react';
+import { IconPrinter, IconLock } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
@@ -41,6 +41,7 @@ const CaBreakdownTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const studentRegistrationId = searchParams.get('student_registration_id');
   const userId = searchParams.get('user_id');
@@ -49,6 +50,7 @@ const CaBreakdownTab = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [paymentRequired, setPaymentRequired] = useState(false);
   const [payload, setPayload] = useState(null);
   const [schoolInfo, setSchoolInfo] = useState(null);
   const [selectedCaIndex, setSelectedCaIndex] = useState('');
@@ -126,6 +128,7 @@ const CaBreakdownTab = () => {
     const load = async () => {
       setLoading(true);
       setError('');
+      setPaymentRequired(false);
       try {
         const body = {
           session_term_id: effectiveSessionTermId ? Number(effectiveSessionTermId) : undefined,
@@ -152,7 +155,11 @@ const CaBreakdownTab = () => {
       } catch (err) {
         if (cancelled) return;
         console.error('Failed to fetch CA breakdown:', err);
-        setError(err?.response?.data?.message || 'Failed to load CA breakdown.');
+        if (err?.response?.data?.reason === 'payment_required') {
+          setPaymentRequired(true);
+        } else {
+          setError(err?.response?.data?.message || 'Failed to load CA breakdown.');
+        }
         setPayload(null);
       } finally {
         if (!cancelled) setLoading(false);
@@ -240,6 +247,26 @@ const CaBreakdownTab = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
             Loading CA breakdown...
           </Typography>
+        </Box>
+      </Paper>
+    );
+  }
+
+  if (paymentRequired) {
+    return (
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+        <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
+          <IconLock size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+          <Alert severity="warning" sx={{ textAlign: 'left', mb: 2 }}>
+            <Typography variant="subtitle2" fontWeight={900}>
+              Payment Required
+            </Typography>
+            You must clear your outstanding fees before you can view your results for this
+            term.
+          </Alert>
+          <Button variant="contained" size="small" onClick={() => navigate('/pay-school-fees')}>
+            Go to Payments
+          </Button>
         </Box>
       </Paper>
     );

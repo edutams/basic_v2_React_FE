@@ -28,6 +28,44 @@ export const ordinalSuffix = (n) => {
   return s[(v - 20) % 10] || s[v] || s[0];
 };
 
+// ── Signatures (comment nomenclatures) ────────────────────────
+// The dossier payload carries the school's active comment
+// nomenclatures (position + uploaded signature). Each template slot is
+// filled by matching the position name, so the printed signature is the
+// one the school configured instead of a hardcoded image.
+const HEAD_OF_SCHOOL_PATTERN = /head of school|principal|head teacher|proprietor|chief instructor/i;
+const CLASS_TEACHER_PATTERN = /class teacher|classmaster|class master|form teacher|form master/i;
+
+const DEFAULT_HOS_LABEL = "Head of School's Signature";
+const DEFAULT_TEACHER_LABEL = "Class Teacher's Signature";
+
+// "Principal's" → "Principal's Signature"; anything already naming a
+// signature is left alone.
+const signatureLabel = (entry, fallback) => {
+  const name = (entry?.position_name || '').trim();
+  if (!name) return fallback;
+  return /signature/i.test(name) ? name : `${name} Signature`;
+};
+
+export const resolveSignatures = (list = []) => {
+  const active = (list || []).filter((s) => s && (s.status ?? 'active') === 'active');
+  const withImage = active.filter((s) => s.signature);
+  const match = (pattern) => withImage.find((s) => pattern.test(s.position_name || '')) || null;
+
+  const headOfSchool = match(HEAD_OF_SCHOOL_PATTERN);
+  const classTeacher = match(CLASS_TEACHER_PATTERN);
+
+  return {
+    list: active,
+    head_of_school: headOfSchool
+      ? { ...headOfSchool, label: signatureLabel(headOfSchool, DEFAULT_HOS_LABEL) }
+      : null,
+    class_teacher: classTeacher
+      ? { ...classTeacher, label: signatureLabel(classTeacher, DEFAULT_TEACHER_LABEL) }
+      : null,
+  };
+};
+
 // Build the `report` prop consumed by the result templates out of the
 // dossier API payload (see ResultDossierController::studentReport).
 export const buildReportProp = (report) => {
@@ -83,6 +121,8 @@ export const buildReportProp = (report) => {
       end_date: report.session_term?.end_date || null,
     },
     grade_settings: report.grade_settings || [],
+    // Signatories resolved from comment_nomenclatures (see above).
+    signatures: resolveSignatures(report.comment_nomenclatures),
     pass_mark: report.pass_mark,
     publish: report.result_publish,
     // Third-term promotion fields (see promotionLine below).

@@ -2,7 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine } from '../reportCardUtils';
+import { promotionLine, caTotal } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -108,21 +108,21 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             <TableBody>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Cont. Assess. Scores</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>20</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.ca_max || ''}</TableCell>
                 {report.subjects.map((s, i) => (
-                  <TableCell key={i} style={innerCellBorder} align="center">{(s.ca1 ?? 0) + (s.ca2 ?? 0)}</TableCell>
+                  <TableCell key={i} style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                 ))}
               </TableRow>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Exam Scores</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>80</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.exam_max || ''}</TableCell>
                 {report.subjects.map((s, i) => (
                   <TableCell key={i} style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                 ))}
               </TableRow>
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Weighted Average</TableCell>
-                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>100</TableCell>
+                <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{report.ca_max + report.exam_max || 100}</TableCell>
                 {report.subjects.map((s, i) => (
                   <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                 ))}

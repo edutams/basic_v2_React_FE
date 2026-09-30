@@ -2,7 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine } from '../reportCardUtils';
+import { promotionLine, caTotal, pctLabel } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -90,8 +90,8 @@ const TemplateTwelve = ({ student, report, sessionTerm, className, gradeScale })
                 <TableHead>
                   <TableRow>
                     <TableCell style={{ ...innerCellBorder, width: '25%', fontWeight: 700 }}>Subject</TableCell>
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Test (CA 20)</TableCell>
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Exam (80)</TableCell>
+                    <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{pctLabel('CA', report.ca_max)}</TableCell>
+                    <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Total(100%)</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Class Average</TableCell>
                     <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Teacher's Remarks</TableCell>
@@ -101,10 +101,10 @@ const TemplateTwelve = ({ student, report, sessionTerm, className, gradeScale })
                   {report.subjects.map((s, i) => (
                     <TableRow key={i}>
                       <TableCell style={innerCellBorder}>{s.subject_name}</TableCell>
-                      <TableCell style={innerCellBorder} align="center">{(s.ca1 ?? 0) + (s.ca2 ?? 0)}</TableCell>
+                      <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
-                      <TableCell style={innerCellBorder} align="center">{s.highest ?? '-'}</TableCell>
+                      <TableCell style={innerCellBorder} align="center">{s.class_average ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder}>{s.remark ?? '-'}</TableCell>
                     </TableRow>
                   ))}

@@ -2,6 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { caTotal } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -90,11 +91,10 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                 <TableHead>
                   <TableRow>
                     <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>S/N</TableCell>
-                    <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Subjects {'{WGT}'}</TableCell>
-                    {report.subjects[0]?.ca1 !== undefined && (
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Test 1</TableCell>
-                    )}
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Test 2</TableCell>
+                    <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Subjects</TableCell>
+                    {report.ca_columns.map((col) => (
+                      <TableCell key={col.key} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{col.name}</TableCell>
+                    ))}
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>CA Total</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Exam</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Total Score</TableCell>
@@ -103,12 +103,11 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                   <TableRow>
                     <TableCell style={innerCellBorder}></TableCell>
                     <TableCell style={innerCellBorder}></TableCell>
-                    {report.subjects[0]?.ca1 !== undefined && (
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>10</TableCell>
-                    )}
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>10</TableCell>
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>20</TableCell>
-                    <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>80</TableCell>
+                    {report.ca_columns.map((col) => (
+                      <TableCell key={col.key} style={{ ...innerCellBorder, textAlign: 'center' }}>{col.max || ''}</TableCell>
+                    ))}
+                    <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>{report.ca_max || ''}</TableCell>
+                    <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>{report.exam_max || ''}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>100</TableCell>
                     <TableCell style={innerCellBorder}></TableCell>
                   </TableRow>
@@ -118,11 +117,10 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                     <TableRow key={i}>
                       <TableCell style={innerCellBorder}>{i + 1}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textTransform: 'uppercase' }}>{s.subject_name}</TableCell>
-                      {report.subjects[0]?.ca1 !== undefined && (
-                        <TableCell style={innerCellBorder} align="center">{s.ca1 ?? '-'}</TableCell>
-                      )}
-                      <TableCell style={innerCellBorder} align="center">{s.ca2 ?? '-'}</TableCell>
-                      <TableCell style={innerCellBorder} align="center">{(s.ca1 ?? 0) + (s.ca2 ?? 0)}</TableCell>
+                      {report.ca_columns.map((col) => (
+                        <TableCell key={col.key} style={innerCellBorder} align="center">{s[col.key] ?? '-'}</TableCell>
+                      ))}
+                      <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</TableCell>

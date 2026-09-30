@@ -43,12 +43,18 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
   );
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      // A radio click on a specific category column pre-fills that target
+      // category so the admin doesn't have to reselect it here — they can
+      // still change it via the dropdown below before previewing.
+      setNewCategoryId(target?.newCategoryId ? String(target.newCategoryId) : '');
+    } else {
       setNewCategoryId('');
       setOldItems([]);
       setNewItems([]);
       setMapping({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {

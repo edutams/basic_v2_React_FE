@@ -238,6 +238,7 @@ const PrintInvoicePage = () => {
                     fontSize={15}
                   >
                     Wallet No -: {invoiceData.student?.wallet_no}
+                    {invoiceData.student?.bank_name && ` (${invoiceData.student.bank_name})`}
                   </Typography>
                 </Box>
               )}

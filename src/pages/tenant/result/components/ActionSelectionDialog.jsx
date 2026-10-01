@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography,
-  RadioGroup, FormControlLabel, Radio, Paper, IconButton, useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Box,
+  Typography,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Paper,
+  IconButton,
+  useTheme,
 } from '@mui/material';
 import { IconX, IconWand, IconDownload, IconCloudUpload, IconEdit } from '@tabler/icons-react';
 
@@ -38,8 +49,16 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
   ];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth paperprops={{ sx: { borderRadius: '12px' } }}>
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      paperprops={{ sx: { borderRadius: '12px' } }}
+    >
+      <DialogTitle
+        sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}
+      >
         <Typography variant="h6" fontWeight={700}>
           Action Selection Pop-Up
         </Typography>
@@ -77,7 +96,12 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
             <IconWand size={20} color="#80BE5A" />
           </Box>
           <Box>
-            <Typography variant="subtitle2" fontWeight={700} color="text.primary" sx={{ fontSize: '0.85rem' }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.85rem' }}
+            >
               {allocation.subject_name} ({allocation.class_name ?? allocation.className})
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.725rem' }}>
@@ -102,10 +126,16 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
                   border: '1px solid',
                   borderColor: isSelected
                     ? theme.palette.primary.main
-                    : isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    : isDark
+                      ? 'rgba(255,255,255,0.12)'
+                      : '#E5E7EB',
                   backgroundColor: isSelected
-                    ? (isDark ? 'rgba(25, 118, 210, 0.12)' : '#E9F7EF')
-                    : (isDark ? 'rgba(255,255,255,0.02)' : '#F9FAFB'),
+                    ? isDark
+                      ? 'rgba(25, 118, 210, 0.12)'
+                      : '#E9F7EF'
+                    : isDark
+                      ? 'rgba(255,255,255,0.02)'
+                      : '#F9FAFB',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -119,10 +149,19 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                   {opt.icon}
                   <Box>
-                    <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ fontSize: '0.825rem' }}>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="text.primary"
+                      sx={{ fontSize: '0.825rem' }}
+                    >
                       {opt.label}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.725rem' }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: '0.725rem' }}
+                    >
                       {opt.desc}
                     </Typography>
                   </Box>
@@ -131,7 +170,11 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
                   checked={isSelected}
                   value={opt.value}
                   size="small"
-                  sx={{ p: 0.5, color: theme.palette.success.main, '&.Mui-checked': { color: theme.palette.success.main } }}
+                  sx={{
+                    p: 0.5,
+                    color: theme.palette.success.main,
+                    '&.Mui-checked': { color: theme.palette.success.main },
+                  }}
                 />
               </Paper>
             );
@@ -143,9 +186,7 @@ const ActionSelectionDialog = ({ open, onClose, allocation, onProceed }) => {
         <Button onClick={onClose} color="inherit" sx={{ textTransform: 'none' }}>
           Cancel
         </Button>
-        <Button onClick={handleProceed}  >
-          Proceed
-        </Button>
+        <Button onClick={handleProceed}>Proceed</Button>
       </DialogActions>
     </Dialog>
   );

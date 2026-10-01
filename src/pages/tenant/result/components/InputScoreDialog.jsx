@@ -57,6 +57,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
             class_arm_id: allocation.class_arm_id,
           }),
           scoreManagerApi.fetchMarksConfiguration({
+            session_term_id: filter.session_term_id,
             session_id: filter.session_id,
             term_id: filter.term_id,
             programme_id: filter.programme_id,
@@ -210,6 +211,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
           ca_details: student.ca_details,
           examScores: student.examScores,
         },
+        session_term_id: filter?.session_term_id,
         session_id: filter?.session_id,
         term_id: filter?.term_id,
       });

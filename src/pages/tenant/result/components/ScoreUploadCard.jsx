@@ -1,11 +1,28 @@
-import { Box, Typography, Paper, Chip, Button, LinearProgress, Tooltip, useTheme } from '@mui/material';
-import { IconCloudUpload, IconEye, IconCheck, IconLoader, IconInfoCircle, IconUser } from '@tabler/icons-react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Chip,
+  Button,
+  LinearProgress,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
+import {
+  IconCloudUpload,
+  IconEye,
+  IconCheck,
+  IconLoader,
+  IconInfoCircle,
+  IconUser,
+} from '@tabler/icons-react';
 
 const ScoreUploadCard = ({
   allocation,
   onUploadScore,
   onViewScoreSheet,
   onSubmitScore,
+  onViewLearners,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -17,11 +34,15 @@ const ScoreUploadCard = ({
   const caProgress = totalReg > 0 ? Math.round((caUploaded / totalReg) * 100) : 0;
   const examProgress = totalReg > 0 ? Math.round((examUploaded / totalReg) * 100) : 0;
 
-  const isSubmitted = allocation?.teacher_submit === 'yes' || allocation?.isSubmitted || allocation?.submissionStatus === 'Submitted';
+  const isSubmitted =
+    allocation?.teacher_submit === 'yes' ||
+    allocation?.isSubmitted ||
+    allocation?.submissionStatus === 'Submitted';
   const isSubmitting = allocation?.isSubmitting || false;
   // No CA and no exam scores uploaded yet → submitting makes no sense
   const hasAnyScores = caUploaded > 0 || examUploaded > 0;
-  const teacherLabel = allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
+  const teacherLabel =
+    allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
 
   return (
     <Paper
@@ -70,14 +91,40 @@ const ScoreUploadCard = ({
           variant="subtitle1"
           fontWeight={700}
           color="text.primary"
-          sx={{ mb: 1, fontSize: '0.925rem', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          sx={{
+            mb: 1,
+            fontSize: '0.925rem',
+            lineHeight: 1.25,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
           title={allocation.subject_name}
         >
           {allocation.subject_name}
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
-          <Typography variant="caption" fontWeight={500} color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 0.75,
+          }}
+        >
+          <Typography
+            variant="caption"
+            fontWeight={500}
+            color="text.secondary"
+            onClick={() => totalReg > 0 && onViewLearners && onViewLearners(allocation)}
+            sx={{
+              fontSize: '0.75rem',
+              cursor: totalReg > 0 ? 'pointer' : 'default',
+              '&:hover':
+                totalReg > 0 ? { color: 'primary.main', textDecoration: 'underline' } : undefined,
+            }}
+          >
             Registered learners: <strong>{totalReg}</strong>
           </Typography>
 
@@ -132,7 +179,12 @@ const ScoreUploadCard = ({
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            sx={{
+              fontSize: '0.7rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
             title={teacherLabel}
           >
             Teacher: <strong>{teacherLabel}</strong>
@@ -145,11 +197,23 @@ const ScoreUploadCard = ({
       <Box sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
         {/* C.A Upload Progress */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               C.A Upload Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               {caProgress}%
             </Typography>
           </Box>
@@ -166,18 +230,34 @@ const ScoreUploadCard = ({
               },
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}
+          >
             {caUploaded} out of {totalReg} learners score record
           </Typography>
         </Box>
 
         {/* Exam Upload Progress */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               Exam Upload Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               {examProgress}%
             </Typography>
           </Box>
@@ -194,7 +274,11 @@ const ScoreUploadCard = ({
               },
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}
+          >
             {examUploaded} out of {totalReg} learners score record
           </Typography>
         </Box>
@@ -206,13 +290,22 @@ const ScoreUploadCard = ({
             px: 1,
             borderRadius: '4px',
             backgroundColor: isSubmitted
-              ? (isDark ? 'rgba(76, 175, 80, 0.15)' : '#EAF4D8')
-              : (isDark ? 'rgba(33, 150, 243, 0.15)' : '#D7EEFD'),
+              ? isDark
+                ? 'rgba(76, 175, 80, 0.15)'
+                : '#EAF4D8'
+              : isDark
+                ? 'rgba(33, 150, 243, 0.15)'
+                : '#D7EEFD',
             textAlign: 'center',
             mt: 'auto',
           }}
         >
-          <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.725rem' }}>
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: '0.725rem' }}
+          >
             Submission Status:{' '}
             <Typography
               component="span"
@@ -229,7 +322,16 @@ const ScoreUploadCard = ({
 
       {/* ── Action Buttons Footer ────────────────────────────── */}
       {totalReg === 0 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 1, pt: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.5,
+            px: 1,
+            pt: 1,
+          }}
+        >
           <IconInfoCircle size={14} color={theme.palette.info.main} />
           <Typography variant="caption" color="info.main" sx={{ fontSize: '0.725rem' }}>
             No registered student for the subject

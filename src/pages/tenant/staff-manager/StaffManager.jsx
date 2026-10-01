@@ -69,7 +69,7 @@ import UploadStaffModal from './components/UploadStaffModal';
 import StaffStatusModal from './components/StaffStatusModal';
 import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [
@@ -86,8 +86,12 @@ const StaffManager = () => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState([]);
-  const [activeTab, setActiveTab] = useState('teaching');
-  const [allocationSubTab, setAllocationSubTab] = useState('class-teacher'); // For Class & Subject Allocations sub-tabs
+  // Deep-linkable from elsewhere (e.g. Score Manager's empty-state link) via
+  // ?tab=allocations&sub=subject-teacher — read once on mount, not kept in
+  // sync afterwards, so normal in-page tab clicks behave exactly as before.
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'teaching');
+  const [allocationSubTab, setAllocationSubTab] = useState(() => searchParams.get('sub') || 'class-teacher'); // For Class & Subject Allocations sub-tabs
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [allocationsRefreshKey, setAllocationsRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');

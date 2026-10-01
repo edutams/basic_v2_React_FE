@@ -95,6 +95,43 @@ const CONFIGS = {
       { key: 'subject_status', label: 'Status' },
     ],
   },
+  subject_scores: {
+    title: 'Subject Scores',
+    icon: EditOutlined,
+    color: '#2563EB',
+    columns: [
+      { key: 'ward', label: 'Ward' },
+      { key: 'subject', label: 'Subject' },
+      { key: 'score', label: 'Score' },
+      { key: 'grade', label: 'Grade' },
+      { key: 'result', label: 'Result' },
+      { key: 'trend', label: 'Trend' },
+    ],
+  },
+  class_rank: {
+    title: 'Class Rank Breakdown',
+    icon: AssignmentOutlined,
+    color: '#EA580C',
+    columns: [
+      { key: 'ward', label: 'Ward' },
+      { key: 'subject', label: 'Subject' },
+      { key: 'position', label: 'Position' },
+      { key: 'score', label: 'Score' },
+      { key: 'class_average', label: 'Class Avg' },
+      { key: 'highest', label: 'Highest' },
+    ],
+  },
+  results_recorded: {
+    title: 'Results Recorded',
+    icon: AssignmentOutlined,
+    color: '#2563EB',
+    columns: [
+      { key: 'ward', label: 'Ward' },
+      { key: 'subject', label: 'Subject' },
+      { key: 'status', label: 'Status' },
+      { key: 'score', label: 'Score' },
+    ],
+  },
   outstanding: {
     title: 'Outstanding Fees Breakdown',
     icon: AccountBalanceWalletOutlined,
@@ -151,11 +188,15 @@ const riskColor = (risk) =>
 const subjectStatusColor = (status) =>
   status === 'Compulsory' ? '#2563EB' : status === 'Trade' ? '#D97706' : '#16A34A';
 
+const resultColor = (result) => (result === 'Pass' ? '#16A34A' : result === 'Fail' ? '#DC2626' : '#94A3B8');
+
+const recordedStatusColor = (status) => (status === 'Recorded' ? '#16A34A' : '#D97706');
+
 /**
  * Detail modal for the parent analytics cards. On open it calls
  * /admission/parent-insights/detail?type=… and renders the rows in a table.
  */
-const InsightsDetailModal = ({ open, onClose, type = 'academic' }) => {
+const InsightsDetailModal = ({ open, onClose, type = 'academic', sessionTermId = null }) => {
   const cfg = CONFIGS[type] || CONFIGS.academic;
   const Icon = cfg.icon;
 
@@ -171,7 +212,7 @@ const InsightsDetailModal = ({ open, onClose, type = 'academic' }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await getParentInsightsDetail(type);
+      const res = await getParentInsightsDetail(type, sessionTermId);
       if (res?.status) setRows(res.data || []);
       else setError(res?.message || 'Failed to load details');
     } catch (err) {
@@ -179,7 +220,7 @@ const InsightsDetailModal = ({ open, onClose, type = 'academic' }) => {
     } finally {
       setLoading(false);
     }
-  }, [open, type]);
+  }, [open, type, sessionTermId]);
 
   useEffect(() => {
     if (open) {
@@ -304,6 +345,30 @@ const InsightsDetailModal = ({ open, onClose, type = 'academic' }) => {
                               height: 20,
                               bgcolor: `${subjectStatusColor(row[col.key])}1A`,
                               color: subjectStatusColor(row[col.key]),
+                              fontWeight: 700,
+                            }}
+                          />
+                        ) : col.key === 'result' && row[col.key] !== '—' ? (
+                          <Chip
+                            label={row[col.key]}
+                            size="small"
+                            sx={{
+                              fontSize: '0.62rem',
+                              height: 20,
+                              bgcolor: `${resultColor(row[col.key])}1A`,
+                              color: resultColor(row[col.key]),
+                              fontWeight: 700,
+                            }}
+                          />
+                        ) : col.key === 'status' && type === 'results_recorded' ? (
+                          <Chip
+                            label={row[col.key]}
+                            size="small"
+                            sx={{
+                              fontSize: '0.62rem',
+                              height: 20,
+                              bgcolor: `${recordedStatusColor(row[col.key])}1A`,
+                              color: recordedStatusColor(row[col.key]),
                               fontWeight: 700,
                             }}
                           />

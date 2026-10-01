@@ -207,21 +207,50 @@ const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
             already been paid (that's still available as ward.paid, just
             not what this card is labeled to show). */}
         <Box sx={{ borderTop: '1px solid #e2e8f0', pt: 1.25, mb: 1.5 }}>
-          <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
-            TOTAL PAYABLE
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 16,
-              fontWeight: 800,
-              color: '#16a34a',
-              lineHeight: 1.2,
-              mt: 0.2,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            ₦{Number(ward.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-          </Typography>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#64748b', letterSpacing: 0.3 }}>
+                TOTAL PAYABLE
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: '#16a34a',
+                  lineHeight: 1.2,
+                  mt: 0.2,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                ₦{Number(ward.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              </Typography>
+            </Box>
+
+            {/* Only shown once this ward has actually paid something — fully
+                or partially — since there'd be no receipt to view otherwise. */}
+            {Number(ward.paid) > 0 && (
+              <Tooltip title={`View past receipts for ${ward.name}`} placement="top" arrow>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewPayments && onViewPayments(ward);
+                  }}
+                  sx={{
+                    width: 30,
+                    height: 30,
+                    flexShrink: 0,
+                    borderRadius: '7px',
+                    border: '1px solid #e2e8f0',
+                    color: '#16a34a',
+                    '&:hover': { bgcolor: '#f0fdf4', borderColor: '#86efac' },
+                  }}
+                >
+                  <ReceiptOutlinedIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
         </Box>
 
         {ward.walletAccount ? (
@@ -364,31 +393,6 @@ const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
         >
           Fund Wallet
         </Button>
-
-        {/* Only shown once this ward has actually paid something — fully
-            or partially — since there'd be no receipt to view otherwise. */}
-        {Number(ward.paid) > 0 && (
-          <Tooltip title={`View past receipts for ${ward.name}`} placement="top" arrow>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewPayments && onViewPayments(ward);
-              }}
-              sx={{
-                width: 30,
-                height: 30,
-                flexShrink: 0,
-                borderRadius: '7px',
-                border: '1px solid #e2e8f0',
-                color: '#16a34a',
-                '&:hover': { bgcolor: '#f0fdf4', borderColor: '#86efac' },
-              }}
-            >
-              <ReceiptOutlinedIcon sx={{ fontSize: 15 }} />
-            </IconButton>
-          </Tooltip>
-        )}
       </Stack>
     </Card>
   );

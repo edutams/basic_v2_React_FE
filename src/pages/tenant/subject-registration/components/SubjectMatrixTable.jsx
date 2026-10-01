@@ -25,7 +25,14 @@ import {
 // this doesn't silently mis-render if that ever changes casing.
 const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
 
-const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnregisterAll }) => {
+const SubjectMatrixTable = ({
+  subjects,
+  learners,
+  onToggle,
+  onRegisterAll,
+  onUnregisterAll,
+  onRegisterAllForLearner,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -277,6 +284,15 @@ const SubjectMatrixTable = ({ subjects, learners, onToggle, onRegisterAll, onUnr
                 <Typography variant="body2" fontWeight={600}>
                   {Object.keys(learner.registered).filter((k) => learner.registered[k]).length}
                 </Typography>
+                <Tooltip title={`Register ${learner.name} for every eligible subject`}>
+                  <IconButton
+                    size="small"
+                    sx={{ p: 0.25, mt: 0.25 }}
+                    onClick={() => onRegisterAllForLearner?.(learner.id)}
+                  >
+                    <CheckCircleIcon color="success" sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
               </TableCell>
               {subjects.map((subj) => (
                 <TableCell key={subj.id} align="center" sx={{ py: 0.25 }}>

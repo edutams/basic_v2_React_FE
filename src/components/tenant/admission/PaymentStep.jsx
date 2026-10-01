@@ -16,12 +16,14 @@ import {
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
   AccountBalanceWallet as WalletIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import PropTypes from 'prop-types';
 
 import {
   initiateAdmissionPayment,
   checkAdmissionPaymentStatus,
+  requeryAdmissionPayment,
 } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
@@ -115,6 +117,7 @@ const PaymentStep = ({
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [checkingPayment, setCheckingPayment] = useState(true);
+  const [requerying, setRequerying] = useState(false);
 
   // Use pre-application payments from the batch
   const preAppPayments = selectedBatch?.pre_application_payments || [];
@@ -244,6 +247,30 @@ const PaymentStep = ({
     setConfirmOpen(true);
   };
 
+  const handleRequery = async () => {
+    if (!admissionId) {
+      return;
+    }
+    setRequerying(true);
+    try {
+      const res = await requeryAdmissionPayment(admissionId);
+      if (res?.status && res?.data) {
+        setPaymentStatus(res.data);
+        if (res.data.has_paid) {
+          notify.success('Payment confirmed!');
+        } else {
+          notify.info(res?.message || 'Payment is still pending. Please try again shortly.');
+        }
+      } else {
+        notify.error(res?.message || 'Unable to requery payment status');
+      }
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Unable to requery payment status');
+    } finally {
+      setRequerying(false);
+    }
+  };
+
   const handleConfirmPayment = async () => {
     setConfirmOpen(false);
     setProcessing(true);
@@ -295,6 +322,28 @@ const PaymentStep = ({
       <FeeBreakdown feeItems={feeItems} />
 
       <TotalBox label="Total Payable" amount={totalPayable} color="#dc2626" />
+
+      {paymentStatus?.has_pending && (
+        <Alert severity="info" sx={{ mt: 2, borderRadius: '8px' }}>
+          <Typography variant="body2" fontWeight={600}>
+            Pending Payment Found
+          </Typography>
+          <Typography variant="caption" color="text.secondary" component="p" sx={{ mb: 1 }}>
+            You have an online payment awaiting confirmation from the payment provider. If you have
+            already paid, click below to check for an update instead of paying again.
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshIcon />}
+            onClick={handleRequery}
+            disabled={requerying}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
+            {requerying ? 'Checking...' : 'Check Payment Status'}
+          </Button>
+        </Alert>
+      )}
 
       <Box sx={{ mt: 3, textAlign: 'center' }}>
         <Button

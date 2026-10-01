@@ -84,6 +84,16 @@ const PrintInvoicePage = () => {
     return num.toLocaleString();
   };
 
+  // Appends the student's selected option name(s) to a payment item's label,
+  // e.g. "Excursion Fee — Zoo Trip", when the schedule offers choices.
+  const withOptionLabel = (item) => {
+    const name = item.schedule_info?.payment_name?.name;
+    const optionNames = (item.invoiceOptions || [])
+      .map((io) => io.option?.option_name)
+      .filter(Boolean);
+    return optionNames.length > 0 ? `${name} — ${optionNames.join(', ')}` : name;
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -310,7 +320,7 @@ const PrintInvoicePage = () => {
                           COMPULSORY
                         </TableCell>
                       )}
-                      <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                      <TableCell>{withOptionLabel(item)}</TableCell>
                       <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
                       <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
                       <TableCell align="center">₦{fmt(item.balance)}</TableCell>
@@ -354,7 +364,7 @@ const PrintInvoicePage = () => {
                             OPTIONAL
                           </TableCell>
                         )}
-                        <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                        <TableCell>{withOptionLabel(item)}</TableCell>
                         <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.balance)}</TableCell>

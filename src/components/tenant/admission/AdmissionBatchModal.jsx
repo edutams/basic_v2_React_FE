@@ -86,7 +86,9 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel, submitting }) => {
             Batch
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch.batch_name}
+            {batch.programme?.programme_name
+              ? `${batch.programme.programme_name} — ${batch.batch_name}`
+              : batch.batch_name}
           </Typography>
 
           <Typography

@@ -1,17 +1,62 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import {
-  Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  FormControl, InputLabel, Select, MenuItem, Menu, Alert, useTheme, Tooltip, Tabs, Tab,
-  Card, Button, Avatar, TablePagination, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, Snackbar, Alert as MuiAlert, Stack, CircularProgress,
+  Box,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Menu,
+  Alert,
+  useTheme,
+  Tooltip,
+  Tabs,
+  Tab,
+  Card,
+  Button,
+  Avatar,
+  TablePagination,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Snackbar,
+  Alert as MuiAlert,
+  Stack,
+  CircularProgress,
 } from '@mui/material';
-import { IconCheck, IconX, IconMessage, IconEdit, IconArrowsHorizontal, IconUsers, IconBook, IconChartBar, IconAward, IconWand } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconX,
+  IconMessage,
+  IconEdit,
+  IconArrowsHorizontal,
+  IconUsers,
+  IconBook,
+  IconChartBar,
+  IconAward,
+  IconWand,
+} from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
-import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import {
-  fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
+  fetchSessionTerms,
+  fetchActiveTenantSessionTerm,
+} from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchProgrammes,
+  fetchClassesByProgramme,
+  fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
@@ -77,8 +122,22 @@ const truncateComment = (text) => {
 const CommentCell = ({ value }) => {
   const full = value || '';
   return (
-    <TableCell sx={{ minWidth: { xs: 80, sm: 96 }, maxWidth: 140, fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-      <Tooltip title={full || 'No comment yet — use Add/Edit'} placement="top" arrow enterDelay={200}>
+    <TableCell
+      sx={{
+        minWidth: { xs: 80, sm: 96 },
+        maxWidth: 140,
+        fontSize: 12,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <Tooltip
+        title={full || 'No comment yet — use Add/Edit'}
+        placement="top"
+        arrow
+        enterDelay={200}
+      >
         <Box
           component="span"
           sx={{
@@ -115,7 +174,12 @@ const BroadsheetTab = () => {
 
   const [activeTab, setActiveTab] = useState(0);
   const [filters, setFilters] = useState({
-    session_id: '', term_id: '', programme_id: '', class_id: '', class_arm_id: '', perf_range: '',
+    session_id: '',
+    term_id: '',
+    programme_id: '',
+    class_id: '',
+    class_arm_id: '',
+    perf_range: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -124,7 +188,11 @@ const BroadsheetTab = () => {
   const [loadedQuery, setLoadedQuery] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [commentDialog, setCommentDialog] = useState({ open: false, student: null, mode: 'teacher' });
+  const [commentDialog, setCommentDialog] = useState({
+    open: false,
+    student: null,
+    mode: 'teacher',
+  });
   const [commentForm, setCommentForm] = useState({ teacher_comment: '', hos_comment: '' });
   const [addEditMenu, setAddEditMenu] = useState({ rowId: null, anchorEl: null });
   const [editScoresDialog, setEditScoresDialog] = useState({ open: false, student: null });
@@ -133,7 +201,8 @@ const BroadsheetTab = () => {
   const [filterError, setFilterError] = useState('');
   const [generatingComments, setGeneratingComments] = useState(false);
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
   // ── Load dropdowns + school info on mount ───────────────────
   useEffect(() => {
@@ -194,7 +263,12 @@ const BroadsheetTab = () => {
           (division.programmes ?? []).forEach((prog) => {
             (prog.classes ?? []).forEach((cls) => {
               (cls.class_arms ?? []).forEach((arm) => {
-                armsList.push({ ...arm, programme_id: prog.id, class_id: cls.id, class_name: cls.class_name });
+                armsList.push({
+                  ...arm,
+                  programme_id: prog.id,
+                  class_id: cls.id,
+                  class_name: cls.class_name,
+                });
               });
             });
           });
@@ -208,10 +282,16 @@ const BroadsheetTab = () => {
 
     loadDropdowns();
     getTenantInfo()
-      .then((data) => { if (!cancelled) setSchoolInfo(data?.data || null); })
-      .catch(() => { if (!cancelled) setSchoolInfo(null); });
+      .then((data) => {
+        if (!cancelled) setSchoolInfo(data?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setSchoolInfo(null);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ── Terms for the selected session (defaults to the active term) ──
@@ -253,7 +333,10 @@ const BroadsheetTab = () => {
       setClassArms([]);
       return;
     }
-    fetchClassArmsByClass(filters.class_id, filters.programme_id ? { programme_id: filters.programme_id } : {})
+    fetchClassArmsByClass(
+      filters.class_id,
+      filters.programme_id ? { programme_id: filters.programme_id } : {},
+    )
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
@@ -267,7 +350,9 @@ const BroadsheetTab = () => {
   const sessionTermId = (() => {
     if (!filters.session_id || !filters.term_id) return null;
     const match = sessionTermsData.find(
-      (st) => String(st.session?.id) === String(filters.session_id) && String(st.term?.id) === String(filters.term_id)
+      (st) =>
+        String(st.session?.id) === String(filters.session_id) &&
+        String(st.term?.id) === String(filters.term_id),
     );
     return match?.id ?? null;
   })();
@@ -277,9 +362,10 @@ const BroadsheetTab = () => {
     setLoading(true);
     setFilterError('');
     try {
-      const res = mode === 'term'
-        ? await resultSheetApi.getBroadsheet(payload)
-        : await resultSheetApi.getTermCumulative(payload);
+      const res =
+        mode === 'term'
+          ? await resultSheetApi.getBroadsheet(payload)
+          : await resultSheetApi.getTermCumulative(payload);
       const data = res?.data?.data;
       if (!data) throw new Error('Empty response');
       setSheet({ ...data, mode });
@@ -290,7 +376,9 @@ const BroadsheetTab = () => {
       console.error('Failed to fetch broadsheet:', err);
       setShowData(false);
       setSheet(null);
-      setFilterError(err?.response?.data?.message || 'Failed to fetch broadsheet data. Please try again.');
+      setFilterError(
+        err?.response?.data?.message || 'Failed to fetch broadsheet data. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -326,7 +414,7 @@ const BroadsheetTab = () => {
     } catch (err) {
       showSnackbar(
         err?.response?.data?.message || 'Failed to update broadsheet publish status',
-        'error'
+        'error',
       );
     } finally {
       setPublishing(null);
@@ -336,7 +424,13 @@ const BroadsheetTab = () => {
 
   const handleFilter = () => {
     if (activeTab === 0) {
-      if (!filters.session_id || !filters.term_id || !filters.programme_id || !filters.class_id || !filters.class_arm_id) {
+      if (
+        !filters.session_id ||
+        !filters.term_id ||
+        !filters.programme_id ||
+        !filters.class_id ||
+        !filters.class_arm_id
+      ) {
         setFilterError('Select Session, Term, Programme, Class and Class Arm, then click Fetch.');
         return;
       }
@@ -346,11 +440,19 @@ const BroadsheetTab = () => {
       }
       loadSheet({ class_arm_id: filters.class_arm_id, session_term_id: sessionTermId }, 'term');
     } else {
-      if (!filters.session_id || !filters.programme_id || !filters.class_id || !filters.class_arm_id) {
+      if (
+        !filters.session_id ||
+        !filters.programme_id ||
+        !filters.class_id ||
+        !filters.class_arm_id
+      ) {
         setFilterError('Select Session, Programme, Class and Class Arm, then click Fetch.');
         return;
       }
-      loadSheet({ class_arm_id: filters.class_arm_id, session_id: filters.session_id }, 'cumulative');
+      loadSheet(
+        { class_arm_id: filters.class_arm_id, session_id: filters.session_id },
+        'cumulative',
+      );
     }
   };
 
@@ -377,11 +479,9 @@ const BroadsheetTab = () => {
   const totalMax = caMax + examMax;
   const subjects = sheet?.subjects ?? [];
 
-  const summaryColSpan = activeTab === 1 ? 11 : (showPromotionButtons ? 10 : 7);
+  const summaryColSpan = activeTab === 1 ? 11 : showPromotionButtons ? 10 : 7;
 
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
-
-  const schoolName = schoolInfo?.tenant_name || schoolInfo?.name || '';
 
   // ── Comments ────────────────────────────────────────────────
   const handleOpenComment = (student, mode = 'teacher') => {
@@ -392,7 +492,8 @@ const BroadsheetTab = () => {
     setCommentDialog({ open: true, student, mode });
   };
 
-  const closeCommentDialog = () => setCommentDialog({ open: false, student: null, mode: 'teacher' });
+  const closeCommentDialog = () =>
+    setCommentDialog({ open: false, student: null, mode: 'teacher' });
 
   // One-click comment generation for the whole class arm: the backend
   // picks a template from the current user's comment bank (student average
@@ -433,15 +534,18 @@ const BroadsheetTab = () => {
         type: mode === 'hos' ? 'hos' : 'teacher',
         comment,
       });
-      setSheet((prev) => prev && ({
-        ...prev,
-        students: prev.students.map((row) => {
-          if (row.student_registration_id !== student.student_registration_id) return row;
-          return mode === 'hos'
-            ? { ...row, hos_comment: comment }
-            : { ...row, class_teachers_comment: comment };
-        }),
-      }));
+      setSheet(
+        (prev) =>
+          prev && {
+            ...prev,
+            students: prev.students.map((row) => {
+              if (row.student_registration_id !== student.student_registration_id) return row;
+              return mode === 'hos'
+                ? { ...row, hos_comment: comment }
+                : { ...row, class_teachers_comment: comment };
+            }),
+          },
+      );
       showSnackbar('Comment saved successfully');
       closeCommentDialog();
     } catch (err) {
@@ -509,20 +613,30 @@ const BroadsheetTab = () => {
   };
 
   const handleScoreChange = (subjectIdx, groupIdx, entityIdx, value) => {
-    setScoreForm((prev) => prev.map((subj, i) => {
-      if (i !== subjectIdx) return subj;
-      return {
-        ...subj,
-        ca_breakdown: subj.ca_breakdown.map((g, gi) => (gi !== groupIdx ? g : {
-          ...g,
-          entities: g.entities.map((e, ei) => (ei !== entityIdx ? e : { ...e, score: value })),
-        })),
-      };
-    }));
+    setScoreForm((prev) =>
+      prev.map((subj, i) => {
+        if (i !== subjectIdx) return subj;
+        return {
+          ...subj,
+          ca_breakdown: subj.ca_breakdown.map((g, gi) =>
+            gi !== groupIdx
+              ? g
+              : {
+                  ...g,
+                  entities: g.entities.map((e, ei) =>
+                    ei !== entityIdx ? e : { ...e, score: value },
+                  ),
+                },
+          ),
+        };
+      }),
+    );
   };
 
   const handleExamChange = (subjectIdx, value) => {
-    setScoreForm((prev) => prev.map((subj, i) => (i !== subjectIdx ? subj : { ...subj, exam_score: value })));
+    setScoreForm((prev) =>
+      prev.map((subj, i) => (i !== subjectIdx ? subj : { ...subj, exam_score: value })),
+    );
   };
 
   const handleSaveScoreRow = async (subjectIdx) => {
@@ -530,7 +644,9 @@ const BroadsheetTab = () => {
     const student = editScoresDialog.student;
     if (!subj || !student) return;
 
-    const invalidEntity = subj.ca_breakdown.some((g) => g.entities.some((e) => isScoreInvalid(e.score, e.max_score)));
+    const invalidEntity = subj.ca_breakdown.some((g) =>
+      g.entities.some((e) => isScoreInvalid(e.score, e.max_score)),
+    );
     const invalidExam = subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax);
     if (invalidEntity || invalidExam) {
       showSnackbar('Fix invalid scores before saving', 'error');
@@ -539,7 +655,7 @@ const BroadsheetTab = () => {
 
     const caTotal = subj.ca_breakdown.reduce(
       (sum, g) => sum + g.entities.reduce((s, e) => s + (Number(e.score) || 0), 0),
-      0
+      0,
     );
     const examScore = Number(subj.exam_score) || 0;
 
@@ -557,7 +673,10 @@ const BroadsheetTab = () => {
       refetch();
     } catch (err) {
       console.error('Failed to save score:', err);
-      showSnackbar(err?.response?.data?.message || err?.response?.data?.error || 'Failed to save score', 'error');
+      showSnackbar(
+        err?.response?.data?.message || err?.response?.data?.error || 'Failed to save score',
+        'error',
+      );
     }
   };
 
@@ -603,14 +722,17 @@ const BroadsheetTab = () => {
         student_registration_id: row.student_registration_id,
         promotion_recommendation: recommendation,
       });
-      setSheet((prev) => prev && ({
-        ...prev,
-        students: prev.students.map((r) => (
-          r.student_registration_id === row.student_registration_id
-            ? { ...r, promotion_recommendation: recommendation }
-            : r
-        )),
-      }));
+      setSheet(
+        (prev) =>
+          prev && {
+            ...prev,
+            students: prev.students.map((r) =>
+              r.student_registration_id === row.student_registration_id
+                ? { ...r, promotion_recommendation: recommendation }
+                : r,
+            ),
+          },
+      );
       showSnackbar('Recommendation updated');
     } catch (err) {
       console.error('Failed to save recommendation:', err);
@@ -625,14 +747,17 @@ const BroadsheetTab = () => {
         student_registration_id: row.student_registration_id,
         next_class_arm_id: nextClassArmId,
       });
-      setSheet((prev) => prev && ({
-        ...prev,
-        students: prev.students.map((r) => (
-          r.student_registration_id === row.student_registration_id
-            ? { ...r, next_class_arm_id: nextClassArmId }
-            : r
-        )),
-      }));
+      setSheet(
+        (prev) =>
+          prev && {
+            ...prev,
+            students: prev.students.map((r) =>
+              r.student_registration_id === row.student_registration_id
+                ? { ...r, next_class_arm_id: nextClassArmId }
+                : r,
+            ),
+          },
+      );
       showSnackbar('Next class updated');
     } catch (err) {
       console.error('Failed to save next class:', err);
@@ -649,7 +774,10 @@ const BroadsheetTab = () => {
 
     const isCumulative = sheet.mode === 'cumulative';
     const header = [
-      'S/N', 'Student ID', 'Name', 'Sex',
+      'S/N',
+      'Student ID',
+      'Name',
+      'Sex',
       ...subjects.flatMap((s) => [
         `${s.subject_name} CA (${caMax})`,
         `${s.subject_name} EXAM (${examMax})`,
@@ -657,14 +785,20 @@ const BroadsheetTab = () => {
         `${s.subject_name} GRADE`,
       ]),
       ...(isCumulative ? ['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'] : []),
-      'CWA', 'POSITION', 'NO. SUBJ', 'REMARK',
+      'CWA',
+      'POSITION',
+      'NO. SUBJ',
+      'REMARK',
       ...(showPromotionButtons ? ['RECOMMENDATION', 'NEXT CLASS'] : []),
-      'CLASS TEACHER COMMENT', 'HEAD OF SCHOOL COMMENT',
+      'CLASS TEACHER COMMENT',
+      'HEAD OF SCHOOL COMMENT',
     ];
 
     const rows = visibleStudents.map((row, index) => {
       const resultMap = {};
-      (row.results || []).forEach((r) => { resultMap[r.subject_id] = r; });
+      (row.results || []).forEach((r) => {
+        resultMap[r.subject_id] = r;
+      });
       const cwa = isCumulative ? row.all_term_average : row.student_average;
       const armName = allArms.find((a) => a.id === row.next_class_arm_id)?.class_arm_names || '';
 
@@ -683,7 +817,12 @@ const BroadsheetTab = () => {
           ];
         }),
         ...(isCumulative
-          ? [row.first_term_average ?? '', row.second_term_average ?? '', row.third_term_average ?? '', row.all_term_average ?? '']
+          ? [
+              row.first_term_average ?? '',
+              row.second_term_average ?? '',
+              row.third_term_average ?? '',
+              row.all_term_average ?? '',
+            ]
           : []),
         cwa ?? '',
         isCumulative ? (row.all_term_overall_class_position ?? '') : (row.position ?? ''),
@@ -703,7 +842,11 @@ const BroadsheetTab = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `broadsheet-${isCumulative ? 'cumulative' : 'termly'}-${sheet.class_arm?.class_name ?? 'class'}-${sheet.class_arm?.arm_name ?? ''}.csv`.replace(/\s+/g, '-');
+    link.download =
+      `broadsheet-${isCumulative ? 'cumulative' : 'termly'}-${sheet.class_arm?.class_name ?? 'class'}-${sheet.class_arm?.arm_name ?? ''}.csv`.replace(
+        /\s+/g,
+        '-',
+      );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -712,9 +855,12 @@ const BroadsheetTab = () => {
   };
 
   const promotionIcon = (recommendation) => {
-    if (recommendation === 'promoted') return <IconCheck size={18} color="#16A34A" style={{ cursor: 'pointer' }} />;
-    if (recommendation === 'promoted on trial') return <IconCheck size={18} color="#D97706" style={{ cursor: 'pointer' }} />;
-    if (recommendation === 'graduated') return <IconCheck size={18} color="#2563EB" style={{ cursor: 'pointer' }} />;
+    if (recommendation === 'promoted')
+      return <IconCheck size={18} color="#16A34A" style={{ cursor: 'pointer' }} />;
+    if (recommendation === 'promoted on trial')
+      return <IconCheck size={18} color="#D97706" style={{ cursor: 'pointer' }} />;
+    if (recommendation === 'graduated')
+      return <IconCheck size={18} color="#2563EB" style={{ cursor: 'pointer' }} />;
     return <IconX size={18} color="#DC2626" style={{ cursor: 'pointer' }} />;
   };
 
@@ -723,10 +869,40 @@ const BroadsheetTab = () => {
   return (
     <Box>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <StatCard count={stats.total_students ?? 0} label="Total Students" subtitle="In this class" icon={IconUsers} colorIndex={0} loading={loading} />
-        <StatCard count={stats.total_subjects ?? subjects.length} label="Total Subjects" subtitle="Across all departments" icon={IconBook} colorIndex={1} loading={loading} />
-        <StatCard count={`${stats.class_average ?? 0}%`} label="Average Score" subtitle="Class average" icon={IconChartBar} colorIndex={2} loading={loading} />
-        <StatCard count={stats.pass_rate !== null && stats.pass_rate !== undefined ? `${stats.pass_rate}%` : '—'} label="Pass Rate" subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'} icon={IconAward} colorIndex={3} loading={loading} />
+        <StatCard
+          count={stats.total_students ?? 0}
+          label="Total Students"
+          subtitle="In this class"
+          icon={IconUsers}
+          colorIndex={0}
+          loading={loading}
+        />
+        <StatCard
+          count={stats.total_subjects ?? subjects.length}
+          label="Total Subjects"
+          subtitle="Across all departments"
+          icon={IconBook}
+          colorIndex={1}
+          loading={loading}
+        />
+        <StatCard
+          count={`${stats.class_average ?? 0}%`}
+          label="Average Score"
+          subtitle="Class average"
+          icon={IconChartBar}
+          colorIndex={2}
+          loading={loading}
+        />
+        <StatCard
+          count={
+            stats.pass_rate !== null && stats.pass_rate !== undefined ? `${stats.pass_rate}%` : '—'
+          }
+          label="Pass Rate"
+          subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
+          icon={IconAward}
+          colorIndex={3}
+          loading={loading}
+        />
       </Stack>
 
       <Card elevation={0} sx={{ border: `1px solid ${borderColor}`, borderRadius: 1 }}>
@@ -734,7 +910,11 @@ const BroadsheetTab = () => {
         <Box sx={{ px: 2 }}>
           <Tabs
             value={activeTab}
-            onChange={(_, v) => { setActiveTab(v); setShowData(false); setFilterError(''); }}
+            onChange={(_, v) => {
+              setActiveTab(v);
+              setShowData(false);
+              setFilterError('');
+            }}
             sx={{ borderBottom: 1, borderColor: 'divider' }}
           >
             <Tab label="Termly" />
@@ -748,9 +928,23 @@ const BroadsheetTab = () => {
             <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Session</InputLabel>
-                <Select value={filters.session_id} label="Session" onChange={(e) => setFilters({ ...filters, session_id: e.target.value, term_id: activeTab === 0 ? '' : filters.term_id })}>
+                <Select
+                  value={filters.session_id}
+                  label="Session"
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      session_id: e.target.value,
+                      term_id: activeTab === 0 ? '' : filters.term_id,
+                    })
+                  }
+                >
                   <MenuItem value="">-- choose --</MenuItem>
-                  {sessions.map((s) => <MenuItem key={s.id} value={s.id}>{s.session_name}</MenuItem>)}
+                  {sessions.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.session_name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -758,9 +952,17 @@ const BroadsheetTab = () => {
               <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Term</InputLabel>
-                  <Select value={filters.term_id} label="Term" onChange={(e) => setFilters({ ...filters, term_id: e.target.value })}>
+                  <Select
+                    value={filters.term_id}
+                    label="Term"
+                    onChange={(e) => setFilters({ ...filters, term_id: e.target.value })}
+                  >
                     <MenuItem value="">-- choose --</MenuItem>
-                    {terms.map((t) => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
+                    {terms.map((t) => (
+                      <MenuItem key={t.id} value={t.id}>
+                        {t.term_name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Box>
@@ -768,27 +970,60 @@ const BroadsheetTab = () => {
             <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
-                <Select value={filters.programme_id} label="Programme" onChange={(e) => setFilters({ ...filters, programme_id: e.target.value, class_id: '', class_arm_id: '' })}>
+                <Select
+                  value={filters.programme_id}
+                  label="Programme"
+                  onChange={(e) =>
+                    setFilters({
+                      ...filters,
+                      programme_id: e.target.value,
+                      class_id: '',
+                      class_arm_id: '',
+                    })
+                  }
+                >
                   <MenuItem value="">--Select Programme--</MenuItem>
-                  {programmes.map((p) => <MenuItem key={p.id} value={p.id}>{p.programme_name || p.programme_title}</MenuItem>)}
+                  {programmes.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.programme_name || p.programme_title}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
             <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class</InputLabel>
-                <Select value={filters.class_id} label="Class" onChange={(e) => setFilters({ ...filters, class_id: e.target.value, class_arm_id: '' })}>
+                <Select
+                  value={filters.class_id}
+                  label="Class"
+                  onChange={(e) =>
+                    setFilters({ ...filters, class_id: e.target.value, class_arm_id: '' })
+                  }
+                >
                   <MenuItem value="">-- Select Class --</MenuItem>
-                  {filteredClasses.map((c) => <MenuItem key={c.id} value={c.id}>{c.class_name}</MenuItem>)}
+                  {filteredClasses.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.class_name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
             <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class Arm</InputLabel>
-                <Select value={filters.class_arm_id} label="Class Arm" onChange={(e) => setFilters({ ...filters, class_arm_id: e.target.value })}>
+                <Select
+                  value={filters.class_arm_id}
+                  label="Class Arm"
+                  onChange={(e) => setFilters({ ...filters, class_arm_id: e.target.value })}
+                >
                   <MenuItem value="">-- Select Arm --</MenuItem>
-                  {filteredClassArms.map((a) => <MenuItem key={a.id} value={a.id}>{a.class_arm_names}</MenuItem>)}
+                  {filteredClassArms.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>
+                      {a.class_arm_names}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -796,7 +1031,14 @@ const BroadsheetTab = () => {
               <Box sx={{ flex: '1 1 0', minWidth: 150 }}>
                 <FormControl fullWidth size="small">
                   <InputLabel>Performance</InputLabel>
-                  <Select value={filters.perf_range} label="Performance" onChange={(e) => { setFilters({ ...filters, perf_range: e.target.value }); setPage(0); }}>
+                  <Select
+                    value={filters.perf_range}
+                    label="Performance"
+                    onChange={(e) => {
+                      setFilters({ ...filters, perf_range: e.target.value });
+                      setPage(0);
+                    }}
+                  >
                     <MenuItem value="">-- Select Range --</MenuItem>
                     <MenuItem value="3">Best 3</MenuItem>
                     <MenuItem value="5">Best 5</MenuItem>
@@ -808,14 +1050,16 @@ const BroadsheetTab = () => {
               </Box>
             )}
             {/* Fetch / Export — narrow and pushed right once every filter (incl. Performance) is on screen */}
-            <Box sx={{
-              flex: showData ? '0 0 auto' : '0 0 auto',
-              minWidth: 0,
-              ml: showData ? 'auto' : 0,
-              display: 'flex',
-              gap: 1,
-              flexWrap: 'nowrap',
-            }}>
+            <Box
+              sx={{
+                flex: showData ? '0 0 auto' : '0 0 auto',
+                minWidth: 0,
+                ml: showData ? 'auto' : 0,
+                display: 'flex',
+                gap: 1,
+                flexWrap: 'nowrap',
+              }}
+            >
               <Button
                 variant="contained"
                 onClick={handleFilter}
@@ -855,7 +1099,11 @@ const BroadsheetTab = () => {
                         onClick={() => setPublishConfirm({ open: true, action: 'unpublish' })}
                         disabled={Boolean(publishing)}
                       >
-                        {publishing === 'unpublish' ? <CircularProgress size={14} color="inherit" /> : 'Unpublish'}
+                        {publishing === 'unpublish' ? (
+                          <CircularProgress size={14} color="inherit" />
+                        ) : (
+                          'Unpublish'
+                        )}
                       </Button>
                     ) : null
                   }
@@ -876,13 +1124,18 @@ const BroadsheetTab = () => {
                         onClick={() => setPublishConfirm({ open: true, action: 'hos' })}
                         disabled={Boolean(publishing)}
                       >
-                        {publishing === 'hos' ? <CircularProgress size={14} color="inherit" /> : 'Publish this Broadsheet'}
+                        {publishing === 'hos' ? (
+                          <CircularProgress size={14} color="inherit" />
+                        ) : (
+                          'Publish this Broadsheet'
+                        )}
                       </Button>
                     ) : null
                   }
                 >
                   <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
-                  Approved by the School Portal Admin — awaiting the Head of School&apos;s final approval.
+                  Approved by the School Portal Admin — awaiting the Head of School&apos;s final
+                  approval.
                 </Alert>
               ) : (
                 <Alert
@@ -897,7 +1150,11 @@ const BroadsheetTab = () => {
                         onClick={() => setPublishConfirm({ open: true, action: 'spa' })}
                         disabled={Boolean(publishing)}
                       >
-                        {publishing === 'spa' ? <CircularProgress size={14} color="inherit" /> : 'Approve Broadsheet'}
+                        {publishing === 'spa' ? (
+                          <CircularProgress size={14} color="inherit" />
+                        ) : (
+                          'Approve Broadsheet'
+                        )}
                       </Button>
                     ) : null
                   }
@@ -911,10 +1168,22 @@ const BroadsheetTab = () => {
 
           {showData && showPromotionButtons && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <Button variant="outlined" color="primary" size="small" onClick={handleRecommendPromotions} disabled={loading}>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                onClick={handleRecommendPromotions}
+                disabled={loading}
+              >
                 Recommend Promotion
               </Button>
-              <Button variant="outlined" color="secondary" size="small" onClick={handlePostRecommendations} disabled={loading}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                onClick={handlePostRecommendations}
+                disabled={loading}
+              >
                 Post Recommendation
               </Button>
             </Box>
@@ -933,113 +1202,346 @@ const BroadsheetTab = () => {
                   onClick={handleGenerateComments}
                   disabled={generatingComments}
                 >
-                  {generatingComments ? <CircularProgress size={14} color="inherit" /> : 'Generate Comments'}
+                  {generatingComments ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    'Generate Comments'
+                  )}
                 </Button>
               </Tooltip>
-            </Box>
-          )}
-
-          {/* ── School Info Header ─────────────────────────────── */}
-          {showData && sheet && (
-            <Box sx={{ mb: 2, border: `1px solid ${borderColor}`, borderRadius: '8px', overflow: 'hidden' }}>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, borderBottom: `1px solid ${borderColor}` }}>
-                <Box sx={{ flex: 1, p: 1, borderRight: { xs: 'none', sm: `1px solid ${borderColor}` }, borderBottom: { xs: `1px solid ${borderColor}`, sm: 'none' }, fontWeight: 700, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa' }}>Name Of School</Box>
-                <Box sx={{ flex: 3, p: 1, fontWeight: 600 }}>{schoolName || '-'}</Box>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
-                <Box sx={{ flex: 1, p: 1, borderRight: { xs: 'none', sm: `1px solid ${borderColor}` }, borderBottom: { xs: `1px solid ${borderColor}`, sm: 'none' }, fontWeight: 700, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa' }}>Session</Box>
-                <Box sx={{ flex: 2, p: 1, fontWeight: 600, borderRight: { xs: 'none', sm: `1px solid ${borderColor}` }, borderBottom: { xs: `1px solid ${borderColor}`, sm: 'none' } }}>
-                  {sheet.mode === 'cumulative' ? sheet.session?.session_name : sheet.session_term?.session_name}
-                </Box>
-                {activeTab === 0 && (
-                  <>
-                    <Box sx={{ flex: 1, p: 1, borderRight: { xs: 'none', sm: `1px solid ${borderColor}` }, fontWeight: 700, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa' }}>Term</Box>
-                    <Box sx={{ flex: 2, p: 1, fontWeight: 600 }}>{sheet.session_term?.term_name}</Box>
-                  </>
-                )}
-              </Box>
             </Box>
           )}
 
           {/* ── Broadsheet Table ───────────────────────────────── */}
           {showData && sheet && (
             <>
-              <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', gap: 0.5, mb: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', gap: 0.5, mb: 1 }}
+              >
                 <IconArrowsHorizontal size={14} /> Swipe horizontally to view all columns
               </Typography>
               <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: { xs: 0.25, sm: 0.5 }, px: { xs: 0.5, sm: 1 } }, whiteSpace: 'nowrap', minWidth: 1200 }}>
+                <Table
+                  stickyHeader
+                  sx={{
+                    '& .MuiTableCell-root': { py: { xs: 0.25, sm: 0.5 }, px: { xs: 0.5, sm: 1 } },
+                    whiteSpace: 'nowrap',
+                    minWidth: 1200,
+                  }}
+                >
                   <TableHead>
                     <TableRow>
-                      <TableCell rowSpan={2} sx={{ position: 'sticky', left: 0, zIndex: 3, bgcolor: '#fc9d49', color: '#fff', fontWeight: 700, minWidth: { xs: 150, sm: 250 }, verticalAlign: 'middle', borderRight: `1px solid ${borderColor}` }}>
+                      <TableCell
+                        rowSpan={2}
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 3,
+                          bgcolor: '#fc9d49',
+                          color: '#fff',
+                          fontWeight: 700,
+                          minWidth: { xs: 150, sm: 250 },
+                          verticalAlign: 'middle',
+                          borderRight: `1px solid ${borderColor}`,
+                        }}
+                      >
                         Student Info
                       </TableCell>
                       {subjects.map((subj) => (
-                        <TableCell key={subj.subject_id} colSpan={4} align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, borderRight: `1px solid ${borderColor}`, minWidth: 200 }}>
+                        <TableCell
+                          key={subj.subject_id}
+                          colSpan={4}
+                          align="center"
+                          sx={{
+                            bgcolor: '#ffcb15',
+                            fontWeight: 700,
+                            borderRight: `1px solid ${borderColor}`,
+                            minWidth: 200,
+                          }}
+                        >
                           {subj.subject_name}
                         </TableCell>
                       ))}
-                      <TableCell colSpan={summaryColSpan} align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, borderRight: `1px solid ${borderColor}` }}>
+                      <TableCell
+                        colSpan={summaryColSpan}
+                        align="center"
+                        sx={{
+                          bgcolor: '#ffcb15',
+                          fontWeight: 700,
+                          borderRight: `1px solid ${borderColor}`,
+                        }}
+                      >
                         SUMMARY
                       </TableCell>
                     </TableRow>
                     <TableRow>
                       {subjects.map((subj) => (
                         <Fragment key={`sub-${subj.subject_id}`}>
-                          <TableCell align="center" sx={{ bgcolor: '#c3dfe3', fontWeight: 700, minWidth: { xs: 40, sm: 48 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>CA ({caMax})</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#c3dfe3',
+                              fontWeight: 700,
+                              minWidth: { xs: 40, sm: 48 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              CA ({caMax})
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#c3dfe3', fontWeight: 700, minWidth: { xs: 40, sm: 48 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>EXAM ({examMax})</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#c3dfe3',
+                              fontWeight: 700,
+                              minWidth: { xs: 40, sm: 48 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              EXAM ({examMax})
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#0ca6e8', fontWeight: 700, color: '#fff', minWidth: { xs: 40, sm: 48 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>TOTAL ({totalMax})</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#0ca6e8',
+                              fontWeight: 700,
+                              color: '#fff',
+                              minWidth: { xs: 40, sm: 48 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              TOTAL ({totalMax})
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#0ca6e8', fontWeight: 700, color: '#fff', minWidth: { xs: 40, sm: 48 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>GRADE</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#0ca6e8',
+                              fontWeight: 700,
+                              color: '#fff',
+                              minWidth: { xs: 40, sm: 48 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              GRADE
+                            </Typography>
                           </TableCell>
                         </Fragment>
                       ))}
                       {activeTab === 1 && (
                         <>
                           {['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'].map((label) => (
-                            <TableCell key={label} align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 44, sm: 60 } }}>
-                              <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>{label}</Typography>
+                            <TableCell
+                              key={label}
+                              align="center"
+                              sx={{
+                                bgcolor: '#ffcb15',
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 60 },
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  writingMode: 'vertical-rl',
+                                  transform: 'rotate(180deg)',
+                                  display: 'inline-block',
+                                }}
+                              >
+                                {label}
+                              </Typography>
                             </TableCell>
                           ))}
                         </>
                       )}
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 44, sm: 60 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>CWA</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 44, sm: 60 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          CWA
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>POSITION</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          POSITION
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>NO. SUBJ</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          NO. SUBJ
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>REMARK</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          REMARK
+                        </Typography>
                       </TableCell>
                       {showPromotionButtons && (
                         <>
-                          <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>RECOMMENDATION</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 40, sm: 50 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              RECOMMENDATION
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}>
-                            <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>PROMOTION</Typography>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 40, sm: 50 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              PROMOTION
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#0ca6e8', fontWeight: 700, color: '#fff', minWidth: { xs: 72, sm: 80 } }}>NEXT CLASS</TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#0ca6e8',
+                              fontWeight: 700,
+                              color: '#fff',
+                              minWidth: { xs: 72, sm: 80 },
+                            }}
+                          >
+                            NEXT CLASS
+                          </TableCell>
                         </>
                       )}
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>CLASS TEACHER COMMENT</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          CLASS TEACHER COMMENT
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>HEAD OF SCHOOL COMMENT</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          HEAD OF SCHOOL COMMENT
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 96, sm: 100 } }}>
-                        <Typography variant="caption" sx={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', display: 'inline-block' }}>ACTION</Typography>
+                      <TableCell
+                        align="center"
+                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 96, sm: 100 } }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            writingMode: 'vertical-rl',
+                            transform: 'rotate(180deg)',
+                            display: 'inline-block',
+                          }}
+                        >
+                          ACTION
+                        </Typography>
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -1048,7 +1550,9 @@ const BroadsheetTab = () => {
                       <TableRow>
                         <TableCell colSpan={8 + summaryColSpan} align="center" sx={{ py: 6 }}>
                           <CircularProgress size={28} />
-                          <Typography variant="body2" sx={{ mt: 1 }}>Loading broadsheet...</Typography>
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            Loading broadsheet...
+                          </Typography>
                         </TableCell>
                       </TableRow>
                     ) : visibleStudents.length === 0 ? (
@@ -1059,152 +1563,353 @@ const BroadsheetTab = () => {
                           </Typography>
                         </TableCell>
                       </TableRow>
-                    ) : visibleStudents.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => {
-                      const resultMap = {};
-                      (row.results || []).forEach((r) => { resultMap[r.subject_id] = r; });
-                      // No uploaded scores yet → comments can't be written, so
-                      // the Add/Edit menu is disabled (scores first, then comments).
-                      const hasNoResults = (row.results || []).length === 0 || (row.results || []).every((r) => !r.has_result);
-                      return (
-                        <TableRow key={row.student_registration_id} hover>
-                          <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', borderRight: `1px solid ${borderColor}`, minWidth: { xs: 150, sm: 250 }, p: { xs: 0.5, sm: 1 } }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 } }}>
-                              <Avatar src={row.user?.avatar} sx={{ width: { xs: 28, sm: 36 }, height: { xs: 28, sm: 36 }, bgcolor: 'primary.main', fontSize: { xs: 12, sm: 14 } }}>
-                                {avatarInitials(row.user)}
-                              </Avatar>
-                              <Box sx={{ minWidth: 0 }}>
-                                <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: 12, sm: 14 }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {row.user?.lname} {row.user?.fname} {row.user?.mname}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                                  {row.user?.sex === 'female' ? 'F' : 'M'} &middot; {row.user?.user_id}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          {subjects.map((subj) => {
-                            const result = resultMap[subj.subject_id];
-                            return (
-                              <Fragment key={`sub-${subj.subject_id}`}>
-                                <TableCell align="center" sx={{ bgcolor: '#b0cbcf', fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}>
-                                  {displayScore(result?.ca_total ?? null)}
-                                </TableCell>
-                                <TableCell align="center" sx={{ bgcolor: '#b0cbcf', fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}>
-                                  {displayScore(result?.exam_score ?? null)}
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}>
-                                  {displayScore(result?.overall_total ?? null)}
-                                </TableCell>
-                                <TableCell align="center" sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}>
-                                  {result?.grade ?? '-'}
-                                </TableCell>
-                              </Fragment>
-                            );
-                          })}
-                          {activeTab === 1 && (
-                            <>
-                              <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 44, sm: 60 } }}>{displayScore(row.first_term_average ?? null)}</TableCell>
-                              <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 44, sm: 60 } }}>{displayScore(row.second_term_average ?? null)}</TableCell>
-                              <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 44, sm: 60 } }}>{displayScore(row.third_term_average ?? null)}</TableCell>
-                              <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 44, sm: 60 } }}>{displayScore(row.all_term_average ?? null)}</TableCell>
-                            </>
-                          )}
-                          <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 44, sm: 60 } }}>
-                            {displayScore(activeTab === 0 ? row.student_average : row.all_term_average)}
-                          </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}>
-                            {activeTab === 0 ? (row.position ?? '-') : (row.all_term_overall_class_position ?? '-')}
-                          </TableCell>
-                          <TableCell align="center" sx={{ bgcolor: '#ffcb15', fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}>{row.total_subjects ?? '-'}</TableCell>
-                          <TableCell align="center" sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}>
-                            {row.remark ?? remarkFor(activeTab === 0 ? row.student_average : row.all_term_average, gradeSettings)}
-                          </TableCell>
-                          {showPromotionButtons && (
-                            <>
-                              <TableCell align="center" sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 }, textTransform: 'capitalize' }}>
-                                {row.promotion_recommendation || '-'}
-                              </TableCell>
-                              <TableCell align="center" sx={{ minWidth: { xs: 40, sm: 50 } }}>
-                                <Tooltip title="Click to change recommendation">
-                                  <Box
-                                    component="span"
-                                    onClick={(e) => setRecMenu({ rowId: row.student_registration_id, anchorEl: e.currentTarget })}
-                                    sx={{ display: 'inline-flex', cursor: 'pointer' }}
-                                  >
-                                    {promotionIcon(row.promotion_recommendation)}
-                                  </Box>
-                                </Tooltip>
-                                <Menu
-                                  anchorEl={recMenu.anchorEl}
-                                  open={Boolean(recMenu.anchorEl) && recMenu.rowId === row.student_registration_id}
-                                  onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
+                    ) : (
+                      visibleStudents
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((row) => {
+                          const resultMap = {};
+                          (row.results || []).forEach((r) => {
+                            resultMap[r.subject_id] = r;
+                          });
+                          // No uploaded scores yet → comments can't be written, so
+                          // the Add/Edit menu is disabled (scores first, then comments).
+                          const hasNoResults =
+                            (row.results || []).length === 0 ||
+                            (row.results || []).every((r) => !r.has_result);
+                          return (
+                            <TableRow key={row.student_registration_id} hover>
+                              <TableCell
+                                sx={{
+                                  position: 'sticky',
+                                  left: 0,
+                                  zIndex: 2,
+                                  bgcolor: 'background.paper',
+                                  borderRight: `1px solid ${borderColor}`,
+                                  minWidth: { xs: 150, sm: 250 },
+                                  p: { xs: 0.5, sm: 1 },
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: { xs: 1, sm: 1.5 },
+                                  }}
                                 >
-                                  {['promoted', 'promoted on trial', 'not promoted', 'advised to repeat'].map((opt) => (
-                                    <MenuItem
-                                      key={opt}
-                                      dense
-                                      selected={row.promotion_recommendation === opt}
-                                      onClick={() => handleSetRecommendation(row, opt)}
+                                  <Avatar
+                                    src={row.user?.avatar}
+                                    sx={{
+                                      width: { xs: 28, sm: 36 },
+                                      height: { xs: 28, sm: 36 },
+                                      bgcolor: 'primary.main',
+                                      fontSize: { xs: 12, sm: 14 },
+                                    }}
+                                  >
+                                    {avatarInitials(row.user)}
+                                  </Avatar>
+                                  <Box sx={{ minWidth: 0 }}>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight={600}
+                                      sx={{
+                                        fontSize: { xs: 12, sm: 14 },
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
                                     >
-                                      {opt}
-                                    </MenuItem>
-                                  ))}
-                                </Menu>
+                                      {row.user?.lname} {row.user?.fname} {row.user?.mname}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{ display: { xs: 'none', sm: 'block' } }}
+                                    >
+                                      {row.user?.sex === 'female' ? 'F' : 'M'} &middot;{' '}
+                                      {row.user?.user_id}
+                                    </Typography>
+                                  </Box>
+                                </Box>
                               </TableCell>
-                              <TableCell align="center" sx={{ minWidth: { xs: 72, sm: 80 } }}>
-                                {(row.promotion_recommendation === 'promoted' || row.promotion_recommendation === 'promoted on trial' || row.promotion_recommendation === 'graduated') ? (
-                                  <FormControl size="small" fullWidth>
-                                    <Select
-                                      value={row.next_class_arm_id || ''}
-                                      onChange={(e) => handleSetNextClass(row, e.target.value)}
-                                      sx={{ fontSize: 12 }}
+                              {subjects.map((subj) => {
+                                const result = resultMap[subj.subject_id];
+                                return (
+                                  <Fragment key={`sub-${subj.subject_id}`}>
+                                    <TableCell
+                                      align="center"
+                                      sx={{
+                                        bgcolor: '#b0cbcf',
+                                        fontWeight: 600,
+                                        minWidth: { xs: 40, sm: 48 },
+                                      }}
                                     >
-                                      <MenuItem value=""><em>-</em></MenuItem>
-                                      {allArms.map((arm) => (
-                                        <MenuItem key={arm.id} value={arm.id}>
-                                          {arm.class_name ? `${arm.class_name} - ${arm.class_arm_names}` : arm.class_arm_names}
+                                      {displayScore(result?.ca_total ?? null)}
+                                    </TableCell>
+                                    <TableCell
+                                      align="center"
+                                      sx={{
+                                        bgcolor: '#b0cbcf',
+                                        fontWeight: 600,
+                                        minWidth: { xs: 40, sm: 48 },
+                                      }}
+                                    >
+                                      {displayScore(result?.exam_score ?? null)}
+                                    </TableCell>
+                                    <TableCell
+                                      align="center"
+                                      sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}
+                                    >
+                                      {displayScore(result?.overall_total ?? null)}
+                                    </TableCell>
+                                    <TableCell
+                                      align="center"
+                                      sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}
+                                    >
+                                      {result?.grade ?? '-'}
+                                    </TableCell>
+                                  </Fragment>
+                                );
+                              })}
+                              {activeTab === 1 && (
+                                <>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      bgcolor: '#ffcb15',
+                                      fontWeight: 600,
+                                      minWidth: { xs: 44, sm: 60 },
+                                    }}
+                                  >
+                                    {displayScore(row.first_term_average ?? null)}
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      bgcolor: '#ffcb15',
+                                      fontWeight: 600,
+                                      minWidth: { xs: 44, sm: 60 },
+                                    }}
+                                  >
+                                    {displayScore(row.second_term_average ?? null)}
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      bgcolor: '#ffcb15',
+                                      fontWeight: 600,
+                                      minWidth: { xs: 44, sm: 60 },
+                                    }}
+                                  >
+                                    {displayScore(row.third_term_average ?? null)}
+                                  </TableCell>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      bgcolor: '#ffcb15',
+                                      fontWeight: 600,
+                                      minWidth: { xs: 44, sm: 60 },
+                                    }}
+                                  >
+                                    {displayScore(row.all_term_average ?? null)}
+                                  </TableCell>
+                                </>
+                              )}
+                              <TableCell
+                                align="center"
+                                sx={{
+                                  bgcolor: '#ffcb15',
+                                  fontWeight: 600,
+                                  minWidth: { xs: 44, sm: 60 },
+                                }}
+                              >
+                                {displayScore(
+                                  activeTab === 0 ? row.student_average : row.all_term_average,
+                                )}
+                              </TableCell>
+                              <TableCell
+                                align="center"
+                                sx={{
+                                  bgcolor: '#ffcb15',
+                                  fontWeight: 600,
+                                  minWidth: { xs: 40, sm: 50 },
+                                }}
+                              >
+                                {activeTab === 0
+                                  ? (row.position ?? '-')
+                                  : (row.all_term_overall_class_position ?? '-')}
+                              </TableCell>
+                              <TableCell
+                                align="center"
+                                sx={{
+                                  bgcolor: '#ffcb15',
+                                  fontWeight: 600,
+                                  minWidth: { xs: 40, sm: 50 },
+                                }}
+                              >
+                                {row.total_subjects ?? '-'}
+                              </TableCell>
+                              <TableCell
+                                align="center"
+                                sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}
+                              >
+                                {row.remark ??
+                                  remarkFor(
+                                    activeTab === 0 ? row.student_average : row.all_term_average,
+                                    gradeSettings,
+                                  )}
+                              </TableCell>
+                              {showPromotionButtons && (
+                                <>
+                                  <TableCell
+                                    align="center"
+                                    sx={{
+                                      fontWeight: 600,
+                                      minWidth: { xs: 40, sm: 50 },
+                                      textTransform: 'capitalize',
+                                    }}
+                                  >
+                                    {row.promotion_recommendation || '-'}
+                                  </TableCell>
+                                  <TableCell align="center" sx={{ minWidth: { xs: 40, sm: 50 } }}>
+                                    <Tooltip title="Click to change recommendation">
+                                      <Box
+                                        component="span"
+                                        onClick={(e) =>
+                                          setRecMenu({
+                                            rowId: row.student_registration_id,
+                                            anchorEl: e.currentTarget,
+                                          })
+                                        }
+                                        sx={{ display: 'inline-flex', cursor: 'pointer' }}
+                                      >
+                                        {promotionIcon(row.promotion_recommendation)}
+                                      </Box>
+                                    </Tooltip>
+                                    <Menu
+                                      anchorEl={recMenu.anchorEl}
+                                      open={
+                                        Boolean(recMenu.anchorEl) &&
+                                        recMenu.rowId === row.student_registration_id
+                                      }
+                                      onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
+                                    >
+                                      {[
+                                        'promoted',
+                                        'promoted on trial',
+                                        'not promoted',
+                                        'advised to repeat',
+                                      ].map((opt) => (
+                                        <MenuItem
+                                          key={opt}
+                                          dense
+                                          selected={row.promotion_recommendation === opt}
+                                          onClick={() => handleSetRecommendation(row, opt)}
+                                        >
+                                          {opt}
                                         </MenuItem>
                                       ))}
-                                    </Select>
-                                  </FormControl>
-                                ) : '-'}
-                              </TableCell>
-                            </>
-                          )}
-                          <CommentCell value={row.class_teachers_comment} />
-                          <CommentCell value={row.hos_comment} />
-                          <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
-                            <Tooltip title={hasNoResults ? 'No scores uploaded for this student yet — upload scores before adding comments' : 'Add or edit comments and scores'}>
-                              <span>
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  color="primary"
-                                  sx={{ fontSize: 12, px: 1, minWidth: 0, textTransform: 'none' }}
-                                  onClick={(e) => handleAddEditClick(e, row)}
-                                  disabled={hasNoResults}
-                                >
-                                  Add/Edit
-                                </Button>
-                              </span>
-                            </Tooltip>
-                            <Menu anchorEl={addEditMenu.anchorEl} open={Boolean(addEditMenu.anchorEl) && addEditMenu.rowId === row.student_registration_id} onClose={closeAddEditMenu}>
-                              <MenuItem dense onClick={() => { closeAddEditMenu(); handleOpenComment(row, 'teacher'); }}>
-                                <IconMessage size={16} style={{ marginRight: 8 }} /> Class Teacher
-                              </MenuItem>
-                              <MenuItem dense onClick={() => { closeAddEditMenu(); handleOpenComment(row, 'hos'); }}>
-                                <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
-                              </MenuItem>
-                              {activeTab === 0 && (
-                                <MenuItem dense onClick={() => { closeAddEditMenu(); handleOpenEditScores(row); }}>
-                                  <IconEdit size={16} style={{ marginRight: 8 }} /> Edit Scores
-                                </MenuItem>
+                                    </Menu>
+                                  </TableCell>
+                                  <TableCell align="center" sx={{ minWidth: { xs: 72, sm: 80 } }}>
+                                    {row.promotion_recommendation === 'promoted' ||
+                                    row.promotion_recommendation === 'promoted on trial' ||
+                                    row.promotion_recommendation === 'graduated' ? (
+                                      <FormControl size="small" fullWidth>
+                                        <Select
+                                          value={row.next_class_arm_id || ''}
+                                          onChange={(e) => handleSetNextClass(row, e.target.value)}
+                                          sx={{ fontSize: 12 }}
+                                        >
+                                          <MenuItem value="">
+                                            <em>-</em>
+                                          </MenuItem>
+                                          {allArms.map((arm) => (
+                                            <MenuItem key={arm.id} value={arm.id}>
+                                              {arm.class_name
+                                                ? `${arm.class_name} - ${arm.class_arm_names}`
+                                                : arm.class_arm_names}
+                                            </MenuItem>
+                                          ))}
+                                        </Select>
+                                      </FormControl>
+                                    ) : (
+                                      '-'
+                                    )}
+                                  </TableCell>
+                                </>
                               )}
-                            </Menu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                              <CommentCell value={row.class_teachers_comment} />
+                              <CommentCell value={row.hos_comment} />
+                              <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
+                                <Tooltip
+                                  title={
+                                    hasNoResults
+                                      ? 'No scores uploaded for this student yet — upload scores before adding comments'
+                                      : 'Add or edit comments and scores'
+                                  }
+                                >
+                                  <span>
+                                    <Button
+                                      size="small"
+                                      variant="contained"
+                                      color="primary"
+                                      sx={{
+                                        fontSize: 12,
+                                        px: 1,
+                                        minWidth: 0,
+                                        textTransform: 'none',
+                                      }}
+                                      onClick={(e) => handleAddEditClick(e, row)}
+                                      disabled={hasNoResults}
+                                    >
+                                      Add/Edit
+                                    </Button>
+                                  </span>
+                                </Tooltip>
+                                <Menu
+                                  anchorEl={addEditMenu.anchorEl}
+                                  open={
+                                    Boolean(addEditMenu.anchorEl) &&
+                                    addEditMenu.rowId === row.student_registration_id
+                                  }
+                                  onClose={closeAddEditMenu}
+                                >
+                                  <MenuItem
+                                    dense
+                                    onClick={() => {
+                                      closeAddEditMenu();
+                                      handleOpenComment(row, 'teacher');
+                                    }}
+                                  >
+                                    <IconMessage size={16} style={{ marginRight: 8 }} /> Class
+                                    Teacher
+                                  </MenuItem>
+                                  <MenuItem
+                                    dense
+                                    onClick={() => {
+                                      closeAddEditMenu();
+                                      handleOpenComment(row, 'hos');
+                                    }}
+                                  >
+                                    <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
+                                  </MenuItem>
+                                  {activeTab === 0 && (
+                                    <MenuItem
+                                      dense
+                                      onClick={() => {
+                                        closeAddEditMenu();
+                                        handleOpenEditScores(row);
+                                      }}
+                                    >
+                                      <IconEdit size={16} style={{ marginRight: 8 }} /> Edit Scores
+                                    </MenuItem>
+                                  )}
+                                </Menu>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -1214,10 +1919,17 @@ const BroadsheetTab = () => {
                 page={page}
                 onPageChange={(_, p) => setPage(p)}
                 rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
                 rowsPerPageOptions={[5, 10, 25]}
                 sx={{
-                  '& .MuiTablePagination-toolbar': { flexWrap: 'wrap', justifyContent: { xs: 'center', sm: 'flex-end' }, gap: 0.5 },
+                  '& .MuiTablePagination-toolbar': {
+                    flexWrap: 'wrap',
+                    justifyContent: { xs: 'center', sm: 'flex-end' },
+                    gap: 0.5,
+                  },
                   '& .MuiTablePagination-selectLabel': { display: { xs: 'none', sm: 'block' } },
                 }}
               />
@@ -1225,22 +1937,22 @@ const BroadsheetTab = () => {
           )}
 
           {!showData && !loading && (
-            <Alert severity={filterError ? 'error' : 'info'} sx={{ mt: 1 }} onClose={filterError ? () => setFilterError('') : undefined}>
-              {filterError || (activeTab === 0
-                ? 'Select Session, Term, Programme, Class and Class Arm, then click Fetch to view the broadsheet.'
-                : 'Select Session, Programme, Class and Class Arm, then click Fetch to view the term cumulative broadsheet.')}
+            <Alert
+              severity={filterError ? 'error' : 'info'}
+              sx={{ mt: 1 }}
+              onClose={filterError ? () => setFilterError('') : undefined}
+            >
+              {filterError ||
+                (activeTab === 0
+                  ? 'Select Session, Term, Programme, Class and Class Arm, then click Fetch to view the broadsheet.'
+                  : 'Select Session, Programme, Class and Class Arm, then click Fetch to view the term cumulative broadsheet.')}
             </Alert>
           )}
         </Box>
       </Card>
 
       {/* ── Publish confirmation ────────────────────────────── */}
-      <Dialog
-        open={publishConfirm.open}
-        onClose={closePublishConfirm}
-        maxWidth="xs"
-        fullWidth
-      >
+      <Dialog open={publishConfirm.open} onClose={closePublishConfirm} maxWidth="xs" fullWidth>
         <DialogTitle>{PUBLISH_CONFIRM[publishConfirm.action]?.title}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary">
@@ -1257,7 +1969,11 @@ const BroadsheetTab = () => {
             onClick={() => handlePublishAction(publishConfirm.action)}
             disabled={Boolean(publishing)}
           >
-            {publishing ? <CircularProgress size={16} color="inherit" /> : PUBLISH_CONFIRM[publishConfirm.action]?.confirm}
+            {publishing ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              PUBLISH_CONFIRM[publishConfirm.action]?.confirm
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1265,18 +1981,25 @@ const BroadsheetTab = () => {
       {/* ── Comment Dialog ──────────────────────────────────── */}
       <Dialog open={commentDialog.open} onClose={closeCommentDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>
-          {commentDialog.mode === 'hos' ? 'Head of School Comment' : 'Class Teacher Comment'} — {commentDialog.student?.user?.lname} {commentDialog.student?.user?.fname}
+          {commentDialog.mode === 'hos' ? 'Head of School Comment' : 'Class Teacher Comment'} —{' '}
+          {commentDialog.student?.user?.lname} {commentDialog.student?.user?.fname}
         </DialogTitle>
         <DialogContent dividers>
           {commentDialog.mode === 'hos' ? (
             <TextField
-              label="Head of School Comment" fullWidth multiline rows={4}
+              label="Head of School Comment"
+              fullWidth
+              multiline
+              rows={4}
               value={commentForm.hos_comment}
               onChange={(e) => setCommentForm({ ...commentForm, hos_comment: e.target.value })}
             />
           ) : (
             <TextField
-              label="Class Teacher Comment" fullWidth multiline rows={4}
+              label="Class Teacher Comment"
+              fullWidth
+              multiline
+              rows={4}
               value={commentForm.teacher_comment}
               onChange={(e) => setCommentForm({ ...commentForm, teacher_comment: e.target.value })}
             />
@@ -1284,14 +2007,17 @@ const BroadsheetTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeCommentDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSaveComment}>Save</Button>
+          <Button variant="contained" onClick={handleSaveComment}>
+            Save
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* ── Edit Scores Dialog ─────────────────────────────── */}
       <Dialog open={editScoresDialog.open} onClose={handleCloseEditScores} maxWidth="lg" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>
-          Edit Scores — {editScoresDialog.student?.user?.lname} {editScoresDialog.student?.user?.fname}
+          Edit Scores — {editScoresDialog.student?.user?.lname}{' '}
+          {editScoresDialog.student?.user?.fname}
         </DialogTitle>
         <DialogContent dividers>
           <TableContainer sx={{ overflowX: 'auto' }}>
@@ -1301,21 +2027,39 @@ const BroadsheetTab = () => {
                   <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
                   {scoreForm[0]?.ca_breakdown.map((g) => (
-                    <TableCell key={g.display_name} colSpan={Math.max(g.entities.length, 1)} align="center" sx={{ fontWeight: 700 }}>
+                    <TableCell
+                      key={g.display_name}
+                      colSpan={Math.max(g.entities.length, 1)}
+                      align="center"
+                      sx={{ fontWeight: 700 }}
+                    >
                       {g.display_name}
                     </TableCell>
                   ))}
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>CA Total</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Exam Score</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700 }}>Action</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>
+                    CA Total
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>
+                    Exam Score
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 700 }}>
+                    Action
+                  </TableCell>
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={2} />
-                  {scoreForm[0]?.ca_breakdown.map((g) => g.entities.map((e) => (
-                    <TableCell key={e.display_name} align="center" sx={{ fontSize: 12, color: 'text.secondary' }}>
-                      {e.display_name}{e.max_score != null ? `(${e.max_score})` : ''}
-                    </TableCell>
-                  )))}
+                  {scoreForm[0]?.ca_breakdown.map((g) =>
+                    g.entities.map((e) => (
+                      <TableCell
+                        key={e.display_name}
+                        align="center"
+                        sx={{ fontSize: 12, color: 'text.secondary' }}
+                      >
+                        {e.display_name}
+                        {e.max_score != null ? `(${e.max_score})` : ''}
+                      </TableCell>
+                    )),
+                  )}
                   <TableCell align="center" sx={{ fontSize: 12, color: 'text.secondary' }}>
                     (Max {caMax})
                   </TableCell>
@@ -1334,47 +2078,72 @@ const BroadsheetTab = () => {
                       </Typography>
                     </TableCell>
                   </TableRow>
-                ) : scoreForm.map((subj, i) => {
-                  const caTotal = subj.ca_breakdown.reduce((sum, g) => sum + g.entities.reduce((s, e) => s + (Number(e.score) || 0), 0), 0);
-                  return (
-                    <TableRow key={subj.subject_id} hover>
-                      <TableCell>{i + 1}</TableCell>
-                      <TableCell sx={{ fontWeight: 500 }}>{subj.subject_name}</TableCell>
-                      {subj.ca_breakdown.map((g, gi) => g.entities.map((e, ei) => (
-                        <TableCell key={`${gi}-${ei}`} align="center">
+                ) : (
+                  scoreForm.map((subj, i) => {
+                    const caTotal = subj.ca_breakdown.reduce(
+                      (sum, g) => sum + g.entities.reduce((s, e) => s + (Number(e.score) || 0), 0),
+                      0,
+                    );
+                    return (
+                      <TableRow key={subj.subject_id} hover>
+                        <TableCell>{i + 1}</TableCell>
+                        <TableCell sx={{ fontWeight: 500 }}>{subj.subject_name}</TableCell>
+                        {subj.ca_breakdown.map((g, gi) =>
+                          g.entities.map((e, ei) => (
+                            <TableCell key={`${gi}-${ei}`} align="center">
+                              <TextField
+                                size="small"
+                                type="number"
+                                value={e.score}
+                                onChange={(ev) => handleScoreChange(i, gi, ei, ev.target.value)}
+                                error={isScoreInvalid(e.score, e.max_score)}
+                                helperText={
+                                  isScoreInvalid(e.score, e.max_score) ? 'Invalid score' : ' '
+                                }
+                                inputProps={{
+                                  min: 0,
+                                  max: e.max_score ?? undefined,
+                                  style: { textAlign: 'center', width: 64, padding: '6px 4px' },
+                                }}
+                                sx={{ '& .MuiFormHelperText-root': { m: 0, fontSize: 10 } }}
+                              />
+                            </TableCell>
+                          )),
+                        )}
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          {caTotal}
+                        </TableCell>
+                        <TableCell align="center">
                           <TextField
                             size="small"
                             type="number"
-                            value={e.score}
-                            onChange={(ev) => handleScoreChange(i, gi, ei, ev.target.value)}
-                            error={isScoreInvalid(e.score, e.max_score)}
-                            helperText={isScoreInvalid(e.score, e.max_score) ? 'Invalid score' : ' '}
-                            inputProps={{ min: 0, max: e.max_score ?? undefined, style: { textAlign: 'center', width: 64, padding: '6px 4px' } }}
+                            value={subj.exam_score}
+                            onChange={(ev) => handleExamChange(i, ev.target.value)}
+                            error={
+                              subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax)
+                            }
+                            helperText={
+                              subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax)
+                                ? 'Invalid score'
+                                : ' '
+                            }
+                            inputProps={{
+                              min: 0,
+                              max: examMax,
+                              style: { textAlign: 'center', width: 64, padding: '6px 4px' },
+                            }}
                             sx={{ '& .MuiFormHelperText-root': { m: 0, fontSize: 10 } }}
                           />
                         </TableCell>
-                      )))}
-                      <TableCell align="center" sx={{ fontWeight: 700 }}>{caTotal}</TableCell>
-                      <TableCell align="center">
-                        <TextField
-                          size="small"
-                          type="number"
-                          value={subj.exam_score}
-                          onChange={(ev) => handleExamChange(i, ev.target.value)}
-                          error={subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax)}
-                          helperText={subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax) ? 'Invalid score' : ' '}
-                          inputProps={{ min: 0, max: examMax, style: { textAlign: 'center', width: 64, padding: '6px 4px' } }}
-                          sx={{ '& .MuiFormHelperText-root': { m: 0, fontSize: 10 } }}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        <Button size="small" onClick={() => handleSaveScoreRow(i)}>
-                          Save
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        <TableCell align="center">
+                          <Button size="small" onClick={() => handleSaveScoreRow(i)}>
+                            Save
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -1385,8 +2154,19 @@ const BroadsheetTab = () => {
       </Dialog>
 
       {/* ── Snackbar ─────────────────────────────────────────── */}
-      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <MuiAlert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity} variant="filled">{snackbar.message}</MuiAlert>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MuiAlert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+        >
+          {snackbar.message}
+        </MuiAlert>
       </Snackbar>
     </Box>
   );

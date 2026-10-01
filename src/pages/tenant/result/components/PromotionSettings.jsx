@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Button, TextField, Grid, Chip, IconButton,
-  FormControl, InputLabel, Select, MenuItem, CircularProgress, Tooltip, Menu,
+  FormControl, InputLabel, Select, MenuItem, Tooltip, Menu,
   MenuItem as MuiMenuItem, Alert, Skeleton,
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
@@ -223,9 +223,11 @@ const PromotionSettings = ({ onStatsRefresh }) => {
       </Grid>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-          <CircularProgress />
-        </Box>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+          {[0, 1, 2].map((row) => (
+            <Skeleton key={row} variant="rounded" height={44} sx={{ mb: 1 }} />
+          ))}
+        </Paper>
       ) : (
         <>
           {/* ── Cumulative Passmark Form ── */}

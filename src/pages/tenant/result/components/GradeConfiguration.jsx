@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, CircularProgress, Alert, Tooltip, Snackbar,
+  TableHead, TableRow, IconButton, Skeleton, Alert, Tooltip, Snackbar, Stack,
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
@@ -48,14 +48,12 @@ const GradeConfiguration = ({ sessionTermId, refreshKey = 0 }) => {
     }
   }, [sessionTermId]);
 
-  // Re-fetch when the parent signals that a sync changed the config.
+  // Fetches on mount, on sessionTermId change (fetchConfigurations is keyed
+  // on it), and whenever the parent bumps refreshKey after a sync — one
+  // effect, not two, which previously fired this request twice per change.
   useEffect(() => {
     fetchConfigurations();
   }, [fetchConfigurations, refreshKey]);
-
-  useEffect(() => {
-    fetchConfigurations();
-  }, [fetchConfigurations]);
 
   const handleGradeSave = useCallback(async (grades) => {
     try {
@@ -158,29 +156,75 @@ const GradeConfiguration = ({ sessionTermId, refreshKey = 0 }) => {
   return (
     <Box>
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ border: '1px solid', borderColor: 'divider' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, width: '20%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Division</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '35%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Mark Configuration</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '45%', bgcolor: isDark ? 'grey.900' : 'grey.50' }}>Grade Settings</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...Array(divisions.length || 2)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width="60%" /></TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width="80%" />
+                    <Skeleton variant="text" width="50%" />
+                  </TableCell>
+                  <TableCell><Skeleton variant="rounded" height={90} /></TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       ) : error ? (
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       ) : divisions.length === 0 ? (
         <Alert severity="info">No configurations found for this session term.</Alert>
       ) : (
-        <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table stickyHeader size="small" sx={{ border: '1px solid', borderColor: 'divider', '& .MuiTableCell-root': { py: 1, px: 1.5, borderRight: '1px solid', borderColor: 'divider' }, whiteSpace: 'nowrap' }}>
+        <TableContainer
+          sx={{
+            overflowX: 'auto',
+            borderRadius: '10px',
+            border: '1px solid',
+            borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}
+        >
+          <Table
+            stickyHeader
+            size="small"
+            sx={{
+              '& .MuiTableCell-root': {
+                py: 1.25,
+                px: 1.5,
+                borderRight: '1px solid',
+                borderBottom: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#E2E8F0',
+                verticalAlign: 'top',
+              },
+              whiteSpace: 'nowrap',
+            }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '20%', bgcolor: isDark ? 'grey.900' : 'grey.50', borderRight: '1px solid', borderColor: 'divider' }}>Division</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '35%', bgcolor: isDark ? 'grey.900' : 'grey.50', borderRight: '1px solid', borderColor: 'divider' }}>Mark Configuration</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '45%', bgcolor: isDark ? 'grey.900' : 'grey.50', borderRight: '1px solid', borderColor: 'divider' }}>Grade Settings</TableCell>
+                <TableCell sx={{ fontWeight: 800, fontSize: '0.78rem', width: '20%', bgcolor: isDark ? 'grey.800' : '#F1F5F9', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Division</TableCell>
+                <TableCell sx={{ fontWeight: 800, fontSize: '0.78rem', width: '35%', bgcolor: isDark ? 'grey.800' : '#F1F5F9', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Mark Configuration</TableCell>
+                <TableCell sx={{ fontWeight: 800, fontSize: '0.78rem', width: '45%', bgcolor: isDark ? 'grey.800' : '#F1F5F9', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Grade Settings</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {divisions.map((division, index) => (
-                <TableRow key={division.id} hover>
+                <TableRow
+                  key={division.id}
+                  hover
+                  sx={{ bgcolor: index % 2 === 1 ? (isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC') : 'transparent' }}
+                >
                   {/* Division Name */}
                   <TableCell>
-                    <Typography variant="body2" fontWeight={600}>{division.division_name}</Typography>
+                    <Typography variant="body2" fontWeight={700}>{division.division_name}</Typography>
                   </TableCell>
 
                   {/* Mark Configuration */}
@@ -195,14 +239,55 @@ const GradeConfiguration = ({ sessionTermId, refreshKey = 0 }) => {
                         </Tooltip>
                       </Alert>
                     ) : (
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Box>
-                          <Typography variant="body2">Exam/C.A Ratio: <strong>{division.examRatio} : {division.caRatio}</strong></Typography>
-                          <Typography variant="body2">No of C.As: <strong>{division.numberOfCAs}</strong></Typography>
-                        </Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                        <Stack spacing={0.75}>
+                          <Box
+                            sx={{
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: '8px',
+                              bgcolor: isDark ? 'rgba(37,99,235,0.15)' : '#EFF6FF',
+                              border: '1px solid',
+                              borderColor: isDark ? 'rgba(37,99,235,0.3)' : '#BFDBFE',
+                              display: 'inline-block',
+                            }}
+                          >
+                            <Typography sx={{ fontSize: '0.72rem', color: isDark ? '#93c5fd' : '#1d4ed8', fontWeight: 600 }}>
+                              Exam / C.A Ratio
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.95rem', fontWeight: 800, color: isDark ? '#fff' : '#1e3a8a', lineHeight: 1.2 }}>
+                              {division.examRatio} : {division.caRatio}
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: '8px',
+                              bgcolor: isDark ? 'rgba(22,163,74,0.15)' : '#F0FDF4',
+                              border: '1px solid',
+                              borderColor: isDark ? 'rgba(22,163,74,0.3)' : '#BBF7D0',
+                              display: 'inline-block',
+                            }}
+                          >
+                            <Typography sx={{ fontSize: '0.72rem', color: isDark ? '#86efac' : '#15803d', fontWeight: 600 }}>
+                              No of C.As
+                            </Typography>
+                            <Typography sx={{ fontSize: '0.95rem', fontWeight: 800, color: isDark ? '#fff' : '#14532d', lineHeight: 1.2 }}>
+                              {division.numberOfCAs}
+                            </Typography>
+                          </Box>
+                        </Stack>
                         <Tooltip title="Edit Mark Configuration">
-                          <IconButton size="small" onClick={() => setMarkDialog({ open: true, division, index })}>
-                            <IconEdit fontSize="small" />
+                          <IconButton
+                            size="small"
+                            onClick={() => setMarkDialog({ open: true, division, index })}
+                            sx={{
+                              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
+                              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E2E8F0' },
+                            }}
+                          >
+                            <IconEdit size={16} />
                           </IconButton>
                         </Tooltip>
                       </Box>
@@ -217,25 +302,27 @@ const GradeConfiguration = ({ sessionTermId, refreshKey = 0 }) => {
                           size="small"
                           sx={{
                             border: '1px solid',
-                            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                            borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
                             '& .MuiTableCell-root': {
                               borderRight: '1px solid',
                               borderBottom: '1px solid',
-                              borderColor: 'divider',
+                              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E2E8F0',
                             },
                             '& tbody tr:nth-of-type(odd)': {
-                              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FAFAFA',
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F8FAFC',
                             },
                           }}
                         >
                           <TableHead>
                             <TableRow>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>#</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>Min</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>Max</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>Grade</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>Remark</TableCell>
-                              <TableCell sx={{ fontWeight: 700, py: 0.25, px: 0.5, fontSize: '0.75rem' }}>Point</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>#</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Min</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Max</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Grade</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Remark</TableCell>
+                              <TableCell sx={{ fontWeight: 700, py: 0.5, px: 0.5, fontSize: '0.75rem', bgcolor: isDark ? 'grey.800' : '#EEF2F6', borderBottom: '2px solid', borderColor: isDark ? 'rgba(255,255,255,0.18)' : '#CBD5E1' }}>Point</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>

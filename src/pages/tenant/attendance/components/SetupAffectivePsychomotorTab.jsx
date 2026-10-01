@@ -739,7 +739,7 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
       {/* Stat Cards — each inner tab gets its own stats, since they cover two
           unrelated concerns (weekly report delivery vs. domain/skill config). */}
       <Box sx={{ mb: 2 }}>
-        {innerTab === 0 ? (
+        {innerTab === 0 && showWeeklyReports ? (
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <StatCard
               loading={summaryLoading}
@@ -816,12 +816,19 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
         )}
       </Box>
 
-      {/* Loading skeleton for the two-column setup area below, matching its real layout —
-          only relevant on the Psychomotor Setup tab, which is what actually loads it */}
+      {/* Loading skeleton for the Affective Domain / Psychomotor Domain
+          cards — shaped like the real DomainCard (colour + title intact)
+          rather than a generic grey placeholder, so each card reads as
+          "this specific card is loading" instead of an anonymous block.
+          Only relevant on the Psychomotor Setup tab, which is what
+          actually renders these two cards. */}
       {innerTab === 1 && loading && (
         <Grid container spacing={3}>
-          {[0, 1].map((col) => (
-            <Grid size={{ xs: 12, md: 6 }} key={col}>
+          {[
+            { title: 'Affective Domain', color: theme.palette.success.main },
+            { title: 'Psychomotor Domain', color: theme.palette.primary.main },
+          ].map((col) => (
+            <Grid size={{ xs: 12, md: 6 }} key={col.title}>
               <Paper
                 elevation={0}
                 sx={{
@@ -830,12 +837,20 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
                   overflow: 'hidden',
                 }}
               >
-                <Box sx={{ px: 3, py: 2 }}>
-                  <Skeleton variant="text" width="40%" height={28} />
+                <Box
+                  sx={{
+                    px: 3,
+                    py: 2,
+                    background: col.color,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={700} color="#fff">
+                    {col.title}
+                  </Typography>
                 </Box>
                 <Box sx={{ p: 2 }}>
-                  {[0, 1, 2].map((row) => (
-                    <Skeleton key={row} variant="rounded" height={40} sx={{ mb: 1 }} />
+                  {[0, 1, 2, 3].map((row) => (
+                    <Skeleton key={row} variant="rounded" height={36} sx={{ mb: 1 }} />
                   ))}
                 </Box>
               </Paper>

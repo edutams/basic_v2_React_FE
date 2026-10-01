@@ -135,6 +135,7 @@ const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBrea
 const PerformanceAnalyticsPage = Loadable(
   lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')),
 );
+const ResultOverviewPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultOverviewPage')));
 const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
@@ -564,6 +565,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.admin.view_analytics">
             <PerformanceAnalyticsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-overview',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_overview">
+            <ResultOverviewPage />
           </TenantProtectedRoute>
         ),
       },

@@ -196,6 +196,38 @@ const GeneralSubjectsTab = forwardRef(function GeneralSubjectsTab(
     });
   };
 
+  // Registers ONE learner for every subject in this tab at once — the
+  // per-row counterpart to the per-column "All"/"None" toggle above.
+  const registerAllForLearner = (learnerId) => {
+    setLearners((prev) =>
+      prev.map((l) =>
+        l.id === learnerId
+          ? {
+              ...l,
+              registered: subjects.reduce(
+                (acc, subj) => ({ ...acc, [subj.id]: true }),
+                { ...l.registered },
+              ),
+            }
+          : l,
+      ),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      subjects.forEach((subj) => {
+        const key = `${learnerId}_${subj.id}`;
+        const origState = originalRegistered[learnerId]?.[subj.id] ?? false;
+        if (!origState) {
+          next[key] = true;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  };
+
   return (
     <Box>
       {error && (
@@ -233,6 +265,7 @@ const GeneralSubjectsTab = forwardRef(function GeneralSubjectsTab(
           onToggle={toggleRegistration}
           onRegisterAll={registerAll}
           onUnregisterAll={unregisterAll}
+          onRegisterAllForLearner={registerAllForLearner}
         />
       )}
 

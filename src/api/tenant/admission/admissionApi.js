@@ -233,6 +233,11 @@ export const initiateAdmissionPayment = async (data) => {
   return response.data;
 };
 
+export const requeryAdmissionPayment = async (admissionId) => {
+  const response = await api.get(`/admission/payments/requery/${admissionId}`);
+  return response.data;
+};
+
 // Get admission payment receipt
 export const getAdmissionPaymentReceipt = async (admissionId) => {
   const response = await api.get(`/admission/payments/receipt/${admissionId}`);

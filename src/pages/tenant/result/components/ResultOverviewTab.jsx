@@ -7,36 +7,36 @@ import {
   Stack,
   TextField,
   MenuItem,
+  Button,
   Avatar,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  LinearProgress,
   Chip,
   useTheme,
 } from '@mui/material';
 import Chart from 'react-apexcharts';
-import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarOutlineOutlinedIcon from '@mui/icons-material/StarOutlineOutlined';
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SearchIcon from '@mui/icons-material/Search';
 
 // ── Dummy data — this page is a UI mockup only, not wired to a backend
-// endpoint yet. Numbers mirror the reference design exactly so the shapes
-// (ranking tables, trend chart, donuts) are easy to swap for real data
-// later without reworking the layout. ──────────────────────────────────
+// endpoint yet. Shapes/labels mirror the CEO-approved reference design
+// exactly so swapping in real data later doesn't require reworking the
+// layout. ──────────────────────────────────────────────────────────────
 
-// Same 4-colour scheme as the Admin Dashboard's StatCardItem
-// (src/pages/tenant/school-dashboard/AdminDashboard/components/TopStatCards.jsx),
-// extended with a 5th (red) for the "At Risk" card using the same red this
-// app already uses for danger/at-risk elsewhere.
 const SCHEME = {
   blue: { bg: '#EEF2FF', iconColor: '#2563EB' },
   green: { bg: '#DCFCE7', iconColor: '#16A34A' },
@@ -46,11 +46,49 @@ const SCHEME = {
 };
 
 const STAT_CARDS = [
-  { label: 'Total Students', value: '742', delta: '5.2%', deltaUp: true, icon: SchoolOutlinedIcon, scheme: 'blue' },
-  { label: 'Overall Pass Rate', value: '86.4%', delta: '3.6%', deltaUp: true, icon: CheckCircleOutlineOutlinedIcon, scheme: 'green' },
-  { label: 'Average Score', value: '74.8%', delta: '4.1%', deltaUp: true, icon: StarOutlineOutlinedIcon, scheme: 'orange' },
-  { label: 'Distinction Rate', value: '28.6%', delta: '6.3%', deltaUp: true, icon: TrendingUpOutlinedIcon, scheme: 'purple' },
-  { label: 'At Risk Students', value: '48', delta: '18.6%', deltaUp: false, icon: WarningAmberOutlinedIcon, scheme: 'red' },
+  {
+    label: 'Total Students',
+    value: '1,248',
+    delta: '3.2%',
+    deltaUp: true,
+    icon: GroupsOutlinedIcon,
+    scheme: 'blue',
+  },
+  {
+    label: 'Passed',
+    value: '1,023',
+    subPercent: '86.6%',
+    delta: '4.8%',
+    deltaUp: true,
+    icon: CheckCircleOutlineOutlinedIcon,
+    scheme: 'green',
+  },
+  {
+    label: 'Distinctions',
+    value: '72',
+    subPercent: '5.8%',
+    delta: '1.6%',
+    deltaUp: true,
+    icon: EmojiEventsOutlinedIcon,
+    scheme: 'orange',
+  },
+  {
+    label: 'Average Score',
+    value: '72.4%',
+    delta: '5.6%',
+    deltaUp: true,
+    icon: StarOutlineOutlinedIcon,
+    scheme: 'purple',
+  },
+  {
+    label: 'At Risk Students',
+    value: '159',
+    subPercent: '12.7%',
+    delta: '5.1%',
+    deltaUp: false,
+    icon: WarningAmberOutlinedIcon,
+    scheme: 'red',
+  },
 ];
 
 const TREND_TERMS = [
@@ -60,77 +98,156 @@ const TREND_TERMS = [
   '2024/2025\n1st Term',
   '2024/2025\n2nd Term',
   '2024/2025\n3rd Term',
-];
-const TREND_SCORES = [68, 70, 71.5, 73, 73.8, 74.8];
-const TREND_PASS_RATES = [78, 80.5, 81.5, 84, 85.1, 86.4];
-
-const GRADE_DISTRIBUTION = [
-  { grade: 'A (70-100)', count: 212, pct: 28.6, color: '#16a34a' },
-  { grade: 'B (60-69)', count: 241, pct: 32.5, color: '#2563eb' },
-  { grade: 'C (50-59)', count: 176, pct: 23.7, color: '#f59e0b' },
-  { grade: 'D (45-49)', count: 71, pct: 9.6, color: '#f97316' },
-  { grade: 'E (40-44)', count: 35, pct: 4.7, color: '#ef4444' },
-  { grade: 'F (0-39)', count: 7, pct: 0.9, color: '#991b1b' },
+  '2025/2026\n1st Term',
 ];
 
-const SUBJECT_PERFORMANCE = [
-  { subject: 'Mathematics', score: 78.4, passRate: 92.1, color: '#2563eb' },
-  { subject: 'English Language', score: 76.1, passRate: 88.6, color: '#16a34a' },
-  { subject: 'Basic Science', score: 72.3, passRate: 82.4, color: '#f59e0b' },
-  { subject: 'Social Studies', score: 70.8, passRate: 80.1, color: '#ef4444' },
-  { subject: 'Civic Education', score: 74.5, passRate: 86.7, color: '#06b6d4' },
-  { subject: 'Agricultural Science', score: 68.2, passRate: 79.3, color: '#ec4899' },
-  { subject: 'Computer Studies', score: 81.6, passRate: 94.2, color: '#7c3aed' },
+const TREND_METRICS = [
+  {
+    key: 'passRate',
+    label: 'Pass Rate',
+    shortLabel: 'Pass Rate (%)',
+    color: '#2563eb',
+    data: [68.2, 72.5, 76.1, 79.3, 82.4, 84.9, 86.6],
+  },
+  {
+    key: 'avgScore',
+    label: 'Average Score',
+    shortLabel: 'Average Score',
+    color: '#16a34a',
+    data: [64.1, 66.8, 69.3, 71.6, 73.8, 70.1, 72.4],
+  },
+  {
+    key: 'distinctionRate',
+    label: 'Distinction Rate',
+    shortLabel: 'Distinction Rate',
+    color: '#9333ea',
+    data: [3.2, 3.8, 4.1, 4.6, 4.9, 4.2, 5.8],
+  },
+  {
+    key: 'failRate',
+    label: 'Fail Rate',
+    shortLabel: 'Fail Rate',
+    color: '#dc2626',
+    data: [18.5, 15.8, 13.2, 10.9, 8.6, 10.2, 13.4],
+  },
 ];
 
-const TOP_CLASSES = [
-  { rank: 1, name: 'JSS 3', students: 98, average: 82.4, passRate: 95.9 },
-  { rank: 2, name: 'SS 3', students: 92, average: 79.1, passRate: 93.5 },
-  { rank: 3, name: 'JSS 2', students: 104, average: 76.8, passRate: 89.4 },
-  { rank: 4, name: 'SS 2', students: 87, average: 74.6, passRate: 86.2 },
-  { rank: 5, name: 'JSS 1', students: 96, average: 71.3, passRate: 81.5 },
+const HEATMAP_SUBJECTS = [
+  'Mathematics',
+  'English',
+  'Basic Science',
+  'Social Studies',
+  'Civic Education',
+  'Agric. Science',
+  'Computer Studies',
 ];
 
-const TOP_SUBJECTS = [
-  { rank: 1, name: 'Computer Studies', average: 81.6, passRate: 94.2 },
-  { rank: 2, name: 'Mathematics', average: 78.4, passRate: 92.1 },
-  { rank: 3, name: 'English Language', average: 76.1, passRate: 88.6 },
-  { rank: 4, name: 'Civic Education', average: 74.5, passRate: 86.7 },
-  { rank: 5, name: 'Basic Science', average: 72.3, passRate: 82.4 },
+const HEATMAP_ROWS = [
+  { className: 'JS1', scores: [78, 82, 76, 71, 74, 69, 81], overall: 75.9 },
+  { className: 'JS2', scores: [81, 84, 79, 76, 77, 72, 85], overall: 79.1 },
+  { className: 'JS3', scores: [76, 78, 72, 69, 70, 66, 77], overall: 73.4 },
+  { className: 'SS1', scores: [68, 72, 70, 65, 66, 61, 73], overall: 67.9 },
+  { className: 'SS2', scores: [71, 76, 74, 70, 72, 67, 78], overall: 71.1 },
+  { className: 'SS3', scores: [74, 79, 77, 72, 75, 70, 82], overall: 74.1 },
 ];
 
-const WEAK_SUBJECTS = [
-  { rank: 1, name: 'Agricultural Science', average: 68.2, passRate: 79.3 },
-  { rank: 2, name: 'Social Studies', average: 70.8, passRate: 80.1 },
-  { rank: 3, name: 'Basic Science', average: 72.3, passRate: 82.4 },
-  { rank: 4, name: 'Civic Education', average: 74.5, passRate: 86.7 },
-  { rank: 5, name: 'English Language', average: 76.1, passRate: 88.6 },
+const getHeatCellStyle = (score) => {
+  if (score >= 80) return { bg: '#bbf7d0', color: '#166534' };
+  if (score >= 75) return { bg: '#d9f99d', color: '#3f6212' };
+  if (score >= 70) return { bg: '#fef08a', color: '#854d0e' };
+  if (score >= 65) return { bg: '#fed7aa', color: '#9a3412' };
+  return { bg: '#fecaca', color: '#991b1b' };
+};
+
+const PERFORMANCE_DISTRIBUTION = [
+  { grade: 'Distinction (70 - 100)', count: 72, pct: 5.8, color: '#16a34a' },
+  { grade: 'Credit (60 - 69)', count: 285, pct: 22.8, color: '#2563eb' },
+  { grade: 'Pass (50 - 59)', count: 724, pct: 58.0, color: '#f59e0b' },
+  { grade: 'Fail (0 - 49)', count: 167, pct: 13.4, color: '#dc2626' },
+];
+
+const GENDER_DATA = {
+  male: {
+    label: 'Male',
+    students: 645,
+    passRate: 84.1,
+    avgScore: 70.8,
+    distinctionRate: 20.3,
+    color: '#2563eb',
+  },
+  female: {
+    label: 'Female',
+    students: 603,
+    passRate: 89.3,
+    avgScore: 74.1,
+    distinctionRate: 25.1,
+    color: '#ec4899',
+  },
+};
+
+const KEY_INSIGHTS = [
+  {
+    icon: TrendingUpOutlinedIcon,
+    bg: '#DCFCE7',
+    color: '#16A34A',
+    text: 'Pass rate improved by 4.8% from 81.8% last term to 86.6% this term.',
+  },
+  {
+    icon: StarOutlineOutlinedIcon,
+    bg: '#EEF2FF',
+    color: '#2563EB',
+    text: 'Average score increased by 5.6% from 68.5% last term to 72.4% this term.',
+  },
+  {
+    icon: EmojiEventsOutlinedIcon,
+    bg: '#F3E8FF',
+    color: '#9333EA',
+    text: 'Distinction rate improved by 1.6% from 4.2% last term to 5.8% this term.',
+  },
+  {
+    icon: WarningAmberOutlinedIcon,
+    bg: '#FEE2E2',
+    color: '#DC2626',
+    text: '159 students (12.7%) are at risk and require intervention.',
+  },
 ];
 
 const TOP_STUDENTS = [
-  { rank: 1, name: 'Adebola, Temitope', className: 'SS 3', total: '564/600', average: 94, distinctions: 8 },
-  { rank: 2, name: 'Okafor, Chisom', className: 'SS 3', total: '558/600', average: 93, distinctions: 7 },
-  { rank: 3, name: 'Balogun, Ridwan', className: 'JSS 3', total: '552/600', average: 92, distinctions: 7 },
-  { rank: 4, name: 'Yusuf, Amina', className: 'SS 2', total: '548/600', average: 91.3, distinctions: 7 },
-  { rank: 5, name: 'Oladipo, Emmanuel', className: 'SS 3', total: '545/600', average: 90.8, distinctions: 6 },
+  { rank: 1, name: 'Adebayo, Temilade', className: 'JS3', total: '578/600', average: 96.3 },
+  { rank: 2, name: 'Okonkwo, Chisom', className: 'SS1', total: '572/600', average: 95.3 },
+  { rank: 3, name: 'Salami, Habeeb', className: 'JS2', total: '568/600', average: 94.7 },
+  { rank: 4, name: 'Oladipo, Zainab', className: 'SS2', total: '566/600', average: 94.3 },
+  { rank: 5, name: 'Usman, Amina', className: 'JS3', total: '560/600', average: 93.3 },
 ];
 
-const WEAK_STUDENTS = [
-  { rank: 1, name: 'Ahmed, Rukayya', className: 'JSS 2', average: 34, weakSubjects: 'Maths, English' },
-  { rank: 2, name: 'Anthony, David', className: 'SS 1', average: 38, weakSubjects: 'Maths, Basic Sci' },
-  { rank: 3, name: 'Bello, Fatima', className: 'JSS 1', average: 42, weakSubjects: 'English, Social Std' },
-  { rank: 4, name: 'Chukwu, James', className: 'SS 2', average: 45, weakSubjects: 'Agric Sci, Maths' },
-  { rank: 5, name: 'Daniel, Grace', className: 'JSS 3', average: 46, weakSubjects: 'Basic Sci, Maths' },
+const MEDAL_COLORS = { 1: '#f59e0b', 2: '#94a3b8', 3: '#b45309' };
+
+const TOP_SUBJECTS = [
+  { rank: 1, name: 'Mathematics', average: 78.4, passRate: 88.1, distinctionRate: 26.4 },
+  { rank: 2, name: 'English Language', average: 75.2, passRate: 82.1, distinctionRate: 22.3 },
+  { rank: 3, name: 'Civic Education', average: 72.6, passRate: 84.6, distinctionRate: 20.1 },
+  { rank: 4, name: 'Basic Science', average: 70.4, passRate: 76.3, distinctionRate: 17.8 },
+  { rank: 5, name: 'Social Studies', average: 68.9, passRate: 69.8, distinctionRate: 12.4 },
+  { rank: 6, name: 'Agricultural Science', average: 63.5, passRate: 71.2, distinctionRate: 14.6 },
+  { rank: 7, name: 'Computer Studies', average: 61.8, passRate: 68.1, distinctionRate: 11.5 },
 ];
 
-const GENDER_STATS = [
-  { metric: 'Average Score', male: '73.6%', female: '76.1%' },
-  { metric: 'Pass Rate', male: '84.1%', female: '88.9%' },
-  { metric: 'Distinction Rate', male: '26.2%', female: '31.1%' },
-  { metric: 'At Risk Students', male: '26 (6.7%)', female: '22 (6.2%)' },
+const ATTENTION_TABS = [
+  { key: 'all', label: 'All', count: 159 },
+  { key: 'low', label: 'Low Performance', count: 94 },
+  { key: 'declining', label: 'Declining Trend', count: 38 },
+  { key: 'frequent_fail', label: 'Frequent Fail', count: 27 },
 ];
 
-const CLASS_OPTIONS = ['All Classes', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1', 'SS 2', 'SS 3'];
+const ATTENTION_STUDENTS = [
+  { rank: 1, name: 'Bello, Sodiq', className: 'JS1', issues: '3 subjects', average: 32.5 },
+  { rank: 2, name: 'Musa, Rukayat', className: 'JS1', issues: '3 subjects', average: 40.0 },
+  { rank: 3, name: 'Adekunle, Femi', className: 'SS2', issues: '2 subjects', average: 41.3 },
+  { rank: 4, name: 'Ibrahim, Zahra', className: 'SS1', issues: '2 subjects', average: 44.0 },
+  { rank: 5, name: 'Ogunleye, Daniel', className: 'JS3', issues: '1 subject', average: 45.7 },
+];
+
+const CLASS_OPTIONS = ['All Classes', 'JS1', 'JS2', 'JS3', 'SS1', 'SS2', 'SS3'];
 
 const cardSx = {
   borderRadius: '14px',
@@ -145,8 +262,6 @@ const cardSx = {
 
 const panelTitleSx = { fontWeight: 800, fontSize: 13, color: '#0f172a' };
 
-// Small, compact dropdown used inside a card's own header — purely cosmetic
-// on this mockup (no filtering logic wired yet).
 const MiniSelect = ({ value, onChange, options }) => (
   <TextField
     select
@@ -168,16 +283,40 @@ const MiniSelect = ({ value, onChange, options }) => (
 );
 
 const ViewLink = ({ label }) => (
-  <Stack direction="row" alignItems="center" spacing={0.5} sx={{ cursor: 'pointer', color: '#2563eb', flexShrink: 0 }}>
+  <Stack
+    direction="row"
+    alignItems="center"
+    spacing={0.5}
+    sx={{ cursor: 'pointer', color: '#2563eb', flexShrink: 0 }}
+  >
     <Typography sx={{ fontSize: 10.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{label}</Typography>
     <ArrowForwardIcon sx={{ fontSize: 11 }} />
   </Stack>
 );
 
-// Replicates the Admin Dashboard's StatCardItem exactly (icon + label/value
-// flush left as one flex row so the card has no dead space on the sides,
-// trend footer separated by a top border) — see TopStatCards.jsx.
-const StatCard = ({ label, value, delta, deltaUp, icon: Icon, scheme }) => {
+// Multi-select pill row — toggles which lines/segments a chart shows.
+const TabChip = ({ label, active, color = '#2563eb', onClick, count }) => (
+  <Box
+    onClick={onClick}
+    sx={{
+      px: 1.1,
+      py: 0.45,
+      borderRadius: '999px',
+      fontSize: 10.5,
+      fontWeight: 700,
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      bgcolor: active ? color : '#f1f5f9',
+      color: active ? '#fff' : '#475569',
+      transition: 'all 120ms ease',
+    }}
+  >
+    {label}
+    {count !== undefined ? ` (${count})` : ''}
+  </Box>
+);
+
+const StatCard = ({ label, value, subPercent, delta, deltaUp, icon: Icon, scheme }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const colors = SCHEME[scheme];
@@ -205,7 +344,7 @@ const StatCard = ({ label, value, delta, deltaUp, icon: Icon, scheme }) => {
         },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: subPercent ? 1 : 2 }}>
         <Box
           sx={{
             width: 48,
@@ -222,16 +361,45 @@ const StatCard = ({ label, value, delta, deltaUp, icon: Icon, scheme }) => {
           <Icon sx={{ fontSize: 24 }} />
         </Box>
         <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: isDark ? 'rgba(255,255,255,0.55)' : '#94a3b8', lineHeight: 1.3 }}>
-            {label}
-          </Typography>
-          <Typography sx={{ fontSize: { xs: 22, sm: 26 }, fontWeight: 800, color: isDark ? '#ffffff' : '#0f172a', lineHeight: 1.2 }}>
+          <Typography
+            sx={{
+              fontSize: { xs: 20, sm: 24 },
+              fontWeight: 800,
+              color: isDark ? '#ffffff' : '#0f172a',
+              lineHeight: 1.2,
+            }}
+          >
             {value}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: isDark ? 'rgba(255,255,255,0.55)' : '#94a3b8',
+              lineHeight: 1.3,
+            }}
+          >
+            {label}
           </Typography>
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pt: 1.25, borderTop: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }}>
+      {subPercent && (
+        <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: colors.iconColor, mb: 1 }}>
+          {subPercent} of total
+        </Typography>
+      )}
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pt: 1.25,
+          borderTop: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           {deltaUp ? (
             <ArrowUpwardIcon sx={{ fontSize: 14, color: trendColor }} />
@@ -242,7 +410,10 @@ const StatCard = ({ label, value, delta, deltaUp, icon: Icon, scheme }) => {
             {delta}
           </Typography>
         </Box>
-        <Typography fontWeight={500} sx={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8' }}>
+        <Typography
+          fontWeight={500}
+          sx={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.45)' : '#94a3b8' }}
+        >
           vs last term
         </Typography>
       </Box>
@@ -250,36 +421,65 @@ const StatCard = ({ label, value, delta, deltaUp, icon: Icon, scheme }) => {
   );
 };
 
-const RankedTable = ({ title, viewLabel, rows, columns }) => (
-  <Box sx={cardSx}>
-    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-      <Typography sx={panelTitleSx}>{title}</Typography>
-      <ViewLink label={viewLabel} />
+const PositionBadge = ({ rank }) => {
+  if (rank > 3) {
+    return (
+      <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>{rank}</Typography>
+    );
+  }
+  return <EmojiEventsIcon sx={{ fontSize: 18, color: MEDAL_COLORS[rank] }} />;
+};
+
+const GenderDonut = ({ data }) => (
+  <Box sx={{ flex: 1, textAlign: 'center' }}>
+    <Box sx={{ width: 108, height: 108, mx: 'auto' }}>
+      <Chart
+        type="radialBar"
+        width={108}
+        height={108}
+        series={[data.passRate]}
+        options={{
+          chart: { sparkline: { enabled: true } },
+          colors: [data.color],
+          plotOptions: {
+            radialBar: {
+              hollow: { size: '62%' },
+              track: { background: '#f1f5f9' },
+              dataLabels: {
+                name: { show: false },
+                value: {
+                  fontSize: '15px',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  offsetY: 5,
+                  formatter: (v) => `${v}%`,
+                },
+              },
+            },
+          },
+        }}
+      />
+    </Box>
+    <Typography sx={{ fontSize: 11.5, fontWeight: 800, color: '#0f172a', mt: 0.25 }}>
+      {data.label}
+    </Typography>
+    <Typography sx={{ fontSize: 10, color: '#94a3b8', mb: 0.75 }}>
+      {data.students} students
+    </Typography>
+    <Stack spacing={0.3}>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography sx={{ fontSize: 9.5, color: '#64748b' }}>Average Score</Typography>
+        <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#0f172a' }}>
+          {data.avgScore}%
+        </Typography>
+      </Stack>
+      <Stack direction="row" justifyContent="space-between">
+        <Typography sx={{ fontSize: 9.5, color: '#64748b' }}>Distinction Rate</Typography>
+        <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#0f172a' }}>
+          {data.distinctionRate}%
+        </Typography>
+      </Stack>
     </Stack>
-    <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}>
-      <TableHead>
-        <TableRow>
-          <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>#</TableCell>
-          {columns.map((c) => (
-            <TableCell key={c.key} align={c.align || 'left'} sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
-              {c.label}
-            </TableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {rows.map((row) => (
-          <TableRow key={row.rank}>
-            <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>{row.rank}</TableCell>
-            {columns.map((c) => (
-              <TableCell key={c.key} align={c.align || 'left'} sx={{ fontSize: 10.5, fontWeight: c.bold ? 700 : 500, color: c.color ? c.color(row) : '#1e293b', whiteSpace: 'nowrap' }}>
-                {c.render ? c.render(row) : row[c.key]}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   </Box>
 );
 
@@ -287,24 +487,41 @@ const ResultOverviewTab = () => {
   const [session, setSession] = useState('2024/2025');
   const [term, setTerm] = useState('Third Term');
   const [classFilter, setClassFilter] = useState('All Classes');
+  const [compareTerm, setCompareTerm] = useState('Previous Term');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Per-card "All Classes" (etc.) filters — cosmetic only on this mockup,
-  // matching exactly which cards the reference design puts a dropdown on.
-  const [trendClass, setTrendClass] = useState('All Classes');
-  const [gradeClass, setGradeClass] = useState('All Classes');
-  const [subjectClass, setSubjectClass] = useState('All Classes');
-  const [topStudentsClass, setTopStudentsClass] = useState('All Classes');
-  const [topStudentsSubject, setTopStudentsSubject] = useState('All Subjects');
-  const [topStudentsCount, setTopStudentsCount] = useState('Top 10');
-  const [genderClass, setGenderClass] = useState('All Classes');
+  const [activeTrendMetrics, setActiveTrendMetrics] = useState(new Set(['passRate', 'avgScore']));
+  const [heatmapView, setHeatmapView] = useState('Average Score');
+  const [distributionView, setDistributionView] = useState('Overall');
+  const [genderMetric, setGenderMetric] = useState('Average Score');
+  const [attentionTab, setAttentionTab] = useState('all');
 
-  const totalStudents = GRADE_DISTRIBUTION.reduce((sum, g) => sum + g.count, 0);
+  const totalStudents = PERFORMANCE_DISTRIBUTION.reduce((sum, g) => sum + g.count, 0);
+
+  const toggleTrendMetric = (key) => {
+    setActiveTrendMetrics((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        if (next.size > 1) next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const resetFilters = () => {
+    setSession('2024/2025');
+    setTerm('Third Term');
+    setClassFilter('All Classes');
+    setCompareTerm('Previous Term');
+  };
+
+  const visibleTrendMetrics = TREND_METRICS.filter((m) => activeTrendMetrics.has(m.key));
 
   return (
     <Box>
-      {/* Header — title/subtitle + session/term/class filters, given a
-          distinct tinted background so it stands out from the plain page
-          background below it (replaces the generic breadcrumb trail). */}
+      {/* Header — filters + compare-with + a one-line summary of what's shown */}
       <Paper
         elevation={0}
         sx={{
@@ -313,40 +530,108 @@ const ResultOverviewTab = () => {
           borderRadius: '14px',
           p: 2,
           mb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 1.5,
         }}
       >
-        <Box>
-          <Typography sx={{ fontWeight: 800, fontSize: 20, color: '#0f172a' }}>Results Overview</Typography>
-          <Typography sx={{ fontSize: 12, color: '#475569', mt: 0.25 }}>
-            Academic performance and analytics for your school
-          </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1.5,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Stack direction="row" spacing={1.25} flexWrap="wrap" gap={1} alignItems="center">
+              <TextField
+                select
+                size="small"
+                label="Academic Session"
+                value={session}
+                onChange={(e) => setSession(e.target.value)}
+                sx={{ minWidth: 130, bgcolor: '#fff', borderRadius: 1 }}
+              >
+                <MenuItem value="2024/2025">2024/2025</MenuItem>
+                <MenuItem value="2023/2024">2023/2024</MenuItem>
+              </TextField>
+              <TextField
+                select
+                size="small"
+                label="Term"
+                value={term}
+                onChange={(e) => setTerm(e.target.value)}
+                sx={{ minWidth: 120, bgcolor: '#fff', borderRadius: 1 }}
+              >
+                <MenuItem value="First Term">First Term</MenuItem>
+                <MenuItem value="Second Term">Second Term</MenuItem>
+                <MenuItem value="Third Term">Third Term</MenuItem>
+              </TextField>
+              <TextField
+                select
+                size="small"
+                label="Class"
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                sx={{ minWidth: 130, bgcolor: '#fff', borderRadius: 1 }}
+              >
+                {CLASS_OPTIONS.map((c) => (
+                  <MenuItem key={c} value={c}>
+                    {c}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Button variant="contained" size="small" sx={{ height: 40 }}>
+                Apply
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<RestartAltIcon sx={{ fontSize: 16 }} />}
+                onClick={resetFilters}
+                sx={{ height: 40, bgcolor: '#fff' }}
+              >
+                Reset
+              </Button>
+            </Stack>
+
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Search for a student, class, or report..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ bgcolor: '#fff', borderRadius: 1 }}
+              slotProps={{
+                input: {
+                  startAdornment: <SearchIcon sx={{ fontSize: 18, color: '#94a3b8', mr: 1 }} />,
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{ textAlign: 'right' }}>
+            <TextField
+              select
+              size="small"
+              label="Compare with"
+              value={compareTerm}
+              onChange={(e) => setCompareTerm(e.target.value)}
+              sx={{ minWidth: 150, bgcolor: '#fff', borderRadius: 1 }}
+            >
+              <MenuItem value="Previous Term">Previous Term</MenuItem>
+              <MenuItem value="Same Term Last Session">Same Term Last Session</MenuItem>
+            </TextField>
+            <Typography sx={{ fontSize: 10.5, color: '#475569', mt: 0.75 }}>
+              Showing results for {session} – {term}
+              <br />
+              Compared with {session} –{' '}
+              {compareTerm === 'Previous Term' ? 'Second Term' : `${term} (${compareTerm})`}
+            </Typography>
+          </Box>
         </Box>
-        <Stack direction="row" spacing={1.25} flexWrap="wrap" gap={1}>
-          <TextField select size="small" value={session} onChange={(e) => setSession(e.target.value)} sx={{ minWidth: 120, bgcolor: '#fff', borderRadius: 1 }}>
-            <MenuItem value="2024/2025">2024/2025</MenuItem>
-            <MenuItem value="2023/2024">2023/2024</MenuItem>
-          </TextField>
-          <TextField select size="small" value={term} onChange={(e) => setTerm(e.target.value)} sx={{ minWidth: 120, bgcolor: '#fff', borderRadius: 1 }}>
-            <MenuItem value="First Term">First Term</MenuItem>
-            <MenuItem value="Second Term">Second Term</MenuItem>
-            <MenuItem value="Third Term">Third Term</MenuItem>
-          </TextField>
-          <TextField select size="small" value={classFilter} onChange={(e) => setClassFilter(e.target.value)} sx={{ minWidth: 130, bgcolor: '#fff', borderRadius: 1 }}>
-            {CLASS_OPTIONS.map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
       </Paper>
 
-      {/* Row 1 — Stat cards, Admin Dashboard style */}
+      {/* Row 1 — Stat cards */}
       <Grid container spacing={2} mb={0.25}>
         {STAT_CARDS.map((c) => (
           <Grid key={c.label} size={{ xs: 12, sm: 6, lg: 2.4 }}>
@@ -355,79 +640,282 @@ const ResultOverviewTab = () => {
         ))}
       </Grid>
 
-      {/* Row 2 — Trend chart, Grade donut, Subject performance list */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 1.5, mb: 2, mt: 2 }}>
+      {/* Row 2 — Performance Trend (wide) + Class Performance Heatmap */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '6fr 6fr' },
+          gap: 1.5,
+          mb: 2,
+          mt: 2,
+        }}
+      >
         <Box sx={cardSx}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            gap={1}
+            mb={1}
+          >
             <Box>
-              <Typography sx={panelTitleSx}>Performance Trend</Typography>
+              <Typography sx={panelTitleSx}>
+                Performance Trend (Last {TREND_TERMS.length} Terms)
+              </Typography>
               <Typography sx={{ fontSize: 10, color: '#64748b' }}>
-                Average score and pass rate over the last {TREND_TERMS.length} terms
+                Click a metric to show/hide its line
               </Typography>
             </Box>
-            <MiniSelect value={trendClass} onChange={setTrendClass} options={CLASS_OPTIONS} />
+            <Stack
+              direction="row"
+              spacing={0.6}
+              flexWrap="wrap"
+              gap={0.5}
+              justifyContent="flex-end"
+            >
+              {TREND_METRICS.map((m) => (
+                <TabChip
+                  key={m.key}
+                  label={m.label}
+                  color={m.color}
+                  active={activeTrendMetrics.has(m.key)}
+                  onClick={() => toggleTrendMetric(m.key)}
+                />
+              ))}
+            </Stack>
           </Stack>
           <Chart
             type="line"
-            height={260}
-            series={[
-              { name: 'Average Score', type: 'column', data: TREND_SCORES },
-              { name: 'Pass Rate', type: 'line', data: TREND_PASS_RATES },
-            ]}
+            height={280}
+            series={visibleTrendMetrics.map((m) => ({ name: m.shortLabel, data: m.data }))}
             options={{
               chart: { toolbar: { show: false } },
-              stroke: { width: [0, 3], curve: 'smooth' },
-              plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
-              colors: ['#93c5fd', '#16a34a'],
+              stroke: { width: 3, curve: 'smooth' },
+              colors: visibleTrendMetrics.map((m) => m.color),
+              markers: { size: 4 },
+              dataLabels: {
+                enabled: true,
+                style: { fontSize: '9px', fontWeight: 700 },
+                formatter: (v) => `${v}%`,
+                background: { enabled: false },
+              },
               xaxis: {
                 categories: TREND_TERMS,
                 labels: { style: { fontSize: '9px' } },
               },
-              yaxis: [
-                { title: { text: 'Average Score (%)', style: { fontSize: '9px' } }, labels: { style: { fontSize: '9px' } }, min: 0, max: 100 },
-                { opposite: true, title: { text: 'Pass Rate (%)', style: { fontSize: '9px' } }, labels: { style: { fontSize: '9px' } }, min: 0, max: 100 },
-              ],
+              yaxis: {
+                min: 0,
+                max: 100,
+                labels: { style: { fontSize: '9px' }, formatter: (v) => `${v}%` },
+              },
               legend: { fontSize: '10px', position: 'bottom' },
-              dataLabels: { enabled: false },
               grid: { strokeDashArray: 3 },
             }}
           />
         </Box>
 
         <Box sx={cardSx}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1} mb={1}>
-            <Box>
-              <Typography sx={panelTitleSx}>Grade Distribution</Typography>
-              <Typography sx={{ fontSize: 10, color: '#64748b' }}>Overall performance distribution</Typography>
-            </Box>
-            <MiniSelect value={gradeClass} onChange={setGradeClass} options={CLASS_OPTIONS} />
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            gap={1}
+            mb={1}
+          >
+            <Typography sx={panelTitleSx}>Class Performance Heatmap ({heatmapView})</Typography>
+            <MiniSelect
+              value={heatmapView}
+              onChange={setHeatmapView}
+              options={['Average Score', 'Pass Rate']}
+            />
           </Stack>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ width: 150, height: 150, position: 'relative' }}>
+          <Box sx={{ overflowX: 'auto', flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+            <Table
+              size="small"
+              sx={{
+                width: '100%',
+                '& .MuiTableCell-root': {
+                  py: 1.6,
+                  px: 0.75,
+                  border: '1px solid #f1f5f9',
+                  textAlign: 'center',
+                },
+              }}
+            >
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      color: '#94a3b8',
+                      textAlign: 'left !important',
+                    }}
+                  >
+                    Class
+                  </TableCell>
+                  {HEATMAP_SUBJECTS.map((s) => (
+                    <TableCell key={s} sx={{ fontSize: 10.5, fontWeight: 800, color: '#334155' }}>
+                      {s}
+                    </TableCell>
+                  ))}
+                  <TableCell
+                    sx={{ fontSize: 11.5, fontWeight: 800, color: '#3730a3', bgcolor: '#e0e7ff' }}
+                  >
+                    Overall
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {HEATMAP_ROWS.map((row) => {
+                  return (
+                    <TableRow key={row.className}>
+                      <TableCell
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: '#1e293b',
+                          textAlign: 'left !important',
+                        }}
+                      >
+                        {row.className}
+                      </TableCell>
+                      {row.scores.map((score, i) => {
+                        const style = getHeatCellStyle(score);
+                        return (
+                          <TableCell
+                            key={i}
+                            sx={{
+                              fontSize: 13,
+                              fontWeight: 800,
+                              bgcolor: style.bg,
+                              color: style.color,
+                            }}
+                          >
+                            {score}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell
+                        sx={{
+                          fontSize: 14,
+                          fontWeight: 800,
+                          bgcolor: '#e0e7ff',
+                          color: '#3730a3',
+                        }}
+                      >
+                        {row.overall}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Row 3 — Performance Distribution, Gender Performance, Key Insights */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' },
+          gap: 1.5,
+          mb: 2,
+        }}
+      >
+        <Box sx={cardSx}>
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            gap={1}
+            mb={1}
+          >
+            <Typography sx={panelTitleSx}>Performance Distribution ({distributionView})</Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.6} sx={{ mb: 1.25 }}>
+            {['Overall', 'By Class', 'By Gender'].map((v) => (
+              <TabChip
+                key={v}
+                label={v}
+                active={distributionView === v}
+                onClick={() => setDistributionView(v)}
+              />
+            ))}
+          </Stack>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 120, height: 120, flexShrink: 0 }}>
               <Chart
                 type="donut"
-                width={150}
-                height={150}
-                series={GRADE_DISTRIBUTION.map((g) => g.count)}
+                width={120}
+                height={120}
+                series={PERFORMANCE_DISTRIBUTION.map((g) => g.count)}
                 options={{
                   chart: { sparkline: { enabled: true } },
-                  labels: GRADE_DISTRIBUTION.map((g) => g.grade),
-                  colors: GRADE_DISTRIBUTION.map((g) => g.color),
-                  plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Students', formatter: () => totalStudents, fontSize: '16px', fontWeight: 800 } } } } },
+                  labels: PERFORMANCE_DISTRIBUTION.map((g) => g.grade),
+                  colors: PERFORMANCE_DISTRIBUTION.map((g) => g.color),
+                  plotOptions: {
+                    pie: {
+                      donut: {
+                        size: '68%',
+                        labels: {
+                          show: true,
+                          total: {
+                            show: true,
+                            label: 'Students',
+                            formatter: () => totalStudents,
+                            fontSize: '14px',
+                            fontWeight: 800,
+                          },
+                        },
+                      },
+                    },
+                  },
                   dataLabels: { enabled: false },
                   legend: { show: false },
                   tooltip: { enabled: true },
                 }}
               />
             </Box>
-            <Stack spacing={0.5} sx={{ width: '100%' }}>
-              {GRADE_DISTRIBUTION.map((g) => (
-                <Stack key={g.grade} direction="row" alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" alignItems="center" spacing={0.6}>
-                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: g.color }} />
-                    <Typography sx={{ fontSize: 9.5, fontWeight: 600, color: '#334155' }}>{g.grade}</Typography>
+            <Stack spacing={0.65} sx={{ flexGrow: 1, minWidth: 0 }}>
+              {PERFORMANCE_DISTRIBUTION.map((g) => (
+                <Stack
+                  key={g.grade}
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" alignItems="center" spacing={0.6} sx={{ minWidth: 0 }}>
+                    <Box
+                      sx={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        bgcolor: g.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: 9.5,
+                        fontWeight: 600,
+                        color: '#334155',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {g.grade}
+                    </Typography>
                   </Stack>
-                  <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#0f172a' }}>
+                  <Typography
+                    sx={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      color: '#0f172a',
+                      flexShrink: 0,
+                      ml: 0.5,
+                    }}
+                  >
                     {g.pct}% · {g.count}
                   </Typography>
                 </Stack>
@@ -437,118 +925,123 @@ const ResultOverviewTab = () => {
         </Box>
 
         <Box sx={cardSx}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1} mb={0.75}>
-            <Typography sx={panelTitleSx}>Subject Performance</Typography>
-            <MiniSelect value={subjectClass} onChange={setSubjectClass} options={CLASS_OPTIONS} />
+          <Stack
+            direction="row"
+            alignItems="flex-start"
+            justifyContent="space-between"
+            gap={1}
+            mb={0.5}
+          >
+            <Typography sx={panelTitleSx}>Gender Performance</Typography>
+            <MiniSelect
+              value={genderMetric}
+              onChange={setGenderMetric}
+              options={['Average Score', 'Pass Rate', 'Distinction Rate']}
+            />
           </Stack>
-          <Stack direction="row" justifyContent="flex-end" sx={{ mb: 0.75 }}>
-            <Stack direction="row" spacing={2}>
-              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Avg. Score</Typography>
-              <Typography sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Pass Rate</Typography>
+          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+            <GenderDonut data={GENDER_DATA.male} />
+            <GenderDonut data={GENDER_DATA.female} />
+          </Stack>
+        </Box>
+
+        <Box sx={cardSx}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <LightbulbOutlinedIcon sx={{ fontSize: 16, color: '#f59e0b' }} />
+              <Typography sx={panelTitleSx}>Key Insights</Typography>
             </Stack>
+            <ViewLink label="View All" />
           </Stack>
-          <Stack spacing={1.1}>
-            {SUBJECT_PERFORMANCE.map((s) => (
-              <Box key={s.subject}>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.3}>
-                  <Stack direction="row" alignItems="center" spacing={0.6} sx={{ minWidth: 0 }}>
-                    <MenuBookOutlinedIcon sx={{ fontSize: 13, color: s.color }} />
-                    <Typography sx={{ fontSize: 10.5, fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {s.subject}
-                    </Typography>
-                  </Stack>
-                  <Stack direction="row" spacing={2}>
-                    <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#0f172a', width: 36, textAlign: 'right' }}>{s.score}%</Typography>
-                    <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#16a34a', width: 36, textAlign: 'right' }}>{s.passRate}%</Typography>
-                  </Stack>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={s.score}
+          <Stack spacing={1.25}>
+            {KEY_INSIGHTS.map((insight, i) => (
+              <Stack key={i} direction="row" spacing={1} alignItems="flex-start">
+                <Box
                   sx={{
-                    height: 5,
-                    borderRadius: 3,
-                    bgcolor: '#f1f5f9',
-                    '& .MuiLinearProgress-bar': { bgcolor: s.color, borderRadius: 3 },
+                    width: 26,
+                    height: 26,
+                    borderRadius: '8px',
+                    bgcolor: insight.bg,
+                    color: insight.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
-                />
-              </Box>
+                >
+                  <insight.icon sx={{ fontSize: 14 }} />
+                </Box>
+                <Typography sx={{ fontSize: 10.5, color: '#334155', lineHeight: 1.4 }}>
+                  {insight.text}
+                </Typography>
+              </Stack>
             ))}
           </Stack>
         </Box>
       </Box>
 
-      {/* Row 3 — Top classes, Top subjects, Areas for improvement */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 1.5, mb: 2 }}>
-        <RankedTable
-          title="Top Performing Classes"
-          viewLabel="View All Classes"
-          rows={TOP_CLASSES}
-          columns={[
-            { key: 'name', label: 'Class', bold: true },
-            { key: 'students', label: 'Students', align: 'center' },
-            { key: 'average', label: 'Average', align: 'center', render: (r) => `${r.average}%` },
-            { key: 'passRate', label: 'Pass Rate', align: 'center', render: (r) => `${r.passRate}%`, color: () => '#16a34a' },
-          ]}
-        />
-        <RankedTable
-          title="Top Performing Subjects"
-          viewLabel="View All Subjects"
-          rows={TOP_SUBJECTS}
-          columns={[
-            { key: 'name', label: 'Subject', bold: true },
-            { key: 'average', label: 'Average', align: 'center', render: (r) => `${r.average}%` },
-            { key: 'passRate', label: 'Pass Rate', align: 'center', render: (r) => `${r.passRate}%`, color: () => '#16a34a' },
-          ]}
-        />
-        <RankedTable
-          title="Areas for Improvement"
-          viewLabel="View Full Report"
-          rows={WEAK_SUBJECTS}
-          columns={[
-            { key: 'name', label: 'Subject', bold: true },
-            { key: 'average', label: 'Average', align: 'center', render: (r) => `${r.average}%`, color: () => '#dc2626' },
-            { key: 'passRate', label: 'Pass Rate', align: 'center', render: (r) => `${r.passRate}%` },
-          ]}
-        />
-      </Box>
-
-      {/* Row 4 — Top students, Students needing support, Performance by gender */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.3fr 1.3fr 1fr' }, gap: 1.5 }}>
+      {/* Row 4 — Top students, Top subjects, Students requiring attention */}
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' }, gap: 1.5 }}
+      >
         <Box sx={cardSx}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1} flexWrap="wrap" gap={0.75}>
-            <Typography sx={panelTitleSx}>Top Performing Students</Typography>
-            <Stack direction="row" spacing={0.75} flexWrap="wrap" gap={0.5}>
-              <MiniSelect value={topStudentsClass} onChange={setTopStudentsClass} options={CLASS_OPTIONS} />
-              <MiniSelect value={topStudentsSubject} onChange={setTopStudentsSubject} options={['All Subjects', 'Mathematics', 'English Language', 'Basic Science']} />
-              <MiniSelect value={topStudentsCount} onChange={setTopStudentsCount} options={['Top 10', 'Top 20', 'Top 50']} />
-            </Stack>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
+            <Typography sx={panelTitleSx}>Top Performing Students (Overall)</Typography>
+            <ViewLink label="View All" />
           </Stack>
-          <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}>
+          <Table
+            size="small"
+            sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>#</TableCell>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Student</TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Student
+                </TableCell>
                 <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Class</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Total</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Average</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Distinctions</TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Total Score
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Average
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Position
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {TOP_STUDENTS.map((s) => (
                 <TableRow key={s.rank}>
-                  <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>{s.rank}</TableCell>
+                  <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>
+                    {s.rank}
+                  </TableCell>
                   <TableCell>
                     <Stack direction="row" alignItems="center" spacing={0.75}>
-                      <Avatar sx={{ width: 22, height: 22, fontSize: 10, bgcolor: '#2563eb' }}>{s.name.charAt(0)}</Avatar>
-                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{s.name}</Typography>
+                      <Avatar sx={{ width: 22, height: 22, fontSize: 10, bgcolor: '#2563eb' }}>
+                        {s.name.charAt(0)}
+                      </Avatar>
+                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {s.name}
+                      </Typography>
                     </Stack>
                   </TableCell>
                   <TableCell sx={{ fontSize: 10.5 }}>{s.className}</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700 }}>{s.total}</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700, color: '#16a34a' }}>{s.average}%</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700 }}>{s.distinctions}</TableCell>
+                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700 }}>
+                    {s.total}
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ fontSize: 10.5, fontWeight: 700, color: '#16a34a' }}
+                  >
+                    {s.average}%
+                  </TableCell>
+                  <TableCell align="center">
+                    <PositionBadge rank={s.rank} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -557,32 +1050,56 @@ const ResultOverviewTab = () => {
 
         <Box sx={cardSx}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-            <Typography sx={panelTitleSx}>Students Needing Support</Typography>
+            <Typography sx={panelTitleSx}>Top Performing Subjects (by Average Score)</Typography>
             <ViewLink label="View All" />
           </Stack>
-          <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}>
+          <Table
+            size="small"
+            sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>#</TableCell>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Student</TableCell>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Class</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Average</TableCell>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Weak Subjects</TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Subject
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Average Score
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Pass Rate
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Distinction Rate
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {WEAK_STUDENTS.map((s) => (
+              {TOP_SUBJECTS.map((s) => (
                 <TableRow key={s.rank}>
-                  <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>{s.rank}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={0.75}>
-                      <Avatar sx={{ width: 22, height: 22, fontSize: 10, bgcolor: '#dc2626' }}>{s.name.charAt(0)}</Avatar>
-                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{s.name}</Typography>
-                    </Stack>
+                  <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>
+                    {s.rank}
                   </TableCell>
-                  <TableCell sx={{ fontSize: 10.5 }}>{s.className}</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626' }}>{s.average}%</TableCell>
-                  <TableCell sx={{ fontSize: 9.5, color: '#64748b', whiteSpace: 'nowrap' }}>{s.weakSubjects}</TableCell>
+                  <TableCell sx={{ fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    {s.name}
+                  </TableCell>
+                  <TableCell align="center" sx={{ fontSize: 10.5, fontWeight: 700 }}>
+                    {s.average}%
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ fontSize: 10.5, fontWeight: 700, color: '#16a34a' }}
+                  >
+                    {s.passRate}%
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ fontSize: 10.5, fontWeight: 700, color: '#9333ea' }}
+                  >
+                    {s.distinctionRate}%
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -590,52 +1107,78 @@ const ResultOverviewTab = () => {
         </Box>
 
         <Box sx={cardSx}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
-            <Typography sx={panelTitleSx}>Performance by Gender</Typography>
-            <MiniSelect value={genderClass} onChange={setGenderClass} options={CLASS_OPTIONS} />
-          </Stack>
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 1 }}>
-            <Box sx={{ width: 130, height: 130 }}>
-              <Chart
-                type="donut"
-                width={130}
-                height={130}
-                series={[386, 356]}
-                options={{
-                  chart: { sparkline: { enabled: true } },
-                  labels: ['Male', 'Female'],
-                  colors: ['#2563eb', '#ec4899'],
-                  plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Students', formatter: () => totalStudents, fontSize: '14px', fontWeight: 800 } } } } },
-                  dataLabels: { enabled: false },
-                  legend: { show: false },
-                }}
+          <Typography sx={panelTitleSx} mb={1}>
+            Students Requiring Attention
+          </Typography>
+          <Stack direction="row" spacing={0.6} flexWrap="wrap" gap={0.5} sx={{ mb: 1.25 }}>
+            {ATTENTION_TABS.map((t) => (
+              <TabChip
+                key={t.key}
+                label={t.label}
+                count={t.count}
+                color="#dc2626"
+                active={attentionTab === t.key}
+                onClick={() => setAttentionTab(t.key)}
               />
-            </Box>
-          </Box>
-          <Stack direction="row" justifyContent="center" spacing={2} mb={1.25}>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#2563eb' }} />
-              <Typography sx={{ fontSize: 9.5, fontWeight: 700 }}>Male 52% (386)</Typography>
-            </Stack>
-            <Stack direction="row" alignItems="center" spacing={0.5}>
-              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#ec4899' }} />
-              <Typography sx={{ fontSize: 9.5, fontWeight: 700 }}>Female 48% (356)</Typography>
-            </Stack>
+            ))}
           </Stack>
-          <Table size="small" sx={{ '& .MuiTableCell-root': { py: 0.5, px: 0.4, borderBottom: '1px solid #f1f5f9' } }}>
+          <Table
+            size="small"
+            sx={{ '& .MuiTableCell-root': { py: 0.6, px: 0.5, borderBottom: '1px solid #f1f5f9' } }}
+          >
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Metric</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#2563eb' }}>Male</TableCell>
-                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#ec4899' }}>Female</TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', width: 20 }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Student
+                </TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>Class</TableCell>
+                <TableCell sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Issues
+                </TableCell>
+                <TableCell align="center" sx={{ fontSize: 9, fontWeight: 700, color: '#94a3b8' }}>
+                  Average
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {GENDER_STATS.map((g) => (
-                <TableRow key={g.metric}>
-                  <TableCell sx={{ fontSize: 9.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{g.metric}</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 9.5, fontWeight: 700 }}>{g.male}</TableCell>
-                  <TableCell align="center" sx={{ fontSize: 9.5, fontWeight: 700 }}>{g.female}</TableCell>
+              {ATTENTION_STUDENTS.map((s) => (
+                <TableRow key={s.rank}>
+                  <TableCell sx={{ fontSize: 10.5, fontWeight: 700, color: '#64748b' }}>
+                    {s.rank}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" alignItems="center" spacing={0.75}>
+                      <Avatar sx={{ width: 22, height: 22, fontSize: 10, bgcolor: '#dc2626' }}>
+                        {s.name.charAt(0)}
+                      </Avatar>
+                      <Typography sx={{ fontSize: 10.5, fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        {s.name}
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell sx={{ fontSize: 10.5 }}>{s.className}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={s.issues}
+                      size="small"
+                      sx={{
+                        height: 18,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        bgcolor: '#fee2e2',
+                        color: '#991b1b',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{ fontSize: 10.5, fontWeight: 700, color: '#dc2626' }}
+                  >
+                    {s.average}%
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

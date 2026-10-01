@@ -162,14 +162,29 @@ const SubjectRegistration = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
-  // Mirrors the Compulsory Subjects tab's own "Save Selected" button up
-  // onto the tabs row, so it's reachable without scrolling down — the
-  // bottom button stays too. generalSubjectsTabRef triggers the actual
-  // save; generalTabStatus drives this button's label/visibility.
+  // Mirrors each tab's own "Save Selected" button up onto the tabs row, so
+  // it's reachable without scrolling down — the bottom button stays too.
+  // One ref + status per tab; the tabs row always reads whichever one is
+  // active.
   const generalSubjectsTabRef = useRef(null);
+  const optionalSubjectsTabRef = useRef(null);
+  const tradeSubjectsTabRef = useRef(null);
+  const tabRefs = [generalSubjectsTabRef, optionalSubjectsTabRef, tradeSubjectsTabRef];
+
   const [generalTabStatus, setGeneralTabStatus] = useState({ pendingCount: 0, saving: false });
+  const [optionalTabStatus, setOptionalTabStatus] = useState({ pendingCount: 0, saving: false });
+  const [tradeTabStatus, setTradeTabStatus] = useState({ pendingCount: 0, saving: false });
+  const tabStatuses = [generalTabStatus, optionalTabStatus, tradeTabStatus];
+  const activeTabStatus = tabStatuses[activeTab] ?? { pendingCount: 0, saving: false };
+
   const handleGeneralStatusChange = useCallback((status) => {
     setGeneralTabStatus(status);
+  }, []);
+  const handleOptionalStatusChange = useCallback((status) => {
+    setOptionalTabStatus(status);
+  }, []);
+  const handleTradeStatusChange = useCallback((status) => {
+    setTradeTabStatus(status);
   }, []);
 
   // ── Filter States ─────────────────────────────────────────
@@ -628,7 +643,10 @@ const SubjectRegistration = () => {
                 size="small"
                 fullWidth
                 startIcon={<FilterIcon />}
-                onClick={fetchStats}
+                onClick={() => {
+                  fetchStats();
+                  tabRefs[activeTab]?.current?.refetch();
+                }}
                 sx={{ height: 40 }}
               >
                 Filter
@@ -664,24 +682,24 @@ const SubjectRegistration = () => {
               <Tab label="2. Optional Subjects" />
               <Tab label="3. Trade Subjects" />
             </Tabs>
-            {activeTab === 0 && generalTabStatus.pendingCount > 0 && (
+            {activeTabStatus.pendingCount > 0 && (
               <Button
                 variant="contained"
                 size="small"
                 startIcon={
-                  generalTabStatus.saving ? (
+                  activeTabStatus.saving ? (
                     <CircularProgress size={16} color="inherit" />
                   ) : (
                     <SaveIcon />
                   )
                 }
-                onClick={() => generalSubjectsTabRef.current?.save()}
-                disabled={generalTabStatus.saving}
+                onClick={() => tabRefs[activeTab]?.current?.save()}
+                disabled={activeTabStatus.saving}
                 sx={{ flexShrink: 0 }}
               >
-                {generalTabStatus.saving
+                {activeTabStatus.saving
                   ? 'SAVING...'
-                  : `SAVE SELECTED (${generalTabStatus.pendingCount})`}
+                  : `SAVE SELECTED (${activeTabStatus.pendingCount})`}
               </Button>
             )}
           </Box>
@@ -689,6 +707,7 @@ const SubjectRegistration = () => {
             <GeneralSubjectsTab
               ref={generalSubjectsTabRef}
               onStatusChange={handleGeneralStatusChange}
+              onSaved={fetchStats}
               session={pSession}
               term={pTerm}
               termId={pTermId}
@@ -699,6 +718,9 @@ const SubjectRegistration = () => {
           )}
           {activeTab === 1 && (
             <OptionalSubjectsTab
+              ref={optionalSubjectsTabRef}
+              onStatusChange={handleOptionalStatusChange}
+              onSaved={fetchStats}
               session={pSession}
               term={pTerm}
               termId={pTermId}
@@ -709,6 +731,9 @@ const SubjectRegistration = () => {
           )}
           {activeTab === 2 && (
             <TradeSubjectsTab
+              ref={tradeSubjectsTabRef}
+              onStatusChange={handleTradeStatusChange}
+              onSaved={fetchStats}
               session={pSession}
               term={pTerm}
               termId={pTermId}

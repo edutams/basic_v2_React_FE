@@ -1,11 +1,34 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography, Alert, Button, Stack } from '@mui/material';
+import {
+  Box,
+  Stack,
+  Skeleton,
+  Typography,
+  Alert,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
 
-const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+const OptionalSubjectsTab = forwardRef(function OptionalSubjectsTab(
+  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved },
+  ref,
+) {
   const navigate = useNavigate();
   // ── Data States ───────────────────────────────────────────
   const [subjects, setSubjects] = useState([]);
@@ -16,6 +39,10 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
 
   const [originalRegistered, setOriginalRegistered] = useState({});
   const [pendingChanges, setPendingChanges] = useState({});
+
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
 
   const pendingCount = useMemo(() => Object.keys(pendingChanges).length, [pendingChanges]);
 
@@ -104,9 +131,14 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       }
       return next;
     });
+
+    notify(
+      `${newRegistered ? 'Marked for registration' : 'Marked for removal'} — click Save Selected to save to the server.`,
+      'info',
+    );
   };
 
-  const handleSaveSelected = async () => {
+  const runSave = async () => {
     const changes = Object.entries(pendingChanges).map(([key, registered]) => {
       const [learnerId, subjectId] = key.split('_');
       return { learner_id: Number(learnerId), subject_id: Number(subjectId), registered };
@@ -124,14 +156,30 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
         orig[l.id] = { ...l.registered };
       });
       setOriginalRegistered(orig);
+      notify(`${changes.length} change(s) saved successfully.`, 'success');
+      onSaved?.();
     } catch (e) {
       console.error('Save failed:', e);
       setError('Failed to save changes. Please try again.');
+      notify('Failed to save changes. Please try again.', 'error');
       fetchData();
     } finally {
       setSaving(false);
     }
   };
+
+  const handleSaveSelected = () => setConfirmSaveOpen(true);
+
+  const confirmAndSave = async () => {
+    setConfirmSaveOpen(false);
+    await runSave();
+  };
+
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData }));
+
+  useEffect(() => {
+    onStatusChange?.({ pendingCount, saving });
+  }, [pendingCount, saving, onStatusChange]);
 
   const registerAll = (subjectId) => {
     setLearners((prev) =>
@@ -151,6 +199,8 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       });
       return next;
     });
+
+    notify(`All learners marked registered — click Save Selected to save to the server.`, 'info');
   };
 
   const unregisterAll = (subjectId) => {
@@ -171,6 +221,8 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       });
       return next;
     });
+
+    notify(`All learners marked for removal — click Save Selected to save to the server.`, 'info');
   };
 
   // Registers ONE learner for every subject in this tab at once — the
@@ -203,6 +255,11 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       });
       return next;
     });
+
+    notify(
+      `Learner marked for every subject — click Save Selected to save to the server.`,
+      'info',
+    );
   };
 
   return (
@@ -214,9 +271,11 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress size={32} />
-        </Box>
+        <Stack spacing={1}>
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} variant="rounded" height={44} />
+          ))}
+        </Stack>
       ) : subjects.length === 0 ? (
         <Alert
           severity="info"
@@ -259,8 +318,40 @@ const OptionalSubjectsTab = ({ session, term, termId, programme, classLevel, cla
           </Button>
         </Stack>
       )}
+
+      <Dialog open={confirmSaveOpen} onClose={() => setConfirmSaveOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Save Subject Registrations?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You're about to save <strong>{pendingCount}</strong> pending change
+            {pendingCount === 1 ? '' : 's'} to the server. This will update which subjects these
+            learners are registered for.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmSaveOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={confirmAndSave}>
+            Yes, Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-};
+});
 
 export default OptionalSubjectsTab;

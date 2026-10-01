@@ -1893,17 +1893,19 @@ const BroadsheetTab = () => {
                                   >
                                     <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
                                   </MenuItem>
-                                  {activeTab === 0 && (
-                                    <MenuItem
-                                      dense
-                                      onClick={() => {
-                                        closeAddEditMenu();
-                                        handleOpenEditScores(row);
-                                      }}
-                                    >
-                                      <IconEdit size={16} style={{ marginRight: 8 }} /> Edit Scores
-                                    </MenuItem>
-                                  )}
+                                  {activeTab === 0 &&
+                                    sheet?.result_publish?.head_of_school_publish !== 'yes' && (
+                                      <MenuItem
+                                        dense
+                                        onClick={() => {
+                                          closeAddEditMenu();
+                                          handleOpenEditScores(row);
+                                        }}
+                                      >
+                                        <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
+                                        Scores
+                                      </MenuItem>
+                                    )}
                                 </Menu>
                               </TableCell>
                             </TableRow>

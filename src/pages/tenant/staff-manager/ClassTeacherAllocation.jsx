@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -33,6 +33,13 @@ import {
 import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
+const formatClassList = (names) => {
+  if (names.length === 0) return '';
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
+};
+
 const ClassTeacherAllocation = () => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
@@ -65,10 +72,15 @@ const ClassTeacherAllocation = () => {
     open: false,
     index: null,
     teacherName: '',
-    className: '',
+    classNames: [],
     previousTeacherId: null,
     previousTeacherName: '',
   });
+  // Tracks whether the conflict modal is closing because the admin hit
+  // "Yes, this is intentional" — ConfirmationDialog always fires onClose
+  // right after onConfirm, so without this flag that onClose would also
+  // run the revert meant only for "No, undo this" / backdrop dismissal.
+  const conflictConfirmedRef = useRef(false);
 
   // Grouped-by-class collapsible sections — a flat list of every class arm
   // in a programme gets long fast (42+ arms isn't unusual), so rows are
@@ -229,32 +241,56 @@ const ClassTeacherAllocation = () => {
     // Warn (but don't block) if this teacher already holds a different
     // class this term — a small school may not have enough staff for one
     // class teacher per class, so this is informational only. The admin
-    // can undo the pick from the modal if it wasn't intentional.
-    if (teacherUserId && selectedTerm) {
-      try {
-        const res = await allocationApi.checkClassTeacherConflict({
-          user_id: teacherUserId,
-          session_term_id: selectedTerm,
-          excluding_class_arm_id: classArmId,
-        });
-        if (res.data) {
-          setConflictDialog({
-            open: true,
-            index,
-            teacherName: teacher ? teacher.user.full_name : 'This teacher',
-            className: res.data.class_name,
-            previousTeacherId: previousAllocation.teacher_id,
-            previousTeacherName: previousAllocation.teacher_name,
-          });
-        }
-      } catch (error) {
-        // Non-blocking — a failed check shouldn't stop the admin from saving.
-        console.error(error);
+    // can undo the pick from the modal if it wasn't intentional. Checks
+    // both already-saved assignments (backend) and other rows picked for
+    // the same teacher in this still-unsaved edit session (local), since
+    // picking the same teacher for two arms before hitting Save never
+    // touches the backend until Save runs.
+    if (!teacherUserId || !selectedTerm) return;
+
+    const pendingClassNames = updatedAllocations
+      .filter((a, i) => i !== index && a.teacher_id === teacherUserId && a.class_name)
+      .map((a) => a.class_name);
+
+    let savedClassNames = [];
+    try {
+      const res = await allocationApi.checkClassTeacherConflict({
+        user_id: teacherUserId,
+        session_term_id: selectedTerm,
+        excluding_class_arm_id: classArmId,
+      });
+      if (res.data) {
+        savedClassNames = res.data.map((c) => c.class_name);
       }
+    } catch (error) {
+      // Non-blocking — a failed check shouldn't stop the admin from saving.
+      console.error(error);
+    }
+
+    const classNames = [...new Set([...savedClassNames, ...pendingClassNames])];
+    if (classNames.length > 0) {
+      conflictConfirmedRef.current = false;
+      setConflictDialog({
+        open: true,
+        index,
+        teacherName: teacher ? teacher.user.full_name : 'This teacher',
+        classNames,
+        previousTeacherId: previousAllocation.teacher_id,
+        previousTeacherName: previousAllocation.teacher_name,
+      });
     }
   };
 
-  const undoConflictedTeacherChange = () => {
+  const confirmConflictedTeacherChange = () => {
+    conflictConfirmedRef.current = true;
+  };
+
+  const closeConflictDialog = () => {
+    if (conflictConfirmedRef.current) {
+      conflictConfirmedRef.current = false;
+      setConflictDialog((prev) => ({ ...prev, open: false }));
+      return;
+    }
     const { index, previousTeacherId, previousTeacherName } = conflictDialog;
     if (index !== null) {
       setAllocations((prev) => {
@@ -386,92 +422,92 @@ const ClassTeacherAllocation = () => {
           borderTopColor: 'primary.main',
         }}
       >
-      <Grid container spacing={2} alignItems="center">
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <TextField
-            select
-            size="small"
-            label="Session"
-            value={selectedSession}
-            onChange={(e) => handleSessionChange(e.target.value)}
-            fullWidth
-          >
-            {sessions.map((session) => (
-              <MenuItem key={session.id} value={session.id}>
-                {session.session_name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <TextField
+              select
+              size="small"
+              label="Session"
+              value={selectedSession}
+              onChange={(e) => handleSessionChange(e.target.value)}
+              fullWidth
+            >
+              {sessions.map((session) => (
+                <MenuItem key={session.id} value={session.id}>
+                  {session.session_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <TextField
-            select
-            size="small"
-            label="Term"
-            value={selectedTerm}
-            onChange={(e) => setSelectedTerm(e.target.value)}
-            fullWidth
-            disabled={!selectedSession}
-          >
-            {sessionTerms.map((term) => (
-              <MenuItem key={term.id} value={term.id}>
-                {term.term?.term_name || term.term_name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <TextField
+              select
+              size="small"
+              label="Term"
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              fullWidth
+              disabled={!selectedSession}
+            >
+              {sessionTerms.map((term) => (
+                <MenuItem key={term.id} value={term.id}>
+                  {term.term?.term_name || term.term_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <TextField
-            select
-            size="small"
-            label="Programme"
-            value={selectedProgramme}
-            onChange={(e) => handleProgrammeChange(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="">Select Programme</MenuItem>
-            {programmes.map((prog) => (
-              <MenuItem key={prog.id} value={prog.id}>
-                {prog.programme_name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <TextField
+              select
+              size="small"
+              label="Programme"
+              value={selectedProgramme}
+              onChange={(e) => handleProgrammeChange(e.target.value)}
+              fullWidth
+            >
+              <MenuItem value="">Select Programme</MenuItem>
+              {programmes.map((prog) => (
+                <MenuItem key={prog.id} value={prog.id}>
+                  {prog.programme_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <TextField
-            select
-            size="small"
-            label="Class"
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            fullWidth
-            disabled={!selectedProgramme}
-          >
-            <MenuItem value="">All Classes</MenuItem>
-            {classes.map((cls) => (
-              <MenuItem key={cls.id} value={cls.id}>
-                {cls.class_name}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <TextField
+              select
+              size="small"
+              label="Class"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              fullWidth
+              disabled={!selectedProgramme}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classes.map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>
+                  {cls.class_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <Button
-            variant="contained"
-            size="small"
-            fullWidth
-            startIcon={<IconSearch size={16} />}
-            onClick={fetchAllocations}
-            sx={{ height: '40px' }}
-          >
-            Fetch
-          </Button>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Button
+              variant="contained"
+              size="small"
+              fullWidth
+              startIcon={<IconSearch size={16} />}
+              onClick={fetchAllocations}
+              sx={{ height: '40px' }}
+            >
+              Fetch
+            </Button>
+          </Grid>
         </Grid>
-      </Grid>
       </Paper>
 
       {/* Table */}
@@ -489,10 +525,18 @@ const ClassTeacherAllocation = () => {
             <TableBody>
               {Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                  <TableCell><Skeleton variant="text" width={100} /></TableCell>
-                  <TableCell><Skeleton variant="rounded" width="100%" height={36} /></TableCell>
-                  <TableCell><Skeleton variant="rounded" width={130} height={24} /></TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={20} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="text" width={100} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rounded" width="100%" height={36} />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton variant="rounded" width={130} height={24} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -508,7 +552,15 @@ const ClassTeacherAllocation = () => {
         </Box>
       ) : (
         <>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              alignItems: 'center',
+              gap: 1,
+              mb: 1.5,
+            }}
+          >
             <Button size="small" onClick={collapseAll}>
               Collapse all
             </Button>
@@ -553,8 +605,8 @@ const ClassTeacherAllocation = () => {
                           {group.rows[0]?.programme_name} — {group.className}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {group.rows.length} arm{group.rows.length !== 1 ? 's' : ''} · {withTeacher}{' '}
-                          with a teacher
+                          {group.rows.length} arm{group.rows.length !== 1 ? 's' : ''} ·{' '}
+                          {withTeacher} with a teacher
                           {group.rows.length - withTeacher > 0
                             ? ` · ${group.rows.length - withTeacher} still need one`
                             : ''}
@@ -596,7 +648,9 @@ const ClassTeacherAllocation = () => {
                                     fullWidth
                                     placeholder="Select Teacher"
                                     value={allocation.teacher_id || ''}
-                                    onChange={(e) => handleTeacherChange(allocation._index, e.target.value)}
+                                    onChange={(e) =>
+                                      handleTeacherChange(allocation._index, e.target.value)
+                                    }
                                   >
                                     <MenuItem value="">Select Teacher</MenuItem>
                                     {teachers.map((teacher) => (
@@ -656,10 +710,14 @@ const ClassTeacherAllocation = () => {
           programmes) is a perfectly normal setup. */}
       <ConfirmationDialog
         open={conflictDialog.open}
-        onClose={undoConflictedTeacherChange}
-        onConfirm={() => setConflictDialog((prev) => ({ ...prev, open: false }))}
-        title="Just confirming — this teacher already covers another class"
-        message={`${conflictDialog.teacherName} is already set as the class teacher for ${conflictDialog.className} this term. That's completely fine if they're meant to cover both classes — this isn't an error, just a check before saving.`}
+        onClose={closeConflictDialog}
+        onConfirm={confirmConflictedTeacherChange}
+        title={
+          conflictDialog.classNames.length > 1
+            ? 'Just confirming — this teacher already covers other classes'
+            : 'Just confirming — this teacher already covers another class'
+        }
+        message={`${conflictDialog.teacherName} is already set as the class teacher for ${formatClassList(conflictDialog.classNames)} this term. That's completely fine if they're meant to cover ${conflictDialog.classNames.length > 1 ? 'all of these classes' : 'both classes'} — this isn't an error, just a check before saving.`}
         severity="info"
         confirmText="Yes, this is intentional"
         cancelText="No, undo this"

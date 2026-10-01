@@ -5,8 +5,8 @@ import ScoreManagerTab from './components/ScoreManagerTab';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Result Manager' }, { title: 'Score Manager' }];
 
 const ScoreManagerPage = () => (
-  <PageContainer title="Score Manager" description="Upload scores and view score sheets">
-    <Breadcrumb title="Score Manager" subtitle="Manage score uploads and score sheets" items={BCrumb} />
+  <PageContainer title="Score Manager" description="Upload and manage student scores">
+    <Breadcrumb title="Score Manager" subtitle="Download templates and upload student scores" items={BCrumb} />
     <ScoreManagerTab />
   </PageContainer>
 );

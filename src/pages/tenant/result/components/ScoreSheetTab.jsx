@@ -1,24 +1,53 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Chip, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, useTheme,
-  IconButton, Menu, ListItemIcon, ListItemText, Avatar, Tooltip, Stack, alpha,
-  Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Snackbar,
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Button,
+  Alert,
+  useTheme,
+  IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
+  Avatar,
+  Tooltip,
+  Stack,
+  alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import {
-  IconClipboardCheck, IconPrinter, IconChartBar, IconEye, IconEdit, IconSend,
-  IconUsers, IconTrophy, IconArrowUp, IconArrowDown, IconCloudUpload, IconTrash,
+  IconClipboardCheck,
+  IconPrinter,
+  IconChartBar,
+  IconEye,
+  IconEdit,
+  IconSend,
+  IconUsers,
+  IconTrophy,
+  IconPercentage,
+  IconHourglassHigh,
+  IconTrash,
+  IconLock,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import StatCard from '@/components/shared/StatCard';
 import InputScoreDialog from './InputScoreDialog';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
-import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
-import {
-  fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
-} from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchCurrentSession } from '@/api/tenant/session-term/sessionTermApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 
 const getEntityTotal = (entities) => {
@@ -36,7 +65,10 @@ const normalizeCa = (ca) => {
 };
 
 const getOverallTotal = (ca, exam) => {
-  const caTotal = normalizeCa(ca).reduce((sum, caItem) => sum + getEntityTotal(caItem?.entities), 0);
+  const caTotal = normalizeCa(ca).reduce(
+    (sum, caItem) => sum + getEntityTotal(caItem?.entities),
+    0,
+  );
   return caTotal + Number(exam || 0);
 };
 
@@ -59,203 +91,67 @@ const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
 const ScoreSheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const [sessions, setSessions] = useState([]);
-  const [terms, setTerms] = useState([]);
-  const [programmes, setProgrammes] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [classArms, setClassArms] = useState([]);
-  const [curriculums, setCurriculums] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [selectedSession, setSelectedSession] = useState('');
-  const [selectedTerm, setSelectedTerm] = useState('');
-  const [sessionTermsData, setSessionTermsData] = useState([]);
-  const [selectedProgramme, setSelectedProgramme] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
-  const [selectedClassArm, setSelectedClassArm] = useState('');
-  const [selectedCurriculum, setSelectedCurriculum] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [dataFetched, setDataFetched] = useState(false);
-  const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
-  const [actionMenuRow, setActionMenuRow] = useState(null);
-  const [inputScoreDialog, setInputScoreDialog] = useState({ open: false, allocation: null, singleStudent: null });
-  const [purgeDialog, setPurgeDialog] = useState({ open: false, allocation: null });
-  const [schoolInfo, setSchoolInfo] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  // This page is always reached from a specific subject's "Score Sheet"
+  // button (Score Upload cards, or the Broadsheet) — it never has its own
+  // filters. Session/term, class arm and subject all come from the URL.
+  const subjectId = searchParams.get('subject_id');
+  const classArmId = searchParams.get('class_arm_id');
+  const sessionTermId = searchParams.get('session_term_id');
+  const hasContext = Boolean(subjectId && classArmId && sessionTermId);
+
   const [loading, setLoading] = useState(false);
   const [scoreSheetData, setScoreSheetData] = useState(null);
   const [students, setStudents] = useState([]);
   const [markConfig, setMarkConfig] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [caType, setCaType] = useState([]);
+  const [schoolInfo, setSchoolInfo] = useState(null);
+  const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
+  const [actionMenuRow, setActionMenuRow] = useState(null);
+  const [inputScoreDialog, setInputScoreDialog] = useState({
+    open: false,
+    allocation: null,
+    singleStudent: null,
+  });
+  const [purgeDialog, setPurgeDialog] = useState({ open: false });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Grade lookup: prefers the school's configured grade settings, falls back to the default scale
-  const getGrade = useCallback((score) => {
-    const scale = (scoreSheetData?.grade_settings || []).length > 0
-      ? scoreSheetData.grade_settings
-      : defaultGradeScale;
-    const found = scale.find((g) => score >= g.min_score && score <= g.max_score);
-    return found ? found.grade : '-';
-  }, [scoreSheetData]);
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
-  // Build lookup: session_id + term_id → session_term_id
-  const sessionTermId = useMemo(() => {
-    if (!selectedSession || !selectedTerm) return null;
-    const match = sessionTermsData.find(
-      (st) => String(st.session?.id) === String(selectedSession) && String(st.term?.id) === String(selectedTerm)
-    );
-    return match?.id || null;
-  }, [selectedSession, selectedTerm, sessionTermsData]);
+  // Grade lookup: prefers the school's configured grade settings, falls back
+  // to the default scale. No grade at all until the exam score is actually
+  // entered — a CA-only total would otherwise resolve to a real (and
+  // misleadingly low) band before the exam is ever recorded.
+  const getGrade = useCallback(
+    (score, examScore) => {
+      if (examScore === null || examScore === undefined || examScore === '') return null;
+      const scale =
+        (scoreSheetData?.grade_settings || []).length > 0
+          ? scoreSheetData.grade_settings
+          : defaultGradeScale;
+      const found = scale.find((g) => score >= g.min_score && score <= g.max_score);
+      return found ? found.grade : null;
+    },
+    [scoreSheetData],
+  );
 
-  const showTable = selectedClassArm && selectedSubject && selectedSession && selectedTerm && dataFetched;
-  const canFetch = Boolean(selectedSession && selectedTerm && selectedClassArm && selectedSubject && sessionTermId);
-
-  const activeSessionTermRef = useRef(null);
-
-  // ── Fetch dropdown data on mount (Class Register endpoints) ─
-  useEffect(() => {
-    const loadDropdowns = async () => {
-      try {
-        const [sessRes, progRes, activeRes, stRes] = await Promise.all([
-          fetchSessions(),
-          fetchProgrammes(),
-          fetchActiveTenantSessionTerm(),
-          fetchSessionTerms(),
-        ]);
-
-        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
-          ? sessRes.data?.data || sessRes.data
-          : [];
-        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
-          ? progRes.data?.data || progRes.data
-          : [];
-
-        setSessions(sessionsData);
-        setProgrammes(programmesData);
-        setSessionTermsData(stRes?.data || []);
-
-        const activeSessionTerm = activeRes?.status ? activeRes.data : null;
-        activeSessionTermRef.current = activeSessionTerm;
-
-        const defaultSession =
-          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
-          sessionsData[0];
-        if (defaultSession) setSelectedSession(defaultSession.id);
-      } catch (err) {
-        console.error('Failed to load dropdowns:', err);
-      }
-    };
-    loadDropdowns();
-  }, []);
-
-  // ── Terms for the selected session (defaults to the active term) ──
-  useEffect(() => {
-    if (!selectedSession) {
-      setTerms([]);
-      return;
-    }
-    fetchTerms(selectedSession)
-      .then((res) => {
-        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
-        setTerms(data);
-        const activeSessionTerm = activeSessionTermRef.current;
-        const activeTermId =
-          activeSessionTerm?.session_id === selectedSession ? activeSessionTerm.term_id : null;
-        const active = (activeTermId && data.find((t) => t.id === activeTermId)) || data[0];
-        if (active) setSelectedTerm(active.id);
-      })
-      .catch(console.error);
-  }, [selectedSession]);
-
-  // ── Classes for the selected programme ─────────────────────
-  useEffect(() => {
-    if (!selectedProgramme) {
-      setClasses([]);
-      return;
-    }
-    fetchClassesByProgramme(selectedProgramme)
-      .then((res) => {
-        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
-        setClasses(data);
-      })
-      .catch(console.error);
-  }, [selectedProgramme]);
-
-  // ── Class arms for the selected class ──────────────────────
-  useEffect(() => {
-    if (!selectedClass) {
-      setClassArms([]);
-      return;
-    }
-    fetchClassArmsByClass(selectedClass, selectedProgramme ? { programme_id: selectedProgramme } : {})
-      .then((res) => {
-        const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
-        setClassArms(data);
-      })
-      .catch(console.error);
-  }, [selectedClass, selectedProgramme]);
-
-  const filteredClasses = classes;
-  const filteredClassArms = classArms;
-
-  // ── Fetch curriculums when class arm changes ────────────────
-  useEffect(() => {
-    if (!selectedClassArm || !selectedSession || !selectedTerm) {
-      setCurriculums([]);
-      return;
-    }
-    const loadCurriculums = async () => {
-      try {
-        const res = await scoreManagerApi.getClassCurriculums({
-          class_arm_id: selectedClassArm,
-          session_id: selectedSession,
-          term_id: selectedTerm,
-        });
-        setCurriculums(res?.data?.data || []);
-      } catch (err) {
-        console.error('Failed to fetch curriculums:', err);
-      }
-    };
-    loadCurriculums();
-  }, [selectedClassArm, selectedSession, selectedTerm]);
-
-  // ── Fetch subjects when class arm or curriculum changes ──────
-  useEffect(() => {
-    if (!selectedClassArm || !selectedSession || !selectedTerm) {
-      setSubjects([]);
-      return;
-    }
-    const loadSubjects = async () => {
-      try {
-        const params = {
-          class_arm_id: selectedClassArm,
-          session_id: selectedSession,
-          term_id: selectedTerm,
-        };
-        if (selectedCurriculum) params.curriculum_id = selectedCurriculum;
-        const res = await scoreManagerApi.getClassSubjects(params);
-        setSubjects(res?.data?.data || []);
-      } catch (err) {
-        console.error('Failed to fetch subjects:', err);
-      }
-    };
-    loadSubjects();
-  }, [selectedClassArm, selectedSession, selectedTerm, selectedCurriculum]);
-
-  // ── Fetch score sheet data ─────────────────────────────────
+  // ── Fetch score sheet data — auto-fetches as soon as the URL gives us a
+  // subject/arm/term, no Fetch button needed. ────────────────────────────
   const fetchScoreSheet = useCallback(async () => {
-    if (!selectedSubject || !selectedSession || !selectedTerm || !selectedClassArm) return;
+    if (!hasContext) return;
     setLoading(true);
     try {
-      const sessionTermRes = await scoreManagerApi.getScoreSheetData({
-        subject_id: selectedSubject,
+      const res = await scoreManagerApi.getScoreSheetData({
+        subject_id: subjectId,
         session_term_id: sessionTermId,
-        class_arm_id: selectedClassArm,
+        class_arm_id: classArmId,
       });
 
-      const data = sessionTermRes?.data?.data;
+      const data = res?.data?.data;
       if (data) {
         setScoreSheetData(data);
         setStudents(data.students || []);
@@ -269,23 +165,21 @@ const ScoreSheetTab = () => {
           if (Array.isArray(raw)) {
             setCaType(raw);
           } else if (typeof raw === 'object') {
-            // Convert { ca1: { display_name: 'CA1', entities: [...] }, ... } to array
             setCaType(Object.values(raw));
           }
         }
       }
-      setDataFetched(true);
     } catch (err) {
       console.error('Failed to fetch score sheet:', err);
+      showSnackbar('Failed to load score sheet', 'error');
     } finally {
       setLoading(false);
     }
-  }, [selectedSubject, sessionTermId, selectedClassArm]);
+  }, [hasContext, subjectId, sessionTermId, classArmId]);
 
-  // Reset the fetched flag whenever the filters change (fetch is manual now)
   useEffect(() => {
-    setDataFetched(false);
-  }, [selectedSession, selectedTerm, selectedProgramme, selectedClass, selectedClassArm, selectedCurriculum, selectedSubject]);
+    fetchScoreSheet();
+  }, [fetchScoreSheet]);
 
   // Fetch tenant school info once for print headers
   useEffect(() => {
@@ -306,13 +200,29 @@ const ScoreSheetTab = () => {
   // Any uploaded data in the sheet? Used to disable submit + show '-' placeholders
   const hasAnyScores = useMemo(
     () => students.some((r) => getOverallTotal(r.ca, r.exam_score) > 0),
-    [students]
+    [students],
   );
 
-  const totals = students.map(r => getOverallTotal(r.ca, r.exam_score));
-  const classAverage = totals.length > 0 ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length) : 0;
-  const highestScore = totals.length > 0 ? Math.max(...totals) : 0;
-  const lowestScore = totals.length > 0 ? Math.min(...totals) : 0;
+  const totals = students.map((r) => getOverallTotal(r.ca, r.exam_score));
+  const classAverage =
+    totals.length > 0 ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length) : 0;
+  const scoredCount = students.filter(
+    (r) => r.exam_score !== null && r.exam_score !== undefined,
+  ).length;
+  const pendingExamCount = students.length - scoredCount;
+  const passRate = analytics?.class_pass_rate ?? 0;
+
+  // ── Edit/purge availability — mirrors the backend's three-state rule
+  // (ScoreUploadController::scoreSheetEditState): editable before
+  // submission and again after a broadsheet reversal, locked here (route to
+  // the Broadsheet instead) once submitted but not yet published, and
+  // locked everywhere once the broadsheet is actually published. The
+  // backend enforces the "published" lock on every write regardless of
+  // what this flag says; this only decides what the UI offers.
+  const editState = scoreSheetData?.edit_state || 'editable';
+  const isEditable = editState === 'editable';
+  const isLockedPublished = editState === 'locked_published';
+  const isLockedPendingBroadsheet = editState === 'locked_pending_broadsheet';
 
   // ── Print helpers ───────────────────────────────────────
   const buildPrintHtml = (title, subtitle, bodyHtml) => {
@@ -354,36 +264,44 @@ const ScoreSheetTab = () => {
     printWindow.document.write(buildPrintHtml(title, subtitle, bodyHtml));
     printWindow.document.close();
     printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 500);
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
   };
 
-  const esc = (v) => String(v ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const esc = (v) =>
+    String(v ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
   const buildStudentRowsHtml = (cellFn) =>
-    students.map((res, i) => {
-      const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
-      return `<tr>
+    students
+      .map((res, i) => {
+        const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
+        return `<tr>
         <td>${i + 1}</td>
         <td>${esc(`${res.lname} ${res.fname} ${res.mname || ''}`)}</td>
         <td>${esc(res.student_id || res.user_id || '')}</td>
         ${cellFn(res, total)}
       </tr>`;
-    }).join('');
+      })
+      .join('');
 
-  const termLabel = `${sessionTermsData.find((st) => String(st.session?.id) === String(selectedSession))?.session?.session_name || ''} - ${terms.find((t) => String(t.id) === String(selectedTerm))?.term_name || ''}`;
-  const subjectLabel = subjects.find((s) => String(s.id) === String(selectedSubject))?.subject_name || '';
-  const armLabel = classArms.find((a) => String(a.id) === String(selectedClassArm))?.class_arm_names || '';
-  const subtitle = `${termLabel} | ${subjectLabel} | ${armLabel}`;
+  const subjectLabel = scoreSheetData?.subject?.subject_name || '';
+  const classLabel = scoreSheetData?.class_arm
+    ? `${scoreSheetData.class_arm.class_name} ${scoreSheetData.class_arm.arm_name}`.trim()
+    : '';
+  const termLabel = scoreSheetData?.session_term
+    ? `${scoreSheetData.session_term.session_name} - ${scoreSheetData.session_term.term_name}`
+    : '';
+  const subtitle = `${termLabel} | ${subjectLabel} | ${classLabel}`;
 
-  // Allocation for the Input Score dialog, built from the Score Sheet's own
-  // filters (the dialog bails out when allocation is null).
+  // Allocation for the Input Score dialog, built from the resolved context.
   const currentAllocation =
-    selectedSubject && selectedClassArm
+    subjectId && classArmId
       ? {
-          subject_id: selectedSubject,
-          class_arm_id: selectedClassArm,
+          subject_id: subjectId,
+          class_arm_id: classArmId,
           subject_name: subjectLabel,
-          class_name: armLabel,
+          class_name: classLabel,
         }
       : null;
 
@@ -394,15 +312,19 @@ const ScoreSheetTab = () => {
       return;
     }
     const caHead = caColumns.map((ca) => `<th>${esc(ca.display_name || 'CA')}</th>`).join('');
-    const bodyRows = buildStudentRowsHtml((res, total) => `
-      ${caColumns.map((_, ci) => {
-        const entityTotal = getEntityTotal(res.ca?.[ci]?.entities);
-        return `<td style="text-align:center">${entityTotal > 0 ? entityTotal : '-'}</td>`;
-      }).join('')}
+    const bodyRows = buildStudentRowsHtml(
+      (res, total) => `
+      ${caColumns
+        .map((_, ci) => {
+          const entityTotal = getEntityTotal(res.ca?.[ci]?.entities);
+          return `<td style="text-align:center">${entityTotal > 0 ? entityTotal : '-'}</td>`;
+        })
+        .join('')}
       <td style="text-align:center">${displayScore(res.exam_score)}</td>
       <td style="text-align:center"><strong>${total > 0 ? total : '-'}</strong></td>
-      <td style="text-align:center">${getGrade(total)}</td>
-    `);
+      <td style="text-align:center">${getGrade(total, res.exam_score) || 'Pending'}</td>
+    `,
+    );
     const html = `<table>
       <thead><tr><th>#</th><th>Student</th><th>ID</th>${caHead}<th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
       <tbody>${bodyRows}</tbody>
@@ -419,9 +341,7 @@ const ScoreSheetTab = () => {
     const isExam = column.type === 'exam';
     const colTitle = isExam ? 'Exam Report' : `${column.label} Report`;
     const bodyRows = buildStudentRowsHtml((res) => {
-      const value = isExam
-        ? res.exam_score
-        : getEntityTotal(res.ca?.[column.index]?.entities);
+      const value = isExam ? res.exam_score : getEntityTotal(res.ca?.[column.index]?.entities);
       return `<td style="text-align:center">${displayScore(value)}</td>`;
     });
     const html = `<table>
@@ -431,43 +351,32 @@ const ScoreSheetTab = () => {
     openPrintWindow(colTitle, subtitle, html);
   };
 
-  // Navigate to the performance analytics page with this subject/class context
+  // Navigate to the performance analytics page with this subject/class
+  // context (session_term_id stands in for separate session_id/term_id —
+  // this page no longer resolves those on its own. View Analytics itself is
+  // being revisited separately).
   const handleViewAnalytics = (column = null) => {
     const params = new URLSearchParams({
-      session_id: selectedSession,
-      term_id: selectedTerm,
-      programme_id: selectedProgramme,
-      class_id: selectedClass,
-      class_arm_id: selectedClassArm,
-      subject_id: selectedSubject,
+      session_term_id: sessionTermId,
+      class_arm_id: classArmId,
+      subject_id: subjectId,
     });
     if (column) params.set('column', column.type === 'exam' ? 'exam' : `ca:${column.index}`);
     navigate(`/result-analytics?${params.toString()}`);
   };
 
-  const handleReverseSubmission = async () => {
-    try {
-      await scoreManagerApi.reverseSubmission({
-        subject_id: selectedSubject,
-        class_arm_id: selectedClassArm,
-        session_term_id: sessionTermId,
-      });
-      fetchScoreSheet();
-    } catch (err) {
-      console.error('Failed to reverse submission:', err);
-    }
-  };
-
   const handleSubmitScores = async () => {
     try {
       await scoreManagerApi.submitScores({
-        subject_id: selectedSubject,
-        class_arm_id: selectedClassArm,
+        subject_id: subjectId,
+        class_arm_id: classArmId,
         session_term_id: sessionTermId,
       });
+      showSnackbar('Scores submitted successfully!');
       fetchScoreSheet();
     } catch (err) {
       console.error('Failed to submit scores:', err);
+      showSnackbar('Failed to submit scores', 'error');
     }
   };
 
@@ -481,422 +390,650 @@ const ScoreSheetTab = () => {
       params.set('user_id', student.user_id);
     }
     if (sessionTermId) params.set('session_term_id', sessionTermId);
-    if (selectedClassArm) params.set('class_arm_id', selectedClassArm);
+    if (classArmId) params.set('class_arm_id', classArmId);
     window.open(`/result-ca_breakdown?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
-  const viewResult = (student) => {
+  const viewResult = () => {
     setActionMenuAnchor(null);
     window.open('/result-reportsheet', '_blank', 'noopener,noreferrer');
   };
 
+  const showTable = hasContext && scoreSheetData;
+
   return (
     <>
+      {!hasContext && (
+        <Alert severity="warning" sx={{ borderRadius: '10px', mb: 2 }}>
+          This page needs a subject, class arm and term to show a score sheet — open it from a
+          subject's "Score Sheet" button in Score Manager instead of navigating here directly.
+        </Alert>
+      )}
+
       {showTable && !loading && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <StatCard count={students.length} label="Total Students" subtitle="In selected class" icon={IconUsers} colorIndex={0} loading={false} />
-          <StatCard count={classAverage} label="Class Average" subtitle="Overall score" icon={IconTrophy} colorIndex={1} loading={false} />
-          <StatCard count={highestScore} label="Highest Score" subtitle="Top performer" icon={IconArrowUp} colorIndex={2} loading={false} />
-          <StatCard count={lowestScore} label="Lowest Score" subtitle="Needs attention" icon={IconArrowDown} colorIndex={3} loading={false} />
+          <StatCard
+            count={`${scoredCount} / ${students.length}`}
+            label="Learners Scored"
+            subtitle="Both CA and exam entered"
+            icon={IconUsers}
+            colorIndex={0}
+            loading={false}
+          />
+          <StatCard
+            count={classAverage}
+            label="Class Average"
+            subtitle="Overall score"
+            icon={IconTrophy}
+            colorIndex={1}
+            loading={false}
+          />
+          <StatCard
+            count={`${passRate}%`}
+            label="Pass Rate"
+            subtitle="Of scored learners"
+            icon={IconPercentage}
+            colorIndex={2}
+            loading={false}
+          />
+          <StatCard
+            count={pendingExamCount}
+            label="Pending Exam Entry"
+            subtitle="No grade until entered"
+            icon={IconHourglassHigh}
+            colorIndex={3}
+            loading={false}
+          />
         </Stack>
       )}
 
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-      {/* ── Card Header ─────────────────────────────────────── */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-        <Typography variant="h6" fontWeight={600}>
-          {/* {showTable
-            ? `Score Sheet — ${dummyClasses.find(c => c.id === selectedClass)?.name} • ${dummySubjects.find(s => s.id === selectedSubject)?.name} • ${dummySessions.find(s => s.id === selectedSession)?.label} - ${dummyTerms.find(t => t.id === selectedTerm)?.label}`
-            : 'View Score Sheet'} */}
-        </Typography>
-        {showTable && (
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <Button variant="contained" size="small" color="info" startIcon={<IconCloudUpload size={16} />}
-              onClick={() => setInputScoreDialog({ open: true, allocation: currentAllocation, singleStudent: null })}>
-              Upload Scores
-            </Button>
-            <Button variant="contained" size="small" color="primary" startIcon={<IconEdit size={16} />}
-              onClick={() => setInputScoreDialog({ open: true, allocation: currentAllocation, singleStudent: null })}>
-              Edit Scores
-            </Button>
-            <Button variant="contained" size="small" color="error" startIcon={<IconTrash size={16} />}
-              onClick={() => setPurgeDialog({ open: true, allocation: null })}>
-              Purge Scores
-            </Button>
-            <Button variant="contained" size="small" color="info" startIcon={<IconPrinter size={16} />} onClick={handlePrintScoreSheet}>
-              Print Score Sheet
-            </Button>
-            <Button variant="contained" size="small" color="success" startIcon={<IconChartBar size={16} />}
-              onClick={() => handleViewAnalytics()}>
-              View Analytics
-            </Button>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
+        {/* ── Card Header ─────────────────────────────────────── */}
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
+              {subjectLabel || 'Score Sheet'}
+            </Typography>
+            {showTable && (
+              <Typography variant="caption" color="text.secondary">
+                {classLabel} · {termLabel}
+              </Typography>
+            )}
           </Box>
-        )}
-      </Box>
-
-      {/* ── Filters ─────────────────────────────────────────── */}
-      <Box sx={{ p: 2, borderBottom: showTable ? 1 : 0, borderColor: 'divider' }}>
-        <Grid container spacing={1.5} alignItems="center">
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Session</InputLabel>
-              <Select value={selectedSession} label="Session"
-                onChange={e => { setSelectedSession(e.target.value); setSelectedProgramme(''); setSelectedClass(''); setSelectedClassArm(''); setSelectedCurriculum(''); setSelectedSubject(''); }}>
-                <MenuItem value="">-- Select Session --</MenuItem>
-                {sessions.map(s => <MenuItem key={s.id} value={s.id}>{s.session_name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Term</InputLabel>
-              <Select value={selectedTerm} label="Term"
-                onChange={e => { setSelectedTerm(e.target.value); setSelectedProgramme(''); setSelectedClass(''); setSelectedClassArm(''); setSelectedCurriculum(''); setSelectedSubject(''); }}>
-                <MenuItem value="">-- Select Term --</MenuItem>
-                {terms.map(t => <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Programme</InputLabel>
-              <Select value={selectedProgramme} label="Programme"
-                onChange={e => { setSelectedProgramme(e.target.value); setSelectedClass(''); setSelectedClassArm(''); setSelectedCurriculum(''); setSelectedSubject(''); }}>
-                <MenuItem value="">-- Select Programme --</MenuItem>
-                {programmes.map(p => <MenuItem key={p.id} value={p.id}>{p.programme_name || p.programme_title}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Class</InputLabel>
-              <Select value={selectedClass} label="Class"
-                onChange={e => { setSelectedClass(e.target.value); setSelectedClassArm(''); setSelectedCurriculum(''); setSelectedSubject(''); }}>
-                <MenuItem value="">-- Select Class --</MenuItem>
-                {filteredClasses.map(c => <MenuItem key={c.id} value={c.id}>{c.class_name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Class Arm</InputLabel>
-              <Select value={selectedClassArm} label="Class Arm"
-                onChange={e => { setSelectedClassArm(e.target.value); setSelectedCurriculum(''); setSelectedSubject(''); }}>
-                <MenuItem value="">-- Select Class Arm --</MenuItem>
-                {filteredClassArms.map(c => <MenuItem key={c.id} value={c.id}>{c.class_arm_names}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Curriculum</InputLabel>
-              <Select value={selectedCurriculum} label="Curriculum"
-                onChange={e => { setSelectedCurriculum(e.target.value); setSelectedSubject(''); }}>
-                <MenuItem value="">-- All --</MenuItem>
-                {curriculums.map(c => <MenuItem key={c.id} value={c.id}>{c.curriculum_name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Subject</InputLabel>
-              <Select value={selectedSubject} label="Subject"
-                onChange={e => setSelectedSubject(e.target.value)}>
-                <MenuItem value="">-- Select Subject --</MenuItem>
-                {subjects.map(s => <MenuItem key={s.id} value={s.id}>{s.subject_name}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 2 }}>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              onClick={fetchScoreSheet}
-              disabled={loading || !canFetch}
-              sx={{ fontWeight: 600, height: '40px' }}
-            >
-              {loading ? <CircularProgress size={20} color="inherit" /> : 'Fetch'}
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* ── Submission Status ────────────────────────────────── */}
-      {showTable && (
-        <Box sx={{ px: 2, pt: 2 }}>
-          {scoreSheetData?.overall_submission_status === 'pending' && (
-            <Alert severity="info" sx={{ borderRadius: '10px' }}
-              action={
-                <Tooltip title={hasAnyScores ? '' : 'Upload scores before submitting'}>
-                  <span>
-                    <Button size="small" variant="contained" color="success" startIcon={<IconSend size={14} />} onClick={handleSubmitScores} disabled={!hasAnyScores}>
-                      SUBMIT SCORES
-                    </Button>
-                  </span>
-                </Tooltip>
-              }>
-              <Typography variant="subtitle2">Scores Submission Status</Typography>
-              {hasAnyScores ? 'Scores not submitted by Subject Teacher yet' : 'No scores uploaded yet — upload at least one CA or exam score to submit'}
-            </Alert>
-          )}
-          {scoreSheetData?.overall_submission_status === 'submitted' && scoreSheetData?.result_publish?.spa_publish === 'no' && (
-            <Alert severity="warning" sx={{ borderRadius: '10px' }}
-              action={
-                <Button size="small" variant="contained" color="warning" onClick={handleReverseSubmission}>
-                  Reverse Submission
-                </Button>
-              }>
-              <Typography variant="subtitle2">Scores Submission Status</Typography>
-              Result submitted awaiting SPA approval. Should you wish to alter this result, click Reverse Submission.
-            </Alert>
-          )}
-          {scoreSheetData?.result_publish?.spa_publish === 'yes' && scoreSheetData?.result_publish?.head_of_school_publish === 'no' && (
-            <Alert severity="success" sx={{ borderRadius: '10px' }}
-              action={
-                <Button size="small" variant="contained" color="warning" onClick={handleSubmitScores}>
-                  Re-Submit
-                </Button>
-              }>
-              <Typography variant="subtitle2">Scores Submission Status</Typography>
-              Result submitted and approved by SPA
-            </Alert>
+          {showTable && (
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+              {isEditable && (
+                <>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="primary"
+                    startIcon={<IconEdit size={16} />}
+                    onClick={() =>
+                      setInputScoreDialog({
+                        open: true,
+                        allocation: currentAllocation,
+                        singleStudent: null,
+                      })
+                    }
+                  >
+                    Edit Scores
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="error"
+                    startIcon={<IconTrash size={16} />}
+                    onClick={() => setPurgeDialog({ open: true })}
+                  >
+                    Purge Scores
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="contained"
+                size="small"
+                color="info"
+                startIcon={<IconPrinter size={16} />}
+                onClick={handlePrintScoreSheet}
+              >
+                Print Score Sheet
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                color="success"
+                startIcon={<IconChartBar size={16} />}
+                onClick={() => handleViewAnalytics()}
+              >
+                View Analytics
+              </Button>
+            </Box>
           )}
         </Box>
-      )}
 
-      {/* ── Table ───────────────────────────────────────────── */}
-      {showTable && (
-        <Box sx={{ p: 3, pt: 2 }}>
-          <TableContainer sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-            <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '3%' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '220px', minWidth: 220 }}>Learner's Info</TableCell>
-                  {caColumns.map((ca, ci) => (
-                    <TableCell key={ca.display_name || ci} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '10%' }} align="center">
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                        {ca.display_name || `CA${ci + 1}`}
-                        <Tooltip title={`Print ${ca.display_name || `CA${ci + 1}`} Report`}>
-                          <IconButton size="small" sx={{ p: 0.25 }} onClick={() => handlePrintColumnReport({ type: 'ca', index: ci, label: ca.display_name || `CA${ci + 1}` })}>
+        {/* ── Status banner — one of: editable/pending, locked pending the
+             broadsheet, or locked published. No self-service "reverse" here
+             any more — only an admin reversing the broadsheet itself brings
+             editing back. ──────────────────────────────────────────────── */}
+        {showTable && (
+          <Box sx={{ px: 2, pt: 2 }}>
+            {isLockedPublished && (
+              <Alert severity="success" icon={<IconLock size={18} />} sx={{ borderRadius: '10px' }}>
+                <Typography variant="subtitle2">Broadsheet Published</Typography>
+                This class's broadsheet has been published — scores are locked and can no longer be
+                edited or purged here.
+              </Alert>
+            )}
+            {isLockedPendingBroadsheet && (
+              <Alert severity="info" sx={{ borderRadius: '10px' }}>
+                <Typography variant="subtitle2">Submitted — Awaiting Broadsheet Review</Typography>
+                Scores have been submitted. From here on, edits happen on the Broadsheet until it's
+                published.
+              </Alert>
+            )}
+            {isEditable && scoreSheetData?.overall_submission_status === 'pending' && (
+              <Alert
+                severity="info"
+                sx={{ borderRadius: '10px' }}
+                action={
+                  <Tooltip title={hasAnyScores ? '' : 'Upload scores before submitting'}>
+                    <span>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="success"
+                        startIcon={<IconSend size={14} />}
+                        onClick={handleSubmitScores}
+                        disabled={!hasAnyScores}
+                      >
+                        SUBMIT SCORES
+                      </Button>
+                    </span>
+                  </Tooltip>
+                }
+              >
+                <Typography variant="subtitle2">Scores Submission Status</Typography>
+                {hasAnyScores
+                  ? 'Scores not submitted by Subject Teacher yet'
+                  : 'No scores uploaded yet — upload at least one CA or exam score to submit'}
+              </Alert>
+            )}
+          </Box>
+        )}
+
+        {/* ── Table ───────────────────────────────────────────── */}
+        {showTable && (
+          <Box sx={{ p: 3, pt: 2 }}>
+            <TableContainer
+              sx={{
+                overflowX: 'auto',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '3%',
+                      }}
+                    >
+                      #
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '220px',
+                        minWidth: 220,
+                      }}
+                    >
+                      Learner's Info
+                    </TableCell>
+                    {caColumns.map((ca, ci) => (
+                      <TableCell
+                        key={ca.display_name || ci}
+                        sx={{
+                          fontWeight: 700,
+                          bgcolor: isDark ? 'grey.900' : 'grey.50',
+                          ...cellBorderSx,
+                          width: '10%',
+                        }}
+                        align="center"
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 0.5,
+                          }}
+                        >
+                          {ca.display_name || `CA${ci + 1}`}
+                          <Tooltip title={`Print ${ca.display_name || `CA${ci + 1}`} Report`}>
+                            <IconButton
+                              size="small"
+                              sx={{ p: 0.25 }}
+                              onClick={() =>
+                                handlePrintColumnReport({
+                                  type: 'ca',
+                                  index: ci,
+                                  label: ca.display_name || `CA${ci + 1}`,
+                                })
+                              }
+                            >
+                              <IconPrinter size={13} color="#0288D1" />
+                            </IconButton>
+                          </Tooltip>
+                          <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
+                          <Tooltip title={`View ${ca.display_name || `CA${ci + 1}`} Analytics`}>
+                            <IconButton
+                              size="small"
+                              sx={{ p: 0.25 }}
+                              onClick={() =>
+                                handleViewAnalytics({
+                                  type: 'ca',
+                                  index: ci,
+                                  label: ca.display_name || `CA${ci + 1}`,
+                                })
+                              }
+                            >
+                              <IconChartBar size={13} color="#16A34A" />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    ))}
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '10%',
+                      }}
+                      align="center"
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 0.5,
+                        }}
+                      >
+                        Exam
+                        <Tooltip title="Print Exam Report">
+                          <IconButton
+                            size="small"
+                            sx={{ p: 0.25 }}
+                            onClick={() => handlePrintColumnReport({ type: 'exam' })}
+                          >
                             <IconPrinter size={13} color="#0288D1" />
                           </IconButton>
                         </Tooltip>
                         <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
-                        <Tooltip title={`View ${ca.display_name || `CA${ci + 1}`} Analytics`}>
-                          <IconButton size="small" sx={{ p: 0.25 }} onClick={() => handleViewAnalytics({ type: 'ca', index: ci, label: ca.display_name || `CA${ci + 1}` })}>
+                        <Tooltip title="View Exam Analytics">
+                          <IconButton
+                            size="small"
+                            sx={{ p: 0.25 }}
+                            onClick={() => handleViewAnalytics({ type: 'exam' })}
+                          >
                             <IconChartBar size={13} color="#16A34A" />
                           </IconButton>
                         </Tooltip>
                       </Box>
                     </TableCell>
-                  ))}
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '10%' }} align="center">
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                      Exam
-                      <Tooltip title="Print Exam Report">
-                        <IconButton size="small" sx={{ p: 0.25 }} onClick={() => handlePrintColumnReport({ type: 'exam' })}>
-                          <IconPrinter size={13} color="#0288D1" />
-                        </IconButton>
-                      </Tooltip>
-                      <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
-                      <Tooltip title="View Exam Analytics">
-                        <IconButton size="small" sx={{ p: 0.25 }} onClick={() => handleViewAnalytics({ type: 'exam' })}>
-                          <IconChartBar size={13} color="#16A34A" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '7%' }} align="center">Total</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '6%' }} align="center">Grade</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', width: '4%' }}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '7%',
+                      }}
+                      align="center"
+                    >
+                      Total
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '6%',
+                      }}
+                      align="center"
+                    >
+                      Grade
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        width: '4%',
+                      }}
+                    >
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading ? (
                     <TableRow>
                       <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                         <CircularProgress />
-                        <Typography variant="body2" sx={{ mt: 1 }}>Loading score sheet...</Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                          Loading score sheet...
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  ) : students.map((res, i) => {
-                  const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
-                  const grade = getGrade(total);
-                  return (
-                    <TableRow key={res.course_registration_id || i} hover>
-                      <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
-                      <TableCell sx={{ ...cellBorderSx, width: 220, minWidth: 220 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar src={res.avatar} sx={{ width: 32, height: 32, fontSize: 13, fontWeight: 700, bgcolor: 'primary.main', flexShrink: 0 }}>
-                            {(!res.avatar && `${res.fname?.[0]}${res.lname?.[0]}`) || '?'}
-                          </Avatar>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Stack direction="row" alignItems="center" spacing={0.75}>
-                              <Typography variant="body2" fontWeight={600} noWrap>
-                                {res.lname} {res.fname} {res.mname}
-                              </Typography>
-                              <Box
-                                title={res.sex}
+                  ) : (
+                    students.map((res, i) => {
+                      const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
+                      const grade = getGrade(total, res.exam_score);
+                      return (
+                        <TableRow key={res.course_registration_id || i} hover>
+                          <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
+                          <TableCell sx={{ ...cellBorderSx, width: 220, minWidth: 220 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar
+                                src={res.avatar}
                                 sx={{
-                                  width: 18, height: 18, borderRadius: '5px', flexShrink: 0,
-                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                  fontSize: '10px', fontWeight: 700,
-                                  bgcolor: alpha(res.sex === 'Male' ? theme.palette.primary.main : theme.palette.success.main, isDark ? 0.28 : 0.14),
-                                  color: res.sex === 'Male' ? theme.palette.primary.main : theme.palette.success.main,
+                                  width: 32,
+                                  height: 32,
+                                  fontSize: 13,
+                                  fontWeight: 700,
+                                  bgcolor: 'primary.main',
+                                  flexShrink: 0,
                                 }}
                               >
-                                {res.sex === 'Male' ? 'M' : 'F'}
+                                {(!res.avatar && `${res.fname?.[0]}${res.lname?.[0]}`) || '?'}
+                              </Avatar>
+                              <Box sx={{ minWidth: 0 }}>
+                                <Stack direction="row" alignItems="center" spacing={0.75}>
+                                  <Typography variant="body2" fontWeight={600} noWrap>
+                                    {res.lname} {res.fname} {res.mname}
+                                  </Typography>
+                                  <Box
+                                    title={res.sex}
+                                    sx={{
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: '5px',
+                                      flexShrink: 0,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: '10px',
+                                      fontWeight: 700,
+                                      bgcolor: alpha(
+                                        res.sex === 'male'
+                                          ? theme.palette.primary.main
+                                          : theme.palette.success.main,
+                                        isDark ? 0.28 : 0.14,
+                                      ),
+                                      color:
+                                        res.sex === 'male'
+                                          ? theme.palette.primary.main
+                                          : theme.palette.success.main,
+                                    }}
+                                  >
+                                    {res.sex === 'male' ? 'M' : 'F'}
+                                  </Box>
+                                </Stack>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', lineHeight: 1.2 }}
+                                  noWrap
+                                >
+                                  {res.student_id || res.user_id}
+                                </Typography>
                               </Box>
-                            </Stack>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.2 }} noWrap>
-                              {res.student_id || res.user_id}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      {caColumns.map((_, ci) => (
-                        <TableCell key={ci} align="center" sx={cellBorderSx}>
-                          {displayScore(getEntityTotal(res.ca?.[ci]?.entities) || null)}
-                        </TableCell>
-                      ))}
-                      <TableCell align="center" sx={cellBorderSx}>{displayScore(res.exam_score)}</TableCell>
-                      <TableCell align="center" sx={cellBorderSx}>{displayScore(total)}</TableCell>
-                      <TableCell align="center" sx={cellBorderSx}>
-                        <Chip label={grade} size="small" sx={{ fontWeight: 700, minWidth: 36 }} />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={(e) => { setActionMenuAnchor(e.currentTarget); setActionMenuRow(res); }}>
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
+                            </Box>
+                          </TableCell>
+                          {caColumns.map((_, ci) => (
+                            <TableCell key={ci} align="center" sx={cellBorderSx}>
+                              {displayScore(getEntityTotal(res.ca?.[ci]?.entities) || null)}
+                            </TableCell>
+                          ))}
+                          <TableCell align="center" sx={cellBorderSx}>
+                            {displayScore(res.exam_score)}
+                          </TableCell>
+                          <TableCell align="center" sx={cellBorderSx}>
+                            {displayScore(total)}
+                          </TableCell>
+                          <TableCell align="center" sx={cellBorderSx}>
+                            {grade ? (
+                              <Chip
+                                label={grade}
+                                size="small"
+                                sx={{ fontWeight: 700, minWidth: 36 }}
+                              />
+                            ) : (
+                              <Tooltip title="No grade until the exam score is entered">
+                                <Chip
+                                  label="Pending"
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ fontWeight: 600, minWidth: 36, color: 'text.secondary' }}
+                                />
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setActionMenuAnchor(e.currentTarget);
+                                setActionMenuRow(res);
+                              }}
+                            >
+                              <MoreVertIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
 
-      {/* ── Empty State ─────────────────────────────────────── */}
-      {!showTable && (
-        <Box sx={{ p: 5, textAlign: 'center' }}>
-          {loading ? (
-            <>
-              <CircularProgress size={36} />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Loading score sheet...
-              </Typography>
-            </>
-          ) : (
-            <>
-              <IconClipboardCheck size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
-              <Typography variant="h6" color="text.secondary" fontWeight={600}>
-                Select a session, term, class arm and subject, then click Fetch to view the score sheet
-              </Typography>
-            </>
-          )}
-        </Box>
-      )}
+        {/* ── Empty / loading state (no URL context yet) ──────────── */}
+        {!showTable && (
+          <Box sx={{ p: 5, textAlign: 'center' }}>
+            {loading ? (
+              <>
+                <CircularProgress size={36} />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Loading score sheet...
+                </Typography>
+              </>
+            ) : (
+              <>
+                <IconClipboardCheck
+                  size={48}
+                  color={isDark ? '#fff' : '#94a3b8'}
+                  style={{ marginBottom: 12 }}
+                />
+                <Typography variant="h6" color="text.secondary" fontWeight={600}>
+                  {hasContext ? 'No score sheet data found.' : 'Open this page from Score Manager.'}
+                </Typography>
+              </>
+            )}
+          </Box>
+        )}
 
-      {/* ── Bottom Submit Button ─────────────────────────────── */}
-      {showTable && (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', borderTop: 1, borderColor: 'divider' }}>
-          {scoreSheetData?.overall_submission_status === 'pending' && (
-            <Button variant="contained" color="success" size="small" startIcon={<IconSend size={14} />} onClick={handleSubmitScores}>
+        {/* ── Bottom Submit Button ─────────────────────────────── */}
+        {showTable && isEditable && scoreSheetData?.overall_submission_status === 'pending' && (
+          <Box
+            sx={{
+              p: 2,
+              display: 'flex',
+              justifyContent: 'center',
+              borderTop: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              startIcon={<IconSend size={14} />}
+              onClick={handleSubmitScores}
+            >
               SUBMIT SCORES
             </Button>
-          )}
-          {scoreSheetData?.overall_submission_status === 'submitted' && scoreSheetData?.result_publish?.spa_publish === 'no' && (
-            <Button variant="contained" color="warning" size="small" onClick={handleReverseSubmission}>
-              Reverse Submission
-            </Button>
-          )}
-          {scoreSheetData?.result_publish?.spa_publish === 'yes' && scoreSheetData?.result_publish?.head_of_school_publish === 'no' && (
-            <Button variant="contained" color="warning" size="small" onClick={handleSubmitScores}>
-              Re-Submit
-            </Button>
-          )}
-        </Box>
-      )}
+          </Box>
+        )}
 
-      {/* ── Row Action Menu ─────────────────────────────────── */}
-      <Menu anchorEl={actionMenuAnchor} open={Boolean(actionMenuAnchor)} onClose={() => { setActionMenuAnchor(null); setActionMenuRow(null); }}>
-        <MenuItem onClick={() => { setActionMenuAnchor(null); setInputScoreDialog({ open: true, allocation: null, singleStudent: actionMenuRow }); }}>
-          <ListItemIcon><IconEdit size={18} /></ListItemIcon>
-          <ListItemText>Edit Score</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => viewCAReport(actionMenuRow)}>
-          <ListItemIcon><IconEye size={18} /></ListItemIcon>
-          <ListItemText>View CA Report</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => viewResult(actionMenuRow)}>
-          <ListItemIcon><IconEye size={18} /></ListItemIcon>
-          <ListItemText>View Result</ListItemText>
-        </MenuItem>
-      </Menu>
+        {/* ── Row Action Menu ─────────────────────────────────── */}
+        <Menu
+          anchorEl={actionMenuAnchor}
+          open={Boolean(actionMenuAnchor)}
+          onClose={() => {
+            setActionMenuAnchor(null);
+            setActionMenuRow(null);
+          }}
+        >
+          {isEditable && (
+            <MenuItem
+              onClick={() => {
+                setActionMenuAnchor(null);
+                setInputScoreDialog({ open: true, allocation: null, singleStudent: actionMenuRow });
+              }}
+            >
+              <ListItemIcon>
+                <IconEdit size={18} />
+              </ListItemIcon>
+              <ListItemText>Edit Score</ListItemText>
+            </MenuItem>
+          )}
+          <MenuItem onClick={() => viewCAReport(actionMenuRow)}>
+            <ListItemIcon>
+              <IconEye size={18} />
+            </ListItemIcon>
+            <ListItemText>View CA Report</ListItemText>
+          </MenuItem>
+          <MenuItem onClick={viewResult}>
+            <ListItemIcon>
+              <IconEye size={18} />
+            </ListItemIcon>
+            <ListItemText>View Result</ListItemText>
+          </MenuItem>
+        </Menu>
 
-      {/* ── Input Score Dialog ─────────────────────────────── */}
-      <InputScoreDialog
-        open={inputScoreDialog.open}
-        onClose={() => setInputScoreDialog({ open: false, allocation: null, singleStudent: null })}
-        allocation={inputScoreDialog.allocation}
-        filter={{
-          session_id: selectedSession,
-          term_id: selectedTerm,
-          programme_id: scoreSheetData?.subject?.programme_id,
-          session_term_id: sessionTermId,
-        }}
-        singleStudent={inputScoreDialog.singleStudent ? {
-          ...inputScoreDialog.singleStudent,
-          caType: caType,
-          settings: markConfig ? { exam_max_score: markConfig.exam_max_score } : { exam_max_score: 60 },
-          session_term_id: sessionTermId,
-        } : null}
-        onSaved={fetchScoreSheet}
-      />
+        {/* ── Input Score Dialog ─────────────────────────────── */}
+        <InputScoreDialog
+          open={inputScoreDialog.open}
+          onClose={() =>
+            setInputScoreDialog({ open: false, allocation: null, singleStudent: null })
+          }
+          allocation={inputScoreDialog.allocation}
+          filter={{
+            session_term_id: sessionTermId,
+          }}
+          singleStudent={
+            inputScoreDialog.singleStudent
+              ? {
+                  ...inputScoreDialog.singleStudent,
+                  caType: caType,
+                  settings: markConfig
+                    ? { exam_max_score: markConfig.exam_max_score }
+                    : { exam_max_score: 60 },
+                  session_term_id: sessionTermId,
+                }
+              : null
+          }
+          onSaved={fetchScoreSheet}
+        />
 
-      {/* ── Purge Confirmation Dialog ──────────────────────── */}
-      <Dialog open={purgeDialog.open} onClose={() => setPurgeDialog({ open: false, allocation: null })} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>Purge Scores</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            Are you sure you want to purge all scores for this class and subject? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPurgeDialog({ open: false, allocation: null })}>Cancel</Button>          <Button variant="contained" color="error" onClick={async () => {
+        {/* ── Purge Confirmation Dialog ──────────────────────── */}
+        <Dialog
+          open={purgeDialog.open}
+          onClose={() => setPurgeDialog({ open: false })}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>Purge Scores</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">
+              Are you sure you want to purge all scores for this class and subject? This action
+              cannot be undone.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPurgeDialog({ open: false })}>Cancel</Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={async () => {
                 try {
                   await scoreManagerApi.purgeScores({
-                    subject_id: selectedSubject,
-                    class_arm_id: selectedClassArm,
+                    subject_id: subjectId,
+                    class_arm_id: classArmId,
                     session_term_id: sessionTermId,
                   });
-                  setPurgeDialog({ open: false, allocation: null });
+                  setPurgeDialog({ open: false });
+                  // Clear the table immediately rather than waiting on the
+                  // refetch — belt-and-suspenders on top of the cache-driver
+                  // fix, so the UI never looks like nothing happened.
+                  setStudents([]);
+                  showSnackbar('Scores purged successfully');
                   fetchScoreSheet();
                 } catch (err) {
                   console.error('Failed to purge scores:', err);
+                  showSnackbar(err?.response?.data?.message || 'Failed to purge scores', 'error');
                 }
-              }}>
+              }}
+            >
               Purge All Scores
             </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogActions>
+        </Dialog>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
-      >
-        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Paper>
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={3000}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
+        >
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Paper>
     </>
   );
 };

@@ -31,6 +31,7 @@ import {
   Alert as MuiAlert,
   Stack,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import {
   IconCheck,
@@ -235,6 +236,11 @@ const BroadsheetTab = () => {
           ? progRes.data?.data || progRes.data
           : [];
         setProgrammes(programmesData);
+        if (programmesData.length > 0) {
+          setFilters((prev) =>
+            prev.programme_id ? prev : { ...prev, programme_id: programmesData[0].id },
+          );
+        }
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         activeSessionTermRef.current = activeSessionTerm;
@@ -323,8 +329,12 @@ const BroadsheetTab = () => {
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
+        if (data.length > 0 && !data.some((c) => c.id === filters.class_id)) {
+          setFilters((prev) => ({ ...prev, class_id: data[0].id, class_arm_id: '' }));
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.programme_id]);
 
   // ── Class arms for the selected class ──────────────────────
@@ -340,8 +350,12 @@ const BroadsheetTab = () => {
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
+        if (data.length > 0 && !data.some((a) => a.id === filters.class_arm_id)) {
+          setFilters((prev) => ({ ...prev, class_arm_id: data[0].id }));
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.class_id, filters.programme_id]);
 
   const filteredClasses = classes;
@@ -421,6 +435,45 @@ const BroadsheetTab = () => {
       closePublishConfirm();
     }
   };
+
+  // Auto-fetch once every required filter has resolved — they're all
+  // preselected now (active session/term, first programme/class/arm), so
+  // the sheet loads immediately instead of waiting for a manual Fetch
+  // click. Silent (no error banner) when something's still missing, since
+  // that's just the cascade not having settled yet, not a user mistake.
+  useEffect(() => {
+    if (activeTab === 0) {
+      if (
+        filters.session_id &&
+        filters.term_id &&
+        filters.programme_id &&
+        filters.class_id &&
+        filters.class_arm_id &&
+        sessionTermId
+      ) {
+        loadSheet({ class_arm_id: filters.class_arm_id, session_term_id: sessionTermId }, 'term');
+      }
+    } else if (
+      filters.session_id &&
+      filters.programme_id &&
+      filters.class_id &&
+      filters.class_arm_id
+    ) {
+      loadSheet(
+        { class_arm_id: filters.class_arm_id, session_id: filters.session_id },
+        'cumulative',
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    filters.session_id,
+    filters.term_id,
+    filters.programme_id,
+    filters.class_id,
+    filters.class_arm_id,
+    sessionTermId,
+  ]);
 
   const handleFilter = () => {
     if (activeTab === 0) {
@@ -1397,7 +1450,7 @@ const BroadsheetTab = () => {
                             display: 'inline-block',
                           }}
                         >
-                          CWA
+                          Cumulative Weighted Average (CWA)
                         </Typography>
                       </TableCell>
                       <TableCell
@@ -1547,14 +1600,41 @@ const BroadsheetTab = () => {
                   </TableHead>
                   <TableBody>
                     {loading ? (
-                      <TableRow>
-                        <TableCell colSpan={8 + summaryColSpan} align="center" sx={{ py: 6 }}>
-                          <CircularProgress size={28} />
-                          <Typography variant="body2" sx={{ mt: 1 }}>
-                            Loading broadsheet...
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
+                      // Shaped like a real row (sticky avatar+name cell, then
+                      // a run of score-cell-sized placeholders spanning the
+                      // rest) rather than a single centered spinner — the
+                      // real column count is dynamic (one set per subject),
+                      // so this approximates it instead of matching exactly.
+                      Array.from({ length: 6 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell
+                            sx={{
+                              position: 'sticky',
+                              left: 0,
+                              zIndex: 2,
+                              bgcolor: 'background.paper',
+                              borderRight: `1px solid ${borderColor}`,
+                              minWidth: { xs: 150, sm: 250 },
+                              p: { xs: 0.5, sm: 1 },
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Skeleton variant="circular" width={32} height={32} />
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Skeleton variant="text" width="70%" />
+                                <Skeleton variant="text" width="40%" />
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell colSpan={7 + summaryColSpan}>
+                            <Stack direction="row" spacing={1.5}>
+                              {Array.from({ length: 8 }).map((__, j) => (
+                                <Skeleton key={j} variant="rounded" width={36} height={24} />
+                              ))}
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))
                     ) : visibleStudents.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8 + summaryColSpan} align="center" sx={{ py: 5 }}>

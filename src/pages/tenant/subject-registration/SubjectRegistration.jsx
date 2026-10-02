@@ -425,7 +425,11 @@ const SubjectRegistration = () => {
         ]);
         const sessionsData = sessRes.data?.data || sessRes.data || [];
         setSessions(sessionsData);
-        setProgrammes(progRes.data?.data || progRes.data || []);
+        const programmesData = progRes.data?.data || progRes.data || [];
+        setProgrammes(programmesData);
+        if (programmesData.length > 0) {
+          setPProgramme(programmesData[0].id);
+        }
 
         const activeStData = activeStRes.data?.data || activeStRes.data;
         if (activeStData?.session_id) {
@@ -466,9 +470,17 @@ const SubjectRegistration = () => {
     fetchClassesByProgramme(pProgramme)
       .then((r) => {
         const d = r.data?.data || r.data || [];
-        setClasses(Array.isArray(d) ? d : []);
+        const classesData = Array.isArray(d) ? d : [];
+        setClasses(classesData);
+        // Preselect the first class whenever the current one isn't valid for
+        // this programme (including the very first load, when none is set
+        // yet) — mirrors the Session/Term auto-preselect above.
+        if (classesData.length > 0 && !classesData.some((c) => c.id === pClass)) {
+          setPClass(classesData[0].id);
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pProgramme]);
 
   useEffect(() => {
@@ -476,9 +488,14 @@ const SubjectRegistration = () => {
     fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined })
       .then((r) => {
         const d = r.data?.data || r.data || [];
-        setArms(Array.isArray(d) ? d : []);
+        const armsData = Array.isArray(d) ? d : [];
+        setArms(armsData);
+        if (armsData.length > 0 && !armsData.some((a) => a.id === pArm)) {
+          setPArm(armsData[0].id);
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pClass, pProgramme]);
 
   return (

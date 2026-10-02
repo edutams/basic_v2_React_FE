@@ -78,6 +78,51 @@ import { TenantAuthContext } from '@/context/TenantContext/auth';
 
 const ADMIN_ROLES = ['super_admin', 'school_admin'];
 
+/**
+ * Mirrors ScoreUploadCard's actual layout (header chip + subject name +
+ * registered-learners/status row + teacher line, then two progress-bar
+ * sections, a status banner, and a two-button footer) so the loading state
+ * reads as "this card is arriving" rather than a generic placeholder box —
+ * same specificity as ApplicationCardSkeleton on the admission cards.
+ */
+const ScoreUploadCardSkeleton = () => (
+  <Paper
+    elevation={0}
+    sx={{ borderRadius: '10px', border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
+  >
+    <Box
+      sx={{ p: 1.5, bgcolor: 'action.hover', borderBottom: '1px solid', borderColor: 'divider' }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
+        <Skeleton variant="rounded" width={60} height={22} />
+      </Box>
+      <Skeleton variant="text" width="70%" height={24} sx={{ mb: 1 }} />
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
+        <Skeleton variant="text" width={110} height={18} />
+        <Skeleton variant="rounded" width={70} height={22} />
+      </Box>
+      <Skeleton variant="text" width={140} height={16} />
+    </Box>
+    <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+      {[0, 1].map((i) => (
+        <Box key={i}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+            <Skeleton variant="text" width={120} height={16} />
+            <Skeleton variant="text" width={30} height={16} />
+          </Box>
+          <Skeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
+          <Skeleton variant="text" width={160} height={14} sx={{ mx: 'auto', mt: 0.5 }} />
+        </Box>
+      ))}
+      <Skeleton variant="rounded" height={26} />
+    </Box>
+    <Box sx={{ p: 1.25, borderTop: '1px solid', borderColor: 'divider', display: 'flex', gap: 1 }}>
+      <Skeleton variant="rounded" width="100%" height={28} />
+      <Skeleton variant="rounded" width="100%" height={28} />
+    </Box>
+  </Paper>
+);
+
 const UploadScoresTab = () => {
   const { roles } = useContext(TenantAuthContext);
   const isAdminRole = Array.isArray(roles)
@@ -259,8 +304,10 @@ const UploadScoresTab = () => {
 
   const selectedClassName = useMemo(() => {
     if (!filter.class_arm_id) return '';
-    return classArms.find((c) => c.id === filter.class_arm_id)?.class_arm_names || '';
-  }, [filter.class_arm_id, classArms]);
+    const armName = classArms.find((c) => c.id === filter.class_arm_id)?.class_arm_names || '';
+    const className = classes.find((c) => c.id === filter.class_id)?.class_name || '';
+    return [className, armName].filter(Boolean).join(' ');
+  }, [filter.class_arm_id, filter.class_id, classArms, classes]);
 
   // Build lookup: session_id + term_id → session_term_id (the session_terms row id)
   const sessionTermId = useMemo(() => {
@@ -484,84 +531,6 @@ const UploadScoresTab = () => {
       <ScoreUploadAnalytics analyticsData={analyticsData} loading={loading} />
 
       {/* ── Guidance banner — what this page is for, and what to do next ── */}
-      <Alert
-        icon={<IconBulb size={20} />}
-        severity="error"
-        variant="filled"
-        sx={{
-          mb: 2,
-          borderRadius: '10px',
-          fontWeight: 500,
-          alignItems: 'flex-start',
-          animation: 'scorePageGuidancePulse 1.4s ease-in-out infinite',
-          '@keyframes scorePageGuidancePulse': {
-            '0%, 100%': { opacity: 1 },
-            '50%': { opacity: 0.72 },
-          },
-        }}
-      >
-        <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
-          This page is where subject teachers enter and manage learner scores
-        </Typography>
-        <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-          The stats above summarize total subjects, registered learners and upload progress for the
-          class arm selected below (already preselected for you — the Fetch button only matters if
-          you change a filter). Each card below is one subject: <strong>Download</strong> its
-          template, fill it in offline and <strong>Upload</strong> it back, or type scores straight
-          into the browser. Click a subject's <strong>Score Sheet</strong> button to review, edit or
-          submit its scores.
-        </Typography>
-        <Typography variant="body2" component="div" sx={{ mb: canShowBulkActions ? 1 : 0 }}>
-          In a hurry? The two buttons above the subject list —{' '}
-          <strong>"Download All Subjects"</strong> and <strong>"Upload All Subjects"</strong> — work
-          on every subject in the class at once: one Excel file with a column per subject, instead
-          of downloading/uploading each subject separately.
-        </Typography>
-        {canShowBulkActions && (
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Tooltip title={bulkTooltip}>
-              <span>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<IconDownload size={14} />}
-                  disabled={!allFiltersSelected}
-                  onClick={() => setDownloadCombinedDialog(true)}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    borderColor: 'rgba(255,255,255,0.6)',
-                    color: '#fff',
-                  }}
-                >
-                  Jump to: Download All Subjects
-                </Button>
-              </span>
-            </Tooltip>
-            <Tooltip title={bulkTooltip}>
-              <span>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<IconCloudUpload size={14} />}
-                  disabled={!allFiltersSelected}
-                  onClick={() => setUploadDialog({ open: true, subjectName: null })}
-                  sx={{
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    borderColor: 'rgba(255,255,255,0.6)',
-                    color: '#fff',
-                  }}
-                >
-                  Jump to: Upload All Subjects
-                </Button>
-              </span>
-            </Tooltip>
-          </Box>
-        )}
-      </Alert>
 
       <Paper
         elevation={0}
@@ -827,7 +796,7 @@ const UploadScoresTab = () => {
             <Grid container spacing={2}>
               {Array.from({ length: 8 }).map((_, i) => (
                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
-                  <Skeleton variant="rounded" height={280} />
+                  <ScoreUploadCardSkeleton />
                 </Grid>
               ))}
             </Grid>

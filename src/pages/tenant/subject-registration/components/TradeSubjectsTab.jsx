@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Stack,
-  Skeleton,
   Typography,
   Alert,
   Button,
@@ -24,6 +23,7 @@ import {
 import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
+import SubjectMatrixTableSkeleton from './SubjectMatrixTableSkeleton';
 
 const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
   { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved },
@@ -268,11 +268,7 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
       )}
 
       {loading ? (
-        <Stack spacing={1}>
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} variant="rounded" height={44} />
-          ))}
-        </Stack>
+        <SubjectMatrixTableSkeleton />
       ) : subjects.length === 0 ? (
         <Alert
           severity="info"

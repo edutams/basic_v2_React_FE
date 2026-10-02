@@ -113,8 +113,15 @@ export const getUserProspectiveAdmissions = async (sessionTermId = null) => {
   return response.data;
 };
 
-export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
-  const params = sessionTermId ? { session_term_id: sessionTermId } : {};
+// `sessionTermId` scopes to one exact session-term; `sessionId` scopes to
+// every term within a session (used when a session is picked but the term
+// filter is left on "All Terms") — passing both is redundant, the backend
+// prefers the more specific sessionTermId when present.
+export const getAllMyAdmissionApplication = async ({ sessionTermId = null, sessionId = null } = {}) => {
+  const params = {};
+  if (sessionTermId) params.session_term_id = sessionTermId;
+  else if (sessionId) params.session_id = sessionId;
+
   const response = await api.get('/admission/all-my-applications', { params });
   return response.data;
 };

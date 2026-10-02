@@ -36,6 +36,15 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel, submitting }) => {
   const feeTotal = feeSummary.reduce((sum, f) => sum + f.amount, 0);
   const feeHasRange = feeSummary.some((f) => f.isRange);
 
+  // Acceptance (post-application) fee — only owed later, once admitted and
+  // ready to accept the offer, so it's shown separately here rather than
+  // folded into the pre-application total the applicant pays right now.
+  const acceptanceFeeSummary = batch?.post_application_payments
+    ? getFeeSummary(batch.post_application_payments)
+    : [];
+  const acceptanceFeeTotal = acceptanceFeeSummary.reduce((sum, f) => sum + f.amount, 0);
+  const acceptanceFeeHasRange = acceptanceFeeSummary.some((f) => f.isRange);
+
   return (
     <Dialog open onClose={onCancel} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
@@ -170,6 +179,54 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel, submitting }) => {
                 <Typography variant="caption" color="text.secondary" fontStyle="italic">
                   No pre-application payments configured
                 </Typography>
+              )}
+
+              {acceptanceFeeSummary.length > 0 && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.75 }}
+                  >
+                    Acceptance Fee (paid later, only if admitted)
+                  </Typography>
+                  <Stack spacing={0.75} mb={1}>
+                    {acceptanceFeeSummary.map((fee) => (
+                      <Box
+                        key={fee.name}
+                        display="flex"
+                        justifyContent="space-between"
+                        sx={{ py: 0.5, px: 1, bgcolor: 'grey.50', borderRadius: 1 }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {fee.name}
+                        </Typography>
+                        <Typography variant="caption" fontWeight={700}>
+                          {fee.isRange
+                            ? `₦${fee.amount.toLocaleString()} - ₦${fee.maxAmount.toLocaleString()}`
+                            : `₦${fee.amount.toLocaleString()}`}
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      sx={{ pt: 0.75, borderTop: 1, borderColor: 'divider' }}
+                    >
+                      <Typography variant="body2" fontWeight={700}>
+                        Total Acceptance Fee
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary.main">
+                        {acceptanceFeeHasRange ? 'from ' : ''}₦{acceptanceFeeTotal.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                    Only payable if this ward is admitted and you accept the offer — not part of
+                    this application's upfront payment.
+                  </Typography>
+                </>
               )}
             </>
           )}
@@ -359,26 +416,48 @@ const AdmissionBatchModal = ({ open, onClose, onApply, createDraftOnApply = true
                       </TableCell>
                       {batch?.require_payment ? (
                         <TableCell>
-                          {batch?.pre_application_payments &&
-                          batch.pre_application_payments.length > 0 ? (
-                            (() => {
-                              const feeSummary = getFeeSummary(batch.pre_application_payments);
-                              const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
-                              const hasRange = feeSummary.some((f) => f.isRange);
-                              return (
-                                <Typography
-                                  variant="caption"
-                                  color="primary.main"
-                                  display="block"
-                                  fontWeight={600}
-                                >
-                                  Pre-Application:{' '}
-                                  <strong style={{ color: '#000', fontWeight: 600 }}>
-                                    {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
-                                  </strong>
-                                </Typography>
-                              );
-                            })()
+                          {(batch?.pre_application_payments?.length > 0) ||
+                          (batch?.post_application_payments?.length > 0) ? (
+                            <Stack spacing={0.25}>
+                              {batch?.pre_application_payments?.length > 0 &&
+                                (() => {
+                                  const feeSummary = getFeeSummary(batch.pre_application_payments);
+                                  const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+                                  const hasRange = feeSummary.some((f) => f.isRange);
+                                  return (
+                                    <Typography
+                                      variant="caption"
+                                      color="primary.main"
+                                      display="block"
+                                      fontWeight={600}
+                                    >
+                                      Pre-Application:{' '}
+                                      <strong style={{ color: '#000', fontWeight: 600 }}>
+                                        {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
+                                      </strong>
+                                    </Typography>
+                                  );
+                                })()}
+                              {batch?.post_application_payments?.length > 0 &&
+                                (() => {
+                                  const feeSummary = getFeeSummary(batch.post_application_payments);
+                                  const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+                                  const hasRange = feeSummary.some((f) => f.isRange);
+                                  return (
+                                    <Typography
+                                      variant="caption"
+                                      color="primary.main"
+                                      display="block"
+                                      fontWeight={600}
+                                    >
+                                      Acceptance Fee:{' '}
+                                      <strong style={{ color: '#000', fontWeight: 600 }}>
+                                        {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
+                                      </strong>
+                                    </Typography>
+                                  );
+                                })()}
+                            </Stack>
                           ) : (
                             <Typography
                               variant="caption"

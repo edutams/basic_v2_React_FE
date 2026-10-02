@@ -57,7 +57,6 @@ import {
   fetchClassesByProgramme,
   fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
-import { fetchAdmissionCodeFormat } from '@/api/tenant/admission/admissionApi';
 import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import ViewAdmissionModal from './ViewAdmissionModal';
 
@@ -115,8 +114,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     selectedClassArm: '',
     rejectionReason: '',
     revokedReason: '',
-    hasCodeFormat: false,
-    admissionPrefix: '',
   });
 
   // ─── Menu state ────────────────────────────────────────────────────────
@@ -545,13 +542,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     }
 
     try {
-      const [programmesRes, codeFormatRes, categoriesRes] = await Promise.all([
+      const [programmesRes, categoriesRes] = await Promise.all([
         fetchProgrammes(),
-        fetchAdmissionCodeFormat(),
         fetchActiveCategories(),
       ]);
       const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
-      const hasCodeFormat = !!codeFormatRes?.data?.code_format;
       const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
 
       setBatchModal({
@@ -567,8 +562,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         selectedPayCategory: '',
         rejectionReason: '',
         revokedReason: '',
-        hasCodeFormat,
-        admissionPrefix: '',
       });
     } catch (err) {
       notify.error('Failed to load programmes');
@@ -632,8 +625,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       selectedPayCategory,
       rejectionReason,
       revokedReason,
-      hasCodeFormat,
-      admissionPrefix,
     } = batchModal;
 
     // Validation
@@ -642,11 +633,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
     ) {
       notify.warning('Please select programme, class, class arm, and pay category for admission');
-      return;
-    }
-
-    if (action === 'admit' && !hasCodeFormat && !admissionPrefix.trim()) {
-      notify.warning('Please enter an admission prefix or set up an admission code format');
       return;
     }
 
@@ -672,11 +658,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         rejection_reason: rejectionReason || null,
         revoked_reason: revokedReason || null,
       };
-
-      // Only send admission_prefix when there's no auto-generation
-      if (!hasCodeFormat && admissionPrefix.trim()) {
-        payload.admission_prefix = admissionPrefix.trim();
-      }
 
       await batchProcessAdmissions(payload);
       notify.success(
@@ -1166,6 +1147,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
             {batchModal.action === 'admit' && (
               <>
+                <Alert severity="info" sx={{ mb: 0.5 }}>
+                  This records the admission decision only — each guardian still needs to accept
+                  the offer (paying any acceptance fee first) before their ward's account and
+                  admission number are created.
+                </Alert>
+
                 <FormControl fullWidth size="small">
                   <InputLabel>Programme *</InputLabel>
                   <Select
@@ -1243,22 +1230,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     ))}
                   </Select>
                 </FormControl>
-
-                {/* ── Admission Prefix (only when code format is NOT configured) ── */}
-                {!batchModal.hasCodeFormat && (
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Admission Number Prefix *"
-                    placeholder="e.g. ADM/2026/STU/"
-                    value={batchModal.admissionPrefix}
-                    onChange={(e) =>
-                      setBatchModal((prev) => ({ ...prev, admissionPrefix: e.target.value }))
-                    }
-                    helperText="Enter a prefix — the system will append sequential numbers (e.g. ADM/2026/STU/0001, ADM/2026/STU/0002, ...)"
-                    required
-                  />
-                )}
               </>
             )}
 

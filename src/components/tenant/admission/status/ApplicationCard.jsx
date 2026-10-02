@@ -1,6 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper, Button, Chip, useTheme } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  Chip,
+  useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Alert,
+} from '@mui/material';
 import {
   ArrowForwardIos as ArrowForwardIosIcon,
   Person as PersonIcon,
@@ -12,8 +25,12 @@ import {
   Groups as GroupsIcon,
   Cake as CakeIcon,
   School as SchoolIcon,
+  HowToReg as HowToRegIcon,
 } from '@mui/icons-material';
 import dayjs from 'dayjs';
+import AcceptanceFeeButton from '@/components/tenant/admission/AcceptanceFeeButton';
+import { acceptAdmissionOffer } from '@/api/tenant/admission/admissionProcessingApi';
+import { useNotification } from '@/hooks/useNotification';
 
 /**
  * Status → accent color + icon, shared between the left rail, the avatar
@@ -126,15 +143,57 @@ const StageRail = ({ stages, color }) => (
   </Box>
 );
 
-const ApplicationCard = ({ app }) => {
+const ApplicationCard = ({ app, onRefresh }) => {
   const navigate = useNavigate();
+  const notify = useNotification();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [acceptingOffer, setAcceptingOffer] = useState(false);
+  const [confirmAcceptOpen, setConfirmAcceptOpen] = useState(false);
 
   const isDraft = app.form_submit_status === 'no';
   const meta = statusMeta(app.admission_status);
   const stages = buildStages(app);
   const StatusIcon = meta.icon;
+
+  // Acceptance (post-application) fee — same batch shape the pre-application
+  // flow already reads (PaymentStep.jsx), just the post_application_payments
+  // side, filtered to whichever class the applicant was actually admitted
+  // into (falling back to the applied-for class before a decision exists).
+  const admission = app._original || app;
+  const admissionBatch = admission.admission_batch;
+  const isAdmitted = admission.admission_status === 'admitted';
+  const offerAccepted = admission.accept_admission_offer === 'yes';
+  const relevantClassId = admission.admitted_class_id ?? admission.intending_class_id;
+
+  const acceptanceFeeItems = (admissionBatch?.post_application_payments || []).filter(
+    (fee) => fee.class_id === null || Number(fee.class_id) === Number(relevantClassId),
+  );
+  const acceptanceFeeTotal = acceptanceFeeItems.reduce((sum, f) => sum + Number(f.amount || 0), 0);
+  const hasPaidAcceptanceFee = admission.has_paid_acceptance_fee === true;
+
+  const needsAcceptanceFee = Boolean(admissionBatch?.require_payment) && acceptanceFeeTotal > 0;
+  const showPayAcceptanceFee =
+    isAdmitted && !offerAccepted && needsAcceptanceFee && !hasPaidAcceptanceFee;
+  const showAcceptOffer = isAdmitted && !offerAccepted && (!needsAcceptanceFee || hasPaidAcceptanceFee);
+
+  const handleAcceptOffer = async () => {
+    setAcceptingOffer(true);
+    try {
+      const res = await acceptAdmissionOffer({ form_number: admission.form_number });
+      if (res?.status) {
+        notify.success('Admission offer accepted! Welcome aboard.');
+        setConfirmAcceptOpen(false);
+        onRefresh?.();
+      } else {
+        notify.error(res?.message || 'Failed to accept admission offer');
+      }
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to accept admission offer');
+    } finally {
+      setAcceptingOffer(false);
+    }
+  };
 
   const goToApplication = () => {
     if (isDraft) {
@@ -288,6 +347,24 @@ const ApplicationCard = ({ app }) => {
         <Box sx={{ gridColumn: '1 / -1' }}>
           <InfoRow icon={SchoolIcon} label="INTENDING CLASS" value={app.class || '—'} isDark={isDark} />
         </Box>
+        {isAdmitted && (
+          <Box sx={{ gridColumn: '1 / -1' }}>
+            <InfoRow
+              icon={SchoolIcon}
+              label="ADMITTED INTO"
+              value={
+                [
+                  admission.admitted_programme?.programme_name,
+                  admission.admitted_class?.class_code || admission.admitted_class?.class_name,
+                  admission.admitted_class_arm?.class_arm_names,
+                ]
+                  .filter(Boolean)
+                  .join(' · ') || '—'
+              }
+              isDark={isDark}
+            />
+          </Box>
+        )}
         <InfoRow icon={CalendarMonthIcon} label="SESSION" value={app.session || '—'} isDark={isDark} />
         <InfoRow icon={GroupsIcon} label="BATCH" value={app.batch || '—'} isDark={isDark} />
         <Box sx={{ gridColumn: '1 / -1' }}>
@@ -323,8 +400,111 @@ const ApplicationCard = ({ app }) => {
         </Box>
       )}
 
-      {/* Print Admission Letter */}
-      {app.admission_status === 'admitted' && (
+      {/* Pay Acceptance Fee — shown once admitted, until it's paid */}
+      {showPayAcceptanceFee && (
+        <Box sx={{ px: { xs: 2.25, sm: 2.75 }, pb: { xs: 2.25, sm: 2.75 } }} onClick={(e) => e.stopPropagation()}>
+          <AcceptanceFeeButton admission={admission} feeItems={acceptanceFeeItems} onPaid={onRefresh} />
+        </Box>
+      )}
+
+      {/* Accept Admission Offer — only once admitted and (if required) the
+          acceptance fee has been paid; this is what actually creates the
+          ward as a learner and links them to this guardian. */}
+      {showAcceptOffer && (
+        <Box sx={{ px: { xs: 2.25, sm: 2.75 }, pb: { xs: 2.25, sm: 2.75 } }}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth
+            startIcon={<HowToRegIcon sx={{ fontSize: '16px !important' }} />}
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmAcceptOpen(true);
+            }}
+            disabled={acceptingOffer}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+              bgcolor: meta.color,
+              '&:hover': { bgcolor: meta.color, opacity: 0.9 },
+            }}
+          >
+            {acceptingOffer ? 'Accepting...' : 'Accept Admission Offer'}
+          </Button>
+        </Box>
+      )}
+
+      {/* Confirm Accept Admission Offer — makes clear this is the action
+          that actually links the ward to this guardian's account as an
+          enrolled student, and that any fees configured for their class
+          will then show up for payment on the dashboard. */}
+      <Dialog
+        open={confirmAcceptOpen}
+        onClose={(e) => {
+          e?.stopPropagation?.();
+          if (!acceptingOffer) setConfirmAcceptOpen(false);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '8px' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Accept Admission Offer?</DialogTitle>
+        <Divider />
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            By accepting this offer:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2.5, m: 0, mb: 1.5 }}>
+            <Typography component="li" variant="body2" sx={{ mb: 0.75 }}>
+              This ward will be linked to your account as your child/ward.
+            </Typography>
+            <Typography component="li" variant="body2" sx={{ mb: 0.75 }}>
+              They become an enrolled student of the school from this point on.
+            </Typography>
+            <Typography component="li" variant="body2">
+              Any fees set up for their class will appear under their name on your dashboard for
+              you to pay, if there are any.
+            </Typography>
+          </Box>
+          <Alert severity="info" sx={{ borderRadius: '8px' }}>
+            This can't be undone from here — contact the school if you need to reverse it
+            afterwards.
+          </Alert>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmAcceptOpen(false);
+            }}
+            disabled={acceptingOffer}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAcceptOffer();
+            }}
+            disabled={acceptingOffer}
+            sx={{ fontWeight: 700, textTransform: 'none' }}
+          >
+            {acceptingOffer ? 'Accepting...' : 'Yes, Accept Offer'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Print Admission Letter — only once the offer's actually been
+          accepted, not just admitted (that's what Pay Acceptance Fee /
+          Accept Admission Offer above are gating). */}
+      {isAdmitted && offerAccepted && (
         <Box sx={{ px: { xs: 2.25, sm: 2.75 }, pb: { xs: 2.25, sm: 2.75 } }}>
           <Button
             variant="contained"

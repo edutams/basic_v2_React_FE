@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -19,6 +19,7 @@ import {
   TaskAlt as TaskAltIcon,
   HowToReg as HowToRegIcon,
   HourglassTop as HourglassTopIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
@@ -156,7 +157,12 @@ const MyApplication = () => {
         const active = activeRes?.data;
         if (active?.session_id) {
           setSelectedSessionId(active.session_id);
-          setSelectedTermId(active.term_id ?? 'all');
+          // `active.id` is the session-term row's own id (what the Term
+          // dropdown's options are keyed by below) — not `active.term_id`,
+          // which is the generic term (e.g. "First Term") shared across
+          // every session and can't identify one exact session-term on
+          // its own.
+          setSelectedTermId(active.id ?? 'all');
         }
       } catch (error) {
         console.error('Failed to load sessions:', error);
@@ -183,7 +189,10 @@ const MyApplication = () => {
         const response = await fetchSessionTerms(selectedSessionId);
         setTerms([
           { id: 'all', label: 'All Terms' },
-          ...response.data.map((st) => ({ id: st.term_id, label: st.term?.term_name || '—' })),
+          // `st.id` (the session-term row's own id) is what's sent to the
+          // backend as session_term_id — not the generic st.term_id, which
+          // repeats across every session and can't pin down this one.
+          ...response.data.map((st) => ({ id: st.id, label: st.term?.term_name || '—' })),
         ]);
       } catch (error) {
         console.error('Failed to load terms:', error);
@@ -197,68 +206,64 @@ const MyApplication = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSessionId]);
 
-  // Load every application once — filtering by session/term happens
-  // client-side below, so switching filters never needs another round trip.
-  useEffect(() => {
-    const loadApplications = async () => {
-      setLoading(true);
-      try {
-        const response = await getAllMyAdmissionApplication();
-        const apps = response?.data || [];
+  // Fetches from the backend scoped to whichever session/term filter is
+  // currently selected — a specific term wins when picked; a session with
+  // "All Terms" still left selected scopes to every term in that session;
+  // "All Sessions" fetches everything. Re-reads the filter state on every
+  // call (via the dependency array below), so this one function serves the
+  // filter-change effect, the "Fetch" button, and a card's onRefresh after
+  // paying the acceptance fee or accepting an offer — always against
+  // whatever's currently selected, not a stale snapshot.
+  const loadApplications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await getAllMyAdmissionApplication({
+        sessionTermId: selectedTermId !== 'all' ? selectedTermId : null,
+        sessionId: selectedSessionId !== 'all' ? selectedSessionId : null,
+      });
+      const apps = response?.data || [];
 
-        // Transform backend data to match ApplicationCard expectations
-        const transformedApps = apps.map((app) => ({
-          id: app.id,
-          surname: app.surname,
-          first_name: app.first_name,
-          other_name: app.other_name,
-          status: app.admission_status,
-          applicationNo: app.form_number || '—',
-          class: app.intending_class?.class_code || app.intending_class?.class_name || '—',
-          session: app.admission_batch?.session_term?.session?.session_name || '—',
-          batch: app.admission_batch?.batch_name || '—',
-          currentStep: app.admission_stage || 0,
-          acceptanceFee: app.admission_batch?.acceptance_fee || null,
-          feeDue: null,
-          timeline: [],
-          draftStep: app.admission_stage || 0,
-          gender: app.gender,
-          dob: app.dob,
-          form_submit_status: app.form_submit_status,
-          admission_status: app.admission_status,
-          image: app.passport_photo || null,
-          // Keep original data for navigation and session/term filtering
-          _original: app,
-        }));
+      // Transform backend data to match ApplicationCard expectations
+      const transformedApps = apps.map((app) => ({
+        id: app.id,
+        surname: app.surname,
+        first_name: app.first_name,
+        other_name: app.other_name,
+        status: app.admission_status,
+        applicationNo: app.form_number || '—',
+        class: app.intending_class?.class_code || app.intending_class?.class_name || '—',
+        session: app.admission_batch?.session_term?.session?.session_name || '—',
+        batch: app.admission_batch?.batch_name || '—',
+        currentStep: app.admission_stage || 0,
+        acceptanceFee: app.admission_batch?.acceptance_fee || null,
+        feeDue: null,
+        timeline: [],
+        draftStep: app.admission_stage || 0,
+        gender: app.gender,
+        dob: app.dob,
+        form_submit_status: app.form_submit_status,
+        admission_status: app.admission_status,
+        image: app.passport_photo || null,
+        // Keep original data for navigation and session/term filtering
+        _original: app,
+      }));
 
-        setApplications(transformedApps);
-      } catch (error) {
-        console.error('Failed to load applications:', error);
-        notify.error('Failed to load applications');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadApplications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const filteredApplications = useMemo(() => {
-    if (selectedSessionId === 'all' && selectedTermId === 'all') {
-      return applications;
+      setApplications(transformedApps);
+    } catch (error) {
+      console.error('Failed to load applications:', error);
+      notify.error('Failed to load applications');
+    } finally {
+      setLoading(false);
     }
+  }, [selectedSessionId, selectedTermId, notify]);
 
-    return applications.filter((app) => {
-      const sessionTerm = app._original?.admission_batch?.session_term;
-      if (!sessionTerm) return false;
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
 
-      const sessionMatch = selectedSessionId === 'all' || sessionTerm.session_id === selectedSessionId;
-      const termMatch = selectedTermId === 'all' || sessionTerm.term_id === selectedTermId;
-
-      return sessionMatch && termMatch;
-    });
-  }, [applications, selectedSessionId, selectedTermId]);
+  // Filtering now happens server-side (see loadApplications) — `applications`
+  // already is exactly the selected session/term's data.
+  const filteredApplications = applications;
 
   const handleApplyAdmission = (batch, draft) => {
     navigate('/admission/new-application', {
@@ -337,6 +342,16 @@ const MyApplication = () => {
                 ))}
               </Select>
             </FormControl>
+
+            <Button
+              size="small"
+              onClick={() => loadApplications()}
+              disabled={loading}
+              startIcon={<RefreshIcon sx={{ fontSize: '16px !important' }} />}
+              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
+            >
+              Fetch
+            </Button>
           </Box>
 
           <Button
@@ -445,7 +460,7 @@ const MyApplication = () => {
           }}
         >
           {filteredApplications.map((app) => (
-            <ApplicationCard key={app.id} app={app} />
+            <ApplicationCard key={app.id} app={app} onRefresh={loadApplications} />
           ))}
         </Box>
       )}

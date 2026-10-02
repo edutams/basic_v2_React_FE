@@ -15,6 +15,7 @@ import {
   IconLoader,
   IconInfoCircle,
   IconUser,
+  IconLock,
 } from '@tabler/icons-react';
 
 const ScoreUploadCard = ({
@@ -38,6 +39,12 @@ const ScoreUploadCard = ({
     allocation?.teacher_submit === 'yes' ||
     allocation?.isSubmitted ||
     allocation?.submissionStatus === 'Submitted';
+  // Submitting is just a status flag — scores stay uploadable/editable right
+  // up until the broadsheet is actually published, matching the Score Sheet
+  // page's own rule. Gating uploads on "submitted" instead would strand a
+  // subject the moment it's submitted, with no way back in to add the exam
+  // score or a missed CA.
+  const isPublished = allocation?.is_published || false;
   const isSubmitting = allocation?.isSubmitting || false;
   // No CA and no exam scores uploaded yet → submitting makes no sense
   const hasAnyScores = caUploaded > 0 || examUploaded > 0;
@@ -135,6 +142,14 @@ const ScoreUploadCard = ({
                 label="Processing..."
                 size="small"
                 color="secondary"
+                sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
+              />
+            ) : isPublished ? (
+              <Chip
+                icon={<IconLock size={12} />}
+                label="Published"
+                size="small"
+                color="default"
                 sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
               />
             ) : isSubmitted ? (
@@ -289,13 +304,17 @@ const ScoreUploadCard = ({
             py: 0.5,
             px: 1,
             borderRadius: '4px',
-            backgroundColor: isSubmitted
+            backgroundColor: isPublished
               ? isDark
-                ? 'rgba(76, 175, 80, 0.15)'
-                : '#EAF4D8'
-              : isDark
-                ? 'rgba(33, 150, 243, 0.15)'
-                : '#D7EEFD',
+                ? 'rgba(255,255,255,0.08)'
+                : '#ECEFF1'
+              : isSubmitted
+                ? isDark
+                  ? 'rgba(76, 175, 80, 0.15)'
+                  : '#EAF4D8'
+                : isDark
+                  ? 'rgba(33, 150, 243, 0.15)'
+                  : '#D7EEFD',
             textAlign: 'center',
             mt: 'auto',
           }}
@@ -306,15 +325,15 @@ const ScoreUploadCard = ({
             color="text.primary"
             sx={{ fontSize: '0.725rem' }}
           >
-            Submission Status:{' '}
+            {isPublished ? 'Broadsheet Status: ' : 'Submission Status: '}
             <Typography
               component="span"
               variant="caption"
               fontWeight={700}
-              color={isSubmitted ? 'success.main' : 'error.main'}
+              color={isPublished ? 'text.secondary' : isSubmitted ? 'success.main' : 'error.main'}
               sx={{ fontSize: '0.725rem' }}
             >
-              {isSubmitted ? 'Submitted' : 'Pending'}
+              {isPublished ? 'Published — locked' : isSubmitted ? 'Submitted' : 'Pending'}
             </Typography>
           </Typography>
         </Box>
@@ -349,7 +368,7 @@ const ScoreUploadCard = ({
           gap: 1,
         }}
       >
-        {!isSubmitted && (
+        {!isPublished && (
           <Button
             fullWidth
             variant="contained"

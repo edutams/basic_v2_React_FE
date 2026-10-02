@@ -24,6 +24,7 @@ import { getResultTemplate } from './templates';
 import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 
 /**
  * Learner-facing Report Card.
@@ -177,10 +178,11 @@ const ReportCardTab = () => {
   };
 
   const openCaBreakdown = () => {
-    const params = new URLSearchParams();
-    if (selectedSessionTerm) params.set('session_term_id', selectedSessionTerm);
-    if (selectedRegistration?.id) params.set('student_registration_id', selectedRegistration.id);
-    navigate(`/result-ca_breakdown?${params.toString()}`);
+    const token = encodeLinkParams({
+      session_term_id: selectedSessionTerm,
+      student_registration_id: selectedRegistration?.id,
+    });
+    navigate(`/result-ca_breakdown?t=${token}`);
   };
 
   // ── Staff safety net: this page is for learners ─────────────

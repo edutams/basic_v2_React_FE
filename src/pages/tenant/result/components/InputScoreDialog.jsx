@@ -1,9 +1,22 @@
 import { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, TextField, Alert,
-  CircularProgress, Box, Snackbar, Portal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Alert,
+  CircularProgress,
+  Box,
+  Snackbar,
+  Portal,
 } from '@mui/material';
 import { IconFileSpreadsheet, IconPdf, IconDeviceFloppy } from '@tabler/icons-react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -18,7 +31,8 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
   const [fetching, setFetching] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
   useEffect(() => {
     if (!open) return;
@@ -30,17 +44,21 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
       // the Score Sheet row carries both (`user_id` + `course_registration_id`/`id`).
       setCaType(singleStudent.caType || []);
       setSettings(singleStudent.settings || { exam_max_score: 60 });
-      const initialized = [{
-        id: singleStudent.user_id ?? singleStudent.id,
-        fullname: `${singleStudent.fname} ${singleStudent.lname}`,
-        reg_id: singleStudent.student_id ?? singleStudent.user_id,
-        course_registration_id: singleStudent.course_registration_id ?? singleStudent.id,
-        ca_details: normalizeCaDetails(singleStudent.ca, singleStudent.caType || []),
-        examScores: singleStudent.exam_score ?? '',
-        loading: false,
-      }];
+      const initialized = [
+        {
+          id: singleStudent.user_id ?? singleStudent.id,
+          fullname: `${singleStudent.fname} ${singleStudent.lname}`,
+          reg_id: singleStudent.student_id ?? singleStudent.user_id,
+          course_registration_id: singleStudent.course_registration_id ?? singleStudent.id,
+          ca_details: normalizeCaDetails(singleStudent.ca, singleStudent.caType || []),
+          examScores: singleStudent.exam_score ?? '',
+          loading: false,
+        },
+      ];
       setStudents(initialized);
-      setCaScoreErrors(initialized.map(() => new Array((singleStudent.caType || []).length).fill(false)));
+      setCaScoreErrors(
+        initialized.map(() => new Array((singleStudent.caType || []).length).fill(false)),
+      );
       setExamScoreErrors(new Array(initialized.length).fill(false));
       return;
     }
@@ -71,9 +89,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
         // The API may return ca_content as an object (keyed by ca1, ca2, etc.) or as an array
         let parsedCaType = [];
         if (configData?.ca_content) {
-          const raw = typeof configData.ca_content === 'string'
-            ? JSON.parse(configData.ca_content)
-            : configData.ca_content;
+          const raw =
+            typeof configData.ca_content === 'string'
+              ? JSON.parse(configData.ca_content)
+              : configData.ca_content;
           if (Array.isArray(raw)) {
             parsedCaType = raw;
           } else if (typeof raw === 'object') {
@@ -145,9 +164,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     const updated = [...students];
     const currentStudent = updated[studentIndex];
     // Defensive: if ca_details is missing/empty, rebuild it from the template
-    const baseDetails = Array.isArray(currentStudent.ca_details) && currentStudent.ca_details.length
-      ? currentStudent.ca_details
-      : normalizeCaDetails(null, caType);
+    const baseDetails =
+      Array.isArray(currentStudent.ca_details) && currentStudent.ca_details.length
+        ? currentStudent.ca_details
+        : normalizeCaDetails(null, caType);
     updated[studentIndex] = {
       ...currentStudent,
       ca_details: baseDetails.map((ca, ci) => {
@@ -191,7 +211,7 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
   const saveRow = async (studentIndex) => {
     const student = students[studentIndex];
     const hasFilledCA = student.ca_details?.some((ca) =>
-      getEntities(ca).some((ent) => ent.score !== '' && ent.score !== undefined)
+      getEntities(ca).some((ent) => ent.score !== '' && ent.score !== undefined),
     );
     const hasFilledExam = student.examScores !== '';
 
@@ -220,11 +240,13 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
       console.error('Failed to save score:', err);
       showSnackbar(
         err?.response?.data?.message || `Failed to save scores for ${student.fullname}`,
-        'error'
+        'error',
       );
       return null;
     } finally {
-      setStudents((prev) => prev.map((s, si) => (si === studentIndex ? { ...s, loading: false } : s)));
+      setStudents((prev) =>
+        prev.map((s, si) => (si === studentIndex ? { ...s, loading: false } : s)),
+      );
     }
   };
 
@@ -253,115 +275,57 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
     }
   };
 
-  const esc = (v) => String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  // Real backend-generated exports (PhpSpreadsheet / Dompdf) of the saved
+  // score sheet — same data the Score Sheet page shows, not whatever is
+  // currently typed into this dialog's unsaved fields. Save first if you
+  // want unsaved edits reflected.
+  const downloadExport = async (apiFn, extension, mimeType) => {
+    try {
+      const res = await apiFn({
+        subject_id: allocation.subject_id,
+        class_arm_id: allocation.class_arm_id,
+        session_term_id: filter?.session_term_id,
+      });
+      const disposition = res?.headers?.['content-disposition'] || '';
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const fileName =
+        match?.[1] || `${allocation?.subject_name || 'scores'}_score_sheet.${extension}`;
 
-  const downloadTitle = singleStudent
-    ? `Edit Score — ${singleStudent.fname} ${singleStudent.lname}`
-    : `Input Score — ${allocation?.subject_name || ''} (${allocation?.class_name ?? allocation?.className ?? ''})`;
-
-  // Export the currently loaded table (incl. unsaved edits) as an Excel file.
-  const handleDownloadExcel = () => {
-    if (students.length === 0) {
-      showSnackbar('No student records to export', 'warning');
-      return;
-    }
-    const entityHeaders = caType.flatMap((ca) =>
-      getEntities(ca).map((ent) => `${ca.display_name || 'CA'} ${ent.display_name || ''}`.trim())
-    );
-    const headerCells = ['#', 'Student', ...entityHeaders, `Exam (${settings.exam_max_score})`];
-    const rowsHtml = students.map((student, si) => {
-      const caCells = caType.flatMap((ca, ci) =>
-        getEntities(ca).map((_, ei) => `<td>${esc(student.ca_details?.[ci]?.entities?.[ei]?.score ?? '')}</td>`)
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: mimeType }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSnackbar(`${extension.toUpperCase()} downloaded`);
+    } catch (err) {
+      showSnackbar(
+        err?.response?.data?.message || `Failed to download ${extension.toUpperCase()}`,
+        'error',
       );
-      return `<tr><td>${si + 1}</td><td>${esc(student.fullname)}</td>${caCells}<td>${esc(student.examScores ?? '')}</td></tr>`;
-    }).join('');
-
-    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head><meta charset="utf-8"></head>
-<body>
-  <table border="1">
-    <thead><tr>${headerCells.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
-    <tbody>${rowsHtml}</tbody>
-  </table>
-</body></html>`;
-
-    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${(allocation?.subject_name || singleStudent?.fname || 'scores')}_scores.xls`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-    showSnackbar('Excel file downloaded');
+    }
   };
 
-  // Print the current table to a PDF via the browser print dialog.
-  const handleDownloadPdf = () => {
-    if (students.length === 0) {
-      showSnackbar('No student records to print', 'warning');
-      return;
-    }
-    const entityHeaders = caType.flatMap((ca) =>
-      getEntities(ca).map((ent) => `${esc(ent.display_name)}(${esc(ent.max_score)})`)
+  const handleDownloadExcel = () =>
+    downloadExport(
+      scoreManagerApi.exportScoreSheetExcel,
+      'xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );
-    const rowsHtml = students.map((student, si) => {
-      const caCells = caType.flatMap((ca, ci) =>
-        getEntities(ca).map((_, ei) => `<td style="text-align:center">${esc(student.ca_details?.[ci]?.entities?.[ei]?.score ?? '-')}</td>`)
-      );
-      return `<tr><td>${si + 1}</td><td>${esc(student.fullname)}</td>${caCells}<td style="text-align:center">${esc(student.examScores || '-')}</td></tr>`;
-    }).join('');
 
-    const caGroupHeaders = caType.map((ca) =>
-      `<th colspan="${getColspan(ca)}" style="text-align:center">${esc(ca.display_name || 'CA')}</th>`
-    ).join('');
+  const handleDownloadPdf = () =>
+    downloadExport(scoreManagerApi.exportScoreSheetPdf, 'pdf', 'application/pdf');
 
-    const printWindow = window.open('', '_blank', 'width=900,height=650');
-    if (!printWindow) {
-      showSnackbar('Please allow pop-ups to print the score sheet', 'error');
-      return;
-    }
-    printWindow.document.write(`<!DOCTYPE html><html><head><title>${esc(downloadTitle)}</title>
-      <style>
-        body { font-family: Arial, sans-serif; margin: 16px; }
-        h2 { text-align: center; margin: 0 0 4px; }
-        .sub { text-align: center; font-size: 12px; color: #444; margin-bottom: 14px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #555; padding: 4px 6px; font-size: 12px; }
-        th { background: #f0f0f0; }
-        @page { size: landscape; margin: 10mm; }
-        @media print { body { margin: 0; } }
-      </style></head>
-      <body>
-        <h2>${esc(downloadTitle)}</h2>
-        <div class="sub">${students.length} student(s)</div>
-        <table>
-          <thead>
-            <tr><th rowspan="2">#</th><th rowspan="2">Student</th>${caGroupHeaders}<th rowspan="2">Exam (${esc(settings.exam_max_score)})</th></tr>
-            <tr>${entityHeaders.map((h) => `<th style="text-align:center">${h}</th>`).join('')}</tr>
-          </thead>
-          <tbody>${rowsHtml}</tbody>
-        </table>
-      </body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); }, 400);
-  };
-
-  const canExport = students.length > 0 && !fetching;
+  const canExport = !singleStudent && students.length > 0 && !fetching;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
       <DialogTitle>
         {singleStudent
           ? `Edit Score — ${singleStudent.fname} ${singleStudent.lname}`
-          : `Input Score — ${allocation?.subject_name} (${allocation?.class_name ?? allocation?.className})`
-        }
+          : `Input Score — ${allocation?.subject_name} (${allocation?.class_name ?? allocation?.className})`}
       </DialogTitle>
       <DialogContent>
         {!fetching && students.length === 0 ? (
@@ -387,116 +351,163 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
           </Alert>
         ) : (
           <>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1 }}>
-          <Button
-            variant="contained"
-            size="small"
-            color="info"
-            startIcon={<IconFileSpreadsheet size={16} />}
-            disabled={!canExport}
-            onClick={handleDownloadExcel}
-          >
-            Download Excel
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            color="error"
-            startIcon={<IconPdf size={16} />}
-            disabled={!canExport}
-            onClick={handleDownloadPdf}
-          >
-            Download PDF
-          </Button>
-        </Box>
-        <TableContainer sx={{
-          overflowX: 'auto',
-          // Hide number-input spinners (arrow up/down)
-          '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button': {
-            WebkitAppearance: 'none',
-            margin: 0,
-          },
-          '& input[type=number]': { MozAppearance: 'textfield' },
-        }}>
-          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }} rowSpan={2}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} rowSpan={2}>Student Info</TableCell>
-                {caType.map((ca) => (
-                  <TableCell key={ca.display_name} sx={{ fontWeight: 700 }} colSpan={getColspan(ca)} align="center">
-                    {ca.display_name}
-                  </TableCell>
-                ))}
-                <TableCell sx={{ fontWeight: 700 }} rowSpan={2} align="center">
-                  Exam Score ({settings.exam_max_score})
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700 }} rowSpan={2} align="center">Action</TableCell>
-              </TableRow>
-              <TableRow>
-                {caType.map((ca, ci) =>
-                  getEntities(ca).map((entity, ei) => (
-                    <TableCell key={`${ci}-${ei}`} sx={{ fontWeight: 700 }} align="center">
-                      {entity.display_name} ({entity.max_score})
+            {!singleStudent && (
+              <Alert severity="info" sx={{ borderRadius: '8px', mb: 1.5 }}>
+                Click <strong>Save</strong> on a row to save just that learner's scores immediately
+                — it's not held back waiting on anyone else. Click <strong>Save All</strong> to save
+                every row on this page in one go instead.
+              </Alert>
+            )}
+            <Box
+              sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mb: 1, flexWrap: 'wrap' }}
+            >
+              {!singleStudent && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="success"
+                  startIcon={<IconDeviceFloppy size={16} />}
+                  onClick={handleSaveAll}
+                >
+                  Save All
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                size="small"
+                color="info"
+                startIcon={<IconFileSpreadsheet size={16} />}
+                disabled={!canExport}
+                onClick={handleDownloadExcel}
+              >
+                Download Excel
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                color="error"
+                startIcon={<IconPdf size={16} />}
+                disabled={!canExport}
+                onClick={handleDownloadPdf}
+              >
+                Download PDF
+              </Button>
+            </Box>
+            <TableContainer
+              sx={{
+                overflowX: 'auto',
+                // Hide number-input spinners (arrow up/down)
+                '& input[type=number]::-webkit-outer-spin-button, & input[type=number]::-webkit-inner-spin-button':
+                  {
+                    WebkitAppearance: 'none',
+                    margin: 0,
+                  },
+                '& input[type=number]': { MozAppearance: 'textfield' },
+              }}
+            >
+              <Table
+                stickyHeader
+                sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }} rowSpan={2}>
+                      #
                     </TableCell>
-                  ))
-                )}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {students.map((student, si) => (
-                <TableRow key={student.id} hover>
-                  <TableCell>{si + 1}</TableCell>
-                  <TableCell>{student.fullname}</TableCell>
-                  {caType.map((ca, ci) => {
-                    const entities = getEntities(ca);
-                    return entities.map((entity, ei) => (
-                      <TableCell key={`${ci}-${ei}`} align="center">
+                    <TableCell sx={{ fontWeight: 700 }} rowSpan={2}>
+                      Student Info
+                    </TableCell>
+                    {caType.map((ca) => (
+                      <TableCell
+                        key={ca.display_name}
+                        sx={{ fontWeight: 700 }}
+                        colSpan={getColspan(ca)}
+                        align="center"
+                      >
+                        {ca.display_name}
+                      </TableCell>
+                    ))}
+                    <TableCell sx={{ fontWeight: 700 }} rowSpan={2} align="center">
+                      Exam Score ({settings.exam_max_score})
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} rowSpan={2} align="center">
+                      Action
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    {caType.map((ca, ci) =>
+                      getEntities(ca).map((entity, ei) => (
+                        <TableCell key={`${ci}-${ei}`} sx={{ fontWeight: 700 }} align="center">
+                          {entity.display_name} ({entity.max_score})
+                        </TableCell>
+                      )),
+                    )}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {students.map((student, si) => (
+                    <TableRow key={student.id} hover>
+                      <TableCell>{si + 1}</TableCell>
+                      <TableCell>{student.fullname}</TableCell>
+                      {caType.map((ca, ci) => {
+                        const entities = getEntities(ca);
+                        return entities.map((entity, ei) => (
+                          <TableCell key={`${ci}-${ei}`} align="center">
+                            <TextField
+                              size="small"
+                              type="number"
+                              placeholder="0"
+                              sx={{ width: 70 }}
+                              value={student.ca_details?.[ci]?.entities?.[ei]?.score || ''}
+                              onChange={(e) => handleCaScoreChange(si, ci, ei, e.target.value)}
+                              error={caScoreErrors[si]?.[ci] || false}
+                              helperText={caScoreErrors[si]?.[ci] ? 'Invalid' : ''}
+                            />
+                          </TableCell>
+                        ));
+                      })}
+                      <TableCell align="center">
                         <TextField
                           size="small"
                           type="number"
                           placeholder="0"
                           sx={{ width: 70 }}
-                          value={student.ca_details?.[ci]?.entities?.[ei]?.score || ''}
-                          onChange={(e) => handleCaScoreChange(si, ci, ei, e.target.value)}
-                          error={caScoreErrors[si]?.[ci] || false}
-                          helperText={caScoreErrors[si]?.[ci] ? 'Invalid' : ''}
+                          value={student.examScores}
+                          onChange={(e) => handleExamScoreChange(si, e.target.value)}
+                          error={examScoreErrors[si] || false}
+                          helperText={examScoreErrors[si] ? 'Invalid' : ''}
                         />
                       </TableCell>
-                    ));
-                  })}
-                  <TableCell align="center">
-                    <TextField
-                      size="small"
-                      type="number"
-                      placeholder="0"
-                      sx={{ width: 70 }}
-                      value={student.examScores}
-                      onChange={(e) => handleExamScoreChange(si, e.target.value)}
-                      error={examScoreErrors[si] || false}
-                      helperText={examScoreErrors[si] ? 'Invalid' : ''}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Button
-                      size="small"
-                      disabled={student.loading}
-                      onClick={() => handleSave(si)}
-                    >
-                      {student.loading ? <CircularProgress size={16} color="inherit" /> : 'Save'}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      <TableCell align="center">
+                        <Button
+                          size="small"
+                          disabled={student.loading}
+                          onClick={() => handleSave(si)}
+                        >
+                          {student.loading ? (
+                            <CircularProgress size={16} color="inherit" />
+                          ) : (
+                            'Save'
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </>
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
         {!singleStudent && (
-          <Button variant="contained" size="small" color="success" startIcon={<IconDeviceFloppy size={16} />} onClick={handleSaveAll}>
+          <Button
+            variant="contained"
+            size="small"
+            color="success"
+            startIcon={<IconDeviceFloppy size={16} />}
+            onClick={handleSaveAll}
+          >
             Save All
           </Button>
         )}
@@ -514,7 +525,10 @@ const InputScoreDialog = ({ open, onClose, allocation, filter, singleStudent, on
           anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
           sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
         >
-          <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
+          <Alert
+            onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+            severity={snackbar.severity}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>

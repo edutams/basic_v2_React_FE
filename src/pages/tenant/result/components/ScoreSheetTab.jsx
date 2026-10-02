@@ -27,6 +27,7 @@ import {
   DialogContent,
   DialogActions,
   CircularProgress,
+  Skeleton,
   Snackbar,
 } from '@mui/material';
 import {
@@ -48,6 +49,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import StatCard from '@/components/shared/StatCard';
 import InputScoreDialog from './InputScoreDialog';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 
 const getEntityTotal = (entities) => {
@@ -96,10 +98,12 @@ const ScoreSheetTab = () => {
 
   // This page is always reached from a specific subject's "Score Sheet"
   // button (Score Upload cards, or the Broadsheet) — it never has its own
-  // filters. Session/term, class arm and subject all come from the URL.
-  const subjectId = searchParams.get('subject_id');
-  const classArmId = searchParams.get('class_arm_id');
-  const sessionTermId = searchParams.get('session_term_id');
+  // filters. Session/term, class arm and subject all come from the URL, via
+  // one opaque token so raw ids don't sit in the address bar.
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
+  const subjectId = linkParams.subject_id;
+  const classArmId = linkParams.class_arm_id;
+  const sessionTermId = linkParams.session_term_id;
   const hasContext = Boolean(subjectId && classArmId && sessionTermId);
 
   const [loading, setLoading] = useState(false);
@@ -212,17 +216,14 @@ const ScoreSheetTab = () => {
   const pendingExamCount = students.length - scoredCount;
   const passRate = analytics?.class_pass_rate ?? 0;
 
-  // ── Edit/purge availability — mirrors the backend's three-state rule
-  // (ScoreUploadController::scoreSheetEditState): editable before
-  // submission and again after a broadsheet reversal, locked here (route to
-  // the Broadsheet instead) once submitted but not yet published, and
-  // locked everywhere once the broadsheet is actually published. The
-  // backend enforces the "published" lock on every write regardless of
-  // what this flag says; this only decides what the UI offers.
+  // ── Edit/purge availability — editing and purging stay available right
+  // up until the broadsheet is actually published (submitting scores alone
+  // doesn't lock anything). The backend enforces the same "published" lock
+  // on every write regardless of what this flag says; this only decides
+  // what the UI offers.
   const editState = scoreSheetData?.edit_state || 'editable';
   const isEditable = editState === 'editable';
   const isLockedPublished = editState === 'locked_published';
-  const isLockedPendingBroadsheet = editState === 'locked_pending_broadsheet';
 
   // ── Print helpers ───────────────────────────────────────
   const buildPrintHtml = (title, subtitle, bodyHtml) => {
@@ -305,31 +306,34 @@ const ScoreSheetTab = () => {
         }
       : null;
 
-  // Print the full score sheet (CA columns + exam + total + grade)
-  const handlePrintScoreSheet = () => {
+  // Print the full score sheet — backend-rendered PDF (PhpSpreadsheet data,
+  // Dompdf render, same as the Input/Edit dialog's own PDF export), opened
+  // in a new tab so the browser's own PDF viewer can print it. No more
+  // building the table twice (once for screen, once as ad hoc print HTML).
+  const [printing, setPrinting] = useState(false);
+  const handlePrintScoreSheet = async () => {
     if (students.length === 0) {
       showSnackbar('No student records to print', 'warning');
       return;
     }
-    const caHead = caColumns.map((ca) => `<th>${esc(ca.display_name || 'CA')}</th>`).join('');
-    const bodyRows = buildStudentRowsHtml(
-      (res, total) => `
-      ${caColumns
-        .map((_, ci) => {
-          const entityTotal = getEntityTotal(res.ca?.[ci]?.entities);
-          return `<td style="text-align:center">${entityTotal > 0 ? entityTotal : '-'}</td>`;
-        })
-        .join('')}
-      <td style="text-align:center">${displayScore(res.exam_score)}</td>
-      <td style="text-align:center"><strong>${total > 0 ? total : '-'}</strong></td>
-      <td style="text-align:center">${getGrade(total, res.exam_score) || 'Pending'}</td>
-    `,
-    );
-    const html = `<table>
-      <thead><tr><th>#</th><th>Student</th><th>ID</th>${caHead}<th>Exam</th><th>Total</th><th>Grade</th></tr></thead>
-      <tbody>${bodyRows}</tbody>
-    </table>`;
-    openPrintWindow('Score Sheet', subtitle, html);
+    setPrinting(true);
+    try {
+      const res = await scoreManagerApi.exportScoreSheetPdf({
+        subject_id: subjectId,
+        class_arm_id: classArmId,
+        session_term_id: sessionTermId,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      showSnackbar(
+        err?.response?.data?.message || 'Failed to generate the score sheet PDF',
+        'error',
+      );
+    } finally {
+      setPrinting(false);
+    }
   };
 
   // Print a single column report (one CA type or the exam)
@@ -352,17 +356,15 @@ const ScoreSheetTab = () => {
   };
 
   // Navigate to the performance analytics page with this subject/class
-  // context (session_term_id stands in for separate session_id/term_id —
-  // this page no longer resolves those on its own. View Analytics itself is
-  // being revisited separately).
+  // context, via the same opaque token this page itself was opened with.
   const handleViewAnalytics = (column = null) => {
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       session_term_id: sessionTermId,
       class_arm_id: classArmId,
       subject_id: subjectId,
+      column: column ? (column.type === 'exam' ? 'exam' : `ca:${column.index}`) : undefined,
     });
-    if (column) params.set('column', column.type === 'exam' ? 'exam' : `ca:${column.index}`);
-    navigate(`/result-analytics?${params.toString()}`);
+    navigate(`/result-analytics?t=${token}`);
   };
 
   const handleSubmitScores = async () => {
@@ -383,15 +385,13 @@ const ScoreSheetTab = () => {
   const viewCAReport = (student) => {
     setActionMenuAnchor(null);
     if (!student) return;
-    const params = new URLSearchParams();
-    if (student.student_registration_id) {
-      params.set('student_registration_id', student.student_registration_id);
-    } else if (student.user_id) {
-      params.set('user_id', student.user_id);
-    }
-    if (sessionTermId) params.set('session_term_id', sessionTermId);
-    if (classArmId) params.set('class_arm_id', classArmId);
-    window.open(`/result-ca_breakdown?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    const token = encodeLinkParams({
+      student_registration_id: student.student_registration_id || undefined,
+      user_id: student.student_registration_id ? undefined : student.user_id,
+      session_term_id: sessionTermId,
+      class_arm_id: classArmId,
+    });
+    window.open(`/result-ca_breakdown?t=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   const viewResult = () => {
@@ -410,7 +410,7 @@ const ScoreSheetTab = () => {
         </Alert>
       )}
 
-      {showTable && !loading && (
+      {hasContext && (loading || showTable) && (
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <StatCard
             count={`${scoredCount} / ${students.length}`}
@@ -418,7 +418,7 @@ const ScoreSheetTab = () => {
             subtitle="Both CA and exam entered"
             icon={IconUsers}
             colorIndex={0}
-            loading={false}
+            loading={loading}
           />
           <StatCard
             count={classAverage}
@@ -426,7 +426,7 @@ const ScoreSheetTab = () => {
             subtitle="Overall score"
             icon={IconTrophy}
             colorIndex={1}
-            loading={false}
+            loading={loading}
           />
           <StatCard
             count={`${passRate}%`}
@@ -434,7 +434,7 @@ const ScoreSheetTab = () => {
             subtitle="Of scored learners"
             icon={IconPercentage}
             colorIndex={2}
-            loading={false}
+            loading={loading}
           />
           <StatCard
             count={pendingExamCount}
@@ -442,7 +442,7 @@ const ScoreSheetTab = () => {
             subtitle="No grade until entered"
             icon={IconHourglassHigh}
             colorIndex={3}
-            loading={false}
+            loading={loading}
           />
         </Stack>
       )}
@@ -495,7 +495,7 @@ const ScoreSheetTab = () => {
                       })
                     }
                   >
-                    Edit Scores
+                    Input/Edit
                   </Button>
                   <Button
                     variant="contained"
@@ -512,7 +512,14 @@ const ScoreSheetTab = () => {
                 variant="contained"
                 size="small"
                 color="info"
-                startIcon={<IconPrinter size={16} />}
+                startIcon={
+                  printing ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <IconPrinter size={16} />
+                  )
+                }
+                disabled={printing}
                 onClick={handlePrintScoreSheet}
               >
                 Print Score Sheet
@@ -530,10 +537,10 @@ const ScoreSheetTab = () => {
           )}
         </Box>
 
-        {/* ── Status banner — one of: editable/pending, locked pending the
-             broadsheet, or locked published. No self-service "reverse" here
-             any more — only an admin reversing the broadsheet itself brings
-             editing back. ──────────────────────────────────────────────── */}
+        {/* ── Status banner — locked once published, otherwise editable
+             (whether or not it's been submitted yet). No self-service
+             "reverse" here any more — only an admin reversing the broadsheet
+             itself brings editing back. ───────────────────────────────── */}
         {showTable && (
           <Box sx={{ px: 2, pt: 2 }}>
             {isLockedPublished && (
@@ -541,13 +548,6 @@ const ScoreSheetTab = () => {
                 <Typography variant="subtitle2">Broadsheet Published</Typography>
                 This class's broadsheet has been published — scores are locked and can no longer be
                 edited or purged here.
-              </Alert>
-            )}
-            {isLockedPendingBroadsheet && (
-              <Alert severity="info" sx={{ borderRadius: '10px' }}>
-                <Typography variant="subtitle2">Submitted — Awaiting Broadsheet Review</Typography>
-                Scores have been submitted. From here on, edits happen on the Broadsheet until it's
-                published.
               </Alert>
             )}
             {isEditable && scoreSheetData?.overall_submission_status === 'pending' && (
@@ -575,6 +575,13 @@ const ScoreSheetTab = () => {
                 {hasAnyScores
                   ? 'Scores not submitted by Subject Teacher yet'
                   : 'No scores uploaded yet — upload at least one CA or exam score to submit'}
+              </Alert>
+            )}
+            {isEditable && scoreSheetData?.overall_submission_status === 'submitted' && (
+              <Alert severity="success" sx={{ borderRadius: '10px' }}>
+                <Typography variant="subtitle2">Submitted</Typography>
+                Scores have been submitted. They're still editable here until the broadsheet is
+                published.
               </Alert>
             )}
           </Box>
@@ -742,124 +749,123 @@ const ScoreSheetTab = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                        <CircularProgress />
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                          Loading score sheet...
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    students.map((res, i) => {
-                      const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
-                      const grade = getGrade(total, res.exam_score);
-                      return (
-                        <TableRow key={res.course_registration_id || i} hover>
-                          <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
-                          <TableCell sx={{ ...cellBorderSx, width: 220, minWidth: 220 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Avatar
-                                src={res.avatar}
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  fontSize: 13,
-                                  fontWeight: 700,
-                                  bgcolor: 'primary.main',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {(!res.avatar && `${res.fname?.[0]}${res.lname?.[0]}`) || '?'}
-                              </Avatar>
-                              <Box sx={{ minWidth: 0 }}>
-                                <Stack direction="row" alignItems="center" spacing={0.75}>
-                                  <Typography variant="body2" fontWeight={600} noWrap>
-                                    {res.lname} {res.fname} {res.mname}
-                                  </Typography>
-                                  <Box
-                                    title={res.sex}
-                                    sx={{
-                                      width: 18,
-                                      height: 18,
-                                      borderRadius: '5px',
-                                      flexShrink: 0,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontSize: '10px',
-                                      fontWeight: 700,
-                                      bgcolor: alpha(
-                                        res.sex === 'male'
-                                          ? theme.palette.primary.main
-                                          : theme.palette.success.main,
-                                        isDark ? 0.28 : 0.14,
-                                      ),
-                                      color:
-                                        res.sex === 'male'
-                                          ? theme.palette.primary.main
-                                          : theme.palette.success.main,
-                                    }}
-                                  >
-                                    {res.sex === 'male' ? 'M' : 'F'}
-                                  </Box>
-                                </Stack>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ display: 'block', lineHeight: 1.2 }}
-                                  noWrap
-                                >
-                                  {res.student_id || res.user_id}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          {caColumns.map((_, ci) => (
-                            <TableCell key={ci} align="center" sx={cellBorderSx}>
-                              {displayScore(getEntityTotal(res.ca?.[ci]?.entities) || null)}
+                  {loading
+                    ? Array.from({ length: 5 }).map((_, ri) => (
+                        <TableRow key={ri}>
+                          {Array.from({ length: caColumns.length + 5 }).map((__, ci) => (
+                            <TableCell key={ci} sx={cellBorderSx}>
+                              <Skeleton variant="text" />
                             </TableCell>
                           ))}
-                          <TableCell align="center" sx={cellBorderSx}>
-                            {displayScore(res.exam_score)}
-                          </TableCell>
-                          <TableCell align="center" sx={cellBorderSx}>
-                            {displayScore(total)}
-                          </TableCell>
-                          <TableCell align="center" sx={cellBorderSx}>
-                            {grade ? (
-                              <Chip
-                                label={grade}
-                                size="small"
-                                sx={{ fontWeight: 700, minWidth: 36 }}
-                              />
-                            ) : (
-                              <Tooltip title="No grade until the exam score is entered">
-                                <Chip
-                                  label="Pending"
-                                  size="small"
-                                  variant="outlined"
-                                  sx={{ fontWeight: 600, minWidth: 36, color: 'text.secondary' }}
-                                />
-                              </Tooltip>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                setActionMenuAnchor(e.currentTarget);
-                                setActionMenuRow(res);
-                              }}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                          </TableCell>
                         </TableRow>
-                      );
-                    })
-                  )}
+                      ))
+                    : students.map((res, i) => {
+                        const total = getOverallTotal(normalizeCa(res.ca), res.exam_score);
+                        const grade = getGrade(total, res.exam_score);
+                        return (
+                          <TableRow key={res.course_registration_id || i} hover>
+                            <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
+                            <TableCell sx={{ ...cellBorderSx, width: 220, minWidth: 220 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar
+                                  src={res.avatar}
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    fontSize: 13,
+                                    fontWeight: 700,
+                                    bgcolor: 'primary.main',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {(!res.avatar && `${res.fname?.[0]}${res.lname?.[0]}`) || '?'}
+                                </Avatar>
+                                <Box sx={{ minWidth: 0 }}>
+                                  <Stack direction="row" alignItems="center" spacing={0.75}>
+                                    <Typography variant="body2" fontWeight={600} noWrap>
+                                      {res.lname} {res.fname} {res.mname}
+                                    </Typography>
+                                    <Box
+                                      title={res.sex}
+                                      sx={{
+                                        width: 18,
+                                        height: 18,
+                                        borderRadius: '5px',
+                                        flexShrink: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '10px',
+                                        fontWeight: 700,
+                                        bgcolor: alpha(
+                                          res.sex === 'male'
+                                            ? theme.palette.primary.main
+                                            : theme.palette.success.main,
+                                          isDark ? 0.28 : 0.14,
+                                        ),
+                                        color:
+                                          res.sex === 'male'
+                                            ? theme.palette.primary.main
+                                            : theme.palette.success.main,
+                                      }}
+                                    >
+                                      {res.sex === 'male' ? 'M' : 'F'}
+                                    </Box>
+                                  </Stack>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ display: 'block', lineHeight: 1.2 }}
+                                    noWrap
+                                  >
+                                    {res.student_id || res.user_id}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            {caColumns.map((_, ci) => (
+                              <TableCell key={ci} align="center" sx={cellBorderSx}>
+                                {displayScore(getEntityTotal(res.ca?.[ci]?.entities) || null)}
+                              </TableCell>
+                            ))}
+                            <TableCell align="center" sx={cellBorderSx}>
+                              {displayScore(res.exam_score)}
+                            </TableCell>
+                            <TableCell align="center" sx={cellBorderSx}>
+                              {displayScore(total)}
+                            </TableCell>
+                            <TableCell align="center" sx={cellBorderSx}>
+                              {grade ? (
+                                <Chip
+                                  label={grade}
+                                  size="small"
+                                  sx={{ fontWeight: 700, minWidth: 36 }}
+                                />
+                              ) : (
+                                <Tooltip title="No grade until the exam score is entered">
+                                  <Chip
+                                    label="Pending"
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontWeight: 600, minWidth: 36, color: 'text.secondary' }}
+                                  />
+                                </Tooltip>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  setActionMenuAnchor(e.currentTarget);
+                                  setActionMenuRow(res);
+                                }}
+                              >
+                                <MoreVertIcon fontSize="small" />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -868,14 +874,14 @@ const ScoreSheetTab = () => {
 
         {/* ── Empty / loading state (no URL context yet) ──────────── */}
         {!showTable && (
-          <Box sx={{ p: 5, textAlign: 'center' }}>
+          <Box sx={{ p: loading ? 3 : 5, textAlign: loading ? 'left' : 'center' }}>
             {loading ? (
-              <>
-                <CircularProgress size={36} />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  Loading score sheet...
-                </Typography>
-              </>
+              <Stack spacing={1.25}>
+                <Skeleton variant="rounded" height={44} />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} variant="rounded" height={36} />
+                ))}
+              </Stack>
             ) : (
               <>
                 <IconClipboardCheck

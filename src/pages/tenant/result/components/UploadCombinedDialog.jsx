@@ -77,13 +77,19 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded, 
     setRowResults([]);
   }, [open, caOptions.length]);
 
-  // Dropdown options: one entry per configured CA type + Exam
+  // Dropdown options: must match whatever category the uploaded file was
+  // actually downloaded as — "all" first (every CA + exam in one file,
+  // same shape the manual Input/Edit screen already uses), then each CA
+  // type alone, then Exam alone.
   const options = useMemo(() => {
-    const list = caOptions.map((ca, i) => ({
-      value: `ca:${ca.display_name || `CA${i + 1}`}`,
-      label: ca.display_name || `CA${i + 1}`,
-    }));
-    list.push({ value: 'exam', label: 'Exam' });
+    const list = [{ value: 'all', label: 'All CAs + Exam (one file)' }];
+    caOptions.forEach((ca, i) => {
+      list.push({
+        value: `ca:${ca.display_name || `CA${i + 1}`}`,
+        label: `${ca.display_name || `CA${i + 1}`} only`,
+      });
+    });
+    list.push({ value: 'exam', label: 'Exam only' });
     return list;
   }, [caOptions]);
 
@@ -104,9 +110,12 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded, 
       setResult(null);
       setRowResults([]);
 
-      const [category, displayName] = selection.startsWith('ca:')
-        ? ['ca', selection.slice(3)]
-        : ['exam', undefined];
+      const [category, displayName] =
+        selection === 'all'
+          ? ['all', undefined]
+          : selection.startsWith('ca:')
+            ? ['ca', selection.slice(3)]
+            : ['exam', undefined];
 
       const formData = new FormData();
       formData.append('file', selectedFile);

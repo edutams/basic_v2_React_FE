@@ -2,40 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Grid, FormControl, InputLabel, Select, MenuItem, Avatar, useTheme,
-  CircularProgress, Alert, Snackbar,
+  Button, Grid, FormControl, InputLabel, Select, MenuItem, useTheme,
+  Alert, Snackbar, Skeleton,
 } from '@mui/material';
 import { IconPrinter, IconLock } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
-import { getTenantInfo } from '@/api/tenant/tenant_api';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 
 const cellBorderSx = { borderRight: '1px solid', borderColor: 'divider' };
-
-// Print only the report card — hide chrome, filters, buttons and layout.
-const PRINT_STYLE_ID = 'ca-breakdown-print-style';
-const printCss = `
-@page { size: portrait; margin: 10mm; }
-@media print {
-  body * { visibility: hidden !important; }
-  .ca-print-root, .ca-print-root * { visibility: visible !important; }
-  .ca-print-root {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-  .ca-no-print, .ca-no-print * { display: none !important; visibility: hidden !important; }
-}
-`;
 
 const CaBreakdownTab = () => {
   const theme = useTheme();
@@ -43,16 +18,20 @@ const CaBreakdownTab = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const studentRegistrationId = searchParams.get('student_registration_id');
-  const userId = searchParams.get('user_id');
-  const sessionTermId = searchParams.get('session_term_id');
-  const classArmId = searchParams.get('class_arm_id');
+  // Context arrives as one opaque token — same pattern as the Score Sheet /
+  // Performance Analytics pages — so a deep link never shows raw student or
+  // class ids in the address bar.
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
+  const studentRegistrationId = linkParams.student_registration_id;
+  const userId = linkParams.user_id;
+  const sessionTermId = linkParams.session_term_id;
+  const classArmId = linkParams.class_arm_id;
 
   const [loading, setLoading] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [error, setError] = useState('');
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [payload, setPayload] = useState(null);
-  const [schoolInfo, setSchoolInfo] = useState(null);
   const [selectedCaIndex, setSelectedCaIndex] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -62,28 +41,16 @@ const CaBreakdownTab = () => {
   const [selfTermId, setSelfTermId] = useState('');
   const [termsLoaded, setTermsLoaded] = useState(false);
 
-  // Deep links (admin dossier / score sheet) carry a student id in the query
-  // string. A learner arriving with none is resolved server-side from the
+  // Deep links (admin dossier / score sheet) carry a student id in the
+  // token. A learner arriving with none is resolved server-side from the
   // auth token, and this term list drives their term selector.
   const hasIdentity = Boolean(studentRegistrationId || userId);
   const isSelfMode = !hasIdentity;
   const effectiveSessionTermId = isSelfMode ? selfTermId : sessionTermId;
   const termsReady = !isSelfMode || (termsLoaded && Boolean(selfTermId));
 
-  useEffect(() => {
-    if (!document.getElementById(PRINT_STYLE_ID)) {
-      const style = document.createElement('style');
-      style.id = PRINT_STYLE_ID;
-      style.textContent = printCss;
-      document.head.appendChild(style);
-    }
-  }, []);
-
-  useEffect(() => {
-    getTenantInfo()
-      .then((data) => setSchoolInfo(data?.data || null))
-      .catch(() => setSchoolInfo(null));
-  }, []);
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
   // Self mode: the learner's own registrations (for the term selector).
   useEffect(() => {
@@ -199,25 +166,49 @@ const CaBreakdownTab = () => {
     ? +(Math.round((totalScore / gradedCount) * 100) / 100)
     : 0;
 
-  const schoolName = schoolInfo?.tenant_name || schoolInfo?.school_name || '';
-  const schoolAddress = schoolInfo?.address || '';
-  const schoolPhone = schoolInfo?.phone || schoolInfo?.tenant_phone || '';
-  const schoolLogo = schoolInfo?.logo || schoolInfo?.school_logo || schoolInfo?.image || '';
-  const sessionTermLabel = payload?.session_term
-    ? `${payload.session_term.session_name} - ${payload.session_term.term_name}`
-    : '';
+  const handlePrint = async () => {
+    if (selectedCaIndex === '') return;
+    setPrinting(true);
+    try {
+      const body = {
+        session_term_id: effectiveSessionTermId ? Number(effectiveSessionTermId) : undefined,
+        class_arm_id: classArmId ? Number(classArmId) : undefined,
+        ca_index: selectedCaIndex,
+      };
+      if (studentRegistrationId) body.student_registration_id = Number(studentRegistrationId);
+      else if (userId) body.user_id = userId;
 
-  const handlePrint = () => window.print();
+      const res = await scoreManagerApi.printCaBreakdown(body);
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+    } catch (err) {
+      console.error('Failed to generate CA report PDF:', err);
+      showSnackbar('Failed to generate the C.A report PDF', 'error');
+    } finally {
+      setPrinting(false);
+    }
+  };
 
-  // ── Self mode: still resolving the learner's registration ──
-  if (isSelfMode && !termsLoaded) {
+  // ── Self mode: still resolving the learner's registration, or the first
+  // breakdown fetch is in flight — skeleton matches the real layout so the
+  // page never flashes a bare spinner.
+  if ((isSelfMode && !termsLoaded) || (loading && !payload)) {
     return (
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-        <Box sx={{ p: 6, textAlign: 'center' }}>
-          <CircularProgress size={36} />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Loading your registration...
-          </Typography>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Skeleton width={260} height={28} />
+        </Box>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 5 }}><Skeleton width="80%" /></Grid>
+            <Grid size={{ xs: 12, sm: 4 }}><Skeleton width="60%" /></Grid>
+            <Grid size={{ xs: 12, sm: 3 }}><Skeleton width="50%" /></Grid>
+          </Grid>
+        </Box>
+        <Box sx={{ p: 2 }}>
+          <Skeleton variant="rounded" width={240} height={40} sx={{ mb: 2 }} />
+          <Skeleton variant="rounded" height={280} />
         </Box>
       </Paper>
     );
@@ -233,19 +224,6 @@ const CaBreakdownTab = () => {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             Your Continuous Assessment sheet appears here once the school registers you for a term.
-          </Typography>
-        </Box>
-      </Paper>
-    );
-  }
-
-  if (loading) {
-    return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-        <Box sx={{ p: 6, textAlign: 'center' }}>
-          <CircularProgress size={36} />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Loading CA breakdown...
           </Typography>
         </Box>
       </Paper>
@@ -303,47 +281,26 @@ const CaBreakdownTab = () => {
   return (
     <Paper
       elevation={0}
-      className="ca-print-root"
       sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}
     >
-      {/* ── Card Header (chrome — hidden when printing) ─────── */}
-      <Box className="ca-no-print" sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+      {/* ── Card Header ──────────────────────────────────────── */}
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
         <Typography variant="h6" fontWeight={600}>
           {caConfig && student
             ? `CA Report — ${student.class_name} ${student.arm_name} • ${student.lname} ${student.fname}`
             : 'Student C.A Scores'}
         </Typography>
         {caConfig && hasAnyScore && (
-          <Button variant="contained" size="small" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
-            Print C.A Result
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconPrinter size={16} />}
+            onClick={handlePrint}
+            disabled={printing}
+          >
+            {printing ? 'Preparing PDF...' : 'Print C.A Result'}
           </Button>
         )}
-      </Box>
-
-      {/* ── School Info Header ──────────────────────────────── */}
-      <Box sx={{ p: 2, pb: 2, display: 'flex', justifyContent: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {schoolLogo ? (
-            <Avatar src={schoolLogo} sx={{ width: 64, height: 64 }} variant="rounded" />
-          ) : (
-            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 20 }} variant="rounded">
-              {schoolName?.[0] || 'S'}
-            </Avatar>
-          )}
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h2" fontWeight={900} sx={{ textTransform: 'uppercase' }}>
-              {schoolName || 'School'}
-            </Typography>
-            <Typography variant="h6" fontWeight={800} color="text.secondary">
-              {schoolAddress}{schoolPhone ? `  |  Phone: ${schoolPhone}` : ''}
-            </Typography>
-            {sessionTermLabel && (
-              <Typography variant="subtitle1" fontWeight={700} color="text.secondary">
-                {sessionTermLabel}
-              </Typography>
-            )}
-          </Box>
-        </Box>
       </Box>
 
       {/* ── Student Info ────────────────────────────────────── */}
@@ -367,8 +324,8 @@ const CaBreakdownTab = () => {
         </Grid>
       </Box>
 
-      {/* ── CA Type Filter (UI chrome — hidden when printing) ── */}
-      <Box className="ca-no-print" sx={{ p: 2, borderBottom: caConfig ? 1 : 0, borderColor: 'divider' }}>
+      {/* ── CA Type Filter ──────────────────────────────────── */}
+      <Box sx={{ p: 2, borderBottom: caConfig ? 1 : 0, borderColor: 'divider' }}>
         <Grid container spacing={2} alignItems="center">
           {isSelfMode && myTerms.length > 0 && (
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -413,8 +370,13 @@ const CaBreakdownTab = () => {
         )}
       </Box>
 
-      {/* ── Subjects Table ──────────────────────────────────── */}
-      {caConfig && (
+      {/* ── Subjects Table — loading skeleton while re-fetching for a new
+          self-mode term, real table once data has arrived ───────── */}
+      {loading && caOptions.length > 0 ? (
+        <Box sx={{ p: 3 }}>
+          <Skeleton variant="rounded" height={280} />
+        </Box>
+      ) : caConfig && (
         <Box sx={{ p: 3 }}>
           {!hasAnyScore && (
             <Alert severity="info" sx={{ mb: 2 }}>
@@ -500,17 +462,22 @@ const CaBreakdownTab = () => {
         </Box>
       )}
 
-      {/* ── Bottom Print Button (chrome — hidden when printing) ── */}
+      {/* ── Bottom Print Button ─────────────────────────────── */}
       {caConfig && hasAnyScore && (
-        <Box className="ca-no-print" sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider' }}>
-          <Button variant="contained" size="small" startIcon={<IconPrinter size={16} />} onClick={handlePrint}>
-            Print C.A Result
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider' }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconPrinter size={16} />}
+            onClick={handlePrint}
+            disabled={printing}
+          >
+            {printing ? 'Preparing PDF...' : 'Print C.A Result'}
           </Button>
         </Box>
       )}
 
       <Snackbar
-        className="ca-no-print"
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

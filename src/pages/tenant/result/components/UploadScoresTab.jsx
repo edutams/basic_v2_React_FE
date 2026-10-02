@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, useContext } from 'react';
 import {
   Box,
   Typography,
@@ -37,6 +37,7 @@ import {
   List,
   ListItem,
   ListItemAvatar,
+  Skeleton,
 } from '@mui/material';
 import {
   IconCloudUpload,
@@ -62,7 +63,6 @@ import {
   fetchTerms,
   fetchProgrammes,
   fetchClassesByProgramme,
-  fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
 import DownloadSampleDialog from './DownloadSampleDialog';
@@ -73,8 +73,16 @@ import ActionSelectionDialog from './ActionSelectionDialog';
 import ScoreUploadAnalytics from './ScoreUploadAnalytics';
 import ScoreUploadCard from './ScoreUploadCard';
 import AnalyticsModal from '@/pages/tenant/attendance/components/AnalyticsModal';
+import { encodeLinkParams } from '@/utils/scoreLinks';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
+
+const ADMIN_ROLES = ['super_admin', 'school_admin'];
 
 const UploadScoresTab = () => {
+  const { roles } = useContext(TenantAuthContext);
+  const isAdminRole = Array.isArray(roles)
+    ? roles.some((r) => ADMIN_ROLES.includes(typeof r === 'string' ? r : r?.name))
+    : false;
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -100,6 +108,9 @@ const UploadScoresTab = () => {
   const [actionMenuAnchor, setActionMenuAnchor] = useState(null);
   const [actionMenuRow, setActionMenuRow] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  // Allocation ids with a submit request in flight — drives each card's
+  // "Processing..." badge and blocks double-submits while it's pending.
+  const [submittingIds, setSubmittingIds] = useState(() => new Set());
   const [analyticsData, setAnalyticsData] = useState(null);
 
   // Dialog States
@@ -220,16 +231,17 @@ const UploadScoresTab = () => {
       .catch(console.error);
   }, [filter.programme_id]);
 
-  // ── Class arms for the selected class — preselect the first one ──
+  // ── Class arms for the selected class — preselect the first one.
+  // Strictly arms the caller has a SUBJECT allocation in (not just
+  // class-teaches) — a class teacher with no subject there has nothing to
+  // upload/view here for it. ─────────────────────────────────────────────
   useEffect(() => {
     if (!filter.class_id) {
       setClassArms([]);
       return;
     }
-    fetchClassArmsByClass(
-      filter.class_id,
-      filter.programme_id ? { programme_id: filter.programme_id } : {},
-    )
+    scoreManagerApi
+      .getMyClassArms({ class_id: filter.class_id, programme_id: filter.programme_id || undefined })
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
@@ -378,24 +390,34 @@ const UploadScoresTab = () => {
   const closeSubmitConfirm = () => setSubmitConfirm({ open: false, allocation: null, all: false });
 
   const handleSubmitScore = async (allocation) => {
+    setSubmittingIds((prev) => new Set(prev).add(allocation.id));
     try {
       await scoreManagerApi.submitScores({
         subject_id: allocation.subject_id,
         class_arm_id: allocation.class_arm_id,
         session_term_id: sessionTermId,
       });
-      setAllocations((prev) =>
-        prev.map((a) => (a.id === allocation.id ? { ...a, teacher_submit: 'yes' } : a)),
-      );
+      // Full refetch (not just a local patch) so the analytics summary
+      // cards above the list reflect the new submission count immediately
+      // too, not just this one card's badge.
+      await fetchAllocations();
       showSnackbar(
         `Scores for ${allocation.subject_name} (${allocation.class_name}) submitted successfully!`,
       );
     } catch (err) {
       showSnackbar('Failed to submit scores', 'error');
+    } finally {
+      setSubmittingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(allocation.id);
+        return next;
+      });
     }
   };
 
   const handleSubmitAllScores = async () => {
+    const allIds = new Set(filteredAllocations.map((a) => a.id));
+    setSubmittingIds(allIds);
     try {
       const res = await scoreManagerApi.submitAllScoresValidated({
         class_arm_id: filter.class_arm_id,
@@ -410,14 +432,7 @@ const UploadScoresTab = () => {
       const submittedCount = data.submitted_count || 0;
       const skipped = data.skipped || [];
 
-      if (submittedCount > 0) {
-        const submittedIds = filteredAllocations
-          .filter((a) => !skipped.some((s) => s.subject_id === a.subject_id))
-          .map((a) => a.id);
-        setAllocations((prev) =>
-          prev.map((a) => (submittedIds.includes(a.id) ? { ...a, teacher_submit: 'yes' } : a)),
-        );
-      }
+      await fetchAllocations();
 
       if (skipped.length > 0) {
         showSnackbar(
@@ -429,16 +444,18 @@ const UploadScoresTab = () => {
       }
     } catch (err) {
       showSnackbar('Failed to submit all scores', 'error');
+    } finally {
+      setSubmittingIds(new Set());
     }
   };
 
   const openScoreSheet = (allocation) => {
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       subject_id: allocation.subject_id,
       class_arm_id: allocation.class_arm_id,
       session_term_id: sessionTermId,
     });
-    window.open(`/result-scoresheet?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    window.open(`/result-scoresheet?t=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   const openLearnersModal = async (allocation) => {
@@ -463,6 +480,9 @@ const UploadScoresTab = () => {
 
   return (
     <Box>
+      {/* ── Top Analytics Summary Header ────────────────────── */}
+      <ScoreUploadAnalytics analyticsData={analyticsData} loading={loading} />
+
       {/* ── Guidance banner — what this page is for, and what to do next ── */}
       <Alert
         icon={<IconBulb size={20} />}
@@ -472,7 +492,7 @@ const UploadScoresTab = () => {
           mb: 2,
           borderRadius: '10px',
           fontWeight: 500,
-          alignItems: 'center',
+          alignItems: 'flex-start',
           animation: 'scorePageGuidancePulse 1.4s ease-in-out infinite',
           '@keyframes scorePageGuidancePulse': {
             '0%, 100%': { opacity: 1 },
@@ -480,15 +500,68 @@ const UploadScoresTab = () => {
           },
         }}
       >
-        This is where subject teachers enter and manage learner scores. Pick a class arm below
-        (already preselected for you) — then, for each subject, either <strong>Download</strong> a
-        template, fill it in and <strong>Upload</strong> it back, or upload the whole class at once
-        with the buttons above the list. Click <strong>Score Sheet</strong> on any subject to
-        review, edit or submit its scores.
+        <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 0.5 }}>
+          This page is where subject teachers enter and manage learner scores
+        </Typography>
+        <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+          The stats above summarize total subjects, registered learners and upload progress for the
+          class arm selected below (already preselected for you — the Fetch button only matters if
+          you change a filter). Each card below is one subject: <strong>Download</strong> its
+          template, fill it in offline and <strong>Upload</strong> it back, or type scores straight
+          into the browser. Click a subject's <strong>Score Sheet</strong> button to review, edit or
+          submit its scores.
+        </Typography>
+        <Typography variant="body2" component="div" sx={{ mb: canShowBulkActions ? 1 : 0 }}>
+          In a hurry? The two buttons above the subject list —{' '}
+          <strong>"Download All Subjects"</strong> and <strong>"Upload All Subjects"</strong> — work
+          on every subject in the class at once: one Excel file with a column per subject, instead
+          of downloading/uploading each subject separately.
+        </Typography>
+        {canShowBulkActions && (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Tooltip title={bulkTooltip}>
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<IconDownload size={14} />}
+                  disabled={!allFiltersSelected}
+                  onClick={() => setDownloadCombinedDialog(true)}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    color: '#fff',
+                  }}
+                >
+                  Jump to: Download All Subjects
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title={bulkTooltip}>
+              <span>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="inherit"
+                  startIcon={<IconCloudUpload size={14} />}
+                  disabled={!allFiltersSelected}
+                  onClick={() => setUploadDialog({ open: true, subjectName: null })}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    color: '#fff',
+                  }}
+                >
+                  Jump to: Upload All Subjects
+                </Button>
+              </span>
+            </Tooltip>
+          </Box>
+        )}
       </Alert>
-
-      {/* ── Top Analytics Summary Header ────────────────────── */}
-      <ScoreUploadAnalytics analyticsData={analyticsData} />
 
       <Paper
         elevation={0}
@@ -518,7 +591,13 @@ const UploadScoresTab = () => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {canShowBulkActions && (
               <>
-                <Tooltip title={bulkTooltip}>
+                <Tooltip
+                  title={
+                    allFiltersSelected
+                      ? 'Downloads ONE Excel file with a column for every subject in this class arm — fill it in and upload it back with the button next to this one.'
+                      : bulkTooltip
+                  }
+                >
                   <span>
                     <Button
                       variant="contained"
@@ -529,11 +608,17 @@ const UploadScoresTab = () => {
                       onClick={() => setDownloadCombinedDialog(true)}
                       sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
                     >
-                      Download {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                      Download All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
                     </Button>
                   </span>
                 </Tooltip>
-                <Tooltip title={bulkTooltip}>
+                <Tooltip
+                  title={
+                    allFiltersSelected
+                      ? "Uploads a previously downloaded all-subjects Excel file — every subject's scores in it are saved at once."
+                      : bulkTooltip
+                  }
+                >
                   <span>
                     <Button
                       variant="contained"
@@ -544,7 +629,7 @@ const UploadScoresTab = () => {
                       onClick={() => setUploadDialog({ open: true, subjectName: null })}
                       sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
                     >
-                      Upload {selectedClassName ? `(${selectedClassName})` : ''} Scoresheet
+                      Upload All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
                     </Button>
                   </span>
                 </Tooltip>
@@ -735,8 +820,22 @@ const UploadScoresTab = () => {
           </Grid>
         </Box>
 
+        {/* ── Skeleton — shown for the first fetch and every refetch, so
+             a filter change or Fetch click never looks frozen ───────── */}
+        {loading && (
+          <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
+            <Grid container spacing={2}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
+                  <Skeleton variant="rounded" height={280} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
+
         {/* ── Prompt when not fetched yet ─────────────────────── */}
-        {!dataFetched && (
+        {!loading && !dataFetched && (
           <Box sx={{ p: 3, textAlign: 'center' }}>
             <Alert
               severity="info"
@@ -750,35 +849,45 @@ const UploadScoresTab = () => {
         )}
 
         {/* ── Empty result → subjects not allocated to a teacher ── */}
-        {dataFetched && filteredAllocations.length === 0 && (
+        {!loading && dataFetched && filteredAllocations.length === 0 && (
           <Box sx={{ px: 2, pt: 1 }}>
             <Alert
               severity="info"
               variant="outlined"
               sx={{ borderRadius: '8px', py: 0.25, fontSize: '0.8125rem' }}
             >
-              No subjects found — subjects must be <strong>allocated to a subject teacher</strong>{' '}
-              for this session term to appear here. Assign teachers under{' '}
-              <Link
-                component={RouterLink}
-                to="/staff-setup?tab=allocations&sub=subject-teacher"
-                fontWeight={700}
-              >
-                Staff Manager → Subject Teacher Allocation
-              </Link>
-              , then click Fetch again.
+              {isAdminRole ? (
+                <>
+                  No subjects found — subjects must be{' '}
+                  <strong>allocated to a subject teacher</strong> for this session term to appear
+                  here. Assign teachers under{' '}
+                  <Link
+                    component={RouterLink}
+                    to="/staff-setup?tab=allocations&sub=subject-teacher"
+                    fontWeight={700}
+                  >
+                    Staff Manager → Subject Teacher Allocation
+                  </Link>
+                  , then click Fetch again.
+                </>
+              ) : (
+                <>
+                  No subjects have been allocated to you for this class arm this term yet. Contact
+                  your school administrator to get assigned, then click Fetch again.
+                </>
+              )}
             </Alert>
           </Box>
         )}
 
         {/* ── CARD GRID VIEW (Primary Layout matching essential_v2) ──────── */}
-        {dataFetched && viewMode === 'cards' && filteredAllocations.length > 0 && (
+        {!loading && dataFetched && viewMode === 'cards' && filteredAllocations.length > 0 && (
           <Box sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Grid container spacing={2}>
               {filteredAllocations.map((alloc) => (
                 <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={alloc.id}>
                   <ScoreUploadCard
-                    allocation={alloc}
+                    allocation={{ ...alloc, isSubmitting: submittingIds.has(alloc.id) }}
                     onUploadScore={(a) => setActionSelectionDialog({ open: true, allocation: a })}
                     onViewScoreSheet={openScoreSheet}
                     onSubmitScore={(a) => openSubmitConfirm(a)}
@@ -791,7 +900,7 @@ const UploadScoresTab = () => {
         )}
 
         {/* ── TABLE VIEW (Fallback Option) ────────────────────── */}
-        {dataFetched && viewMode === 'table' && filteredAllocations.length > 0 && (
+        {!loading && dataFetched && viewMode === 'table' && filteredAllocations.length > 0 && (
           <Box>
             <Box sx={{ p: 2 }}>
               <TableContainer sx={{ overflowX: 'auto' }}>

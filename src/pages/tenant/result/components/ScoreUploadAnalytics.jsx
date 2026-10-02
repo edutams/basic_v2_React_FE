@@ -1,6 +1,24 @@
-import { Box, Typography, Paper, Grid, LinearProgress, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Grid, LinearProgress, Skeleton, useTheme } from '@mui/material';
 
-const ScoreUploadAnalytics = ({ analyticsData }) => {
+const AnalyticsCardSkeleton = ({ cardStyle, title }) => (
+  <Paper elevation={0} sx={cardStyle}>
+    <Typography
+      variant="subtitle2"
+      fontWeight={700}
+      color="text.primary"
+      align="center"
+      sx={{ fontSize: '0.875rem' }}
+    >
+      {title}
+    </Typography>
+    <Box sx={{ mt: 1 }}>
+      <Skeleton variant="rounded" height={7} sx={{ borderRadius: 4, mb: 1 }} />
+      <Skeleton variant="text" width="70%" sx={{ mx: 'auto' }} />
+    </Box>
+  </Paper>
+);
+
+const ScoreUploadAnalytics = ({ analyticsData, loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -37,13 +55,33 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
     backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FAFBFD',
   };
 
+  if (loading) {
+    return (
+      <Box sx={{ mb: 2.5 }}>
+        <Grid container spacing={2}>
+          {['C.A Scores Upload', 'Exam Scores Upload', 'Score Submission'].map((title) => (
+            <Grid key={title} size={{ xs: 12, sm: 4 }}>
+              <AnalyticsCardSkeleton cardStyle={cardStyle} title={title} />
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ mb: 2.5 }}>
       <Grid container spacing={2}>
         {/* C.A Scores Upload */}
         <Grid size={{ xs: 12, sm: 4 }}>
           <Paper elevation={0} sx={cardStyle}>
-            <Typography variant="subtitle2" fontWeight={700} color="text.primary" align="center" sx={{ fontSize: '0.875rem' }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              color="text.primary"
+              align="center"
+              sx={{ fontSize: '0.875rem' }}
+            >
               C.A Scores Upload
             </Typography>
             <Box sx={progressBoxStyle}>
@@ -63,11 +101,20 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
                     }}
                   />
                 </Box>
-                <Typography variant="body2" fontWeight={800} sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={800}
+                  sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}
+                >
                   {caPercentage}%
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={500}
+                sx={{ fontSize: '0.75rem' }}
+              >
                 {formatNum(caUploaded)} C.A Scores out of {formatNum(caTotal)}
               </Typography>
             </Box>
@@ -77,7 +124,13 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
         {/* Exam Scores Upload */}
         <Grid size={{ xs: 12, sm: 4 }}>
           <Paper elevation={0} sx={cardStyle}>
-            <Typography variant="subtitle2" fontWeight={700} color="text.primary" align="center" sx={{ fontSize: '0.875rem' }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              color="text.primary"
+              align="center"
+              sx={{ fontSize: '0.875rem' }}
+            >
               Exam Scores Upload
             </Typography>
             <Box sx={progressBoxStyle}>
@@ -97,11 +150,20 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
                     }}
                   />
                 </Box>
-                <Typography variant="body2" fontWeight={800} sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={800}
+                  sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}
+                >
                   {examPercentage}%
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={500}
+                sx={{ fontSize: '0.75rem' }}
+              >
                 {formatNum(examUploaded)} Exam Scores out of {formatNum(examTotal)}
               </Typography>
             </Box>
@@ -111,7 +173,13 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
         {/* Score Submission */}
         <Grid size={{ xs: 12, sm: 4 }}>
           <Paper elevation={0} sx={cardStyle}>
-            <Typography variant="subtitle2" fontWeight={700} color="text.primary" align="center" sx={{ fontSize: '0.875rem' }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              color="text.primary"
+              align="center"
+              sx={{ fontSize: '0.875rem' }}
+            >
               Score Submission
             </Typography>
             <Box sx={progressBoxStyle}>
@@ -131,11 +199,20 @@ const ScoreUploadAnalytics = ({ analyticsData }) => {
                     }}
                   />
                 </Box>
-                <Typography variant="body2" fontWeight={800} sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={800}
+                  sx={{ minWidth: 42, textAlign: 'right', fontSize: '0.95rem' }}
+                >
                   {submissionPercentage}%
                 </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={500}
+                sx={{ fontSize: '0.75rem' }}
+              >
                 {formatNum(submittedSubjects)} Submitted out of {formatNum(totalSubjects)} Subjects
               </Typography>
             </Box>

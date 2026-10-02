@@ -16,6 +16,7 @@ import {
   fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   displayScore, buildReportProp, gradeScaleFor, printNode,
 } from './reportCardUtils';
@@ -680,10 +681,12 @@ const ReportSheetTab = () => {
             setActionMenuAnchor(null);
             setActionMenuRow(null);
             if (row) {
-              navigate(
-                `/result-ca_breakdown?student_registration_id=${row.student_registration_id}` +
-                `&session_term_id=${selectedSessionTerm}&class_arm_id=${selectedClassArm}`
-              );
+              const token = encodeLinkParams({
+                student_registration_id: row.student_registration_id,
+                session_term_id: selectedSessionTerm,
+                class_arm_id: selectedClassArm,
+              });
+              navigate(`/result-ca_breakdown?t=${token}`);
             }
           }}
         >

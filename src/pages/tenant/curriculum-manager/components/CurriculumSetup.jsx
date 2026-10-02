@@ -209,6 +209,9 @@ const CurriculumSetup = () => {
 
   // Assign to Classes state
   const [classData, setClassData] = useState([]);
+  // Last-saved curriculum id per row — the diff baseline for the unsaved-
+  // changes indicator, keyed by the same synthetic row id as classData.
+  const [savedCurriculumIds, setSavedCurriculumIds] = useState({});
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [loadingSave, setLoadingSave] = useState(false);
   const [sessions, setSessions] = useState([]);
@@ -362,6 +365,9 @@ const CurriculumSetup = () => {
       const response = await fetchClassAssignments(selectedSession, selectedTerm);
       if (response.status) {
         setClassData(response.data);
+        setSavedCurriculumIds(
+          Object.fromEntries(response.data.map((c) => [c.id, c.assigned_curriculum_id || ''])),
+        );
       }
     } catch (error) {
       showSnackbar('Failed to load class assignments', 'error');
@@ -380,6 +386,17 @@ const CurriculumSetup = () => {
     );
     setClassData(updated);
   };
+
+  // Picking a curriculum in a row only changes local state — nothing is
+  // persisted until "Update" is clicked. Diffed against the last-saved
+  // snapshot so switching a row back to its original value doesn't still
+  // count as unsaved, and so this resets cleanly after a successful save.
+  const dirtyRowIds = new Set(
+    classData
+      .filter((cls) => (cls.assigned_curriculum_id || '') !== (savedCurriculumIds[cls.id] ?? ''))
+      .map((cls) => cls.id),
+  );
+  const hasUnsavedAssignments = dirtyRowIds.size > 0;
 
   const handleSaveAssignments = async () => {
     if (!selectedSession || !selectedTerm) {
@@ -405,6 +422,9 @@ const CurriculumSetup = () => {
       const response = await saveClassAssignments(selectedSession, selectedTerm, assignments);
       if (response.status) {
         showSnackbar('Assignments saved successfully', 'success');
+        setSavedCurriculumIds(
+          Object.fromEntries(classData.map((c) => [c.id, c.assigned_curriculum_id || ''])),
+        );
         fetchStats();
       } else {
         // Display the detailed error message from the backend
@@ -1039,15 +1059,33 @@ const CurriculumSetup = () => {
                     data-tour={CURRICULUM_TOUR_KEYS.UPDATE_BTN}
                     variant="contained"
                     size="small"
+                    color={hasUnsavedAssignments ? 'warning' : 'primary'}
                     onClick={handleSaveAssignments}
                     disabled={loadingSave}
+                    sx={
+                      hasUnsavedAssignments
+                        ? {
+                            animation: 'curriculumUnsavedPulse 1.4s ease-in-out infinite',
+                            '@keyframes curriculumUnsavedPulse': {
+                              '0%, 100%': { boxShadow: '0 0 0 0 rgba(237,108,2,0.5)' },
+                              '50%': { boxShadow: '0 0 0 6px rgba(237,108,2,0)' },
+                            },
+                          }
+                        : undefined
+                    }
                   >
-                    {loadingSave ? <CircularProgress size={24} /> : 'Update'}
+                    {loadingSave ? <CircularProgress size={24} /> : hasUnsavedAssignments ? 'Update (unsaved)' : 'Update'}
                   </Button>
                 </Box>
               </Box>
             }
           >
+            {hasUnsavedAssignments && (
+              <Alert severity="warning" icon={<IconAlertCircle size={18} />} sx={{ mb: 1.5 }}>
+                You changed the curriculum for {dirtyRowIds.size} row{dirtyRowIds.size === 1 ? '' : 's'} below —
+                it isn't saved yet. Click <strong>Update</strong> to apply {dirtyRowIds.size === 1 ? 'it' : 'them'}.
+              </Alert>
+            )}
             <Paper sx={{ overflowX: 'auto' }}>
               <TableContainer sx={{ maxHeight: 380, overflowY: 'auto' }}>
                 <Table
@@ -1090,7 +1128,20 @@ const CurriculumSetup = () => {
                       ))
                     ) : classData.length > 0 ? (
                       classData.map((item, i) => (
-                        <TableRow key={item.id} hover>
+                        <TableRow
+                          key={item.id}
+                          hover
+                          sx={
+                            dirtyRowIds.has(item.id)
+                              ? {
+                                  bgcolor: (theme) =>
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(237,108,2,0.12)'
+                                      : 'rgba(237,108,2,0.08)',
+                                }
+                              : undefined
+                          }
+                        >
                           <TableCell>{i + 1}</TableCell>
                           <TableCell>
                             <Box

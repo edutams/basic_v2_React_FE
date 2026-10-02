@@ -584,10 +584,25 @@ const NewApplication = () => {
     return () => clearTimeout(timer);
   }, [activeStep, maxAllowedStep, navigate, location.state, notify, batchLoaded, resumeApplication, admissionId]);
 
-  // Update activeStep when currentStage changes (for resuming applications)
+  // Jump activeStep to currentStage once, when a resumed application's
+  // saved stage first loads. currentStage always records the stage just
+  // *completed* (set by saveStepData/updateStage), one behind activeStep —
+  // so letting this effect re-fire on every later currentStage change (as
+  // the user progresses through the form in this same session) fought
+  // handleNext()'s forward move with a same-tick backward one, and the
+  // resulting activeStep/URL disagreement across renders is what caused
+  // the step=3/step=4 address-bar flicker right after payment. One-shot via
+  // a ref keeps the original "restore where they left off" behavior for a
+  // fresh resume without re-triggering mid-session.
+  const hasAppliedResumeStageRef = useRef(false);
   useEffect(() => {
-    if (resumeApplication && currentStage !== null && currentStage !== undefined) {
-      // Only update if we're resuming and currentStage is loaded
+    if (
+      resumeApplication &&
+      !hasAppliedResumeStageRef.current &&
+      currentStage !== null &&
+      currentStage !== undefined
+    ) {
+      hasAppliedResumeStageRef.current = true;
       setActiveStep(currentStage);
     }
   }, [currentStage, resumeApplication]);

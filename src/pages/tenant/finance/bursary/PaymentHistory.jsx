@@ -185,8 +185,16 @@ const PaymentHistory = () => {
     (async () => {
       try {
         const res = await fetchMyWards();
-        setWards(res.data?.wards || []);
+        const loadedWards = res.data?.wards || [];
+        setWards(loadedWards);
         setGuardian(res.data?.guardian || null);
+        // Default to the first ward instead of landing on the empty
+        // "Myself" view — most parents are here to check a specific ward's
+        // payments, not their own.
+        if (loadedWards.length > 0) {
+          setSelectedWardId(loadedWards[0].id);
+          setViewMode('ward');
+        }
       } catch (error) {
         console.error('Failed to load wards', error);
         notify.error('Failed to load your wards');
@@ -728,6 +736,7 @@ const PaymentHistory = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>S/N</TableCell>
+                    <TableCell>Transaction ID</TableCell>
                     <TableCell>Date</TableCell>
                     <TableCell>Payment Name</TableCell>
                     <TableCell>Description</TableCell>
@@ -743,14 +752,14 @@ const PaymentHistory = () => {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        {Array.from({ length: 10 }).map((__, j) => (
+                        {Array.from({ length: 11 }).map((__, j) => (
                           <TableCell key={j}><Skeleton variant="text" /></TableCell>
                         ))}
                       </TableRow>
                     ))
                   ) : rows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10}>
+                      <TableCell colSpan={11}>
                         <Alert severity="info" sx={{ my: 1 }}>No transactions found.</Alert>
                       </TableCell>
                     </TableRow>
@@ -758,6 +767,7 @@ const PaymentHistory = () => {
                     rows.map((row, index) => (
                       <TableRow key={row.id} hover>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                        <TableCell>{row.order_id || '—'}</TableCell>
                         <TableCell>{row.trans_date}</TableCell>
                         <TableCell>{row.payment_name}</TableCell>
                         <TableCell>{row.description || '—'}</TableCell>

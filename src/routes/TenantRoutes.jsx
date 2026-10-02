@@ -140,6 +140,7 @@ const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/Result
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
 const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
+const ClassDossierPage = Loadable(lazy(() => import('@/pages/tenant/result/ClassDossierPage')));
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
@@ -605,6 +606,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.view_dossier">
             <ReportSheetPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-class_dossier',
+        element: (
+          <TenantProtectedRoute permission="result.view_dossier">
+            <ClassDossierPage />
           </TenantProtectedRoute>
         ),
       },

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -87,7 +88,8 @@ const ResultSetupTab = () => {
     getCAReportForDivision,
   } = useResultTemplate();
 
-  const [innerTab, setInnerTab] = useState(0);
+  const [searchParams] = useSearchParams();
+  const [innerTab, setInnerTab] = useState(searchParams.get('tab') === 'templates' ? 1 : 0);
   const [currentSessionTermId, setCurrentSessionTermId] = useState(null);
   const [gradeStats, setGradeStats] = useState({
     total_grades: 0,

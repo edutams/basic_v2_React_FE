@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Grid, FormControl, InputLabel, Select, MenuItem,
   Table, TableBody, TableCell, TableHead, TableRow, useTheme, Alert,
   Avatar, Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  Snackbar, CircularProgress, Chip,
+  Snackbar, CircularProgress, Chip, Skeleton, Tooltip,
 } from '@mui/material';
-import { IconX } from '@tabler/icons-react';
+import { IconX, IconTemplate } from '@tabler/icons-react';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
 import { fetchSessionTerms, fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import {
   fetchSessions, fetchTerms, fetchProgrammes, fetchClassesByProgramme, fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import { useResultTemplate } from '@/context/ResultTemplateContext';
 
 // Trim trailing zeros: 80.00 → 80, 10.01 → 10.01
 const formatScore = (value) => {
@@ -22,6 +24,14 @@ const formatScore = (value) => {
 const SummarySheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
+  const { activeTemplate, templateSamples, fetchTemplateSamples } = useResultTemplate();
+  const currentSample = templateSamples.find((t) => t.sample === activeTemplate) ?? null;
+
+  useEffect(() => {
+    if (templateSamples.length === 0) fetchTemplateSamples();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Dropdown data ───────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -69,6 +79,9 @@ const SummarySheetTab = () => {
         setSessions(sessionsData);
         setProgrammes(programmesData);
         setSessionTermsData(stRes?.data ?? []);
+        if (programmesData.length > 0) {
+          setFilters((prev) => (prev.programme_id ? prev : { ...prev, programme_id: programmesData[0].id }));
+        }
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         activeSessionTermRef.current = activeSessionTerm;
@@ -130,8 +143,12 @@ const SummarySheetTab = () => {
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
+        if (data.length > 0 && !data.some((c) => c.id === filters.class_id)) {
+          setFilters((prev) => ({ ...prev, class_id: data[0].id, class_arm_id: '' }));
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.programme_id]);
 
   // ── Class arms for the selected class ──────────────────────
@@ -144,8 +161,12 @@ const SummarySheetTab = () => {
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
+        if (data.length > 0 && !data.some((a) => a.id === filters.class_arm_id)) {
+          setFilters((prev) => ({ ...prev, class_arm_id: data[0].id }));
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.class_id, filters.programme_id]);
 
   // ── Load the summary matrix via the Fetch button ─────────────
@@ -175,10 +196,16 @@ const SummarySheetTab = () => {
     loadSummary(filters.class_arm_id, sessionTermId);
   };
 
-  // Clear stale data whenever the selection changes
+  // Clear stale data whenever the selection changes, then auto-fetch —
+  // the filters are now preselected (first programme/class/arm, active
+  // session/term), so the summary shows up without an extra manual click.
   useEffect(() => {
     setData(null);
     setError('');
+    if (filters.class_arm_id && sessionTermId) {
+      loadSummary(filters.class_arm_id, sessionTermId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.class_arm_id, sessionTermId]);
 
   // ── Breakdown dialog ────────────────────────────────────────
@@ -256,6 +283,11 @@ const SummarySheetTab = () => {
   const grades = data?.grades ?? [];
   const subjects = data?.subjects ?? [];
   const headerHeight = Math.max(280, grades.length * 49);
+
+  // ── Analytics — derived entirely from the matrix already fetched, no
+  // extra round trip. "Fail" bands are detected by remark text (same scale
+  // every grade/remark call in this module already uses) so pass rate
+  // works for whatever grading scale this division has configured.
 
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor }}>
@@ -350,11 +382,26 @@ const SummarySheetTab = () => {
         )}
 
         {loading && (
-          <Box sx={{ py: 6, textAlign: 'center' }}>
-            <CircularProgress size={32} />
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Loading summary sheet...
-            </Typography>
+          <Box sx={{ display: 'flex', gap: 2.5, flexWrap: 'wrap' }}>
+            {/* Grade × Subject matrix skeleton */}
+            <Box sx={{ display: 'flex', gap: 0.5 }}>
+              <Skeleton variant="rounded" width={140} height={280} />
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} variant="rounded" width={70} height={280} />
+              ))}
+            </Box>
+            {/* Side panel skeleton — mirrors the 2-column mini stat cards +
+                chart it's standing in for */}
+            <Box sx={{ flex: 1, minWidth: 280 }}>
+              <Grid container spacing={1} sx={{ mb: 2 }}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Grid key={i} size={6}>
+                    <Skeleton variant="rounded" height={64} />
+                  </Grid>
+                ))}
+              </Grid>
+              <Skeleton variant="rounded" height={240} />
+            </Box>
           </Box>
         )}
 
@@ -372,9 +419,11 @@ const SummarySheetTab = () => {
               <Alert severity="info" sx={{ mb: 2 }}>No subjects registered for this class arm in the selected term.</Alert>
             )}
 
-            {/* ── Table Container (scrollable) ────────────────── */}
+            {/* ── Matrix (left, natural width) + Analytics (right, fills
+                the leftover blank space instead of sitting unused) ──── */}
             {subjects.length > 0 && (
-              <Box sx={{ overflowX: 'auto' }}>
+              <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <Box sx={{ overflowX: 'auto', flexShrink: 0, maxWidth: '100%' }}>
                 <Box sx={{ minWidth: 600, display: 'flex', flexDirection: 'column' }}>
 
                   {/* ── Main Data Row ─────────────────────────── */}
@@ -404,13 +453,15 @@ const SummarySheetTab = () => {
                     {/* Right: Subject columns */}
                     <Box sx={{ display: 'flex', flex: 1, overflowX: 'auto' }}>
                       {subjects.map((subj) => (
-                        <Box key={subj.subject_id} sx={{ flexShrink: 0, minWidth: 70 }}>
+                        <Box key={subj.subject_id} sx={{ flexShrink: 0, minWidth: 70, opacity: subj.submitted ? 1 : 0.5 }}>
                           <Table size="small" sx={{ borderCollapse: 'collapse' }}>
                             <TableHead>
                               <TableRow>
-                                <TableCell sx={{ height: headerHeight, fontWeight: 700, textAlign: 'center', border: `1px solid ${borderColor}`, bgcolor: isDark ? 'grey.900' : '#f5f5f5', writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}>
-                                  {subj.subject_name}
-                                </TableCell>
+                                <Tooltip title={subj.submitted ? '' : 'Not submitted yet — scores hidden until the teacher submits'}>
+                                  <TableCell sx={{ height: headerHeight, fontWeight: 700, textAlign: 'center', border: `1px solid ${borderColor}`, bgcolor: isDark ? 'grey.900' : '#f5f5f5', writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap' }}>
+                                    {subj.subject_name}{!subj.submitted && ' (Pending)'}
+                                  </TableCell>
+                                </Tooltip>
                               </TableRow>
                             </TableHead>
                             <TableBody>
@@ -420,9 +471,10 @@ const SummarySheetTab = () => {
                                     sx={{
                                       height: 49, fontWeight: 600, textAlign: 'center',
                                       border: `1px solid ${borderColor}`,
-                                      cursor: 'pointer', textDecoration: 'underline',
+                                      cursor: subj.submitted ? 'pointer' : 'default',
+                                      textDecoration: subj.submitted ? 'underline' : 'none',
                                     }}
-                                    onClick={() => handleCellClick(subj, g)}
+                                    onClick={() => subj.submitted && handleCellClick(subj, g)}
                                   >
                                     {data.matrix?.[subj.subject_id]?.[gi] ?? 0}
                                   </TableCell>
@@ -497,6 +549,50 @@ const SummarySheetTab = () => {
 
                 </Box>
               </Box>
+
+              {/* ── Current result template — fills the blank space beside a
+                  narrow matrix instead of leaving it empty ──────────── */}
+              {data && (
+                <Box sx={{ flex: 1, minWidth: 280 }}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      border: '1px solid', borderColor, borderRadius: '10px',
+                      height: '100%', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', overflow: 'hidden',
+                    }}
+                  >
+                    <Box sx={{ width: '100%', p: 1.5, pb: 1 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" textAlign="center">
+                        CURRENT RESULT TEMPLATE{activeTemplate ? ` — ${activeTemplate}` : ''}
+                      </Typography>
+                    </Box>
+                    {currentSample?.image ? (
+                      <Box
+                        component="img"
+                        src={currentSample.image}
+                        alt={activeTemplate}
+                        sx={{ width: '100%', flex: 1, minHeight: 200, objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                      />
+                    ) : (
+                      <Box sx={{ flex: 1, minHeight: 200, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <IconTemplate size={40} color={isDark ? '#fff' : '#94a3b8'} />
+                      </Box>
+                    )}
+                    <Box sx={{ width: '100%', p: 1.5 }}>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        onClick={() => navigate('/result-setup?tab=templates')}
+                      >
+                        Change Template
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Box>
+              )}
+              </Box>
             )}
           </>
         )}
@@ -527,7 +623,28 @@ const SummarySheetTab = () => {
             </Alert>
           )}
           {breakdown.loading ? (
-            <Box sx={{ py: 6, textAlign: 'center' }}><CircularProgress size={30} /></Box>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  {['#', 'Photo', 'Participant ID', 'Participant Name', 'CA Score', 'Exam Score', 'Total'].map((h) => (
+                    <TableCell key={h} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', borderRight: '1px solid', borderColor: 'divider' }}>{h}</TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="text" width={16} /></TableCell>
+                    <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="circular" width={28} height={28} /></TableCell>
+                    <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="text" width={70} /></TableCell>
+                    <TableCell sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="text" width={140} /></TableCell>
+                    <TableCell align="center" sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="text" width={30} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ borderRight: '1px solid', borderColor: 'divider' }}><Skeleton variant="text" width={30} sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center"><Skeleton variant="text" width={30} sx={{ mx: 'auto' }} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>

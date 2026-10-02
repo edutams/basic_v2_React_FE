@@ -224,9 +224,32 @@ const PromotionSettings = ({ onStatsRefresh }) => {
 
       {loading ? (
         <Paper elevation={0} sx={{ p: 3, borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-          {[0, 1, 2].map((row) => (
-            <Skeleton key={row} variant="rounded" height={44} sx={{ mb: 1 }} />
-          ))}
+          <TableContainer sx={{ overflowX: 'auto' }}>
+            <Table sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Subject Type</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Total Subjects</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Pass Mark</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Subjects</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {['Compulsory', 'Elective', 'Trade'].map((type, i) => (
+                  <TableRow key={type}>
+                    <TableCell><Skeleton variant="text" width={16} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                    <TableCell><Skeleton variant="text" width={30} /></TableCell>
+                    <TableCell><Skeleton variant="rounded" width={130} height={24} /></TableCell>
+                    <TableCell><Skeleton variant="circular" width={24} height={24} /></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       ) : (
         <>

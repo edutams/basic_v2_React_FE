@@ -1195,7 +1195,7 @@ const BroadsheetTab = () => {
                   severity="warning"
                   sx={{ borderRadius: '10px' }}
                   action={
-                    can('result.admin.spa_publish_broadsheet') ? (
+                    can('result.admin.spa_approve_broadsheet') ? (
                       <Button
                         size="small"
                         variant="contained"

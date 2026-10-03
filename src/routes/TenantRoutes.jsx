@@ -596,7 +596,7 @@ const TenantRoutes = [
       {
         path: 'result-summary',
         element: (
-          <TenantProtectedRoute permission="result.admin.view_summary">
+          <TenantProtectedRoute permission="result.admin.view_summary_sheet">
             <SummarySheetPage />
           </TenantProtectedRoute>
         ),

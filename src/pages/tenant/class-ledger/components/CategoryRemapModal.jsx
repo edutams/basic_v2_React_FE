@@ -42,6 +42,19 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
     [categories, target],
   );
 
+  const currentCategoryName = useMemo(
+    () => categories.find((c) => c.id === target?.currentCategoryId)?.name || 'their current category',
+    [categories, target],
+  );
+
+  const newCategoryName = useMemo(
+    () => categories.find((c) => String(c.id) === String(newCategoryId))?.name || 'the new category',
+    [categories, newCategoryId],
+  );
+
+  const mappedCount = Object.values(mapping).filter((v) => v && v !== UNMAPPED).length;
+  const payableOldItems = oldItems.filter((item) => item.paid_amount > 0);
+
   useEffect(() => {
     if (open) {
       // A radio click on a specific category column pre-fills that target
@@ -116,10 +129,46 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
       </DialogTitle>
       <DialogContent>
         <Alert severity="info" sx={{ mb: 2 }}>
-          This student has already paid against some items in their current category.
-          Match each paid item on the left to its equivalent under the new category so
-          the payment follows them. Anything you leave unmapped stays exactly as it is —
-          still visible on their payment history, untouched.
+          <Typography variant="body2" fontWeight={700} gutterBottom>
+            What moving {target.fullName?.split(' ')[0] || 'this student'} from{' '}
+            <strong>{currentCategoryName}</strong> to <strong>{newCategoryName || 'a new category'}</strong> actually
+            does:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2.5, '& li': { mb: 0.5 } }}>
+            <li>
+              <Typography variant="body2">
+                Below is every fee this student has a payment against in <strong>{currentCategoryName}</strong>.
+                For each one, you decide: should that payment count toward a fee in{' '}
+                <strong>{newCategoryName || 'the new category'}</strong> instead?
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Pick a fee in "Map to"</strong> — the payment moves there: the old fee is cleared
+                (no longer owed, no longer shown), and the matching new fee shows as paid by that same amount.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                <strong>Leave it "unmapped"</strong> — nothing happens to that payment. It stays exactly where
+                it is, still visible in the student's payment history, but it will no longer count toward
+                anything they currently owe (because they're no longer in that category). No refund, no
+                transfer — it just stops being part of their active bill.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                Fees with nothing paid need no decision — they're simply dropped once the category changes.
+              </Typography>
+            </li>
+            <li>
+              <Typography variant="body2">
+                After you confirm: the student's category changes, and any other fee required by{' '}
+                <strong>{newCategoryName || 'the new category'}</strong> that you didn't map from anything above
+                gets added to their bill automatically (same as a brand-new student in that category).
+              </Typography>
+            </li>
+          </Box>
         </Alert>
 
         <FormControl size="small" sx={{ minWidth: 260, mb: 2 }}>
@@ -149,9 +198,13 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Current item (paid)</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Amount / Paid</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Map to</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    Fee under {currentCategoryName}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>Fee amount / Amount paid</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    Move this payment to which fee in {newCategoryName || 'the new category'}?
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -184,7 +237,9 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
                               }))
                             }
                           >
-                            <MenuItem value={UNMAPPED}>Leave unmapped (stays as-is)</MenuItem>
+                            <MenuItem value={UNMAPPED}>
+                              Don't move it — leave this payment in their history, untouched
+                            </MenuItem>
                             {newItems.map((n) => (
                               <MenuItem key={n.bursary_schedule_id} value={n.bursary_schedule_id}>
                                 {n.payment_name} (₦{n.amount.toLocaleString()})
@@ -203,9 +258,24 @@ const CategoryRemapModal = ({ open, target, sessionTermId, categories, onClose, 
 
         {!loadingPreview && newCategoryId && newItems.length === 0 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
-            The target category has no payment schedule configured for this student's
-            class/term yet — everything will be left unmapped (untouched).
+            {newCategoryName || 'The target category'} has no payment schedule configured for this student's
+            class/term yet — there's nothing to map to, so every paid item above will be left untouched in
+            their history, and no new fees will be added until a schedule is set for this category.
           </Alert>
+        )}
+
+        {!loadingPreview && newCategoryId && oldItems.length > 0 && (
+          <Typography variant="body2" sx={{ mt: 2 }} color="text.secondary">
+            On confirm: <strong>{mappedCount}</strong> of <strong>{payableOldItems.length}</strong> paid
+            item(s) will move to {newCategoryName || 'the new category'}
+            {payableOldItems.length - mappedCount > 0 && (
+              <>
+                , and <strong>{payableOldItems.length - mappedCount}</strong> will stay in {currentCategoryName}'s
+                history untouched
+              </>
+            )}
+            .
+          </Typography>
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>

@@ -15,7 +15,8 @@ import {
   TableRow,
   Paper,
   CircularProgress,
-  Grid
+  Grid,
+  Alert
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
@@ -101,7 +102,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
 
   const studentName = student?.users?.full_name || student?.user?.full_name || 'Student';
 
-  const { groupedData, totals } = useMemo(() => {
+  const { groupedData, totals, distinctCategories } = useMemo(() => {
     const groups = {};
     let totalBill = 0;
     let totalPaid = 0;
@@ -135,13 +136,16 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
       };
     });
 
+    const distinctCategories = [...new Set(data.map((item) => item.category_name).filter(Boolean))];
+
     return {
       groupedData: finalGroups,
       totals: {
         bill: totalBill,
         paid: totalPaid,
         balance: totalBalance,
-      }
+      },
+      distinctCategories,
     };
   }, [data]);
 
@@ -214,6 +218,14 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
               />
             </Box>
 
+            {distinctCategories.length > 1 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                This student has payment items from {distinctCategories.length} different pay categories
+                ({distinctCategories.join(', ')}) — usually from a pay category change. Check the "Category"
+                column below for each item.
+              </Alert>
+            )}
+
             {/* Header section */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="subtitle1" fontWeight={600}>
@@ -242,6 +254,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Sessn/Term</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Payment Items</TableCell>
+                    <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Category</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount Paid (NGN)</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Balance</TableCell>
@@ -261,6 +274,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                               </TableCell>
                             ) : null}
                             <TableCell>{item.payment_item}</TableCell>
+                            <TableCell>{item.category_name || '-'}</TableCell>
                             <TableCell>{parseFloat(item.sched_amount || 0).toLocaleString()}</TableCell>
                             <TableCell>{parseFloat(item.amount_paid || 0).toLocaleString()}</TableCell>
                             <TableCell>{parseFloat(item.balance_amount || 0).toLocaleString()}</TableCell>
@@ -297,7 +311,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
                         No payment records found.
                       </TableCell>
                     </TableRow>
@@ -305,7 +319,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                   {/* Totals Row */}
                   {groupedData.length > 0 && (
                     <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
-                      <TableCell colSpan={2} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
+                      <TableCell colSpan={3} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.bill.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.paid.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.balance.toLocaleString()}</TableCell>

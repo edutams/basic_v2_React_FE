@@ -1192,7 +1192,7 @@ const BroadsheetTab = () => {
                 </Alert>
               ) : (
                 <Alert
-                  severity="warning"
+                  severity="info"
                   sx={{ borderRadius: '10px' }}
                   action={
                     can('result.admin.spa_approve_broadsheet') ? (

@@ -18,8 +18,8 @@ const resultSheetApi = {
   // Two-stage flow: the School Portal Admin approves first (stage 1),
   // then the Head of School publishes (stage 2). Server rejects a HOS
   // publish until the SPA approval exists.
-  // POST /result-sheet/publish/spa { class_arm_id, session_term_id }
-  publishSpa: (data) => tenantApi.post('/result-sheet/publish/spa', data),
+  // POST /result-sheet/publish/spa_approve { class_arm_id, session_term_id }
+  publishSpa: (data) => tenantApi.post('/result-sheet/publish/spa_approve', data),
 
   // POST /result-sheet/publish/hos { class_arm_id, session_term_id }
   publishHos: (data) => tenantApi.post('/result-sheet/publish/hos', data),

@@ -148,15 +148,6 @@ const CommunicationsPage = Loadable(
   lazy(() => import('@/pages/tenant/communications/CommunicationsPage')),
 );
 
-// May open the Continuous Assessment (CA breakdown) page: learners via the
-// sidebar, staff via the Student Dossier / score sheet deep links. The learner
-// permission exists under two spellings across seeded databases.
-const CA_BREAKDOWN_ACCESS = [
-  'result.client.ca_breakdown',
-  'result.view_dossier',
-  'result.admin.view_score_sheet',
-];
-
 const TenantRoutes = [
   {
     path: '/setup-welcome',
@@ -556,7 +547,7 @@ const TenantRoutes = [
       {
         path: 'result-ca_breakdown',
         element: (
-          <TenantProtectedRoute anyOf={CA_BREAKDOWN_ACCESS}>
+          <TenantProtectedRoute permission="result.client.ca_breakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),

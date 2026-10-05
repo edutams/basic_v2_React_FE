@@ -1,9 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Grid, FormControl, InputLabel, Select, MenuItem, useTheme,
-  Alert, Snackbar, Skeleton,
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Button,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  useTheme,
+  Alert,
+  Snackbar,
+  Skeleton,
 } from '@mui/material';
 import { IconPrinter, IconLock } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
@@ -59,7 +75,8 @@ const CaBreakdownTab = () => {
       return;
     }
     let cancelled = false;
-    resultDossierApi.getMyRegistration()
+    resultDossierApi
+      .getMyRegistration()
       .then((res) => {
         if (cancelled) return;
         const body = res?.data;
@@ -83,7 +100,9 @@ const CaBreakdownTab = () => {
       .finally(() => {
         if (!cancelled) setTermsLoaded(true);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isSelfMode]);
 
   useEffect(() => {
@@ -133,10 +152,10 @@ const CaBreakdownTab = () => {
       }
     };
     load();
-    return () => { cancelled = true; };
-  }, [
-    termsReady, effectiveSessionTermId, studentRegistrationId, userId, classArmId,
-  ]);
+    return () => {
+      cancelled = true;
+    };
+  }, [termsReady, effectiveSessionTermId, studentRegistrationId, userId, classArmId]);
 
   const caOptions = payload?.ca_options || [];
   const student = payload?.user_details || null;
@@ -152,9 +171,7 @@ const CaBreakdownTab = () => {
 
   // True when at least one subject has an uploaded CA total for the selected
   // CA type — drives the "no scores yet" notice and hides the print/totals.
-  const hasAnyScore = subjectRows.some(
-    (s) => s.ca?.total !== null && s.ca?.total !== undefined,
-  );
+  const hasAnyScore = subjectRows.some((s) => s.ca?.total !== null && s.ca?.total !== undefined);
 
   const totalScore = caConfig
     ? subjectRows.reduce((sum, s) => sum + Number(s.ca?.total || 0), 0)
@@ -162,9 +179,7 @@ const CaBreakdownTab = () => {
   const gradedCount = caConfig
     ? subjectRows.filter((s) => s.ca?.total !== null && s.ca?.total !== undefined).length
     : 0;
-  const average = gradedCount > 0
-    ? +(Math.round((totalScore / gradedCount) * 100) / 100)
-    : 0;
+  const average = gradedCount > 0 ? +(Math.round((totalScore / gradedCount) * 100) / 100) : 0;
 
   const handlePrint = async () => {
     if (selectedCaIndex === '') return;
@@ -195,15 +210,28 @@ const CaBreakdownTab = () => {
   // page never flashes a bare spinner.
   if ((isSelfMode && !termsLoaded) || (loading && !payload)) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Skeleton width={260} height={28} />
         </Box>
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 5 }}><Skeleton width="80%" /></Grid>
-            <Grid size={{ xs: 12, sm: 4 }}><Skeleton width="60%" /></Grid>
-            <Grid size={{ xs: 12, sm: 3 }}><Skeleton width="50%" /></Grid>
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <Skeleton width="80%" />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Skeleton width="60%" />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Skeleton width="50%" />
+            </Grid>
           </Grid>
         </Box>
         <Box sx={{ p: 2 }}>
@@ -217,7 +245,14 @@ const CaBreakdownTab = () => {
   // ── Self mode: this account has never been registered ──────
   if (isSelfMode && myTerms.length === 0 && !payload) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 5, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" fontWeight={600}>
             {error || 'No student registration found for your account.'}
@@ -232,15 +267,21 @@ const CaBreakdownTab = () => {
 
   if (paymentRequired) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
           <IconLock size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
           <Alert severity="warning" sx={{ textAlign: 'left', mb: 2 }}>
             <Typography variant="subtitle2" fontWeight={900}>
               Payment Required
             </Typography>
-            You must clear your outstanding fees before you can view your results for this
-            term.
+            You must clear your outstanding fees before you can view your results for this term.
           </Alert>
           <Button variant="contained" size="small" onClick={() => navigate('/pay-school-fees')}>
             Go to Payments
@@ -252,13 +293,23 @@ const CaBreakdownTab = () => {
 
   if (error) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 4 }}>
-          <Alert severity="error" action={
-            <Button color="inherit" size="small" onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          }>
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" onClick={() => window.location.reload()}>
+                Retry
+              </Button>
+            }
+          >
             {error}
           </Alert>
         </Box>
@@ -268,7 +319,14 @@ const CaBreakdownTab = () => {
 
   if (!payload) {
     return (
-      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          borderRadius: '14px',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        }}
+      >
         <Box sx={{ p: 5, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" fontWeight={600}>
             No student data found.
@@ -281,10 +339,25 @@ const CaBreakdownTab = () => {
   return (
     <Paper
       elevation={0}
-      sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}
+      sx={{
+        borderRadius: '14px',
+        border: '1px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+      }}
     >
       {/* ── Card Header ──────────────────────────────────────── */}
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1,
+        }}
+      >
         <Typography variant="h6" fontWeight={600}>
           {caConfig && student
             ? `CA Report — ${student.class_name} ${student.arm_name} • ${student.lname} ${student.fname}`
@@ -308,12 +381,18 @@ const CaBreakdownTab = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, sm: 5 }}>
             <Typography variant="h6" color="text.dark" fontWeight={800}>
-              Name Of Student: <strong>{student.lname} {student.fname} {student.mname}</strong>
+              Name Of Student:{' '}
+              <strong>
+                {student.lname} {student.fname} {student.mname}
+              </strong>
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Typography variant="h6" color="text.dark" fontWeight={800}>
-              Student Class: <strong>{student.class_name} {student.arm_name}</strong>
+              Student Class:{' '}
+              <strong>
+                {student.class_name} {student.arm_name}
+              </strong>
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 3 }}>
@@ -351,11 +430,15 @@ const CaBreakdownTab = () => {
               <Select
                 value={selectedCaIndex}
                 label="CA Type"
-                onChange={(e) => setSelectedCaIndex(e.target.value === '' ? '' : Number(e.target.value))}
+                onChange={(e) =>
+                  setSelectedCaIndex(e.target.value === '' ? '' : Number(e.target.value))
+                }
               >
                 <MenuItem value="">--Select Type--</MenuItem>
                 {caOptions.map((ca, i) => (
-                  <MenuItem key={ca.display_name || i} value={i}>{ca.display_name || `CA${i + 1}`}</MenuItem>
+                  <MenuItem key={ca.display_name || i} value={i}>
+                    {ca.display_name || `CA${i + 1}`}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -376,81 +459,140 @@ const CaBreakdownTab = () => {
         <Box sx={{ p: 3 }}>
           <Skeleton variant="rounded" height={280} />
         </Box>
-      ) : caConfig && (
-        <Box sx={{ p: 3 }}>
-          {!hasAnyScore && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              {isSelfMode
-                ? 'No CA scores have been uploaded yet for this term. Your scores will appear here once your teachers upload them.'
-                : 'No CA scores have been uploaded for this student yet.'}
-            </Alert>
-          )}
-          <TableContainer sx={{ overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-            <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx, width: '3%' }}>#</TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }}>Subjects</TableCell>
-                  {(caConfig.entities || []).map((ent) => (
-                    <TableCell key={ent.display_name} sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">
-                      {ent.display_name}({ent.max_score})
-                    </TableCell>
-                  ))}
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">
-                    Total({caConfig.max_score})
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50', ...cellBorderSx }} align="center">
-                    Percentage(100%)
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }} align="center">Grade</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {subjectRows.length === 0 && (
+      ) : (
+        caConfig && (
+          <Box sx={{ p: 3 }}>
+            {!hasAnyScore && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                {isSelfMode
+                  ? 'No CA scores have been uploaded yet for this term. Your scores will appear here once your teachers upload them.'
+                  : 'No CA scores have been uploaded for this student yet.'}
+              </Alert>
+            )}
+            <TableContainer
+              sx={{
+                overflowX: 'auto',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Table stickyHeader size="small" sx={{ whiteSpace: 'nowrap' }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={(caConfig.entities || []).length + 5} align="center" sx={{ py: 5 }}>
-                      <Typography variant="body1" color="text.secondary" fontWeight={600}>
-                        No registered subjects found for this student.
-                      </Typography>
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                        width: '3%',
+                      }}
+                    >
+                      #
                     </TableCell>
-                  </TableRow>
-                )}
-                {subjectRows.map((sub, i) => (
-                  <TableRow key={sub.subject_id ?? i} hover>
-                    <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
-                    <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>{sub.subject_name}</TableCell>
-                    {(sub.ca?.entities || caConfig.entities || []).map((ent, ei) => (
-                      <TableCell key={ei} align="center" sx={cellBorderSx}>
-                        {ent.score ?? '-'}
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                      }}
+                    >
+                      Subjects
+                    </TableCell>
+                    {(caConfig.entities || []).map((ent) => (
+                      <TableCell
+                        key={ent.display_name}
+                        sx={{
+                          fontWeight: 700,
+                          bgcolor: isDark ? 'grey.900' : 'grey.50',
+                          ...cellBorderSx,
+                        }}
+                        align="center"
+                      >
+                        {ent.display_name}({ent.max_score})
                       </TableCell>
                     ))}
-                    <TableCell align="center" sx={{ ...cellBorderSx, fontWeight: 700 }}>
-                      {sub.ca?.total ?? '-'}
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                      }}
+                      align="center"
+                    >
+                      Total({caConfig.max_score})
                     </TableCell>
-                    <TableCell align="center" sx={cellBorderSx}>
-                      {sub.ca?.percent != null ? `${sub.ca.percent}%` : '-'}
+                    <TableCell
+                      sx={{
+                        fontWeight: 700,
+                        bgcolor: isDark ? 'grey.900' : 'grey.50',
+                        ...cellBorderSx,
+                      }}
+                      align="center"
+                    >
+                      Percentage(100%)
                     </TableCell>
-                    <TableCell align="center">
-                      <strong>{sub.ca?.grade ?? '-'}</strong>
+                    <TableCell
+                      sx={{ fontWeight: 700, bgcolor: isDark ? 'grey.900' : 'grey.50' }}
+                      align="center"
+                    >
+                      Grade
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {subjectRows.length === 0 && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={(caConfig.entities || []).length + 5}
+                        align="center"
+                        sx={{ py: 5 }}
+                      >
+                        <Typography variant="body1" color="text.secondary" fontWeight={600}>
+                          No registered subjects found for this student.
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {subjectRows.map((sub, i) => (
+                    <TableRow key={sub.subject_id ?? i} hover>
+                      <TableCell sx={cellBorderSx}>{i + 1}</TableCell>
+                      <TableCell sx={{ ...cellBorderSx, fontWeight: 500 }}>
+                        {sub.subject_name}
+                      </TableCell>
+                      {(sub.ca?.entities || caConfig.entities || []).map((ent, ei) => (
+                        <TableCell key={ei} align="center" sx={cellBorderSx}>
+                          {ent.score ?? '-'}
+                        </TableCell>
+                      ))}
+                      <TableCell align="center" sx={{ ...cellBorderSx, fontWeight: 700 }}>
+                        {sub.ca?.total ?? '-'}
+                      </TableCell>
+                      <TableCell align="center" sx={cellBorderSx}>
+                        {sub.ca?.percent != null ? `${sub.ca.percent}%` : '-'}
+                      </TableCell>
+                      <TableCell align="center">
+                        <strong>{sub.ca?.grade ?? '-'}</strong>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-          {/* ── Total & Average ────────────────────────────── */}
-          {hasAnyScore && (
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
-              <Typography variant="h6" fontWeight={700} color="primary">
-                Total Score: {totalScore}
-              </Typography>
-              <Typography variant="h6" fontWeight={700} color="primary">
-                Average Score: {average}
-              </Typography>
-            </Box>
-          )}
-        </Box>
+            {/* ── Total & Average ────────────────────────────── */}
+            {hasAnyScore && (
+              <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
+                <Typography variant="h6" fontWeight={700} color="primary">
+                  Total Score: {totalScore}
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="primary">
+                  Average Score: {average}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )
       )}
 
       {/* ── Empty State ─────────────────────────────────────── */}
@@ -464,7 +606,15 @@ const CaBreakdownTab = () => {
 
       {/* ── Bottom Print Button ─────────────────────────────── */}
       {caConfig && hasAnyScore && (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', borderTop: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            borderTop: 1,
+            borderColor: 'divider',
+          }}
+        >
           <Button
             variant="contained"
             size="small"
@@ -484,7 +634,10 @@ const CaBreakdownTab = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
-        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity}>
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -16,7 +16,13 @@ import {
   Snackbar,
   Avatar,
 } from '@mui/material';
-import { IconPrinter, IconChartBar, IconArrowLeft, IconClipboardCheck, IconLock } from '@tabler/icons-react';
+import {
+  IconPrinter,
+  IconChartBar,
+  IconArrowLeft,
+  IconClipboardCheck,
+  IconLock,
+} from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -453,19 +459,18 @@ const ReportCardTab = () => {
             </Box>
           ) : paymentRequired ? (
             <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
-              <IconLock size={48} color={isDark ? '#fff' : '#94a3b8'} style={{ marginBottom: 12 }} />
+              <IconLock
+                size={48}
+                color={isDark ? '#fff' : '#94a3b8'}
+                style={{ marginBottom: 12 }}
+              />
               <Alert severity="warning" sx={{ textAlign: 'left', mb: 2 }}>
                 <Typography variant="subtitle2" fontWeight={900}>
                   Payment Required
                 </Typography>
-                You must clear your outstanding fees before you can view your results for
-                this term.
+                You must clear your outstanding fees before you can view your results for this term.
               </Alert>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => navigate('/pay-school-fees')}
-              >
+              <Button variant="contained" size="small" onClick={() => navigate('/pay-school-fees')}>
                 Go to Payments
               </Button>
             </Box>
@@ -476,8 +481,8 @@ const ReportCardTab = () => {
                   <Typography variant="subtitle2" fontWeight={900}>
                     SPA Approval Notification
                   </Typography>
-                  This report card is not available at the moment because the School
-                  Portal Admin has not approved all the scores.
+                  This report card is not available at the moment because the School Portal Admin
+                  has not approved all the scores.
                 </Alert>
               )}
               {!hosPublished && (
@@ -485,8 +490,8 @@ const ReportCardTab = () => {
                   <Typography variant="subtitle2" fontWeight={900}>
                     HoS Approval Notification
                   </Typography>
-                  This report card is not available at the moment because the Head of
-                  School has not published all the scores.
+                  This report card is not available at the moment because the Head of School has not
+                  published all the scores.
                 </Alert>
               )}
             </Box>

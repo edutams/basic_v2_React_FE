@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Typography,
@@ -168,6 +170,12 @@ const BroadsheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { can } = usePermissions();
+  const [searchParams] = useSearchParams();
+  // Prefill from a Student Dossier / Score Sheet "View Class Broadsheet"
+  // link — a one-time read; consumed by each dropdown-loading effect below
+  // as its preferred default instead of that effect's own "pick the first
+  // one" fallback, so it never fights the user's own later selections.
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
 
   // ── Dropdown data ───────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -244,16 +252,19 @@ const BroadsheetTab = () => {
           : [];
         setProgrammes(programmesData);
         if (programmesData.length > 0) {
-          setFilters((prev) =>
-            prev.programme_id ? prev : { ...prev, programme_id: programmesData[0].id },
-          );
+          const preferredProgramme = linkParams.programme_id && programmesData.some((p) => p.id === linkParams.programme_id)
+            ? linkParams.programme_id
+            : programmesData[0].id;
+          setFilters((prev) => (prev.programme_id ? prev : { ...prev, programme_id: preferredProgramme }));
         }
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         activeSessionTermRef.current = activeSessionTerm;
 
-        // Preselect the active session (the term effect below picks its term).
+        // Preselect the active session (the term effect below picks its term),
+        // unless a prefill link named a specific one.
         const defaultSession =
+          (linkParams.session_id && sessionList.find((s) => s.id === linkParams.session_id)) ||
           (activeSessionTerm && sessionList.find((s) => s.id === activeSessionTerm.session_id)) ||
           sessionList[0];
         if (defaultSession) {
@@ -320,7 +331,10 @@ const BroadsheetTab = () => {
         const activeSessionTerm = activeSessionTermRef.current;
         const activeTermId =
           activeSessionTerm?.session_id === filters.session_id ? activeSessionTerm.term_id : null;
-        const active = (activeTermId && data.find((t) => t.id === activeTermId)) || data[0];
+        const active =
+          (linkParams.term_id && data.find((t) => t.id === linkParams.term_id)) ||
+          (activeTermId && data.find((t) => t.id === activeTermId)) ||
+          data[0];
         if (active) setFilters((prev) => ({ ...prev, term_id: active.id }));
       })
       .catch(console.error);
@@ -337,7 +351,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
         if (data.length > 0 && !data.some((c) => c.id === filters.class_id)) {
-          setFilters((prev) => ({ ...prev, class_id: data[0].id, class_arm_id: '' }));
+          const preferredClass = linkParams.class_id && data.some((c) => c.id === linkParams.class_id)
+            ? linkParams.class_id
+            : data[0].id;
+          setFilters((prev) => ({ ...prev, class_id: preferredClass, class_arm_id: '' }));
         }
       })
       .catch(console.error);
@@ -358,7 +375,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
         if (data.length > 0 && !data.some((a) => a.id === filters.class_arm_id)) {
-          setFilters((prev) => ({ ...prev, class_arm_id: data[0].id }));
+          const preferredArm = linkParams.class_arm_id && data.some((a) => a.id === linkParams.class_arm_id)
+            ? linkParams.class_arm_id
+            : data[0].id;
+          setFilters((prev) => ({ ...prev, class_arm_id: preferredArm }));
         }
       })
       .catch(console.error);

@@ -698,7 +698,7 @@ const UploadScoresTab = () => {
                   value={filter.session_id}
                   label="Session"
                   onChange={(e) => {
-                    resetResults();
+                    // resetResults();
                     setFilter({
                       ...filter,
                       session_id: e.target.value,
@@ -724,7 +724,7 @@ const UploadScoresTab = () => {
                   value={filter.term_id}
                   label="Term"
                   onChange={(e) => {
-                    resetResults();
+                    // resetResults();
                     setFilter({
                       ...filter,
                       term_id: e.target.value,
@@ -750,7 +750,7 @@ const UploadScoresTab = () => {
                   value={filter.programme_id}
                   label="Programme"
                   onChange={(e) => {
-                    resetResults();
+                    // resetResults();
                     setFilter({
                       ...filter,
                       programme_id: e.target.value,
@@ -775,7 +775,7 @@ const UploadScoresTab = () => {
                   value={filter.class_id}
                   label="Class"
                   onChange={(e) => {
-                    resetResults();
+                    // resetResults();
                     setFilter({ ...filter, class_id: e.target.value, class_arm_id: '' });
                   }}
                 >
@@ -795,7 +795,7 @@ const UploadScoresTab = () => {
                   value={filter.class_arm_id}
                   label="Class Arm"
                   onChange={(e) => {
-                    resetResults();
+                    // resetResults();
                     setFilter({ ...filter, class_arm_id: e.target.value });
                   }}
                 >

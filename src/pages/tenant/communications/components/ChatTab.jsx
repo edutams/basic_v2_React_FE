@@ -3,21 +3,36 @@ import {
   Box, Grid, Typography, Paper, TextField, List, ListItem, ListItemAvatar, ListItemText,
   Avatar, Chip, IconButton, InputAdornment, Snackbar, Alert, CircularProgress, useTheme, Divider, Button,
 } from '@mui/material';
-import { IconSend, IconSearch, IconTrash, IconPaperclip, IconPencilPlus } from '@tabler/icons-react';
+import { IconSend, IconSearch, IconTrash, IconPaperclip, IconPencilPlus, IconCornerUpLeft, IconX, IconChecks } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
+import { getEcho, leaveChannel } from '@/utils/echo';
+
+const stripHtml = (s = '') => String(s).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || 'Attachment';
+
+// Ids are UUIDs in most tenants but historically numeric in some — compare
+// both ways so `mine` and read receipts agree on which bubbles are ours.
+const sameId = (a, b) => a === b || Number(a) === Number(b);
+
+// Laravel errors return `message`, our endpoints return `error` — surface
+// whichever is present instead of always blaming the file type.
+const apiError = (err, fallback) =>
+  err?.response?.data?.error || err?.response?.data?.message || fallback;
 
 const ChatTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { user } = useTenantAuth();
   const border = { border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB', borderRadius: '10px' };
+  const currentUserId = user?.id ?? user?.user_id;
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [receiver, setReceiver] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [channel, setChannel] = useState(null);
   const [draft, setDraft] = useState('');
+  const [replyTo, setReplyTo] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [sending, setSending] = useState(false);
@@ -50,10 +65,13 @@ const ChatTab = () => {
 
   const openChat = async (u) => {
     setReceiver(u);
+    setReplyTo(null);
+    setChannel(null);
     setLoadingMsgs(true);
     try {
       const res = await communicationApi.chatMessages(u.id);
       setMessages(res.data?.message ?? []);
+      setChannel(res.data?.channel ?? null);
     } catch {
       setMessages([]);
     } finally {
@@ -61,16 +79,47 @@ const ChatTab = () => {
     }
   };
 
+  // Realtime: the API hands back the conversation's channel name, so a message
+  // sent by the other side lands here without reloading the chat. Echo appends
+  // our own sends too — hence the id de-duplication. The same channel carries
+  // read receipts, which is what turns our double check green.
+  useEffect(() => {
+    if (!channel) return undefined;
+
+    const echo = getEcho();
+    if (!echo) return undefined;
+
+    echo
+      .channel(channel)
+      .listen('.App\\Events\\ChatEvent', ({ message }) => {
+        if (!message?.id) return;
+        setMessages((prev) => (prev.some((m) => m.id === message.id) ? prev : [...prev, message]));
+        // The chat is on screen, so acknowledge it now — getMessages() only
+        // marks read when the conversation is (re)opened, which would leave
+        // the sender's tick grey until they refreshed.
+        if (message.from && !sameId(message.from, currentUserId)) {
+          communicationApi.chatMarkRead([message.id], message.from).catch(() => {});
+        }
+      })
+      .listen('.App\\Events\\ChatReadEvent', ({ ids }) => {
+        if (!Array.isArray(ids) || ids.length === 0) return;
+        setMessages((prev) => prev.map((m) => (ids.includes(m.id) ? { ...m, is_read: 1 } : m)));
+      });
+
+    return () => leaveChannel(channel);
+  }, [channel, currentUserId]);
+
   const send = async () => {
     if (!draft.trim() || !receiver) return;
     setSending(true);
     try {
-      const res = await communicationApi.chatCreate(receiver.id, draft.trim());
+      const res = await communicationApi.chatCreate(receiver.id, draft.trim(), replyTo?.id);
       const created = res.data?.message;
       if (created) setMessages((m) => [...m, created]);
       setDraft('');
+      setReplyTo(null);
     } catch (err) {
-      showSnack(err.response?.data?.error || 'Failed to send', 'error');
+      showSnack(apiError(err, 'Failed to send'), 'error');
     } finally {
       setSending(false);
     }
@@ -79,34 +128,45 @@ const ChatTab = () => {
   const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file || !receiver) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showSnack('File too large (max 2MB)', 'warning');
+    // Matches the backend's 5MB decoded cap (and stays under post_max_size=8M,
+    // which base64 inflates by ~33%).
+    if (file.size > 5 * 1024 * 1024) {
+      showSnack('File too large (max 5MB)', 'warning');
       return;
     }
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const res = await communicationApi.chatFile(reader.result, receiver.id);
+        const res = await communicationApi.chatFile(reader.result, receiver.id, replyTo?.id);
         const created = res.data?.message;
         if (created) setMessages((m) => [...m, created]);
+        setReplyTo(null);
       } catch (err) {
-        showSnack(err.response?.data?.error || 'File type not supported', 'error');
+        showSnack(apiError(err, 'Attachment failed to upload'), 'error');
       }
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
+  const startReply = (m) => setReplyTo(m);
+
+  const jumpTo = (id) =>
+    document.getElementById(`chat-msg-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const quotedSender = (m) =>
+    Number(m.from) === Number(currentUserId)
+      ? 'You'
+      : [m.userFrom?.fname, m.userFrom?.lname].filter(Boolean).join(' ') || 'Unknown';
+
   const removeMsg = async (id) => {
     try {
       await communicationApi.chatDelete(id);
       setMessages((m) => m.filter((x) => x.id !== id));
     } catch (err) {
-      showSnack(err.response?.data?.error || 'Delete failed', 'error');
+      showSnack(apiError(err, 'Delete failed'), 'error');
     }
   };
-
-  const currentUserId = user?.id ?? user?.user_id;
 
   return (
     <Box>
@@ -190,29 +250,76 @@ const ChatTab = () => {
                     <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>No messages yet. Say hello!</Typography>
                   ) : (
                     messages.map((m) => {
-                      const mine = Number(m.from) === Number(currentUserId) || m.from === currentUserId;
+                      const mine = sameId(m.from, currentUserId);
+                      const quoted = m.replyTo;
                       return (
                         <Box
                           key={m.id}
+                          id={`chat-msg-${m.id}`}
                           sx={{
                             alignSelf: mine ? 'flex-end' : 'flex-start',
                             maxWidth: '75%',
-                            px: 1.5, py: 1, borderRadius: '12px',
-                            bgcolor: mine ? 'primary.main' : isDark ? 'rgba(255,255,255,0.08)' : '#F3F4F6',
-                            color: mine ? 'primary.contrastText' : 'text.primary',
-                            position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: mine ? 'flex-end' : 'flex-start',
                           }}
                         >
-                          {m.message?.includes('<') ? (
-                            <Box dangerouslySetInnerHTML={{ __html: m.message }} sx={{ img: { maxWidth: '100%', borderRadius: 1 } }} />
-                          ) : (
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{m.message}</Typography>
-                          )}
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
+                          <Box
+                            sx={{
+                              px: 1.5, py: 1, borderRadius: '12px',
+                              bgcolor: mine ? 'primary.main' : isDark ? 'rgba(255,255,255,0.08)' : '#F3F4F6',
+                              color: mine ? 'primary.contrastText' : 'text.primary',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {quoted && (
+                              <Box
+                                onClick={() => jumpTo(quoted.id)}
+                                title="Jump to original message"
+                                sx={{
+                                  mb: 0.75, px: 1, py: 0.5, cursor: 'pointer',
+                                  borderLeft: 3,
+                                  borderColor: mine ? 'primary.contrastText' : 'primary.main',
+                                  bgcolor: mine ? 'rgba(255,255,255,0.18)' : isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB',
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, fontSize: 10, opacity: 0.9 }}>
+                                  {quotedSender(quoted)}
+                                </Typography>
+                                <Typography variant="caption" sx={{ display: 'block', fontSize: 11, opacity: 0.85, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {stripHtml(quoted.message)}
+                                </Typography>
+                              </Box>
+                            )}
+                            {m.message?.includes('<') ? (
+                              <Box dangerouslySetInnerHTML={{ __html: m.message }} sx={{ img: { maxWidth: '100%', borderRadius: 1 } }} />
+                            ) : (
+                              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{m.message}</Typography>
+                            )}
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mt: 0.25, px: 0.5, color: 'text.secondary' }}>
                             <Typography variant="caption" sx={{ opacity: 0.7, fontSize: 10 }}>{m.created_at}</Typography>
-                            <IconButton size="small" onClick={() => removeMsg(m.id)} sx={{ p: 0.25, color: 'inherit', opacity: 0.7 }}>
+                            <IconButton size="small" title="Reply" onClick={() => startReply(m)} sx={{ p: 0.25 }}>
+                              <IconCornerUpLeft size={12} />
+                            </IconButton>
+                            <IconButton size="small" title="Delete" onClick={() => removeMsg(m.id)} sx={{ p: 0.25 }}>
                               <IconTrash size={12} />
                             </IconButton>
+                            {mine && (
+                              <Box
+                                component="span"
+                                title={Number(m.is_read) === 1 ? 'Read' : 'Delivered'}
+                                sx={{ display: 'inline-flex', alignItems: 'center', px: 0.25 }}
+                              >
+                                <IconChecks
+                                  size={14}
+                                  strokeWidth={2.4}
+                                  color={Number(m.is_read) === 1 ? (isDark ? '#4ADE80' : '#16A34A') : 'currentColor'}
+                                  style={{ opacity: Number(m.is_read) === 1 ? 1 : 0.55 }}
+                                />
+                              </Box>
+                            )}
                           </Box>
                         </Box>
                       );
@@ -221,20 +328,54 @@ const ChatTab = () => {
                   <div ref={bottomRef} />
                 </Box>
                 <Divider />
-                <Box sx={{ p: 1.5, display: 'flex', gap: 1 }}>
-                  <input type="file" hidden ref={fileRef} accept="image/*,application/pdf,video/*" onChange={onFile} />
-                  <IconButton onClick={() => fileRef.current?.click()} size="small"><IconPaperclip size={18} /></IconButton>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Type a message…"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                  />
-                  <IconButton color="primary" onClick={send} disabled={sending || !draft.trim()}>
-                    {sending ? <CircularProgress size={18} /> : <IconSend size={18} />}
-                  </IconButton>
+                <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {replyTo && (
+                    <Box
+                      onClick={() => jumpTo(replyTo.id)}
+                      sx={{
+                        display: 'flex', alignItems: 'center', gap: 1, p: 1, cursor: 'pointer',
+                        borderLeft: 3, borderColor: 'primary.main', borderRadius: '8px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#F3F4F6',
+                      }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="caption" color="primary" fontWeight={700} sx={{ display: 'block' }}>
+                          {Number(replyTo.from) === Number(currentUserId)
+                            ? 'Replying to your message'
+                            : `Replying to ${quotedSender(replyTo)}`}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {stripHtml(replyTo.message)}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        size="small"
+                        title="Cancel reply"
+                        onClick={(e) => { e.stopPropagation(); setReplyTo(null); }}
+                        sx={{ p: 0.25 }}
+                      >
+                        <IconX size={14} />
+                      </IconButton>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <input type="file" hidden ref={fileRef} accept="image/*,application/pdf,video/*" onChange={onFile} />
+                    <IconButton onClick={() => fileRef.current?.click()} size="small"><IconPaperclip size={18} /></IconButton>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      placeholder={replyTo ? 'Type a reply…' : 'Type a message…'}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+                        if (e.key === 'Escape') setReplyTo(null);
+                      }}
+                    />
+                    <IconButton color="primary" onClick={send} disabled={sending || !draft.trim()}>
+                      {sending ? <CircularProgress size={18} /> : <IconSend size={18} />}
+                    </IconButton>
+                  </Box>
                 </Box>
               </>
             ) : (

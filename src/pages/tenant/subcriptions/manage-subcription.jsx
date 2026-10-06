@@ -20,6 +20,7 @@ import {
   Alert,
   Skeleton,
   Grid,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -558,6 +559,17 @@ const ManageSubscriptionList = () => {
                               borderRadius: '8px',
                             }}
                           />
+                          {row.extended_due_date && (
+                            <Tooltip title="This plan was set up for your school after your free trial ended, so you wouldn't be locked out while deciding. You're not required to keep it — use Change Plan below to switch to a different one at any time before paying.">
+                              <Chip
+                                label="Grace Extended"
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                                sx={{ ml: 0.5, fontWeight: 600, borderRadius: '8px' }}
+                              />
+                            </Tooltip>
+                          )}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton onClick={(e) => handleMenuOpen(e, row)}>

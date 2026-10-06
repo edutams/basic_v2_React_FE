@@ -3,6 +3,7 @@ import { Box, Button, Alert, CircularProgress, Typography } from '@mui/material'
 import PropTypes from 'prop-types';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
+import PlanSummary, { planDataOf } from './PlanSummary';
 
 const RevertPlanModal = ({ open, onClose, selectedRow, onRevert }) => {
   const [submitting, setSubmitting] = useState(false);
@@ -28,15 +29,20 @@ const RevertPlanModal = ({ open, onClose, selectedRow, onRevert }) => {
       open={open}
       onClose={onClose}
       title="Revert Plan"
-      size="small"
+      size="medium"
       disableEnforceFocus
       disableAutoFocus
     >
       <Box>
         {selectedRow && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            Current Plan: <strong>{selectedRow.my_plans?.display_name || 'N/A'}</strong>
-          </Alert>
+          <PlanSummary
+            label="Current Plan"
+            name={selectedRow.my_plans?.display_name}
+            price={selectedRow.my_plans?.price}
+            population={planDataOf(selectedRow.plans).students_limit}
+            modules={(selectedRow.plans?.modules || []).map((m) => m.module_name).filter(Boolean)}
+            chipColor="default"
+          />
         )}
 
         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
@@ -44,8 +50,10 @@ const RevertPlanModal = ({ open, onClose, selectedRow, onRevert }) => {
         </Typography>
 
         {selectedRow?.previous_plan_id && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            The subscription will revert to the plan used before the last upgrade.
+          <Alert severity="info" sx={{ mb: 2 }}>
+            The subscription will revert to the plan used before the last upgrade, and will be{' '}
+            <strong>reactivated immediately</strong> — no new payment is required, since you already
+            paid for that plan.
           </Alert>
         )}
 

@@ -50,10 +50,17 @@ const SubscriptionBanner = () => {
       })
     : null;
 
+  // Fallback only — the backend always supplies `message` with the right
+  // wording (resolveForActiveSessionTerm()/messageFor()). A locked tenant
+  // that never actually had a subscription for this term (the normal case
+  // once the free grace weeks run out) gets "trial ended" wording here too,
+  // not "has expired" — nothing expired if nothing was ever subscribed to.
   const message =
     subscriptionStatus?.message ||
     (isLocked
-      ? `Your school's subscription${label ? ` for ${label}` : ''} has expired. Please renew to restore full access.`
+      ? subscriptionStatus?.subscription_status === 'expired'
+        ? `Your school's subscription${label ? ` for ${label}` : ''} has expired. Please renew to restore full access.`
+        : `Your free trial${label ? ` for ${label}` : ''} has ended. Subscribe now to restore full access.`
       : `Your subscription${label ? ` for ${label}` : ''} is due${dueDateLabel ? ` on ${dueDateLabel}` : ' soon'}.`);
 
   return (

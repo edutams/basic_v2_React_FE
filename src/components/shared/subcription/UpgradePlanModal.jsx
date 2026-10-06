@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, TextField, MenuItem, Button, Alert, CircularProgress } from '@mui/material';
+import { Box, TextField, MenuItem, Button, Alert, CircularProgress, Divider } from '@mui/material';
 import PropTypes from 'prop-types';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import subscriptionApi from '@/api/tenant/subscription/subscriptionApi';
+import PlanSummary, { planDataOf } from './PlanSummary';
 
 const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade }) => {
   const [form, setForm] = useState({
@@ -81,21 +82,59 @@ const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade }) => {
     }
   };
 
+  const currentPopulation = planDataOf(selectedRow?.plans).students_limit;
+  const currentModules = (selectedRow?.plans?.modules || []).map((m) => m.module_name).filter(Boolean);
+  const selectedPlan = plans.find((p) => String(p.id) === form.my_plan_id);
+  const selectedPlanPopulation = selectedPlan ? planDataOf(selectedPlan.plan).students_limit : null;
+  const selectedPlanModules = selectedPlan
+    ? (selectedPlan.plan?.modules || []).map((m) => m.module_name).filter(Boolean)
+    : [];
+  const isCurrentlyActive = selectedRow?.status === 'active';
+
   return (
     <ReusableModal
       open={open}
       onClose={onClose}
-      title="Upgrade Plan"
-      size="small"
+      title="Change Plan"
+      subtitle="Review what you currently have before switching — changing plans has real consequences for your access."
+      size="medium"
       disableEnforceFocus
       disableAutoFocus
     >
       <Box component="form" onSubmit={handleSubmit}>
         {selectedRow && (
+          <PlanSummary
+            label="Current Plan"
+            name={selectedRow.my_plans?.display_name}
+            price={selectedRow.my_plans?.price}
+            population={currentPopulation}
+            modules={currentModules}
+            chipColor="default"
+          />
+        )}
+
+        {selectedRow?.extended_due_date && (
           <Alert severity="info" sx={{ mb: 2 }}>
-            Current Plan: {selectedRow.my_plans?.display_name || 'N/A'}
+            This plan was set up for your school after your free trial ended, so you wouldn&apos;t be
+            locked out while deciding — it&apos;s not a plan you&apos;re required to keep. Pick whichever
+            plan actually suits your school below.
           </Alert>
         )}
+
+        <Alert severity={isCurrentlyActive ? 'warning' : 'info'} sx={{ mb: 2 }}>
+          {isCurrentlyActive ? (
+            <>
+              Your subscription is currently <strong>active</strong>. Changing plans will move it back to{' '}
+              <strong>Pending</strong>, and you&apos;ll need to complete a new payment for the new plan
+              before full access is restored. Your current plan stays active until then.
+            </>
+          ) : (
+            <>
+              Your subscription is currently <strong>pending</strong> payment. Changing plans now updates
+              what you&apos;ll pay for — you still need to complete payment to activate it.
+            </>
+          )}
+        </Alert>
 
         {errors.submit && (
           <Alert severity="error" sx={{ mb: 2 }}>
@@ -149,12 +188,26 @@ const UpgradePlanModal = ({ open, onClose, selectedRow, onUpgrade }) => {
           ))}
         </TextField>
 
+        {selectedPlan && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <PlanSummary
+              label="New Plan"
+              name={selectedPlan.display_name}
+              price={selectedPlan.price}
+              population={selectedPlanPopulation}
+              modules={selectedPlanModules}
+              chipColor="primary"
+            />
+          </>
+        )}
+
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 1 }}>
           <Button variant="contained" size="small" color="inherit" onClick={onClose} disabled={submitting}>
             Cancel
           </Button>
           <Button size="small" type="submit" color="primary" disabled={submitting || fetchingPlans}>
-            {submitting ? <CircularProgress size={20} /> : 'Upgrade Plan'}
+            {submitting ? <CircularProgress size={20} /> : 'Change Plan'}
           </Button>
         </Box>
       </Box>

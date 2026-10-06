@@ -1,5 +1,4 @@
 import { useMediaQuery, Box, Drawer, Container } from '@mui/material';
-import SchoolNavListing from './SchoolNavListing';
 import Logo from '../../../landlord/shared/logo/Logo';
 import SchoolSidebarItems from '../../vertical/sidebar/SchoolSidebarItems';
 import { useContext } from 'react';
@@ -19,7 +18,7 @@ const SchoolNavigation = () => {
             maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',
           }}
         >
-          <SchoolNavListing />
+          <SchoolSidebarItems />
         </Container>
       </Box>
     );

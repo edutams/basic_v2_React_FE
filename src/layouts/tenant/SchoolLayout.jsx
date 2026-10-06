@@ -1,6 +1,6 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import ImpersonationBar from './vertical/header/ImpersonationBar';
 import SubscriptionBanner from './vertical/header/SubscriptionBanner';
@@ -9,6 +9,7 @@ import Customizer from '../landlord/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
+import { useSnackbar } from '../../context/SnackbarContext';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
 import ScrollToTop from '../../components/shared/ScrollToTop';
@@ -38,6 +39,38 @@ const SchoolLayout = () => {
   const { isImpersonated, subscriptionStatus } = useContext(TenantAuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { showError } = useSnackbar();
+  const pathnameRef = useRef(location.pathname);
+  pathnameRef.current = location.pathname;
+  const lockNoticeShownRef = useRef(false);
+
+  // An admin clicking into a page while the subscription is locked (e.g. a
+  // stale bookmark, or TenantProtectedRoute letting admins through so they
+  // can still reach /subscriptions from anywhere) previously just hit a page
+  // that silently never loaded any data — every data call 402s with the
+  // same "subscription_locked" payload tenant_api.js already turns into
+  // this event. Surface it once (parallel 402s on page mount shouldn't
+  // stack several toasts) and land admins on the subscription page itself.
+  useEffect(() => {
+    const handleLocked = (event) => {
+      const detail = event.detail || {};
+      if (!lockNoticeShownRef.current) {
+        lockNoticeShownRef.current = true;
+        showError(detail.message || "Your school's subscription has expired.", { duration: 8000 });
+        window.setTimeout(() => {
+          lockNoticeShownRef.current = false;
+        }, 5000);
+      }
+      if (detail.audience === 'admin' && pathnameRef.current !== '/subscriptions') {
+        navigate('/subscriptions');
+      }
+    };
+    window.addEventListener('tenant_subscription:locked', handleLocked);
+    return () => window.removeEventListener('tenant_subscription:locked', handleLocked);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const subscriptionTier = subscriptionStatus?.tier;
   const showSubscriptionBanner = subscriptionTier && subscriptionTier !== 'active';

@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Typography,
@@ -32,6 +34,7 @@ import {
   Stack,
   CircularProgress,
   Skeleton,
+  Chip,
 } from '@mui/material';
 import {
   IconCheck,
@@ -44,6 +47,12 @@ import {
   IconChartBar,
   IconAward,
   IconWand,
+  IconListNumbers,
+  IconCertificate,
+  IconSend,
+  IconLock,
+  IconArrowBackUp,
+  IconChevronRight,
 } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
@@ -161,6 +170,12 @@ const BroadsheetTab = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { can } = usePermissions();
+  const [searchParams] = useSearchParams();
+  // Prefill from a Student Dossier / Score Sheet "View Class Broadsheet"
+  // link — a one-time read; consumed by each dropdown-loading effect below
+  // as its preferred default instead of that effect's own "pick the first
+  // one" fallback, so it never fights the user's own later selections.
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
 
   // ── Dropdown data ───────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -237,16 +252,19 @@ const BroadsheetTab = () => {
           : [];
         setProgrammes(programmesData);
         if (programmesData.length > 0) {
-          setFilters((prev) =>
-            prev.programme_id ? prev : { ...prev, programme_id: programmesData[0].id },
-          );
+          const preferredProgramme = linkParams.programme_id && programmesData.some((p) => p.id === linkParams.programme_id)
+            ? linkParams.programme_id
+            : programmesData[0].id;
+          setFilters((prev) => (prev.programme_id ? prev : { ...prev, programme_id: preferredProgramme }));
         }
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         activeSessionTermRef.current = activeSessionTerm;
 
-        // Preselect the active session (the term effect below picks its term).
+        // Preselect the active session (the term effect below picks its term),
+        // unless a prefill link named a specific one.
         const defaultSession =
+          (linkParams.session_id && sessionList.find((s) => s.id === linkParams.session_id)) ||
           (activeSessionTerm && sessionList.find((s) => s.id === activeSessionTerm.session_id)) ||
           sessionList[0];
         if (defaultSession) {
@@ -313,7 +331,10 @@ const BroadsheetTab = () => {
         const activeSessionTerm = activeSessionTermRef.current;
         const activeTermId =
           activeSessionTerm?.session_id === filters.session_id ? activeSessionTerm.term_id : null;
-        const active = (activeTermId && data.find((t) => t.id === activeTermId)) || data[0];
+        const active =
+          (linkParams.term_id && data.find((t) => t.id === linkParams.term_id)) ||
+          (activeTermId && data.find((t) => t.id === activeTermId)) ||
+          data[0];
         if (active) setFilters((prev) => ({ ...prev, term_id: active.id }));
       })
       .catch(console.error);
@@ -330,7 +351,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
         if (data.length > 0 && !data.some((c) => c.id === filters.class_id)) {
-          setFilters((prev) => ({ ...prev, class_id: data[0].id, class_arm_id: '' }));
+          const preferredClass = linkParams.class_id && data.some((c) => c.id === linkParams.class_id)
+            ? linkParams.class_id
+            : data[0].id;
+          setFilters((prev) => ({ ...prev, class_id: preferredClass, class_arm_id: '' }));
         }
       })
       .catch(console.error);
@@ -351,7 +375,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
         if (data.length > 0 && !data.some((a) => a.id === filters.class_arm_id)) {
-          setFilters((prev) => ({ ...prev, class_arm_id: data[0].id }));
+          const preferredArm = linkParams.class_arm_id && data.some((a) => a.id === linkParams.class_arm_id)
+            ? linkParams.class_arm_id
+            : data[0].id;
+          setFilters((prev) => ({ ...prev, class_arm_id: preferredArm }));
         }
       })
       .catch(console.error);
@@ -1134,6 +1161,205 @@ const BroadsheetTab = () => {
               )}
             </Box>
           </Box>
+
+          {/* ── STATIC MOCKUP — Broadsheet workflow stages ───────────
+              Not wired to real data yet. This is a screenshot-ready mockup
+              of the 4-stage termly broadsheet workflow, for the CEO to use
+              as a design reference. Each stage is sequential — a school
+              portal admin (SPA) must finish one before the next unlocks.
+              Numbers shown below are illustrative placeholders only. ── */}
+          {activeTab === 0 && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                Broadsheet Workflow
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                Mockup only — illustrates the 4 stages an SPA works through for a termly
+                broadsheet, in order.
+              </Typography>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={0} sx={{ alignItems: 'stretch' }}>
+                {[
+                  {
+                    step: 1,
+                    icon: IconWand,
+                    title: 'Generate Remarks',
+                    status: 'done',
+                    description:
+                      "Calculates each student's grade from their scores and writes the matching remark. Can also auto-generate the comment-bank comment (attendance / affective / psychomotor averages) for each student once this is done.",
+                    stats: [
+                      { label: 'Graded', value: '42' },
+                      { label: 'Not graded', value: '8' },
+                    ],
+                    action: 'Generate Remarks',
+                    // Real, already-working action (see handleGenerateComments below) —
+                    // shown here too because it's conceptually part of this same stage.
+                    secondaryAction: 'Generate Comments',
+                    secondaryIcon: IconWand,
+                    secondaryColor: 'warning',
+                  },
+                  {
+                    step: 2,
+                    icon: IconListNumbers,
+                    title: 'Generate Positioning',
+                    status: 'active',
+                    description:
+                      "Computes each student's class and arm position. Idempotent — running it again doesn't disturb students already positioned, it only fills in the position for anyone who's missing one (e.g. a newly added or re-graded student).",
+                    stats: [
+                      { label: 'Positioned', value: '45' },
+                      { label: 'Missing position', value: '5' },
+                    ],
+                    action: 'Generate Positioning',
+                  },
+                  {
+                    step: 3,
+                    icon: IconCertificate,
+                    title: 'Approval of Results',
+                    status: 'locked',
+                    description:
+                      'The School Portal Admin reviews and approves the broadsheet, confirming it is ready to go to the Head of School for final publication.',
+                    stats: [{ label: 'Status', value: 'Not yet approved' }],
+                    action: 'Approve Results',
+                  },
+                  {
+                    step: 4,
+                    icon: IconSend,
+                    title: 'Publish Results',
+                    status: 'locked',
+                    description:
+                      "The Head of School gives final publication — results become visible to parents/students and are locked. The SPA can reverse a publication at any time, which reopens stage 1 so anyone whose score changed afterward can be regraded, repositioned and re-approved before publishing again.",
+                    stats: [{ label: 'Status', value: 'Not published' }],
+                    action: 'Publish Results',
+                    secondaryAction: 'Reverse Publication',
+                    secondaryIcon: IconArrowBackUp,
+                    secondaryColor: 'warning',
+                  },
+                ].map((stage, idx, arr) => {
+                  const StageIcon = stage.icon;
+                  const isLocked = stage.status === 'locked';
+                  const isDone = stage.status === 'done';
+                  const isActive = stage.status === 'active';
+                  return (
+                    <Box key={stage.step} sx={{ display: 'flex', flex: 1, alignItems: 'stretch' }}>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          p: 1.75,
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: isActive ? 'primary.main' : isDone ? 'success.main' : borderColor,
+                          borderWidth: isActive || isDone ? 2 : 1,
+                          bgcolor: isDone
+                            ? isDark
+                              ? 'rgba(46,125,50,0.12)'
+                              : '#EAF7ED'
+                            : isActive
+                              ? isDark
+                                ? 'rgba(37,99,235,0.14)'
+                                : '#EDF2FE'
+                              : isDark
+                                ? 'rgba(255,255,255,0.03)'
+                                : '#F1F5F9',
+                          opacity: isLocked ? 0.75 : 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 1,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box
+                              sx={{
+                                width: 28,
+                                height: 28,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                bgcolor: isDone
+                                  ? 'success.main'
+                                  : isActive
+                                    ? 'primary.main'
+                                    : 'action.disabledBackground',
+                                color: isDone || isActive ? '#fff' : 'text.secondary',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {isDone ? <IconCheck size={16} /> : stage.step}
+                            </Box>
+                            <StageIcon
+                              size={18}
+                              color={isLocked ? undefined : theme.palette.primary.main}
+                            />
+                          </Box>
+                          {isLocked && <IconLock size={16} color={theme.palette.text.secondary} />}
+                        </Box>
+
+                        <Typography variant="subtitle2" fontWeight={700}>
+                          {stage.step}. {stage.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                          {stage.description}
+                        </Typography>
+
+                        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+                          {stage.stats.map((s) => (
+                            <Chip
+                              key={s.label}
+                              size="small"
+                              label={`${s.label}: ${s.value}`}
+                              color={isDone ? 'success' : isActive ? 'primary' : 'default'}
+                              variant={isLocked ? 'outlined' : 'filled'}
+                              sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                            />
+                          ))}
+                        </Stack>
+
+                        <Box sx={{ mt: 'auto', pt: 0.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <Button
+                            size="small"
+                            variant={isActive ? 'contained' : 'outlined'}
+                            disabled={isLocked}
+                            sx={{ fontSize: '0.7rem' }}
+                          >
+                            {stage.action}
+                          </Button>
+                          {stage.secondaryAction && (
+                            <Button
+                              size="small"
+                              variant="text"
+                              color={stage.secondaryColor || 'warning'}
+                              startIcon={
+                                stage.secondaryIcon ? <stage.secondaryIcon size={14} /> : null
+                              }
+                              disabled={isLocked}
+                              sx={{ fontSize: '0.7rem' }}
+                            >
+                              {stage.secondaryAction}
+                            </Button>
+                          )}
+                        </Box>
+                      </Box>
+                      {idx < arr.length - 1 && (
+                        <Box
+                          sx={{
+                            display: { xs: 'none', md: 'flex' },
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 28,
+                            flexShrink: 0,
+                          }}
+                        >
+                          <IconChevronRight size={18} color={theme.palette.text.secondary} />
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Stack>
+            </Box>
+          )}
 
           {/* ── Publish status (termly broadsheet only — the cumulative
               response carries no result_publish) ──────────────────── */}

@@ -11,8 +11,12 @@ const communicationApi = {
       ...(all ? { all: 1 } : {}),
     }),
   chatMessages: (receiverId) => tenantApi.get(`${BASE}/chats/get_messages`, { params: { id: receiverId } }),
-  chatCreate: (receiverId, message) => tenantApi.post(`${BASE}/chats/create`, { receiverId, message }),
-  chatFile: (fileData, receiverId) => tenantApi.post(`${BASE}/chats/file`, { fileData, receiverId }),
+  // Live read receipt — fired when the peer's message lands while the chat is open.
+  chatMarkRead: (ids, peerId) => tenantApi.post(`${BASE}/chats/mark_read`, { ids, peerId }),
+  chatCreate: (receiverId, message, replyTo = null) =>
+    tenantApi.post(`${BASE}/chats/create`, { receiverId, message, ...(replyTo ? { reply_to: replyTo } : {}) }),
+  chatFile: (fileData, receiverId, replyTo = null) =>
+    tenantApi.post(`${BASE}/chats/file`, { fileData, receiverId, ...(replyTo ? { reply_to: replyTo } : {}) }),
   chatDelete: (id) => tenantApi.post(`${BASE}/chats/delete`, { id }),
 
   // Mail

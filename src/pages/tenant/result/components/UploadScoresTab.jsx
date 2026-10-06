@@ -49,6 +49,7 @@ import {
   IconList,
   IconAlertTriangle,
   IconBulb,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import { Link as RouterLink } from 'react-router-dom';
@@ -497,10 +498,17 @@ const UploadScoresTab = () => {
   };
 
   const openScoreSheet = (allocation) => {
+    // Carry the full filter context (not just subject/arm/term) so the Score
+    // Sheet page can prefill its own Session/Term/Programme/Class/Arm
+    // dropdowns without having to reverse-resolve them from class_arm_id.
     const token = encodeLinkParams({
       subject_id: allocation.subject_id,
       class_arm_id: allocation.class_arm_id,
       session_term_id: sessionTermId,
+      session_id: filter.session_id,
+      term_id: filter.term_id,
+      programme_id: filter.programme_id,
+      class_id: filter.class_id,
     });
     window.open(`/result-scoresheet?t=${token}`, '_blank', 'noopener,noreferrer');
   };
@@ -560,48 +568,80 @@ const UploadScoresTab = () => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             {canShowBulkActions && (
               <>
-                <Tooltip
-                  title={
-                    allFiltersSelected
-                      ? 'Downloads ONE Excel file with a column for every subject in this class arm — fill it in and upload it back with the button next to this one.'
-                      : bulkTooltip
-                  }
-                >
-                  <span>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="info"
-                      startIcon={<IconDownload size={16} />}
-                      disabled={!allFiltersSelected}
-                      onClick={() => setDownloadCombinedDialog(true)}
-                      sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Tooltip
+                      title={
+                        allFiltersSelected
+                          ? 'Downloads ONE Excel file with a column for every subject in this class arm — fill it in and upload it back with the button next to this one.'
+                          : bulkTooltip
+                      }
                     >
-                      Download All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip
-                  title={
-                    allFiltersSelected
-                      ? "Uploads a previously downloaded all-subjects Excel file — every subject's scores in it are saved at once."
-                      : bulkTooltip
-                  }
-                >
-                  <span>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      color="success"
-                      startIcon={<IconCloudUpload size={16} />}
-                      disabled={!allFiltersSelected}
-                      onClick={() => setUploadDialog({ open: true, subjectName: null })}
-                      sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                      <span>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="info"
+                          startIcon={<IconDownload size={16} />}
+                          disabled={!allFiltersSelected}
+                          onClick={() => setDownloadCombinedDialog(true)}
+                          sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                        >
+                          Download All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Downloads ONE Excel file with a column for every subject in this class arm — fill it in and upload it back with the Upload button next to this one.">
+                      <IconButton size="small" sx={{ p: 0.25, color: 'info.main' }}>
+                        <IconInfoCircle size={15} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap', mt: 0.25 }}
+                  >
+                    One file, a column per subject
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Tooltip
+                      title={
+                        allFiltersSelected
+                          ? "Uploads a previously downloaded all-subjects Excel file — every subject's scores in it are saved at once."
+                          : bulkTooltip
+                      }
                     >
-                      Upload All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
-                    </Button>
-                  </span>
-                </Tooltip>
+                      <span>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="success"
+                          startIcon={<IconCloudUpload size={16} />}
+                          disabled={!allFiltersSelected}
+                          onClick={() => setUploadDialog({ open: true, subjectName: null })}
+                          sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8125rem' }}
+                        >
+                          Upload All Subjects{selectedClassName ? ` (${selectedClassName})` : ''}
+                        </Button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Uploads a previously downloaded all-subjects Excel file — every subject's scores in it are saved at once.">
+                      <IconButton size="small" sx={{ p: 0.25, color: 'success.main' }}>
+                        <IconInfoCircle size={15} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: '0.65rem', whiteSpace: 'nowrap', mt: 0.25 }}
+                  >
+                    Upload the filled-in file to save it
+                  </Typography>
+                </Box>
               </>
             )}
 

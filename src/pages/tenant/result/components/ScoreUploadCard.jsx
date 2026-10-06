@@ -51,31 +51,52 @@ const ScoreUploadCard = ({
   const teacherLabel =
     allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
 
+  // Status accent — same meaning as the bottom "Submission Status" banner,
+  // echoed here as a left border + stronger header tint so cards in
+  // different states (and cards sitting flush against each other) are
+  // immediately tellable apart instead of all reading as the same white box.
+  const accentColor = isPublished ? '#64748B' : isSubmitted ? '#2E7D32' : '#1565C0';
+  const headerTint = isPublished
+    ? isDark
+      ? 'rgba(100,116,139,0.12)'
+      : '#ECEFF1'
+    : isSubmitted
+      ? isDark
+        ? 'rgba(46,125,50,0.14)'
+        : '#DCEFDC'
+      : isDark
+        ? 'rgba(21,101,192,0.14)'
+        : '#DCEAFB';
+
   return (
     <Paper
       elevation={0}
       sx={{
         borderRadius: '10px',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E5E7EB',
+        borderLeft: '4px solid',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#D8DEE6',
+        borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 2px 8px rgba(15,23,42,0.08)',
         transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.06)',
+          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 6px 18px rgba(15,23,42,0.12)',
           borderColor: theme.palette.primary.main,
+          borderLeftColor: accentColor,
         },
       }}
     >
-      {/* ── Top Header Section (Light Green Tint) ─────────────── */}
+      {/* ── Top Header Section — tinted by status (blue/green/grey) ── */}
       <Box
         sx={{
           p: 1.5,
-          backgroundColor: isDark ? 'rgba(243, 247, 228, 0.06)' : '#F3F7E4',
+          backgroundColor: headerTint,
           borderBottom: '1px solid',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E6EBCB',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>

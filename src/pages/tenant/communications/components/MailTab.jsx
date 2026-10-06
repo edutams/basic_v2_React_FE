@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Box, Grid, Typography, Paper, Button, TextField, List, ListItem, ListItemText,
+  Box, Grid, Typography, Paper, Button, TextField, List, ListItem, ListItemButton, ListItemText,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert,
   CircularProgress, useTheme, Pagination, MenuItem, FormControl, InputLabel, Select,
   Divider, Stack, InputAdornment, Paper as PaperSurface,
@@ -156,7 +156,7 @@ const MailTab = () => {
     }
     setGenerating(true);
     try {
-      const res = await communicationApi.smsUsers({ filters });
+      const res = await communicationApi.smsUsers(filters);
       const rows = Array.isArray(res.data) ? res.data : [];
       if (!rows.length) {
         showSnack('No users matched these filters', 'info');
@@ -178,7 +178,7 @@ const MailTab = () => {
     }
     setSearching(true);
     try {
-      const res = await communicationApi.smsUserSearch({ filters: { ...filters, search: q } });
+      const res = await communicationApi.smsUserSearch({ ...filters, search: q });
       const rows = Array.isArray(res.data) ? res.data : [];
       setSearchResults(rows.map(normalizeUser));
     } catch {
@@ -287,17 +287,24 @@ const MailTab = () => {
             </Button>
             <List dense>
               {navItems.map((n) => (
-                <ListItem
+                <ListItemButton
                   key={n.key}
-                  button
-                  selected={view === n.key && !detail}
+                  selected={view === n.key}
                   onClick={() => { setView(n.key); setDetail(null); setPage(1); }}
-                  sx={{ borderRadius: '8px', cursor: 'pointer' }}
+                  sx={{
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    '&.Mui-selected': {
+                      bgcolor: 'action.selected',
+                      '&:hover': { bgcolor: 'action.hover' },
+                      '& .MuiListItemText-primary': { fontWeight: 700 },
+                    },
+                  }}
                 >
                   {n.icon}
                   <ListItemText primary={n.label} sx={{ ml: 1 }} />
                   {n.badge > 0 && <Chip size="small" color="primary" label={n.badge} />}
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           </Paper>
@@ -511,25 +518,31 @@ const MailTab = () => {
                   </Grid>
                 )}
 
-                {(filters.recipient === 'all' || filters.recipient === 'group') && (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      size="large"
-                      startIcon={generating ? <CircularProgress size={14} color="inherit" /> : <IconWand size={16} />}
-                      onClick={generateUsers}
-                      disabled={generating}
-                      sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', minHeight: 40 }}
-                    >
-                      Generate
-                    </Button>
-                  </Grid>
-                )}
-
                 {filters.userType && (
-                  <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button size="small" onClick={resetFilters} sx={{ textTransform: 'none' }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {(filters.recipient === 'all' || filters.recipient === 'group') && (
+                      <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={generating ? <CircularProgress size={14} color="inherit" /> : <IconWand size={16} />}
+                        onClick={generateUsers}
+                        disabled={generating}
+                        sx={{
+                          textTransform: 'none', fontWeight: 700, borderRadius: '10px', minHeight: 40, flex: 1,
+                        }}
+                      >
+                        Fetch
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      onClick={resetFilters}
+                      sx={{
+                        textTransform: 'none',
+                        whiteSpace: 'nowrap',
+                        ml: (filters.recipient === 'all' || filters.recipient === 'group') ? 0 : 'auto',
+                      }}
+                    >
                       Reset filters
                     </Button>
                   </Grid>

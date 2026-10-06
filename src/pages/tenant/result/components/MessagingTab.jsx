@@ -56,6 +56,7 @@ import {
   fetchSessionTerms,
   fetchActiveTenantSessionTerm,
 } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import StatCard from '@/components/shared/StatCard';
 
 const CHANNELS = {
@@ -111,10 +112,18 @@ const MessagingTab = () => {
   };
 
   const [sessionTerms, setSessionTerms] = useState([]);
+  const [sessions, setSessions] = useState([]);
+  const [terms, setTerms] = useState([]);
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [sendDialog, setSendDialog] = useState({ open: false, channel: '' });
-  const [form, setForm] = useState({ sessTermId: '', progId: '', classArmIds: [] });
+  const [form, setForm] = useState({
+    sessionId: '',
+    termId: '',
+    sessTermId: '',
+    progId: '',
+    classArmIds: [],
+  });
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState([]);
   const [contactEdits, setContactEdits] = useState({});
@@ -130,17 +139,37 @@ const MessagingTab = () => {
 
   const loadBase = useCallback(async () => {
     try {
-      const [st, progs, active] = await Promise.all([
+      const [sessRes, termRes, st, progs, active] = await Promise.all([
+        fetchSessions(),
+        fetchTerms(),
         fetchSessionTerms(),
         communicationApi.resultProgrammes(),
         fetchActiveTenantSessionTerm().catch(() => null),
       ]);
+      const sessionList = Array.isArray(sessRes?.data?.data || sessRes?.data)
+        ? sessRes.data?.data || sessRes.data
+        : [];
+      const termList = Array.isArray(termRes?.data?.data || termRes?.data)
+        ? termRes.data?.data || termRes.data
+        : [];
       const stRows = st?.data ?? [];
+      setSessions(sessionList);
+      setTerms(termList);
       setSessionTerms(stRows);
       setProgrammes(Array.isArray(progs.data) ? progs.data : []);
+
       const activeRow = (active?.data ?? active?.status) ? (active?.data ?? active) : null;
-      const activeId = activeRow?.id ?? stRows.find((s) => s.status === 'active')?.id ?? '';
-      setForm((f) => ({ ...f, sessTermId: activeId || '' }));
+      const activeSessionId =
+        activeRow?.session_id ?? stRows.find((s) => s.status === 'active')?.session_id ?? '';
+      const activeTermId =
+        activeRow?.term_id ?? stRows.find((s) => s.status === 'active')?.term_id ?? '';
+      const activeStId = activeRow?.id ?? stRows.find((s) => s.status === 'active')?.id ?? '';
+      setForm((f) => ({
+        ...f,
+        sessionId: activeSessionId || '',
+        termId: activeTermId || '',
+        sessTermId: activeStId || '',
+      }));
     } catch (err) {
       showSnackbar(err.response?.data?.error || 'Failed to load form data', 'error');
     }
@@ -149,6 +178,20 @@ const MessagingTab = () => {
   useEffect(() => {
     loadBase();
   }, [loadBase]);
+
+  // Resolve sessTermId whenever session/term change
+  useEffect(() => {
+    if (!form.sessionId || !form.termId) {
+      setForm((f) => (f.sessTermId ? { ...f, sessTermId: '' } : f));
+      return;
+    }
+    const match = sessionTerms.find(
+      (st) => st.session_id === form.sessionId && st.term_id === form.termId,
+    );
+    setForm((f) =>
+      f.sessTermId !== (match?.id ?? '') ? { ...f, sessTermId: match?.id ?? '' } : f,
+    );
+  }, [form.sessionId, form.termId, sessionTerms]);
 
   const loadClasses = async (progId) => {
     try {
@@ -194,7 +237,7 @@ const MessagingTab = () => {
   const populate = async () => {
     const { channel } = sendDialog;
     if (!form.sessTermId || !form.progId || !form.classArmIds.length) {
-      showSnackbar('Select session-term, programme and class(es)', 'warning');
+      showSnackbar('Select session, term, programme and class(es)', 'warning');
       return;
     }
     setPopulating(true);
@@ -348,7 +391,9 @@ const MessagingTab = () => {
     return s.total_result_sms ?? 0;
   };
 
-  const filtersReady = Boolean(form.sessTermId && form.progId && form.classArmIds.length);
+  const filtersReady = Boolean(
+    form.sessionId && form.termId && form.sessTermId && form.progId && form.classArmIds.length,
+  );
   const dialogChannel = CHANNELS[sendDialog.channel];
   const allSelected = rows.length > 0 && selected.length === rows.length;
   const someSelected = selected.length > 0 && selected.length < rows.length;
@@ -426,24 +471,49 @@ const MessagingTab = () => {
         </Box>
         <Box sx={{ p: 2, pb: 1.5 }}>
           <Grid container spacing={1.5} alignItems="center">
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session-Term</InputLabel>
+                <InputLabel>Session</InputLabel>
                 <Select
-                  value={form.sessTermId}
-                  label="Session-Term"
-                  onChange={(e) => setForm((f) => ({ ...f, sessTermId: e.target.value }))}
+                  value={form.sessionId}
+                  label="Session"
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      sessionId: e.target.value,
+                      termId: '',
+                      sessTermId: '',
+                    }))
+                  }
                 >
-                  {sessionTerms.map((s) => (
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
-                      {s.term?.term_name ?? s.display_name}
+                      {s.session_name}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select
+                  value={form.termId}
+                  label="Term"
+                  onChange={(e) => setForm((f) => ({ ...f, termId: e.target.value }))}
+                  disabled={!form.sessionId}
+                >
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Programme</InputLabel>
                 <Select
@@ -462,7 +532,7 @@ const MessagingTab = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Class(es)</InputLabel>
                 <Select
@@ -489,18 +559,35 @@ const MessagingTab = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Stack direction="row" spacing={1}>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Stack
+                direction={{ xs: 'row', sm: 'row' }}
+                spacing={1}
+                useFlexGap
+                flexWrap="wrap"
+                sx={{ width: '100%' }}
+              >
                 {Object.entries(CHANNELS).map(([name, cfg]) => (
                   <Button
                     key={name}
                     fullWidth
                     variant={cfg.variant}
-                    size="medium"
+                    size="small"
                     startIcon={cfg.buttonIcon}
                     onClick={() => openDialog(name)}
                     disabled={!filtersReady}
-                    sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      borderRadius: '8px',
+                      flex: {
+                        xs: '1 1 calc(50% - 4px)',
+                        sm: '1 1 calc(33.33% - 8px)',
+                        md: '1 1 calc(100% - 8px)',
+                      },
+                      minWidth: { xs: 0, md: 0 },
+                      px: { xs: 1, md: 1.5 },
+                    }}
                   >
                     {name}
                   </Button>
@@ -510,7 +597,9 @@ const MessagingTab = () => {
           </Grid>
           {!filtersReady && (
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-              Select a session-term, programme and at least one class to enable channel buttons.
+              {!form.sessionId || !form.termId
+                ? 'Select a session and term'
+                : '…and a programme with at least one class to enable channel buttons.'}
             </Typography>
           )}
         </Box>
@@ -700,16 +789,41 @@ const MessagingTab = () => {
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 4 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Session-Term</InputLabel>
+                <InputLabel>Session</InputLabel>
                 <Select
-                  value={form.sessTermId}
-                  label="Session-Term"
-                  onChange={(e) => setForm((f) => ({ ...f, sessTermId: e.target.value }))}
+                  value={form.sessionId}
+                  label="Session"
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      sessionId: e.target.value,
+                      termId: '',
+                      sessTermId: '',
+                    }))
+                  }
                 >
-                  {sessionTerms.map((s) => (
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
-                      {s.term?.term_name ?? s.display_name}
+                      {s.session_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select
+                  value={form.termId}
+                  label="Term"
+                  onChange={(e) => setForm((f) => ({ ...f, termId: e.target.value }))}
+                  disabled={!form.sessionId}
+                >
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -984,7 +1098,7 @@ const MessagingTab = () => {
                     No recipients loaded yet
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    Pick a session-term, programme and class(es), then click Load Students.
+                    Pick a session, term, programme and class(es), then click Load Students.
                   </Typography>
                 </Box>
               </Grid>

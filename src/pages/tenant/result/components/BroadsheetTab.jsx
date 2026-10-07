@@ -74,7 +74,6 @@ import {
   fetchTerms,
   fetchProgrammes,
   fetchClassesByProgramme,
-  fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
@@ -110,6 +109,16 @@ const PUBLISH_CONFIRM = {
     title: 'Unpublish this broadsheet?',
     body: 'Both the SPA approval and the Head of School publish are cleared, and the broadsheet goes back to awaiting approval.',
     confirm: 'Unpublish',
+    color: 'error',
+  },
+  // Same underlying action as `unpublish` (it's safe/idempotent to clear a
+  // publish flag that was never set) — shown instead of `unpublish` when
+  // nothing has actually been published yet, so the copy doesn't talk
+  // about undoing a publish that hasn't happened.
+  unapprove: {
+    title: 'Reverse this approval?',
+    body: 'The SPA approval is cleared and the broadsheet goes back to awaiting approval. Nothing has been published yet, so there is nothing else to undo.',
+    confirm: 'Reverse approval',
     color: 'error',
   },
 };
@@ -410,16 +419,20 @@ const BroadsheetTab = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.programme_id]);
 
-  // ── Class arms for the selected class ──────────────────────
+  // ── Class arms for the selected class — scoped to the class arms the
+  //    caller is the ACTIVE CLASS TEACHER of (stricter than the generic
+  //    curriculum arm dropdown, which also includes arms they merely
+  //    subject-teach in) ────────────────────────────────────────
   useEffect(() => {
     if (!filters.class_id) {
       setClassArms([]);
       return;
     }
-    fetchClassArmsByClass(
-      filters.class_id,
-      filters.programme_id ? { programme_id: filters.programme_id } : {},
-    )
+    resultSheetApi
+      .getMyClassArms({
+        class_id: filters.class_id,
+        ...(filters.programme_id ? { programme_id: filters.programme_id } : {}),
+      })
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
@@ -983,7 +996,11 @@ const BroadsheetTab = () => {
             ...prev,
             students: prev.students.map((r) =>
               r.student_registration_id === row.student_registration_id
-                ? { ...r, promotion_recommendation: recommendation, next_class_arm_id: nextClassArmId }
+                ? {
+                    ...r,
+                    promotion_recommendation: recommendation,
+                    next_class_arm_id: nextClassArmId,
+                  }
                 : r,
             ),
           },
@@ -1406,7 +1423,9 @@ const BroadsheetTab = () => {
                     : '—'
                 }
                 label="Pass Rate"
-                subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
+                subtitle={
+                  stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'
+                }
                 icon={IconAward}
                 colorIndex={3}
                 loading={loading}
@@ -1525,7 +1544,11 @@ const BroadsheetTab = () => {
                 };
               };
 
-              const stageStatusLabel = { done: 'Complete', active: 'In progress', locked: 'Locked' };
+              const stageStatusLabel = {
+                done: 'Complete',
+                active: 'In progress',
+                locked: 'Locked',
+              };
 
               const stages = [
                 {
@@ -1537,6 +1560,10 @@ const BroadsheetTab = () => {
                   action: 'Generate remarks',
                   onAction: () => setPublishConfirm({ open: true, action: 'remarks' }),
                   loading: generatingComments,
+                  // Unlike the other 3 stages, a class teacher may also run
+                  // this one — the backend scopes it to only fill their own
+                  // class_teachers_comment column when they're not SPA.
+                  allowClassTeacher: true,
                 },
                 {
                   step: 2,
@@ -1582,8 +1609,17 @@ const BroadsheetTab = () => {
                   action: 'Publish results',
                   onAction: () => setPublishConfirm({ open: true, action: 'hos' }),
                   loading: publishing === 'hos',
-                  secondaryAction: spaDone || hosDone ? 'Reverse publication' : null,
-                  onSecondaryAction: () => setPublishConfirm({ open: true, action: 'unpublish' }),
+                  // `unpublish` always resets BOTH the SPA approval and the
+                  // HOS publish flags together — but the label must match
+                  // what's actually true yet, or it reads as "revert a
+                  // publish" when nothing has been published at all.
+                  secondaryAction: hosDone
+                    ? 'Reverse Publication'
+                    : spaDone
+                      ? 'Reverse Approval'
+                      : null,
+                  onSecondaryAction: () =>
+                    setPublishConfirm({ open: true, action: hosDone ? 'unpublish' : 'unapprove' }),
                 },
               ];
 
@@ -1641,10 +1677,13 @@ const BroadsheetTab = () => {
                       const isLocked = stage.status === 'locked';
                       const isDone = stage.status === 'done';
                       const scheme = stageScheme(stage.status);
-                      // Every workflow action is SPA/super_admin-only — a
-                      // class teacher viewing the broadsheet can watch
-                      // progress but not trigger any of the 4 stages.
-                      const canAct = can('result.admin.spa_approve_broadsheet');
+                      // Every workflow action is SPA/super_admin-only,
+                      // EXCEPT Remarks — a class teacher with their own
+                      // comment bank access may also generate remarks (the
+                      // backend scopes what that actually fills in).
+                      const canAct =
+                        can('result.admin.spa_approve_broadsheet') ||
+                        (stage.allowClassTeacher && can('result.admin.manage_comment_bank'));
                       const ButtonIcon = stage.buttonIcon;
                       return (
                         <Box
@@ -1724,7 +1763,9 @@ const BroadsheetTab = () => {
                                 disabled={isLocked || stage.loading || !canAct}
                                 onClick={stage.onAction}
                                 startIcon={
-                                  stage.loading ? null : ButtonIcon ? <ButtonIcon size={15} /> : null
+                                  stage.loading ? null : ButtonIcon ? (
+                                    <ButtonIcon size={15} />
+                                  ) : null
                                 }
                                 sx={{
                                   textTransform: 'none',
@@ -1750,14 +1791,22 @@ const BroadsheetTab = () => {
                                 <Button
                                   fullWidth
                                   size="small"
-                                  variant="text"
+                                  variant="contained"
                                   color="warning"
                                   disabled={
                                     publishing === 'unpublish' ||
+                                    publishing === 'unapprove' ||
                                     !can('result.admin.unpublish_broadsheet')
                                   }
                                   onClick={stage.onSecondaryAction}
-                                  sx={{ fontSize: '0.7rem', mt: 0.5, textTransform: 'none' }}
+                                  sx={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    mt: 0.5,
+                                    textTransform: 'none',
+                                    boxShadow: 'none',
+                                    '&:hover': { boxShadow: 'none' },
+                                  }}
                                 >
                                   {stage.secondaryAction}
                                 </Button>
@@ -2713,7 +2762,8 @@ const BroadsheetTab = () => {
                                           handleOpenComment(row, 'hos');
                                         }}
                                       >
-                                        <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
+                                        <IconMessage size={16} style={{ marginRight: 8 }} /> HoS
+                                        Comment
                                       </MenuItem>
                                       {activeTab === 0 &&
                                         sheet?.result_publish?.head_of_school_publish !== 'yes' && (
@@ -2884,18 +2934,20 @@ const BroadsheetTab = () => {
       {/* ── Post Recommendation ──────────────────────────────── */}
       <Dialog
         open={promoteDialog.open}
-        onClose={() => setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })}
+        onClose={() =>
+          setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })
+        }
         maxWidth="xs"
         fullWidth
       >
         <DialogTitle>Post recommendations into the new session?</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Creates each student&apos;s registration in the destination session&apos;s first term, using
-            the next class arm Recommend Promotion already assigned (promoted students move up a
-            class, keeping the same arm letter; retained students repeat). Also rolls the school&apos;s
-            subscription forward into that term if nothing covers it yet. Run Recommend Promotion
-            first if you haven&apos;t already.
+            Creates each student&apos;s registration in the destination session&apos;s first term,
+            using the next class arm Recommend Promotion already assigned (promoted students move up
+            a class, keeping the same arm letter; retained students repeat). Also rolls the
+            school&apos;s subscription forward into that term if nothing covers it yet. Run
+            Recommend Promotion first if you haven&apos;t already.
           </Typography>
 
           {promoteDialog.loading ? (
@@ -2908,14 +2960,16 @@ const BroadsheetTab = () => {
             </Alert>
           ) : (
             <Alert severity="warning">
-              The next session (<strong>{promoteDialog.sessionName}</strong>) hasn&apos;t been created
-              yet. Create it first (Session Management) before posting recommendations.
+              The next session (<strong>{promoteDialog.sessionName}</strong>) hasn&apos;t been
+              created yet. Create it first (Session Management) before posting recommendations.
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button
-            onClick={() => setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })}
+            onClick={() =>
+              setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })
+            }
             disabled={postingRecommendations}
           >
             Cancel
@@ -2926,7 +2980,11 @@ const BroadsheetTab = () => {
             onClick={handlePostRecommendations}
             disabled={postingRecommendations || promoteDialog.loading || !promoteDialog.exists}
           >
-            {postingRecommendations ? <CircularProgress size={16} color="inherit" /> : 'Post Recommendation'}
+            {postingRecommendations ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              'Post Recommendation'
+            )}
           </Button>
         </DialogActions>
       </Dialog>

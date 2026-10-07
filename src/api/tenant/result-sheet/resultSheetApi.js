@@ -4,6 +4,13 @@ import tenantApi from '@/api/tenant/tenant_api';
 // Backed by the /result-sheet routes in routes/tenant/result_sheet.php
 const resultSheetApi = {
   // ── Broadsheet ──────────────────────────────────────────────
+  // Class arms for the filter's Arm dropdown, scoped server-side to arms
+  // the caller is the ACTIVE CLASS TEACHER of (not just a subject teacher
+  // in) when they're not an admin — stricter than the generic curriculum
+  // arm dropdown, since Broadsheet writes class-teacher-only fields.
+  // GET /result-sheet/my-class-arms?class_id=X&programme_id=Y
+  getMyClassArms: (params) => tenantApi.get('/result-sheet/my-class-arms', { params }),
+
   // Termly broadsheet: students x subjects with CA/exam/total/grade,
   // positions, comments, promotion fields + stat cards.
   // POST /result-sheet/broadsheet { class_arm_id, session_term_id, search? }

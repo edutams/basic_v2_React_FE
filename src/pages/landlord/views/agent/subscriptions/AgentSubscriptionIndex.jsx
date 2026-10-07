@@ -7,6 +7,7 @@ import ParentCard from 'src/components/shared/ParentCard';
 import MiniStat from '@/components/shared/stats/MiniStat';
 import axios from '@/api/landlord/landlord_api';
 import AgentSubscriptionList from './AgentSubscriptionList';
+import SchoolsNeedingSubscriptionList from './SchoolsNeedingSubscriptionList';
 
 const BCrumb = [
   {
@@ -101,6 +102,7 @@ const AgentSubscriptionIndex = () => {
               <Tab label="All Requests" id="tab-0" />
               <Tab label="Pending" id="tab-1" />
               <Tab label="Active" id="tab-2" />
+              <Tab label="Needs Subscription" id="tab-3" />
             </Tabs>
           </Box>
           <Box>
@@ -113,6 +115,7 @@ const AgentSubscriptionIndex = () => {
             {value === 2 && (
               <AgentSubscriptionList status="active" onMutate={fetchStats} subscriptionCharges={subscriptionCharges} />
             )}
+            {value === 3 && <SchoolsNeedingSubscriptionList />}
           </Box>
         </Box>
       </ParentCard>

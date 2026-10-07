@@ -27,6 +27,24 @@ const OTHER_ROLE_LABELS = {
 export const hasRole = (roles, roleName) =>
   Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === roleName);
 
+// Tenant-guard Spatie roles that can manage the school's subscription — same
+// list as config/subscription.php's admin_roles on the backend. These roles
+// keep full access to every real page while the subscription is locked
+// (SchoolLayout, TenantProtectedRoute, SubscriptionBanner all share this).
+export const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head', 'bursar'];
+
+export const isAdminTier = (roles) => ADMIN_TIER_ROLES.some((role) => hasRole(roles, role));
+
+// Narrower than ADMIN_TIER_ROLES: the roles who actually own fixing a locked
+// subscription, so a locked Dashboard sends them straight to /subscriptions
+// instead of letting them land on a dashboard they can't act on. Bursar and
+// super_admin are admin-tier (full access) but not "the" subscription owner,
+// so they still see the real dashboard when locked.
+export const SUBSCRIPTION_OWNER_ROLES = ['school_admin', 'school_owner', 'school_head'];
+
+export const isSubscriptionOwner = (roles) =>
+  SUBSCRIPTION_OWNER_ROLES.some((role) => hasRole(roles, role));
+
 /**
  * Label for a staff member (user_type_id === 1) from their roles, falling
  * back to their staff_type, then a generic "Staff".

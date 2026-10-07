@@ -5,13 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
+import { isAdminTier } from '@/utils/roleLabels';
 
-// Tenant-guard Spatie roles that can manage the school's subscription — same
-// list as config/subscription.php's admin_roles on the backend, and
-// TenantProtectedRoute.jsx's ADMIN_TIER_ROLES. Only they see this banner:
-// end users must never be told their school is behind on payment (see
-// SubscriptionLockedNotice for their generic, role-blind message instead).
-const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head', 'bursar'];
+// Only admin-tier roles see this banner: end users must never be told their
+// school is behind on payment (see AccountLockedScreen, which SchoolLayout
+// shows them instead once locked, for their generic, role-blind message).
 
 /**
  * Fixed strip docked beneath the header (and beneath the impersonation bar,
@@ -27,14 +25,12 @@ const SubscriptionBanner = () => {
   const { subscriptionStatus, isImpersonated, roles } = useContext(TenantAuthContext);
 
   const tier = subscriptionStatus?.tier;
-  const isAdminTier =
-    Array.isArray(roles) &&
-    roles.some((r) => ADMIN_TIER_ROLES.includes(typeof r === 'string' ? r : r?.name));
+  const userIsAdminTier = isAdminTier(roles);
 
   // 'not_configured' (no active session-term yet — e.g. still onboarding)
   // is deliberately silent here too: there's genuinely nothing to report on
   // yet, and it must never be confused with 'active' ("confirmed paid").
-  if (!tier || tier === 'active' || tier === 'not_configured' || !isAdminTier) {
+  if (!tier || tier === 'active' || tier === 'not_configured' || !userIsAdminTier) {
     return null;
   }
 
@@ -50,10 +46,17 @@ const SubscriptionBanner = () => {
       })
     : null;
 
+  // Fallback only — the backend always supplies `message` with the right
+  // wording (resolveForActiveSessionTerm()/messageFor()). A locked tenant
+  // that never actually had a subscription for this term (the normal case
+  // once the free grace weeks run out) gets "trial ended" wording here too,
+  // not "has expired" — nothing expired if nothing was ever subscribed to.
   const message =
     subscriptionStatus?.message ||
     (isLocked
-      ? `Your school's subscription${label ? ` for ${label}` : ''} has expired. Please renew to restore full access.`
+      ? subscriptionStatus?.subscription_status === 'expired'
+        ? `Your school's subscription${label ? ` for ${label}` : ''} has expired. Please renew to restore full access.`
+        : `Your free trial${label ? ` for ${label}` : ''} has ended. Subscribe now to restore full access.`
       : `Your subscription${label ? ` for ${label}` : ''} is due${dueDateLabel ? ` on ${dueDateLabel}` : ' soon'}.`);
 
   return (

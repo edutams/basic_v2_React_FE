@@ -1,6 +1,6 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import ImpersonationBar from './vertical/header/ImpersonationBar';
 import SubscriptionBanner from './vertical/header/SubscriptionBanner';
@@ -9,9 +9,12 @@ import Customizer from '../landlord/shared/customizer/Customizer';
 import DashboardFooter from '../../components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { TenantAuthContext } from '../../context/TenantContext/auth';
+import { useSnackbar } from '../../context/SnackbarContext';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
 import ScrollToTop from '../../components/shared/ScrollToTop';
+import AccountLockedScreen from '../../components/protectedroutes/AccountLockedScreen';
+import { isAdminTier, isSubscriptionOwner } from '@/utils/roleLabels';
 // import LoadingBar from '../../LoadingBar';
 import config from 'src/context/config';
 
@@ -35,12 +38,76 @@ const PageWrapper = styled('div')(({ theme }) => ({
 const SchoolLayout = () => {
   // const { isCollapse } = useContext(CustomizerContext);
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
-  const { isImpersonated, subscriptionStatus } = useContext(TenantAuthContext);
+  const { isImpersonated, subscriptionStatus, roles } = useContext(TenantAuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { showError } = useSnackbar();
+  const pathnameRef = useRef(location.pathname);
+  pathnameRef.current = location.pathname;
+  const lockNoticeShownRef = useRef(false);
+
+  // An admin clicking into a page while the subscription is locked (e.g. a
+  // stale bookmark, or TenantProtectedRoute letting admins through so they
+  // can still reach /subscriptions from anywhere) previously just hit a page
+  // that silently never loaded any data — every data call 402s with the
+  // same "subscription_locked" payload tenant_api.js already turns into
+  // this event. Surface it once (parallel 402s on page mount shouldn't
+  // stack several toasts) and land admins on the subscription page itself.
+  useEffect(() => {
+    const handleLocked = (event) => {
+      // A 402 can still be in flight from a background fetch (dashboard
+      // stats, a poll, whatever was on screen) at the exact moment the user
+      // logs out — logout itself already cleared the token and is about to
+      // navigate to /login. Racing that with a navigate('/subscriptions')
+      // here previously meant whichever call finished last decided where
+      // the user actually landed, so logout could visibly "fail" even
+      // though the server-side logout had already succeeded. Once there's
+      // no token, the session is gone or going — this event is stale,
+      // ignore it entirely rather than fighting over where to redirect.
+      if (!localStorage.getItem('tenant_access_token')) {
+        return;
+      }
+
+      const detail = event.detail || {};
+      if (!lockNoticeShownRef.current) {
+        lockNoticeShownRef.current = true;
+        showError(detail.message || "Your school's subscription has expired.", { duration: 8000 });
+        window.setTimeout(() => {
+          lockNoticeShownRef.current = false;
+        }, 5000);
+      }
+      if (detail.audience === 'admin' && pathnameRef.current !== '/subscriptions') {
+        navigate('/subscriptions');
+      }
+    };
+    window.addEventListener('tenant_subscription:locked', handleLocked);
+    return () => window.removeEventListener('tenant_subscription:locked', handleLocked);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const subscriptionTier = subscriptionStatus?.tier;
   const showSubscriptionBanner = subscriptionTier && subscriptionTier !== 'active';
+
+  // Locked + not admin-tier (teacher/student/parent/etc): this is the ONLY
+  // thing they get, for every route under this layout — no sidebar, no
+  // header, no page content underneath. Replaces the old approach of
+  // rendering the real page and relying on a toast/overlay on top of it.
+  if (subscriptionTier === 'locked' && !isAdminTier(roles)) {
+    return <AccountLockedScreen />;
+  }
+
+  // Locked + the subscription OWNER roles (school_admin/school_owner/
+  // school_head) landing on the Dashboard: send them straight to
+  // /subscriptions on the very first render, from this same layout-level
+  // check — not a separate route-level check further down the tree, which
+  // only caught this reactively (after some other locked API call's 402
+  // fired the global listener below) rather than the moment the dashboard
+  // itself loads.
+  if (subscriptionTier === 'locked' && isSubscriptionOwner(roles) && location.pathname.startsWith('/dashboard')) {
+    return <Navigate to="/subscriptions" replace />;
+  }
 
   return (
     <>

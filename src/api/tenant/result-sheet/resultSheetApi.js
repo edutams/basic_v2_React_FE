@@ -9,6 +9,12 @@ const resultSheetApi = {
   // POST /result-sheet/broadsheet { class_arm_id, session_term_id, search? }
   getBroadsheet: (data) => tenantApi.post('/result-sheet/broadsheet', data),
 
+  // Results Workflow stage 2 — persists term totals, arm/class positions
+  // and quality points onto student_registrations, independently of
+  // approval (which also runs this as a safety net). Idempotent.
+  // POST /result-sheet/broadsheet/generate-positioning { class_arm_id, session_term_id }
+  generatePositioning: (data) => tenantApi.post('/result-sheet/broadsheet/generate-positioning', data),
+
   // Term-cumulative broadsheet: per-term averages + CWA/position for a
   // class arm across every term of a session.
   // POST /result-sheet/term-cumulative { class_arm_id, session_id, search? }
@@ -32,10 +38,11 @@ const resultSheetApi = {
   // POST /result-sheet/comment { student_registration_id, type: 'teacher'|'hos', comment }
   saveComment: (data) => tenantApi.post('/result-sheet/comment', data),
 
-  // Generate class-teacher / HoS comments for a whole class arm from the
-  // current user's comment bank (student average → score-range grade,
-  // domain average → band, gender-aware).
-  // POST /result-sheet/generate-comments { class_arm_id, session_term_id, type? }
+  // Generate comments for a whole class arm from the current user's OWN
+  // comment bank (student average → score-range grade, domain average →
+  // band, gender-aware). Which field it fills (class teacher's vs school
+  // admin's) is resolved server-side from the caller's role.
+  // POST /result-sheet/generate-comments { class_arm_id, session_term_id }
   generateComments: (data) => tenantApi.post('/result-sheet/generate-comments', data),
 
   // POST /result-sheet/promotion { student_registration_id, promotion_recommendation?, next_class_arm_id? }
@@ -61,7 +68,9 @@ const resultSheetApi = {
 
   // ── Comment bank ────────────────────────────────────────────
   // GET /result-sheet/comment-bank — comment grades + the current user's
-  // saved cells (comment1..comment4 = domain-average bands).
+  // saved cells (comment1..comment4 = domain-average bands), plus `meta`
+  // describing which role/report-card field this user's bank feeds and
+  // how many of its cells are filled.
   getCommentBank: () => tenantApi.get('/result-sheet/comment-bank'),
 
   // POST /result-sheet/comment-bank { comment_grade_id, field: 'comment1'..'comment4', value }

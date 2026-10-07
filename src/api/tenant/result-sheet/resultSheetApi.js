@@ -48,14 +48,27 @@ const resultSheetApi = {
   // POST /result-sheet/promotion { student_registration_id, promotion_recommendation?, next_class_arm_id? }
   savePromotion: (data) => tenantApi.post('/result-sheet/promotion', data),
 
-  // "Recommend Promotion" — compute + persist recommendations from the
-  // configured cumulative/pass mark.
+  // "Recommend Promotion" — compute + persist recommendations (and the
+  // resolved next class arm, for review) from the configured
+  // cumulative/pass mark.
   // POST /result-sheet/recommend-promotions { class_arm_id, session_id }
   recommendPromotions: (data) => tenantApi.post('/result-sheet/recommend-promotions', data),
 
-  // "Post Recommendation" — resolve each student's next class arm.
+  // "Post Recommendation" — the execution step: creates each student's
+  // registration in the destination session's first term using the
+  // next_class_arm_id Recommend Promotion already assigned, and rolls the
+  // school's subscription forward into that term if nothing covers it yet.
+  // The destination session is resolved server-side (see getNextSession
+  // below) — never chosen by the caller.
   // POST /result-sheet/post-recommendations { class_arm_id, session_id }
   postRecommendations: (data) => tenantApi.post('/result-sheet/post-recommendations', data),
+
+  // Preview for the Post Recommendation dialog: the session that
+  // chronologically follows the given one (leading year + 1, e.g.
+  // "2025/2026" → "2026/2027"), and whether it's actually been created yet.
+  // GET /result-sheet/next-session?session_id=X
+  getNextSession: (sessionId) =>
+    tenantApi.get('/result-sheet/next-session', { params: { session_id: sessionId } }),
 
   // ── Summary sheet ───────────────────────────────────────────
   // Grade-distribution matrix: grades x subjects with outlier/total rows.

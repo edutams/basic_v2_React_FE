@@ -913,36 +913,77 @@ const BroadsheetTab = () => {
     }
   };
 
+  // ── Post Recommendation: the execution step. Recommend Promotion
+  // already computed promotion_recommendation + next_class_arm_id for
+  // review (shown in the table); this opens a dialog that shows which
+  // session it's about to promote into — resolved automatically
+  // (current session's leading year + 1, e.g. "2025/2026" → "2026/2027"),
+  // never a picker — then actually creates each student's registration
+  // there and rolls the subscription forward.
+  const [promoteDialog, setPromoteDialog] = useState({
+    open: false,
+    loading: false,
+    exists: false,
+    sessionName: '',
+  });
+  const [postingRecommendations, setPostingRecommendations] = useState(false);
+
+  const openPromoteDialog = async () => {
+    setPromoteDialog({ open: true, loading: true, exists: false, sessionName: '' });
+    try {
+      const res = await resultSheetApi.getNextSession(filters.session_id);
+      const info = res?.data?.data || {};
+      setPromoteDialog({
+        open: true,
+        loading: false,
+        exists: Boolean(info.exists),
+        sessionName: info.session_name || '',
+      });
+    } catch (err) {
+      console.error('Failed to resolve next session:', err);
+      setPromoteDialog({ open: true, loading: false, exists: false, sessionName: '' });
+      showSnackbar(err?.response?.data?.message || 'Failed to resolve the next session', 'error');
+    }
+  };
+
   const handlePostRecommendations = async () => {
-    setLoading(true);
+    setPostingRecommendations(true);
     try {
       const res = await resultSheetApi.postRecommendations({
         class_arm_id: filters.class_arm_id,
         session_id: filters.session_id,
       });
       showSnackbar(res?.data?.message || 'Recommendations posted');
-      await refetch();
+      setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' });
     } catch (err) {
       console.error('Failed to post recommendations:', err);
       showSnackbar(err?.response?.data?.message || 'Failed to post recommendations', 'error');
-      setLoading(false);
+    } finally {
+      setPostingRecommendations(false);
     }
   };
 
   const handleSetRecommendation = async (row, recommendation) => {
     setRecMenu({ rowId: null, anchorEl: null });
     try {
-      await resultSheetApi.savePromotion({
+      const res = await resultSheetApi.savePromotion({
         student_registration_id: row.student_registration_id,
         promotion_recommendation: recommendation,
       });
+      // The backend re-resolves next_class_arm_id to match the new
+      // recommendation (repeat the current arm if held back, the next
+      // class's matching arm if promoted/on trial, null if graduated) —
+      // read that back rather than just patching promotion_recommendation,
+      // so the Next Class dropdown doesn't keep showing whatever arm was
+      // resolved under the student's PREVIOUS status.
+      const nextClassArmId = res?.data?.data?.next_class_arm_id ?? null;
       setSheet(
         (prev) =>
           prev && {
             ...prev,
             students: prev.students.map((r) =>
               r.student_registration_id === row.student_registration_id
-                ? { ...r, promotion_recommendation: recommendation }
+                ? { ...r, promotion_recommendation: recommendation, next_class_arm_id: nextClassArmId }
                 : r,
             ),
           },
@@ -1600,13 +1641,10 @@ const BroadsheetTab = () => {
                       const isLocked = stage.status === 'locked';
                       const isDone = stage.status === 'done';
                       const scheme = stageScheme(stage.status);
-                      // Generate Remarks (step 1) is SPA/super_admin-only — it
-                      // pulls both the class teacher's AND the SPA's comment
-                      // bank in one go, so a class teacher viewing the
-                      // broadsheet can watch progress but not trigger it.
-                      // Positioning (step 2) stays open to anyone who can view
-                      // the broadsheet, same as before.
-                      const canAct = can('result.admin.spa_approve_broadsheet') || stage.step === 2;
+                      // Every workflow action is SPA/super_admin-only — a
+                      // class teacher viewing the broadsheet can watch
+                      // progress but not trigger any of the 4 stages.
+                      const canAct = can('result.admin.spa_approve_broadsheet');
                       const ButtonIcon = stage.buttonIcon;
                       return (
                         <Box
@@ -1806,7 +1844,7 @@ const BroadsheetTab = () => {
               );
             })()}
 
-          {showData && showPromotionButtons && (
+          {showData && showPromotionButtons && can('result.admin.spa_approve_broadsheet') && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
@@ -1818,10 +1856,10 @@ const BroadsheetTab = () => {
                 Recommend Promotion
               </Button>
               <Button
-                variant="outlined"
+                variant="contained"
                 color="secondary"
                 size="small"
-                onClick={handlePostRecommendations}
+                onClick={openPromoteDialog}
                 disabled={loading}
               >
                 Post Recommendation
@@ -2623,72 +2661,78 @@ const BroadsheetTab = () => {
                               <CommentCell value={row.class_teachers_comment} />
                               <CommentCell value={row.hos_comment} />
                               <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
-                                <Tooltip
-                                  title={
-                                    hasNoResults
-                                      ? 'No scores uploaded for this student yet — upload scores before adding comments'
-                                      : 'Add or edit comments and scores'
-                                  }
-                                >
-                                  <span>
-                                    <Button
-                                      size="small"
-                                      variant="contained"
-                                      color="primary"
-                                      sx={{
-                                        fontSize: 12,
-                                        px: 1,
-                                        minWidth: 0,
-                                        textTransform: 'none',
-                                      }}
-                                      onClick={(e) => handleAddEditClick(e, row)}
-                                      disabled={hasNoResults}
+                                {can('result.admin.spa_approve_broadsheet') ? (
+                                  <>
+                                    <Tooltip
+                                      title={
+                                        hasNoResults
+                                          ? 'No scores uploaded for this student yet — upload scores before adding comments'
+                                          : 'Add or edit comments and scores'
+                                      }
                                     >
-                                      Add/Edit
-                                    </Button>
-                                  </span>
-                                </Tooltip>
-                                <Menu
-                                  anchorEl={addEditMenu.anchorEl}
-                                  open={
-                                    Boolean(addEditMenu.anchorEl) &&
-                                    addEditMenu.rowId === row.student_registration_id
-                                  }
-                                  onClose={closeAddEditMenu}
-                                >
-                                  <MenuItem
-                                    dense
-                                    onClick={() => {
-                                      closeAddEditMenu();
-                                      handleOpenComment(row, 'teacher');
-                                    }}
-                                  >
-                                    <IconMessage size={16} style={{ marginRight: 8 }} /> Class
-                                    Teacher
-                                  </MenuItem>
-                                  <MenuItem
-                                    dense
-                                    onClick={() => {
-                                      closeAddEditMenu();
-                                      handleOpenComment(row, 'hos');
-                                    }}
-                                  >
-                                    <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
-                                  </MenuItem>
-                                  {activeTab === 0 &&
-                                    sheet?.result_publish?.head_of_school_publish !== 'yes' && (
+                                      <span>
+                                        <Button
+                                          size="small"
+                                          variant="contained"
+                                          color="primary"
+                                          sx={{
+                                            fontSize: 12,
+                                            px: 1,
+                                            minWidth: 0,
+                                            textTransform: 'none',
+                                          }}
+                                          onClick={(e) => handleAddEditClick(e, row)}
+                                          disabled={hasNoResults}
+                                        >
+                                          Add/Edit
+                                        </Button>
+                                      </span>
+                                    </Tooltip>
+                                    <Menu
+                                      anchorEl={addEditMenu.anchorEl}
+                                      open={
+                                        Boolean(addEditMenu.anchorEl) &&
+                                        addEditMenu.rowId === row.student_registration_id
+                                      }
+                                      onClose={closeAddEditMenu}
+                                    >
                                       <MenuItem
                                         dense
                                         onClick={() => {
                                           closeAddEditMenu();
-                                          handleOpenEditScores(row);
+                                          handleOpenComment(row, 'teacher');
                                         }}
                                       >
-                                        <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
-                                        Scores
+                                        <IconMessage size={16} style={{ marginRight: 8 }} /> Class
+                                        Teacher
                                       </MenuItem>
-                                    )}
-                                </Menu>
+                                      <MenuItem
+                                        dense
+                                        onClick={() => {
+                                          closeAddEditMenu();
+                                          handleOpenComment(row, 'hos');
+                                        }}
+                                      >
+                                        <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
+                                      </MenuItem>
+                                      {activeTab === 0 &&
+                                        sheet?.result_publish?.head_of_school_publish !== 'yes' && (
+                                          <MenuItem
+                                            dense
+                                            onClick={() => {
+                                              closeAddEditMenu();
+                                              handleOpenEditScores(row);
+                                            }}
+                                          >
+                                            <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
+                                            Scores
+                                          </MenuItem>
+                                        )}
+                                    </Menu>
+                                  </>
+                                ) : (
+                                  '-'
+                                )}
                               </TableCell>
                             </TableRow>
                           );
@@ -2833,6 +2877,56 @@ const BroadsheetTab = () => {
             ) : (
               PUBLISH_CONFIRM[publishConfirm.action]?.confirm
             )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Post Recommendation ──────────────────────────────── */}
+      <Dialog
+        open={promoteDialog.open}
+        onClose={() => setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Post recommendations into the new session?</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Creates each student&apos;s registration in the destination session&apos;s first term, using
+            the next class arm Recommend Promotion already assigned (promoted students move up a
+            class, keeping the same arm letter; retained students repeat). Also rolls the school&apos;s
+            subscription forward into that term if nothing covers it yet. Run Recommend Promotion
+            first if you haven&apos;t already.
+          </Typography>
+
+          {promoteDialog.loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <CircularProgress size={22} />
+            </Box>
+          ) : promoteDialog.exists ? (
+            <Alert severity="info">
+              Promoting into <strong>{promoteDialog.sessionName}</strong>.
+            </Alert>
+          ) : (
+            <Alert severity="warning">
+              The next session (<strong>{promoteDialog.sessionName}</strong>) hasn&apos;t been created
+              yet. Create it first (Session Management) before posting recommendations.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })}
+            disabled={postingRecommendations}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handlePostRecommendations}
+            disabled={postingRecommendations || promoteDialog.loading || !promoteDialog.exists}
+          >
+            {postingRecommendations ? <CircularProgress size={16} color="inherit" /> : 'Post Recommendation'}
           </Button>
         </DialogActions>
       </Dialog>

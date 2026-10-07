@@ -132,6 +132,7 @@ const MessagingTab = () => {
   const [stats, setStats] = useState({ Email: null, SMS: null, WhatsApp: null });
   const [statsLoading, setStatsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [modalAlert, setModalAlert] = useState(null);
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
@@ -230,8 +231,14 @@ const MessagingTab = () => {
     setRows([]);
     setSelected([]);
     setContactEdits({});
+    setModalAlert(null);
     setSendDialog({ open: true, channel });
     if (form.progId) loadClasses(form.progId);
+  };
+
+  const closeDialog = () => {
+    setModalAlert(null);
+    setSendDialog({ open: false, channel: '' });
   };
 
   const populate = async () => {
@@ -241,6 +248,7 @@ const MessagingTab = () => {
       return;
     }
     setPopulating(true);
+    setModalAlert(null);
     try {
       const filter = {
         sessTermId: form.sessTermId,
@@ -333,9 +341,8 @@ const MessagingTab = () => {
     const recipients = payloadRows.filter((r) => (contactValue(r, channel) ?? '').trim());
     const skipped = payloadRows.length - recipients.length;
     if (!recipients.length) {
-      showSnackbar(
+      setModalAlert(
         `None of the selected students have a ${CHANNELS[channel].contactLabel.toLowerCase()}`,
-        'warning',
       );
       return;
     }
@@ -361,7 +368,7 @@ const MessagingTab = () => {
         showSnackbar(res.data?.message || 'WhatsApp messages queued');
       }
       loadStats();
-      setSendDialog({ open: false, channel: '' });
+      closeDialog();
       setRows([]);
       setSelected([]);
       setContactEdits({});
@@ -778,7 +785,7 @@ const MessagingTab = () => {
       {/* ── Send dialog ───────────────────────────────── */}
       <Dialog
         open={sendDialog.open}
-        onClose={() => setSendDialog({ open: false, channel: '' })}
+        onClose={closeDialog}
         maxWidth="lg"
         fullWidth
         PaperProps={{ sx: { borderRadius: '16px', maxHeight: '90vh' } }}
@@ -930,6 +937,18 @@ const MessagingTab = () => {
               </Box>
               {populating && <LinearProgress sx={{ mt: 1.5, borderRadius: 1 }} />}
             </Grid>
+
+            {modalAlert && (
+              <Grid size={12}>
+                <Alert
+                  severity="success"
+                  onClose={() => setModalAlert(null)}
+                  sx={{ borderRadius: '10px' }}
+                >
+                  {modalAlert}
+                </Alert>
+              </Grid>
+            )}
 
             {rows.length > 0 && (
               <Grid size={12}>
@@ -1108,7 +1127,7 @@ const MessagingTab = () => {
         <Divider />
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
-            onClick={() => setSendDialog({ open: false, channel: '' })}
+            onClick={closeDialog}
             sx={{ textTransform: 'none' }}
           >
             Cancel

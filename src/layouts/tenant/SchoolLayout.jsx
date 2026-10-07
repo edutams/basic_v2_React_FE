@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef } from 'react';
 import { styled, Container, Box, useTheme } from '@mui/material';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import SchoolHeader from './vertical/header/SchoolHeader';
 import ImpersonationBar from './vertical/header/ImpersonationBar';
 import SubscriptionBanner from './vertical/header/SubscriptionBanner';
@@ -13,6 +13,8 @@ import { useSnackbar } from '../../context/SnackbarContext';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
 import ScrollToTop from '../../components/shared/ScrollToTop';
+import AccountLockedScreen from '../../components/protectedroutes/AccountLockedScreen';
+import { isAdminTier, isSubscriptionOwner } from '@/utils/roleLabels';
 // import LoadingBar from '../../LoadingBar';
 import config from 'src/context/config';
 
@@ -36,7 +38,7 @@ const PageWrapper = styled('div')(({ theme }) => ({
 const SchoolLayout = () => {
   // const { isCollapse } = useContext(CustomizerContext);
   const { activeLayout, isLayout, activeMode, isCollapse } = useContext(CustomizerContext);
-  const { isImpersonated, subscriptionStatus } = useContext(TenantAuthContext);
+  const { isImpersonated, subscriptionStatus, roles } = useContext(TenantAuthContext);
   const MiniSidebarWidth = config.miniSidebarWidth;
   const theme = useTheme();
   const navigate = useNavigate();
@@ -87,6 +89,25 @@ const SchoolLayout = () => {
 
   const subscriptionTier = subscriptionStatus?.tier;
   const showSubscriptionBanner = subscriptionTier && subscriptionTier !== 'active';
+
+  // Locked + not admin-tier (teacher/student/parent/etc): this is the ONLY
+  // thing they get, for every route under this layout — no sidebar, no
+  // header, no page content underneath. Replaces the old approach of
+  // rendering the real page and relying on a toast/overlay on top of it.
+  if (subscriptionTier === 'locked' && !isAdminTier(roles)) {
+    return <AccountLockedScreen />;
+  }
+
+  // Locked + the subscription OWNER roles (school_admin/school_owner/
+  // school_head) landing on the Dashboard: send them straight to
+  // /subscriptions on the very first render, from this same layout-level
+  // check — not a separate route-level check further down the tree, which
+  // only caught this reactively (after some other locked API call's 402
+  // fired the global listener below) rather than the moment the dashboard
+  // itself loads.
+  if (subscriptionTier === 'locked' && isSubscriptionOwner(roles) && location.pathname.startsWith('/dashboard')) {
+    return <Navigate to="/subscriptions" replace />;
+  }
 
   return (
     <>

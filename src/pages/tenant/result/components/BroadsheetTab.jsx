@@ -1082,47 +1082,6 @@ const BroadsheetTab = () => {
 
   return (
     <Box>
-      {activeTab === 1 && (
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <StatCard
-            count={stats.total_students ?? 0}
-            label="Total Students"
-            subtitle="In this class"
-            icon={IconUsers}
-            colorIndex={0}
-            loading={loading}
-          />
-          <StatCard
-            count={stats.total_subjects ?? subjects.length}
-            label="Total Subjects"
-            subtitle="Across all departments"
-            icon={IconBook}
-            colorIndex={1}
-            loading={loading}
-          />
-          <StatCard
-            count={`${stats.class_average ?? 0}%`}
-            label="Average Score"
-            subtitle="Class average"
-            icon={IconChartBar}
-            colorIndex={2}
-            loading={loading}
-          />
-          <StatCard
-            count={
-              stats.pass_rate !== null && stats.pass_rate !== undefined
-                ? `${stats.pass_rate}%`
-                : '—'
-            }
-            label="Pass Rate"
-            subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
-            icon={IconAward}
-            colorIndex={3}
-            loading={loading}
-          />
-        </Stack>
-      )}
-
       <Card elevation={0} sx={{ border: `1px solid ${borderColor}`, borderRadius: 1 }}>
         {/* ── Nested Tabs + broadsheet header (right-aligned, same row) ── */}
         <Box
@@ -1371,6 +1330,48 @@ const BroadsheetTab = () => {
               )}
             </Box>
           </Box>
+
+          {/* ── Term Cumulative stats — right after the filter row ── */}
+          {activeTab === 1 && (showData || loading) && (
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+              <StatCard
+                count={stats.total_students ?? 0}
+                label="Total Students"
+                subtitle="In this class"
+                icon={IconUsers}
+                colorIndex={0}
+                loading={loading}
+              />
+              <StatCard
+                count={stats.total_subjects ?? subjects.length}
+                label="Total Subjects"
+                subtitle="Across all departments"
+                icon={IconBook}
+                colorIndex={1}
+                loading={loading}
+              />
+              <StatCard
+                count={`${stats.class_average ?? 0}%`}
+                label="Average Score"
+                subtitle="Class average"
+                icon={IconChartBar}
+                colorIndex={2}
+                loading={loading}
+              />
+              <StatCard
+                count={
+                  stats.pass_rate !== null && stats.pass_rate !== undefined
+                    ? `${stats.pass_rate}%`
+                    : '—'
+                }
+                label="Pass Rate"
+                subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
+                icon={IconAward}
+                colorIndex={3}
+                loading={loading}
+              />
+            </Stack>
+          )}
 
           {/* ── Results Workflow (real) ──────────────────────────
               4 sequential stages an SPA works through for a termly

@@ -3,11 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import Spinner from '@/components/shared/spinner/Spinner';
 import { usePermissions } from '@/context/TenantContext/permissions';
-import SubscriptionLockedNotice from './SubscriptionLockedNotice';
-
-// Tenant-guard Spatie roles that can manage the school's subscription — same
-// list as config/subscription.php's admin_roles on the backend.
-const ADMIN_TIER_ROLES = ['super_admin', 'school_admin', 'school_owner', 'school_head', 'bursar'];
+import { isSubscriptionOwner } from '@/utils/roleLabels';
 
 const TenantProtectedRoute = ({ children, permission = null, anyOf = null }) => {
   const { isAuthenticated, isLoading, user, roles, subscriptionStatus } = useTenantAuth();
@@ -42,15 +38,19 @@ const TenantProtectedRoute = ({ children, permission = null, anyOf = null }) => 
   }
 
   // Subscription locked (past the free grace period, no active
-  // subscription): admin-tier roles still see every real page — the backend
-  // gates their actual actions, with a specific reason. Everyone else is
-  // limited to the dashboard and gets a deliberately generic notice here.
-  const isAdminTier = Array.isArray(roles) &&
-    roles.some((r) => ADMIN_TIER_ROLES.includes(typeof r === 'string' ? r : r?.name));
+  // subscription): SchoolLayout itself already swaps in a full-page,
+  // nav-less AccountLockedScreen for anyone who isn't admin-tier, for every
+  // route — so by the time this runs, we're always either not locked, or
+  // locked-but-admin-tier. The one thing still handled here is the
+  // Dashboard special case: the subscription OWNER roles (school_admin/
+  // school_owner/school_head — narrower than admin-tier, excludes bursar/
+  // super_admin) land on a dashboard they can't act on, so send them
+  // straight to /subscriptions instead.
   const isDashboardRoute = location.pathname.startsWith('/dashboard');
+  const isLocked = subscriptionStatus?.tier === 'locked';
 
-  if (subscriptionStatus?.tier === 'locked' && !isAdminTier && !isDashboardRoute) {
-    return <SubscriptionLockedNotice />;
+  if (isLocked && isDashboardRoute && isSubscriptionOwner(roles)) {
+    return <Navigate to="/subscriptions" replace />;
   }
 
   return children;

@@ -130,6 +130,10 @@ const CommentBankTab = () => {
 
   // ── Stats (shown up top, before the table, so the user knows where they
   // stand the moment the page loads) ──────────────────────────────────
+  // Always derived live from `rows` (kept in sync on every save/clear) —
+  // never from `meta.filled_cells`/`total_cells`, which is just a snapshot
+  // from whenever the page last loaded and would otherwise freeze the
+  // stats until the next full refresh.
   const { filledCells, totalCells, rowsComplete } = useMemo(() => {
     let filled = 0;
     let complete = 0;
@@ -139,8 +143,8 @@ const CommentBankTab = () => {
       if (rowFilled === BANDS.length) complete += 1;
     });
     return {
-      filledCells: meta?.filled_cells ?? filled,
-      totalCells: meta?.total_cells ?? rows.length * BANDS.length,
+      filledCells: filled,
+      totalCells: rows.length * BANDS.length,
       rowsComplete: complete,
     };
   }, [rows, meta]);

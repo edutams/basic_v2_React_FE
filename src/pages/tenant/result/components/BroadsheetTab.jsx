@@ -35,6 +35,10 @@ import {
   CircularProgress,
   Skeleton,
   Chip,
+  Checkbox,
+  InputAdornment,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import {
   IconCheck,
@@ -46,13 +50,17 @@ import {
   IconBook,
   IconChartBar,
   IconAward,
-  IconWand,
-  IconListNumbers,
-  IconCertificate,
   IconSend,
   IconLock,
-  IconArrowBackUp,
   IconChevronRight,
+  IconAlertTriangle,
+  IconCircleCheck,
+  IconClock,
+  IconSearch,
+  IconDownload,
+  IconPrinter,
+  IconChevronDown,
+  IconFileText,
 } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
@@ -74,6 +82,18 @@ import { usePermissions } from '@/context/TenantContext/permissions';
 
 // Confirmation copy for the three publish actions.
 const PUBLISH_CONFIRM = {
+  remarks: {
+    title: 'Generate remarks for this class?',
+    body: "This creates each student's class-teacher and HoS comments from your comment bank, based on their average and affective/psychomotor domain. Existing comments will be overwritten.",
+    confirm: 'Generate',
+    color: 'primary',
+  },
+  positioning: {
+    title: 'Generate positioning for this class?',
+    body: "This computes and saves each student's class and arm position. Safe to re-run — it only fills in whoever's missing a position.",
+    confirm: 'Generate',
+    color: 'primary',
+  },
   spa: {
     title: 'Approve this broadsheet?',
     body: 'Acting as the School Portal Admin: totals, positions and points are frozen onto the student records. Any later score change will revoke this approval.',
@@ -96,6 +116,31 @@ const PUBLISH_CONFIRM = {
 
 // Display value: null / undefined / '' render as '-' (0 is a valid score).
 const displayScore = (value) => (value === 0 || value ? value : '-');
+
+// Same grade→color meaning used across the Score Sheet and Summary Sheet:
+// green (best) through red (worst).
+const gradeColorMap = {
+  A: { bg: '#DCFCE7', color: '#16A34A' },
+  B: { bg: '#DBEAFE', color: '#2563EB' },
+  C: { bg: '#FEF3C7', color: '#D97706' },
+  D: { bg: '#FFEDD5', color: '#EA580C' },
+  E: { bg: '#FEE2E2', color: '#DC2626' },
+  F: { bg: '#FECACA', color: '#991B1B' },
+};
+const getGradeColors = (grade) => gradeColorMap[grade?.[0]] || { bg: '#F1F5F9', color: '#64748B' };
+
+// One distinct pastel band per subject column group, cycling if there are
+// more subjects than colors — same idea as the grade palette, just for
+// telling subject columns apart at a glance instead of one flat color.
+const SUBJECT_BAND_COLORS = [
+  { bg: '#DBEAFE', dark: '#BFDBFE' }, // blue
+  { bg: '#DCFCE7', dark: '#BBF7D0' }, // green
+  { bg: '#FCE7F3', dark: '#FBCFE8' }, // pink
+  { bg: '#FEE2E2', dark: '#FECACA' }, // red
+  { bg: '#EDE9FE', dark: '#DDD6FE' }, // purple
+  { bg: '#FEF3C7', dark: '#FDE68A' }, // amber
+];
+const subjectBandColor = (index) => SUBJECT_BAND_COLORS[index % SUBJECT_BAND_COLORS.length];
 
 // Stored `ca` JSON may be an array (manual entry) or a keyed object
 // (combined upload) — normalize to an array of CA groups for rendering.
@@ -252,10 +297,13 @@ const BroadsheetTab = () => {
           : [];
         setProgrammes(programmesData);
         if (programmesData.length > 0) {
-          const preferredProgramme = linkParams.programme_id && programmesData.some((p) => p.id === linkParams.programme_id)
-            ? linkParams.programme_id
-            : programmesData[0].id;
-          setFilters((prev) => (prev.programme_id ? prev : { ...prev, programme_id: preferredProgramme }));
+          const preferredProgramme =
+            linkParams.programme_id && programmesData.some((p) => p.id === linkParams.programme_id)
+              ? linkParams.programme_id
+              : programmesData[0].id;
+          setFilters((prev) =>
+            prev.programme_id ? prev : { ...prev, programme_id: preferredProgramme },
+          );
         }
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
@@ -351,9 +399,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClasses(data);
         if (data.length > 0 && !data.some((c) => c.id === filters.class_id)) {
-          const preferredClass = linkParams.class_id && data.some((c) => c.id === linkParams.class_id)
-            ? linkParams.class_id
-            : data[0].id;
+          const preferredClass =
+            linkParams.class_id && data.some((c) => c.id === linkParams.class_id)
+              ? linkParams.class_id
+              : data[0].id;
           setFilters((prev) => ({ ...prev, class_id: preferredClass, class_arm_id: '' }));
         }
       })
@@ -375,9 +424,10 @@ const BroadsheetTab = () => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
         if (data.length > 0 && !data.some((a) => a.id === filters.class_arm_id)) {
-          const preferredArm = linkParams.class_arm_id && data.some((a) => a.id === linkParams.class_arm_id)
-            ? linkParams.class_arm_id
-            : data[0].id;
+          const preferredArm =
+            linkParams.class_arm_id && data.some((a) => a.id === linkParams.class_arm_id)
+              ? linkParams.class_arm_id
+              : data[0].id;
           setFilters((prev) => ({ ...prev, class_arm_id: preferredArm }));
         }
       })
@@ -434,6 +484,24 @@ const BroadsheetTab = () => {
   const [publishConfirm, setPublishConfirm] = useState({ open: false, action: null });
 
   const closePublishConfirm = () => setPublishConfirm({ open: false, action: null });
+
+  // Routes the single publish-confirm dialog to the right handler — the
+  // remarks/positioning stages reuse this same confirm flow instead of
+  // firing immediately, matching the other two (destructive/irreversible)
+  // workflow actions.
+  const handleWorkflowConfirm = async (action) => {
+    if (action === 'remarks') {
+      await handleGenerateComments();
+      closePublishConfirm();
+      return;
+    }
+    if (action === 'positioning') {
+      await handleGeneratePositioning();
+      closePublishConfirm();
+      return;
+    }
+    handlePublishAction(action);
+  };
 
   const handlePublishAction = async (action) => {
     const payload = {
@@ -536,6 +604,15 @@ const BroadsheetTab = () => {
     }
   };
 
+  // ── Table toolbar: client-side filters over the already-fetched roster
+  // (classroom-sized lists — no round trip needed for instant filtering) ──
+  const [tableSearch, setTableSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [subjectFilter, setSubjectFilter] = useState('');
+  const [atRiskOnly, setAtRiskOnly] = useState(false);
+  const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [bulkMenuAnchor, setBulkMenuAnchor] = useState(null);
+
   // ── Derived rows ────────────────────────────────────────────
   const visibleStudents = (() => {
     if (!sheet?.students) return [];
@@ -546,6 +623,28 @@ const BroadsheetTab = () => {
         const pos = activeTab === 0 ? s.position : s.all_term_overall_class_position;
         return pos !== null && pos !== undefined && pos <= count;
       });
+    }
+    if (tableSearch.trim()) {
+      const q = tableSearch.trim().toLowerCase();
+      rows = rows.filter((s) => {
+        const name =
+          `${s.user?.lname ?? ''} ${s.user?.fname ?? ''} ${s.user?.mname ?? ''}`.toLowerCase();
+        const admNo = String(s.user?.user_id ?? '').toLowerCase();
+        return name.includes(q) || admNo.includes(q);
+      });
+    }
+    if (statusFilter === 'incomplete') {
+      rows = rows.filter((s) => s.subjects_scored < s.total_subjects);
+    } else if (statusFilter === 'remarks_pending') {
+      rows = rows.filter((s) => !s.class_teachers_comment);
+    } else if (statusFilter === 'position_missing') {
+      rows = rows.filter((s) => s.persisted_class_position === null);
+    }
+    if (atRiskOnly) {
+      const passMark = sheet?.stats?.pass_mark;
+      rows = rows.filter(
+        (s) => passMark != null && s.student_average != null && s.student_average < passMark,
+      );
     }
     return rows;
   })();
@@ -558,6 +657,14 @@ const BroadsheetTab = () => {
   const examMax = markConfig?.exam_max_score ?? 60;
   const totalMax = caMax + examMax;
   const subjects = sheet?.subjects ?? [];
+
+  // When a single subject is picked in the toolbar, narrow the table to just
+  // that subject's CA/Exam/Grade columns instead of every subject at once —
+  // genuinely useful for "how did the class do in Mathematics" at a glance,
+  // not just a cosmetic filter.
+  const visibleSubjects = subjectFilter
+    ? subjects.filter((s) => String(s.subject_id) === String(subjectFilter))
+    : subjects;
 
   const summaryColSpan = activeTab === 1 ? 11 : showPromotionButtons ? 10 : 7;
 
@@ -576,10 +683,13 @@ const BroadsheetTab = () => {
     setCommentDialog({ open: false, student: null, mode: 'teacher' });
 
   // One-click comment generation for the whole class arm: the backend
-  // picks a template from the current user's comment bank (student average
-  // → score-range grade, domain average → band, gender-aware) and writes
-  // it to student_registrations. Existing manual comments are overwritten
-  // — the button lives next to the comment column it fills.
+  // picks a template from the current user's OWN comment bank (student
+  // average → score-range grade, domain average → band, gender-aware) and
+  // writes it to student_registrations. Which field it fills (class
+  // teacher's vs school admin's) is resolved server-side from the caller's
+  // role, never from here — a class teacher and a school admin each keep a
+  // separate, private comment bank. Existing manual comments are
+  // overwritten — the button lives next to the comment column it fills.
   const handleGenerateComments = async () => {
     if (!sheet?.class_arm?.id || !sheet?.session_term?.id) return;
     setGeneratingComments(true);
@@ -587,7 +697,6 @@ const BroadsheetTab = () => {
       const res = await resultSheetApi.generateComments({
         class_arm_id: sheet.class_arm.id,
         session_term_id: sheet.session_term.id,
-        type: 'both',
       });
       if (res.data?.status) {
         // Refetch so the new comments show in the grid immediately.
@@ -601,6 +710,31 @@ const BroadsheetTab = () => {
       showSnackbar(err?.response?.data?.message || 'Failed to generate comments', 'error');
     } finally {
       setGeneratingComments(false);
+    }
+  };
+
+  const [generatingPositioning, setGeneratingPositioning] = useState(false);
+  const [checksModalOpen, setChecksModalOpen] = useState(false);
+
+  const handleGeneratePositioning = async () => {
+    if (!sheet?.class_arm?.id || !sheet?.session_term?.id) return;
+    setGeneratingPositioning(true);
+    try {
+      const res = await resultSheetApi.generatePositioning({
+        class_arm_id: sheet.class_arm.id,
+        session_term_id: sheet.session_term.id,
+      });
+      if (res.data?.status) {
+        refetch();
+        showSnackbar(res.data?.message || 'Positioning generated successfully');
+      } else {
+        showSnackbar(res.data?.message || 'Failed to generate positioning', 'error');
+      }
+    } catch (err) {
+      console.error('Failed to generate positioning:', err);
+      showSnackbar(err?.response?.data?.message || 'Failed to generate positioning', 'error');
+    } finally {
+      setGeneratingPositioning(false);
     }
   };
 
@@ -948,46 +1082,61 @@ const BroadsheetTab = () => {
 
   return (
     <Box>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-        <StatCard
-          count={stats.total_students ?? 0}
-          label="Total Students"
-          subtitle="In this class"
-          icon={IconUsers}
-          colorIndex={0}
-          loading={loading}
-        />
-        <StatCard
-          count={stats.total_subjects ?? subjects.length}
-          label="Total Subjects"
-          subtitle="Across all departments"
-          icon={IconBook}
-          colorIndex={1}
-          loading={loading}
-        />
-        <StatCard
-          count={`${stats.class_average ?? 0}%`}
-          label="Average Score"
-          subtitle="Class average"
-          icon={IconChartBar}
-          colorIndex={2}
-          loading={loading}
-        />
-        <StatCard
-          count={
-            stats.pass_rate !== null && stats.pass_rate !== undefined ? `${stats.pass_rate}%` : '—'
-          }
-          label="Pass Rate"
-          subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
-          icon={IconAward}
-          colorIndex={3}
-          loading={loading}
-        />
-      </Stack>
+      {activeTab === 1 && (
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
+          <StatCard
+            count={stats.total_students ?? 0}
+            label="Total Students"
+            subtitle="In this class"
+            icon={IconUsers}
+            colorIndex={0}
+            loading={loading}
+          />
+          <StatCard
+            count={stats.total_subjects ?? subjects.length}
+            label="Total Subjects"
+            subtitle="Across all departments"
+            icon={IconBook}
+            colorIndex={1}
+            loading={loading}
+          />
+          <StatCard
+            count={`${stats.class_average ?? 0}%`}
+            label="Average Score"
+            subtitle="Class average"
+            icon={IconChartBar}
+            colorIndex={2}
+            loading={loading}
+          />
+          <StatCard
+            count={
+              stats.pass_rate !== null && stats.pass_rate !== undefined
+                ? `${stats.pass_rate}%`
+                : '—'
+            }
+            label="Pass Rate"
+            subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
+            icon={IconAward}
+            colorIndex={3}
+            loading={loading}
+          />
+        </Stack>
+      )}
 
       <Card elevation={0} sx={{ border: `1px solid ${borderColor}`, borderRadius: 1 }}>
-        {/* ── Nested Tabs ────────────────────────────────────── */}
-        <Box sx={{ px: 2 }}>
+        {/* ── Nested Tabs + broadsheet header (right-aligned, same row) ── */}
+        <Box
+          sx={{
+            px: 2,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
           <Tabs
             value={activeTab}
             onChange={(_, v) => {
@@ -995,11 +1144,72 @@ const BroadsheetTab = () => {
               setShowData(false);
               setFilterError('');
             }}
-            sx={{ borderBottom: 1, borderColor: 'divider' }}
+            sx={{ borderBottom: 0, minHeight: 0 }}
           >
-            <Tab label="Termly" />
-            <Tab label="Term Cummulative" />
+            <Tab label="Termly" sx={{ py: 1.25 }} />
+            <Tab label="Term Cummulative" sx={{ py: 1.25 }} />
           </Tabs>
+
+          {activeTab === 0 && showData && (sheet || loading) && (
+            <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+              {loading ? (
+                <>
+                  <Skeleton variant="text" width={200} height={22} sx={{ ml: { sm: 'auto' } }} />
+                  <Skeleton variant="text" width={160} height={16} sx={{ ml: { sm: 'auto' } }} />
+                </>
+              ) : (
+                <>
+                  <Typography variant="body2" fontWeight={700} noWrap>
+                    Broadsheet Results for {sheet.class_arm?.class_name} ·{' '}
+                    {sheet.class_arm?.arm_name}
+                  </Typography>
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    alignItems="center"
+                    justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
+                    flexWrap="wrap"
+                  >
+                    <Chip
+                      label={
+                        sheet.result_publish?.head_of_school_publish === 'yes'
+                          ? 'Published'
+                          : 'Not published'
+                      }
+                      size="small"
+                      color={
+                        sheet.result_publish?.head_of_school_publish === 'yes'
+                          ? 'success'
+                          : 'warning'
+                      }
+                      variant="outlined"
+                      sx={{ fontWeight: 700, height: 20, fontSize: '0.7rem' }}
+                    />
+                    {sheet.result_publish?.last_updated_at && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: 'flex', alignItems: 'center', gap: 0.4 }}
+                      >
+                        <IconClock size={12} />
+                        Last updated:{' '}
+                        {new Date(sheet.result_publish.last_updated_at).toLocaleString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                        {sheet.result_publish.last_updated_by
+                          ? ` by ${sheet.result_publish.last_updated_by}`
+                          : ''}
+                      </Typography>
+                    )}
+                  </Stack>
+                </>
+              )}
+            </Box>
+          )}
         </Box>
 
         {/* ── Shared Filters ─────────────────────────────────── */}
@@ -1162,288 +1372,438 @@ const BroadsheetTab = () => {
             </Box>
           </Box>
 
-          {/* ── STATIC MOCKUP — Broadsheet workflow stages ───────────
-              Not wired to real data yet. This is a screenshot-ready mockup
-              of the 4-stage termly broadsheet workflow, for the CEO to use
-              as a design reference. Each stage is sequential — a school
-              portal admin (SPA) must finish one before the next unlocks.
-              Numbers shown below are illustrative placeholders only. ── */}
-          {activeTab === 0 && (
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
-                Broadsheet Workflow
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                Mockup only — illustrates the 4 stages an SPA works through for a termly
-                broadsheet, in order.
-              </Typography>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={0} sx={{ alignItems: 'stretch' }}>
-                {[
-                  {
-                    step: 1,
-                    icon: IconWand,
-                    title: 'Generate Remarks',
-                    status: 'done',
-                    description:
-                      "Calculates each student's grade from their scores and writes the matching remark. Can also auto-generate the comment-bank comment (attendance / affective / psychomotor averages) for each student once this is done.",
-                    stats: [
-                      { label: 'Graded', value: '42' },
-                      { label: 'Not graded', value: '8' },
-                    ],
-                    action: 'Generate Remarks',
-                    // Real, already-working action (see handleGenerateComments below) —
-                    // shown here too because it's conceptually part of this same stage.
-                    secondaryAction: 'Generate Comments',
-                    secondaryIcon: IconWand,
-                    secondaryColor: 'warning',
-                  },
-                  {
-                    step: 2,
-                    icon: IconListNumbers,
-                    title: 'Generate Positioning',
-                    status: 'active',
-                    description:
-                      "Computes each student's class and arm position. Idempotent — running it again doesn't disturb students already positioned, it only fills in the position for anyone who's missing one (e.g. a newly added or re-graded student).",
-                    stats: [
-                      { label: 'Positioned', value: '45' },
-                      { label: 'Missing position', value: '5' },
-                    ],
-                    action: 'Generate Positioning',
-                  },
-                  {
-                    step: 3,
-                    icon: IconCertificate,
-                    title: 'Approval of Results',
-                    status: 'locked',
-                    description:
-                      'The School Portal Admin reviews and approves the broadsheet, confirming it is ready to go to the Head of School for final publication.',
-                    stats: [{ label: 'Status', value: 'Not yet approved' }],
-                    action: 'Approve Results',
-                  },
-                  {
-                    step: 4,
-                    icon: IconSend,
-                    title: 'Publish Results',
-                    status: 'locked',
-                    description:
-                      "The Head of School gives final publication — results become visible to parents/students and are locked. The SPA can reverse a publication at any time, which reopens stage 1 so anyone whose score changed afterward can be regraded, repositioned and re-approved before publishing again.",
-                    stats: [{ label: 'Status', value: 'Not published' }],
-                    action: 'Publish Results',
-                    secondaryAction: 'Reverse Publication',
-                    secondaryIcon: IconArrowBackUp,
-                    secondaryColor: 'warning',
-                  },
-                ].map((stage, idx, arr) => {
-                  const StageIcon = stage.icon;
-                  const isLocked = stage.status === 'locked';
-                  const isDone = stage.status === 'done';
-                  const isActive = stage.status === 'active';
-                  return (
-                    <Box key={stage.step} sx={{ display: 'flex', flex: 1, alignItems: 'stretch' }}>
-                      <Box
-                        sx={{
-                          flex: 1,
-                          p: 1.75,
-                          borderRadius: 1,
-                          border: '1px solid',
-                          borderColor: isActive ? 'primary.main' : isDone ? 'success.main' : borderColor,
-                          borderWidth: isActive || isDone ? 2 : 1,
-                          bgcolor: isDone
-                            ? isDark
-                              ? 'rgba(46,125,50,0.12)'
-                              : '#EAF7ED'
-                            : isActive
-                              ? isDark
-                                ? 'rgba(37,99,235,0.14)'
-                                : '#EDF2FE'
-                              : isDark
-                                ? 'rgba(255,255,255,0.03)'
-                                : '#F1F5F9',
-                          opacity: isLocked ? 0.75 : 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1,
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* ── Results Workflow (real) ──────────────────────────
+              4 sequential stages an SPA works through for a termly
+              broadsheet. Each stage's completion and stats are derived from
+              sheet.workflow (computed server-side in broadsheetData()) and
+              sheet.result_publish — nothing here is a placeholder. ── */}
+          {activeTab === 0 &&
+            showData &&
+            (sheet || loading) &&
+            (() => {
+              // While (re)fetching, shape-match this whole section instead of
+              // either freezing on stale numbers or showing nothing — same
+              // convention as the table body's skeleton rows below.
+              if (loading) {
+                return (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+                      Results Workflow
+                    </Typography>
+                    <Stack
+                      direction={{ xs: 'column', md: 'row' }}
+                      spacing={1.5}
+                      sx={{ alignItems: 'stretch' }}
+                    >
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            flex: 1,
+                            p: 2,
+                            borderRadius: '12px',
+                            bgcolor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1,
+                          }}
+                        >
+                          <Skeleton variant="circular" width={26} height={26} />
+                          <Skeleton variant="text" width="70%" height={22} />
+                          <Skeleton variant="text" width="90%" height={16} />
+                          <Skeleton
+                            variant="rounded"
+                            height={32}
+                            sx={{ mt: 'auto', borderRadius: '8px' }}
+                          />
+                        </Box>
+                      ))}
+                    </Stack>
+                    <Stack
+                      direction={{ xs: 'column', sm: 'row' }}
+                      spacing={1.5}
+                      sx={{ mt: 1.5, alignItems: 'stretch' }}
+                    >
+                      {[IconUsers, IconChartBar, IconBook, IconAlertTriangle].map((Icon, i) => (
+                        <StatCard key={i} icon={Icon} label="" loading />
+                      ))}
+                    </Stack>
+                  </Box>
+                );
+              }
+
+              const workflow = sheet.workflow || {};
+              const checks = workflow.checks || {
+                missing_scores: 0,
+                remarks_pending: 0,
+                positions_missing: 0,
+              };
+              const checksTotal = workflow.checks_total ?? 0;
+              const remarksDone = (checks.remarks_pending ?? 0) === 0;
+              const positioningDone = (checks.positions_missing ?? 0) === 0;
+              const spaDone = sheet.result_publish?.spa_publish === 'yes';
+              const hosDone = sheet.result_publish?.head_of_school_publish === 'yes';
+
+              // ── Colour scheme per stage state, matching the approved design
+              // exactly: green = done, blue = active/in-progress, gray = locked.
+              const stageScheme = (status) => {
+                if (status === 'done') {
+                  return {
+                    cardBg: isDark ? 'rgba(22,163,74,0.2)' : '#DCFCE7',
+                    cardBorder: isDark ? 'rgba(22,163,74,0.45)' : '#86EFAC',
+                    circleBg: '#16A34A',
+                    circleColor: '#fff',
+                    textColor: '#15803D',
+                    buttonBg: '#16A34A',
+                    buttonHoverBg: '#15803D',
+                    buttonColor: '#fff',
+                  };
+                }
+                if (status === 'active') {
+                  return {
+                    cardBg: isDark ? 'rgba(37,99,235,0.22)' : '#DBEAFE',
+                    cardBorder: isDark ? 'rgba(37,99,235,0.5)' : '#93C5FD',
+                    circleBg: '#2563EB',
+                    circleColor: '#fff',
+                    textColor: '#1D4ED8',
+                    buttonBg: '#2563EB',
+                    buttonHoverBg: '#1D4ED8',
+                    buttonColor: '#fff',
+                  };
+                }
+                return {
+                  cardBg: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
+                  cardBorder: isDark ? 'rgba(255,255,255,0.12)' : '#E2E8F0',
+                  circleBg: isDark ? 'rgba(255,255,255,0.14)' : '#E2E8F0',
+                  circleColor: isDark ? '#fff' : '#64748B',
+                  textColor: '#64748B',
+                  buttonBg: '#94A3B8',
+                  buttonHoverBg: '#64748B',
+                  buttonColor: '#fff',
+                };
+              };
+
+              const stageStatusLabel = { done: 'Complete', active: 'In progress', locked: 'Locked' };
+
+              const stages = [
+                {
+                  step: 1,
+                  status: remarksDone ? 'done' : 'active',
+                  title: 'Remarks',
+                  subtitle: `${workflow.remarks?.complete ?? 0}/${workflow.remarks?.total ?? 0} students have remarks`,
+                  buttonIcon: IconFileText,
+                  action: 'Generate remarks',
+                  onAction: () => setPublishConfirm({ open: true, action: 'remarks' }),
+                  loading: generatingComments,
+                },
+                {
+                  step: 2,
+                  status: !remarksDone ? 'locked' : positioningDone ? 'done' : 'active',
+                  title: 'Positioning',
+                  subtitle: !remarksDone
+                    ? 'Complete remarks first'
+                    : `${workflow.positioning?.complete ?? 0} positioned · ${
+                        (workflow.positioning?.total ?? 0) - (workflow.positioning?.complete ?? 0)
+                      } missing`,
+                  buttonIcon: IconUsers,
+                  action: 'Generate positioning',
+                  onAction: () => setPublishConfirm({ open: true, action: 'positioning' }),
+                  loading: generatingPositioning,
+                },
+                {
+                  step: 3,
+                  status:
+                    !positioningDone || checksTotal > 0 ? 'locked' : spaDone ? 'done' : 'active',
+                  title: 'Approval',
+                  subtitle: !positioningDone
+                    ? 'Complete positioning first'
+                    : checksTotal > 0
+                      ? 'Resolve all checks to enable'
+                      : spaDone
+                        ? 'Approved'
+                        : 'Ready for approval',
+                  buttonIcon: IconLock,
+                  action: 'Approve results',
+                  onAction: () => setPublishConfirm({ open: true, action: 'spa' }),
+                  loading: publishing === 'spa',
+                },
+                {
+                  step: 4,
+                  status: !spaDone ? 'locked' : hosDone ? 'done' : 'active',
+                  title: 'Publish',
+                  subtitle: !spaDone
+                    ? 'Requires approval first'
+                    : hosDone
+                      ? 'Published'
+                      : 'Ready to publish',
+                  buttonIcon: IconSend,
+                  action: 'Publish results',
+                  onAction: () => setPublishConfirm({ open: true, action: 'hos' }),
+                  loading: publishing === 'hos',
+                  secondaryAction: spaDone || hosDone ? 'Reverse publication' : null,
+                  onSecondaryAction: () => setPublishConfirm({ open: true, action: 'unpublish' }),
+                },
+              ];
+
+              const totalStudents = stats.total_students ?? sheet.students?.length ?? 0;
+              const subjectsComplete = workflow.subjects_complete ?? 0;
+              const statCards = [
+                {
+                  icon: IconUsers,
+                  colorIndex: 0,
+                  count: totalStudents,
+                  label: 'Students',
+                  subtitle:
+                    `${sheet.class_arm?.class_name ?? ''} ${sheet.class_arm?.arm_name ?? ''}`.trim() ||
+                    'This class',
+                },
+                {
+                  icon: IconChartBar,
+                  colorIndex: 1,
+                  count: `${stats.class_average ?? 0}%`,
+                  label: 'Class Average',
+                  subtitle: 'This term',
+                },
+                {
+                  icon: IconBook,
+                  colorIndex: 1,
+                  count: subjectsComplete,
+                  label: 'Subjects Complete',
+                  subtitle:
+                    subjectsComplete >= subjects.length
+                      ? 'All subjects have scores'
+                      : `${subjects.length - subjectsComplete} subject(s) missing scores`,
+                },
+                {
+                  icon: checksTotal > 0 ? IconAlertTriangle : IconCircleCheck,
+                  colorIndex: checksTotal > 0 ? 3 : 1,
+                  count: checksTotal,
+                  label: 'Checks to Resolve',
+                  subtitle: checksTotal > 0 ? 'Review before approval' : 'All clear',
+                  onClick: checksTotal > 0 ? () => setChecksModalOpen(true) : undefined,
+                  tooltip: checksTotal > 0 ? 'Click to review what needs fixing' : undefined,
+                },
+              ];
+
+              return (
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5 }}>
+                    Results Workflow
+                  </Typography>
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={1.5}
+                    sx={{ alignItems: 'stretch' }}
+                  >
+                    {stages.map((stage, idx, arr) => {
+                      const isLocked = stage.status === 'locked';
+                      const isDone = stage.status === 'done';
+                      const scheme = stageScheme(stage.status);
+                      // Generate Remarks (step 1) is SPA/super_admin-only — it
+                      // pulls both the class teacher's AND the SPA's comment
+                      // bank in one go, so a class teacher viewing the
+                      // broadsheet can watch progress but not trigger it.
+                      // Positioning (step 2) stays open to anyone who can view
+                      // the broadsheet, same as before.
+                      const canAct = can('result.admin.spa_approve_broadsheet') || stage.step === 2;
+                      const ButtonIcon = stage.buttonIcon;
+                      return (
+                        <Box
+                          key={stage.step}
+                          sx={{ display: 'flex', flex: 1, alignItems: 'stretch' }}
+                        >
+                          <Box
+                            sx={{
+                              flex: 1,
+                              p: 2,
+                              borderRadius: '12px',
+                              bgcolor: scheme.cardBg,
+                              border: '1.5px solid',
+                              borderColor: scheme.cardBorder,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 1,
+                            }}
+                          >
                             <Box
                               sx={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
+                                justifyContent: 'space-between',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 26,
+                                  height: 26,
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.75rem',
+                                  bgcolor: scheme.circleBg,
+                                  color: scheme.circleColor,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isDone ? <IconCheck size={15} /> : stage.step}
+                              </Box>
+                              {isLocked && (
+                                <IconLock size={16} color={theme.palette.text.secondary} />
+                              )}
+                            </Box>
+
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {stage.title}
+                              <Typography
+                                component="span"
+                                sx={{ color: 'text.secondary', fontWeight: 700 }}
+                              >
+                                {' '}
+                                ·{' '}
+                              </Typography>
+                              <Typography
+                                component="span"
+                                sx={{ color: scheme.textColor, fontWeight: 700 }}
+                              >
+                                {stageStatusLabel[stage.status]}
+                              </Typography>
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ lineHeight: 1.4 }}
+                            >
+                              {stage.subtitle}
+                            </Typography>
+
+                            <Box sx={{ mt: 'auto', pt: 0.5 }}>
+                              <Button
+                                fullWidth
+                                size="small"
+                                disabled={isLocked || stage.loading || !canAct}
+                                onClick={stage.onAction}
+                                startIcon={
+                                  stage.loading ? null : ButtonIcon ? <ButtonIcon size={15} /> : null
+                                }
+                                sx={{
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  borderRadius: '8px',
+                                  bgcolor: scheme.buttonBg,
+                                  color: scheme.buttonColor,
+                                  '&:hover': { bgcolor: scheme.buttonHoverBg },
+                                  '&.Mui-disabled': {
+                                    bgcolor: scheme.buttonBg,
+                                    color: scheme.buttonColor,
+                                    opacity: 0.85,
+                                  },
+                                }}
+                              >
+                                {stage.loading ? (
+                                  <CircularProgress size={14} color="inherit" />
+                                ) : (
+                                  stage.action
+                                )}
+                              </Button>
+                              {stage.secondaryAction && (
+                                <Button
+                                  fullWidth
+                                  size="small"
+                                  variant="text"
+                                  color="warning"
+                                  disabled={
+                                    publishing === 'unpublish' ||
+                                    !can('result.admin.unpublish_broadsheet')
+                                  }
+                                  onClick={stage.onSecondaryAction}
+                                  sx={{ fontSize: '0.7rem', mt: 0.5, textTransform: 'none' }}
+                                >
+                                  {stage.secondaryAction}
+                                </Button>
+                              )}
+                            </Box>
+                          </Box>
+                          {idx < arr.length - 1 && (
+                            <Box
+                              sx={{
+                                display: { xs: 'none', md: 'flex' },
+                                alignItems: 'center',
                                 justifyContent: 'center',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                bgcolor: isDone
-                                  ? 'success.main'
-                                  : isActive
-                                    ? 'primary.main'
-                                    : 'action.disabledBackground',
-                                color: isDone || isActive ? '#fff' : 'text.secondary',
+                                width: 28,
                                 flexShrink: 0,
                               }}
                             >
-                              {isDone ? <IconCheck size={16} /> : stage.step}
+                              <IconChevronRight size={18} color={theme.palette.text.secondary} />
                             </Box>
-                            <StageIcon
-                              size={18}
-                              color={isLocked ? undefined : theme.palette.primary.main}
-                            />
-                          </Box>
-                          {isLocked && <IconLock size={16} color={theme.palette.text.secondary} />}
-                        </Box>
-
-                        <Typography variant="subtitle2" fontWeight={700}>
-                          {stage.step}. {stage.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-                          {stage.description}
-                        </Typography>
-
-                        <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-                          {stage.stats.map((s) => (
-                            <Chip
-                              key={s.label}
-                              size="small"
-                              label={`${s.label}: ${s.value}`}
-                              color={isDone ? 'success' : isActive ? 'primary' : 'default'}
-                              variant={isLocked ? 'outlined' : 'filled'}
-                              sx={{ fontWeight: 600, fontSize: '0.7rem' }}
-                            />
-                          ))}
-                        </Stack>
-
-                        <Box sx={{ mt: 'auto', pt: 0.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                          <Button
-                            size="small"
-                            variant={isActive ? 'contained' : 'outlined'}
-                            disabled={isLocked}
-                            sx={{ fontSize: '0.7rem' }}
-                          >
-                            {stage.action}
-                          </Button>
-                          {stage.secondaryAction && (
-                            <Button
-                              size="small"
-                              variant="text"
-                              color={stage.secondaryColor || 'warning'}
-                              startIcon={
-                                stage.secondaryIcon ? <stage.secondaryIcon size={14} /> : null
-                              }
-                              disabled={isLocked}
-                              sx={{ fontSize: '0.7rem' }}
-                            >
-                              {stage.secondaryAction}
-                            </Button>
                           )}
                         </Box>
-                      </Box>
-                      {idx < arr.length - 1 && (
-                        <Box
+                      );
+                    })}
+                  </Stack>
+
+                  <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={1.5}
+                    sx={{ mt: 1.5, alignItems: 'stretch' }}
+                  >
+                    {statCards.map((card) => (
+                      <StatCard
+                        key={card.label}
+                        count={card.count}
+                        label={card.label}
+                        subtitle={card.subtitle}
+                        icon={card.icon}
+                        colorIndex={card.colorIndex}
+                        onClick={card.onClick}
+                        tooltip={card.tooltip}
+                      />
+                    ))}
+                  </Stack>
+
+                  {checksTotal > 0 && (
+                    <Alert
+                      severity="warning"
+                      icon={<IconAlertTriangle size={20} color="#D97706" />}
+                      sx={{
+                        mt: 1.5,
+                        borderRadius: '10px',
+                        bgcolor: isDark ? 'rgba(217,119,6,0.16)' : '#FEF3C7',
+                        color: '#92400E',
+                        alignItems: 'center',
+                        '& .MuiAlert-icon': { color: '#D97706' },
+                      }}
+                      action={
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disableElevation
+                          onClick={() => setChecksModalOpen(true)}
+                          endIcon={<IconChevronRight size={14} />}
                           sx={{
-                            display: { xs: 'none', md: 'flex' },
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 28,
-                            flexShrink: 0,
+                            bgcolor: '#D97706',
+                            color: '#fff',
+                            fontWeight: 600,
+                            '&:hover': { bgcolor: '#B45309' },
                           }}
                         >
-                          <IconChevronRight size={18} color={theme.palette.text.secondary} />
-                        </Box>
-                      )}
-                    </Box>
-                  );
-                })}
-              </Stack>
-            </Box>
-          )}
-
-          {/* ── Publish status (termly broadsheet only — the cumulative
-              response carries no result_publish) ──────────────────── */}
-          {showData && sheet && sheet.mode === 'term' && sheet.result_publish && (
-            <Box sx={{ mb: 2 }}>
-              {sheet.result_publish.head_of_school_publish === 'yes' ? (
-                <Alert
-                  severity="success"
-                  sx={{ borderRadius: '10px' }}
-                  action={
-                    can('result.admin.unpublish_broadsheet') ? (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
-                        onClick={() => setPublishConfirm({ open: true, action: 'unpublish' })}
-                        disabled={Boolean(publishing)}
-                      >
-                        {publishing === 'unpublish' ? (
-                          <CircularProgress size={14} color="inherit" />
-                        ) : (
-                          'Unpublish'
-                        )}
-                      </Button>
-                    ) : null
-                  }
-                >
-                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
-                  This broadsheet has been APPROVED and PUBLISHED by the Head of School.
-                </Alert>
-              ) : sheet.result_publish.spa_publish === 'yes' ? (
-                <Alert
-                  severity="info"
-                  sx={{ borderRadius: '10px' }}
-                  action={
-                    can('result.admin.hos_publish_broadsheet') ? (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        onClick={() => setPublishConfirm({ open: true, action: 'hos' })}
-                        disabled={Boolean(publishing)}
-                      >
-                        {publishing === 'hos' ? (
-                          <CircularProgress size={14} color="inherit" />
-                        ) : (
-                          'Publish this Broadsheet'
-                        )}
-                      </Button>
-                    ) : null
-                  }
-                >
-                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
-                  Approved by the School Portal Admin — awaiting the Head of School&apos;s final
-                  approval.
-                </Alert>
-              ) : (
-                <Alert
-                  severity="info"
-                  sx={{ borderRadius: '10px' }}
-                  action={
-                    can('result.admin.spa_approve_broadsheet') ? (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="primary"
-                        onClick={() => setPublishConfirm({ open: true, action: 'spa' })}
-                        disabled={Boolean(publishing)}
-                      >
-                        {publishing === 'spa' ? (
-                          <CircularProgress size={14} color="inherit" />
-                        ) : (
-                          'Approve Broadsheet'
-                        )}
-                      </Button>
-                    ) : null
-                  }
-                >
-                  <Typography variant="subtitle2">Broadsheet Publish Status</Typography>
-                  This broadsheet is ready for approval by the School Portal Admin.
-                </Alert>
-              )}
-            </Box>
-          )}
+                          Review checks
+                        </Button>
+                      }
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#D97706' }}>
+                        {checks.missing_scores} missing scores | {checks.remarks_pending} remarks
+                        pending | {checks.positions_missing} positions missing
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#92400E' }}>
+                        Please review and complete the highlighted items before approval.
+                      </Typography>
+                    </Alert>
+                  )}
+                </Box>
+              );
+            })()}
 
           {showData && showPromotionButtons && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
@@ -1468,32 +1828,120 @@ const BroadsheetTab = () => {
             </Box>
           )}
 
-          {/* ── Comment tools (termly broadsheet only — comments live
-              on student_registrations per session-term) ────────── */}
-          {showData && sheet && sheet.mode === 'term' && (
-            <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Tooltip title="Fill the class teacher and head-of-school comment columns for every student from your comment bank — each student's average picks the score range and their attendance/affective/psychomotor average picks the band. Existing comments are overwritten.">
-                <Button
-                  variant="outlined"
-                  color="warning"
-                  size="small"
-                  startIcon={<IconWand size={16} />}
-                  onClick={handleGenerateComments}
-                  disabled={generatingComments}
-                >
-                  {generatingComments ? (
-                    <CircularProgress size={14} color="inherit" />
-                  ) : (
-                    'Generate Comments'
-                  )}
-                </Button>
-              </Tooltip>
-            </Box>
-          )}
-
           {/* ── Broadsheet Table ───────────────────────────────── */}
           {showData && sheet && (
             <>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+                justifyContent="space-between"
+                sx={{ mb: 2 }}
+              >
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  flexWrap="wrap"
+                  useFlexGap
+                >
+                  <TextField
+                    size="small"
+                    placeholder="Search student name or admission no."
+                    value={tableSearch}
+                    onChange={(e) => setTableSearch(e.target.value)}
+                    sx={{ minWidth: { xs: '100%', sm: 240 } }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <IconSearch size={16} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
+                    <InputLabel id="broadsheet-status-filter-label">Status</InputLabel>
+                    <Select
+                      labelId="broadsheet-status-filter-label"
+                      label="Status"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                      <MenuItem value="">All students</MenuItem>
+                      <MenuItem value="incomplete">Missing scores</MenuItem>
+                      <MenuItem value="remarks_pending">Remarks pending</MenuItem>
+                      <MenuItem value="position_missing">Positions missing</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
+                    <InputLabel id="broadsheet-subject-filter-label">Subject</InputLabel>
+                    <Select
+                      labelId="broadsheet-subject-filter-label"
+                      label="Subject"
+                      value={subjectFilter}
+                      onChange={(e) => setSubjectFilter(e.target.value)}
+                    >
+                      <MenuItem value="">All subjects</MenuItem>
+                      {subjects.map((subj) => (
+                        <MenuItem key={subj.subject_id} value={subj.subject_id}>
+                          {subj.subject_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <FormControlLabel
+                    sx={{ ml: { xs: 0, sm: 0.5 }, mr: 0 }}
+                    control={
+                      <Switch
+                        size="small"
+                        checked={atRiskOnly}
+                        onChange={(e) => setAtRiskOnly(e.target.checked)}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" color="text.secondary">
+                        At risk only
+                      </Typography>
+                    }
+                  />
+                </Stack>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  endIcon={<IconChevronDown size={16} />}
+                  disabled={selectedRowIds.length === 0}
+                  onClick={(e) => setBulkMenuAnchor(e.currentTarget)}
+                >
+                  Bulk Actions{selectedRowIds.length > 0 ? ` (${selectedRowIds.length})` : ''}
+                </Button>
+                <Menu
+                  anchorEl={bulkMenuAnchor}
+                  open={Boolean(bulkMenuAnchor)}
+                  onClose={() => setBulkMenuAnchor(null)}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      setBulkMenuAnchor(null);
+                      showSnackbar(
+                        'Export is not available yet for a selected set of students.',
+                        'info',
+                      );
+                    }}
+                  >
+                    <IconDownload size={16} style={{ marginRight: 8 }} /> Export selected
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      setBulkMenuAnchor(null);
+                      showSnackbar(
+                        'Print is not available yet for a selected set of students.',
+                        'info',
+                      );
+                    }}
+                  >
+                    <IconPrinter size={16} style={{ marginRight: 8 }} /> Print selected
+                  </MenuItem>
+                </Menu>
+              </Stack>
               <Typography
                 variant="caption"
                 color="text.secondary"
@@ -1526,15 +1974,45 @@ const BroadsheetTab = () => {
                           borderRight: `1px solid ${borderColor}`,
                         }}
                       >
-                        Student Info
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Checkbox
+                            size="small"
+                            sx={{ color: '#fff', p: 0.5, '&.Mui-checked': { color: '#fff' } }}
+                            checked={
+                              visibleStudents.length > 0 &&
+                              visibleStudents.every((s) =>
+                                selectedRowIds.includes(s.student_registration_id),
+                              )
+                            }
+                            indeterminate={
+                              visibleStudents.some((s) =>
+                                selectedRowIds.includes(s.student_registration_id),
+                              ) &&
+                              !visibleStudents.every((s) =>
+                                selectedRowIds.includes(s.student_registration_id),
+                              )
+                            }
+                            onChange={(e) => {
+                              const visibleIds = visibleStudents.map(
+                                (s) => s.student_registration_id,
+                              );
+                              setSelectedRowIds((prev) =>
+                                e.target.checked
+                                  ? Array.from(new Set([...prev, ...visibleIds]))
+                                  : prev.filter((id) => !visibleIds.includes(id)),
+                              );
+                            }}
+                          />
+                          Student Info
+                        </Box>
                       </TableCell>
-                      {subjects.map((subj) => (
+                      {visibleSubjects.map((subj, subjIdx) => (
                         <TableCell
                           key={subj.subject_id}
                           colSpan={4}
                           align="center"
                           sx={{
-                            bgcolor: '#ffcb15',
+                            bgcolor: subjectBandColor(subjIdx).dark,
                             fontWeight: 700,
                             borderRight: `1px solid ${borderColor}`,
                             minWidth: 200,
@@ -1556,85 +2034,48 @@ const BroadsheetTab = () => {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      {subjects.map((subj) => (
+                      {visibleSubjects.map((subj, subjIdx) => (
                         <Fragment key={`sub-${subj.subject_id}`}>
                           <TableCell
                             align="center"
                             sx={{
-                              bgcolor: '#c3dfe3',
                               fontWeight: 700,
                               minWidth: { xs: 40, sm: 48 },
+                              borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                              borderRight: `1px solid ${borderColor}`,
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                writingMode: 'vertical-rl',
-                                transform: 'rotate(180deg)',
-                                display: 'inline-block',
-                              }}
-                            >
-                              CA ({caMax})
-                            </Typography>
+                            CA ({caMax})
                           </TableCell>
                           <TableCell
                             align="center"
                             sx={{
-                              bgcolor: '#c3dfe3',
                               fontWeight: 700,
                               minWidth: { xs: 40, sm: 48 },
+                              borderRight: `1px solid ${borderColor}`,
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                writingMode: 'vertical-rl',
-                                transform: 'rotate(180deg)',
-                                display: 'inline-block',
-                              }}
-                            >
-                              EXAM ({examMax})
-                            </Typography>
+                            EXAM ({examMax})
                           </TableCell>
                           <TableCell
                             align="center"
                             sx={{
-                              bgcolor: '#0ca6e8',
                               fontWeight: 700,
-                              color: '#fff',
-                              minWidth: { xs: 40, sm: 48 },
+                              minWidth: { xs: 44, sm: 56 },
+                              borderRight: `1px solid ${borderColor}`,
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                writingMode: 'vertical-rl',
-                                transform: 'rotate(180deg)',
-                                display: 'inline-block',
-                              }}
-                            >
-                              TOTAL ({totalMax})
-                            </Typography>
+                            TOTAL ({totalMax})
                           </TableCell>
                           <TableCell
                             align="center"
                             sx={{
-                              bgcolor: '#0ca6e8',
                               fontWeight: 700,
-                              color: '#fff',
-                              minWidth: { xs: 40, sm: 48 },
+                              minWidth: { xs: 44, sm: 56 },
+                              borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                writingMode: 'vertical-rl',
-                                transform: 'rotate(180deg)',
-                                display: 'inline-block',
-                              }}
-                            >
-                              GRADE
-                            </Typography>
+                            GRADE
                           </TableCell>
                         </Fragment>
                       ))}
@@ -1872,7 +2313,8 @@ const BroadsheetTab = () => {
                     ) : (
                       visibleStudents
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((row) => {
+                        .map((row, idx) => {
+                          const rowNumber = page * rowsPerPage + idx + 1;
                           const resultMap = {};
                           (row.results || []).forEach((r) => {
                             resultMap[r.subject_id] = r;
@@ -1902,6 +2344,25 @@ const BroadsheetTab = () => {
                                     gap: { xs: 1, sm: 1.5 },
                                   }}
                                 >
+                                  <Checkbox
+                                    size="small"
+                                    sx={{ p: 0.5 }}
+                                    checked={selectedRowIds.includes(row.student_registration_id)}
+                                    onChange={(e) => {
+                                      setSelectedRowIds((prev) =>
+                                        e.target.checked
+                                          ? [...prev, row.student_registration_id]
+                                          : prev.filter((id) => id !== row.student_registration_id),
+                                      );
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ minWidth: 16, textAlign: 'right', flexShrink: 0 }}
+                                  >
+                                    {rowNumber}
+                                  </Typography>
                                   <Avatar
                                     src={row.user?.avatar}
                                     sx={{
@@ -1937,16 +2398,19 @@ const BroadsheetTab = () => {
                                   </Box>
                                 </Box>
                               </TableCell>
-                              {subjects.map((subj) => {
+                              {visibleSubjects.map((subj, subjIdx) => {
                                 const result = resultMap[subj.subject_id];
+                                const gradeColors = getGradeColors(result?.grade);
                                 return (
                                   <Fragment key={`sub-${subj.subject_id}`}>
                                     <TableCell
                                       align="center"
                                       sx={{
-                                        bgcolor: '#b0cbcf',
+                                        bgcolor: subjectBandColor(subjIdx).bg,
                                         fontWeight: 600,
                                         minWidth: { xs: 40, sm: 48 },
+                                        borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                        borderRight: `1px solid ${borderColor}`,
                                       }}
                                     >
                                       {displayScore(result?.ca_total ?? null)}
@@ -1954,22 +2418,33 @@ const BroadsheetTab = () => {
                                     <TableCell
                                       align="center"
                                       sx={{
-                                        bgcolor: '#b0cbcf',
+                                        bgcolor: subjectBandColor(subjIdx).bg,
                                         fontWeight: 600,
                                         minWidth: { xs: 40, sm: 48 },
+                                        borderRight: `1px solid ${borderColor}`,
                                       }}
                                     >
                                       {displayScore(result?.exam_score ?? null)}
                                     </TableCell>
                                     <TableCell
                                       align="center"
-                                      sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}
+                                      sx={{
+                                        fontWeight: 700,
+                                        minWidth: { xs: 44, sm: 56 },
+                                        borderRight: `1px solid ${borderColor}`,
+                                      }}
                                     >
                                       {displayScore(result?.overall_total ?? null)}
                                     </TableCell>
                                     <TableCell
                                       align="center"
-                                      sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 48 } }}
+                                      sx={{
+                                        bgcolor: result?.grade ? gradeColors.bg : undefined,
+                                        color: result?.grade ? gradeColors.color : undefined,
+                                        fontWeight: 700,
+                                        minWidth: { xs: 44, sm: 56 },
+                                        borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                      }}
                                     >
                                       {result?.grade ?? '-'}
                                     </TableCell>
@@ -2259,7 +2734,79 @@ const BroadsheetTab = () => {
         </Box>
       </Card>
 
-      {/* ── Publish confirmation ────────────────────────────── */}
+      {/* ── Review checks ───────────────────────────────────── */}
+      <Dialog
+        open={checksModalOpen}
+        onClose={() => setChecksModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Checks to resolve</DialogTitle>
+        <DialogContent dividers>
+          {(() => {
+            const students = sheet?.students || [];
+            const missingScores = students.filter((s) => s.subjects_scored < s.total_subjects);
+            const remarksPending = students.filter((s) => !s.class_teachers_comment);
+            const positionsMissing = students.filter((s) => s.persisted_class_position === null);
+            const Section = ({ title, list, hint }) => (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+                  {title} ({list.length})
+                </Typography>
+                {list.length === 0 ? (
+                  <Typography variant="caption" color="success.main">
+                    All clear.
+                  </Typography>
+                ) : (
+                  <>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mb: 0.5 }}
+                    >
+                      {hint}
+                    </Typography>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                      {list.map((s) => (
+                        <Chip
+                          key={s.id}
+                          size="small"
+                          label={`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
+                          variant="outlined"
+                        />
+                      ))}
+                    </Stack>
+                  </>
+                )}
+              </Box>
+            );
+            return (
+              <>
+                <Section
+                  title="Missing scores"
+                  list={missingScores}
+                  hint="Hasn't been scored in every subject yet."
+                />
+                <Section
+                  title="Remarks pending"
+                  list={remarksPending}
+                  hint="Run Generate Remarks (Stage 1) to fill these in."
+                />
+                <Section
+                  title="Positions missing"
+                  list={positionsMissing}
+                  hint="Run Generate Positioning (Stage 2) once remarks are complete."
+                />
+              </>
+            );
+          })()}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setChecksModalOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Workflow action confirmation ─────────────────────── */}
       <Dialog open={publishConfirm.open} onClose={closePublishConfirm} maxWidth="xs" fullWidth>
         <DialogTitle>{PUBLISH_CONFIRM[publishConfirm.action]?.title}</DialogTitle>
         <DialogContent dividers>
@@ -2268,16 +2815,19 @@ const BroadsheetTab = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closePublishConfirm} disabled={Boolean(publishing)}>
+          <Button
+            onClick={closePublishConfirm}
+            disabled={Boolean(publishing) || generatingComments || generatingPositioning}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             color={PUBLISH_CONFIRM[publishConfirm.action]?.color || 'primary'}
-            onClick={() => handlePublishAction(publishConfirm.action)}
-            disabled={Boolean(publishing)}
+            onClick={() => handleWorkflowConfirm(publishConfirm.action)}
+            disabled={Boolean(publishing) || generatingComments || generatingPositioning}
           >
-            {publishing ? (
+            {publishing || generatingComments || generatingPositioning ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
               PUBLISH_CONFIRM[publishConfirm.action]?.confirm

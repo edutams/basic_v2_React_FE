@@ -16,7 +16,9 @@ import {
   Paper,
   CircularProgress,
   Grid,
-  Alert
+  Alert,
+  Tooltip,
+  Chip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import PrintIcon from '@mui/icons-material/Print';
@@ -103,22 +105,42 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
   const studentName = student?.users?.full_name || student?.user?.full_name || 'Student';
 
   const { groupedData, totals, distinctCategories } = useMemo(() => {
+    // A stale (non-current-category) row only earns a place in this ledger
+    // when real money was actually paid against it — that's a genuine
+    // financial event (reconciliation needs it) regardless of which
+    // category it was billed under. A stale row nobody ever paid anything
+    // on is just an abandoned obligation under a category the student isn't
+    // in anymore; the invoice view already doesn't show it, so neither
+    // should this — keeping it visible served no one and only produced the
+    // "2 different pay categories" confusion in the first place.
+    const visibleData = data.filter(
+      (item) => Number(item.is_current_category) === 1 || parseFloat(item.amount_paid || 0) > 0
+    );
+
     const groups = {};
     let totalBill = 0;
     let totalPaid = 0;
     let totalBalance = 0;
     let cumulative = 0;
 
-    data.forEach((item) => {
+    visibleData.forEach((item) => {
       const sessionTerm = `${item.session_name || 'Unknown'}/${item.term_name || 'Unknown'}`;
       if (!groups[sessionTerm]) {
         groups[sessionTerm] = [];
       }
       groups[sessionTerm].push(item);
 
-      totalBill += parseFloat(item.sched_amount || 0);
-      totalPaid += parseFloat(item.amount_paid || 0);
-      totalBalance += parseFloat(item.balance_amount || 0);
+      // A pay-category change never retires the old category's invoice row
+      // (kept for history — see category_name below) — only roll a row into
+      // the stat-card totals when it's still the student's CURRENT category
+      // for that term, same rule the invoice view already applies. Backend
+      // sends 0/1 (occasionally as a string depending on the DB driver), so
+      // compare numerically rather than truthiness-checking the raw value.
+      if (Number(item.is_current_category) === 1) {
+        totalBill += parseFloat(item.sched_amount || 0);
+        totalPaid += parseFloat(item.amount_paid || 0);
+        totalBalance += parseFloat(item.balance_amount || 0);
+      }
     });
 
     const sortedTerms = Object.keys(groups).sort((a, b) => {
@@ -136,7 +158,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
       };
     });
 
-    const distinctCategories = [...new Set(data.map((item) => item.category_name).filter(Boolean))];
+    const distinctCategories = [...new Set(visibleData.map((item) => item.category_name).filter(Boolean))];
 
     return {
       groupedData: finalGroups,
@@ -221,8 +243,11 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
             {distinctCategories.length > 1 && (
               <Alert severity="warning" sx={{ mb: 2 }}>
                 This student has payment items from {distinctCategories.length} different pay categories
-                ({distinctCategories.join(', ')}) — usually from a pay category change. Check the "Category"
-                column below for each item.
+                ({distinctCategories.join(', ')}) — usually from a pay category change. The items below
+                from a category the student is no longer in all have a real payment against them, so
+                they&apos;re kept for the record — shown dimmed, tagged &quot;Not in current bill&quot;,
+                and excluded from the Total Bill / Amount Paid / Balance figures above. Fully-unpaid
+                items from an old category aren&apos;t shown at all, same as the invoice.
               </Alert>
             )}
 
@@ -266,15 +291,24 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                   {groupedData.length > 0 ? (
                     groupedData.map((group, gIndex) => (
                       <React.Fragment key={gIndex}>
-                        {group.items.map((item, iIndex) => (
-                          <TableRow key={`${gIndex}-${iIndex}`} hover>
+                        {group.items.map((item, iIndex) => {
+                          const isStale = Number(item.is_current_category) !== 1;
+                          return (
+                          <TableRow key={`${gIndex}-${iIndex}`} hover sx={isStale ? { opacity: 0.55 } : undefined}>
                             {iIndex === 0 ? (
                               <TableCell rowSpan={group.items.length} sx={{ verticalAlign: 'top', fontWeight: 600, borderRight: '1px solid', borderColor: 'divider' }}>
                                 {group.term}
                               </TableCell>
                             ) : null}
                             <TableCell>{item.payment_item}</TableCell>
-                            <TableCell>{item.category_name || '-'}</TableCell>
+                            <TableCell>
+                              {item.category_name || '-'}
+                              {isStale && (
+                                <Tooltip title="This item was billed under a pay category this student is no longer in. It's shown because a payment was made against it; it isn't counted in the totals above.">
+                                  <Chip label="Not in current bill" size="small" variant="outlined" sx={{ ml: 0.75, height: 18, fontSize: '0.65rem' }} />
+                                </Tooltip>
+                              )}
+                            </TableCell>
                             <TableCell>{parseFloat(item.sched_amount || 0).toLocaleString()}</TableCell>
                             <TableCell>{parseFloat(item.amount_paid || 0).toLocaleString()}</TableCell>
                             <TableCell>{parseFloat(item.balance_amount || 0).toLocaleString()}</TableCell>
@@ -306,7 +340,8 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                               )}
                             </TableCell>
                           </TableRow>
-                        ))}
+                          );
+                        })}
                       </React.Fragment>
                     ))
                   ) : (

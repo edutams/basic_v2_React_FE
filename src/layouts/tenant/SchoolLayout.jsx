@@ -55,6 +55,19 @@ const SchoolLayout = () => {
   // stack several toasts) and land admins on the subscription page itself.
   useEffect(() => {
     const handleLocked = (event) => {
+      // A 402 can still be in flight from a background fetch (dashboard
+      // stats, a poll, whatever was on screen) at the exact moment the user
+      // logs out — logout itself already cleared the token and is about to
+      // navigate to /login. Racing that with a navigate('/subscriptions')
+      // here previously meant whichever call finished last decided where
+      // the user actually landed, so logout could visibly "fail" even
+      // though the server-side logout had already succeeded. Once there's
+      // no token, the session is gone or going — this event is stale,
+      // ignore it entirely rather than fighting over where to redirect.
+      if (!localStorage.getItem('tenant_access_token')) {
+        return;
+      }
+
       const detail = event.detail || {};
       if (!lockNoticeShownRef.current) {
         lockNoticeShownRef.current = true;

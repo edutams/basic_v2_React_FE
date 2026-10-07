@@ -285,7 +285,7 @@ const MessagingTab = () => {
 
   const saveContact = async (row) => {
     const { channel } = sendDialog;
-    const value = contactEdits[row.res_msg_id] ?? '';
+    const value = contactEdits[row.res_msg_id] ?? contactValue(row, channel);
     if (value === contactValue(row, channel)) return;
     try {
       if (channel === 'Email') {
@@ -319,31 +319,43 @@ const MessagingTab = () => {
       showSnackbar('No students selected', 'warning');
       return;
     }
-    const missing = payloadRows.filter(
-      (r) =>
-        !contactValue(r, channel) &&
-        !(CHANNELS[channel].contactField in r && r[CHANNELS[channel].contactField]),
-    );
-    if (missing.length) {
+    if (channel === 'WhatsApp') {
+      const missingWa = payloadRows.filter((r) => !(r.res_whatsapp_phone_number ?? '').trim());
+      if (missingWa.length) {
+        showSnackbar(
+          `${missingWa.length} selected student(s) are missing a WhatsApp number`,
+          'warning',
+        );
+        return;
+      }
+    }
+
+    const recipients = payloadRows.filter((r) => (contactValue(r, channel) ?? '').trim());
+    const skipped = payloadRows.length - recipients.length;
+    if (!recipients.length) {
       showSnackbar(
-        `${missing.length} selected student(s) are missing a ${CHANNELS[channel].contactLabel}`,
+        `None of the selected students have a ${CHANNELS[channel].contactLabel.toLowerCase()}`,
         'warning',
       );
       return;
     }
+
     setSending(true);
     try {
       if (channel === 'Email') {
-        await communicationApi.resultSend('email', payloadRows);
-        showSnackbar('Emails queued for sending');
+        await communicationApi.resultSend('email', recipients);
+        showSnackbar(
+          `Emails queued for ${recipients.length} student(s)${skipped ? `, ${skipped} skipped` : ''}`,
+        );
       } else if (channel === 'SMS') {
-        const phones = payloadRows.filter((r) => r.res_msg_phone_number);
         await communicationApi.resultSend('sms', {
-          data: phones,
+          data: recipients,
           remain_unit_balance: 0,
           filter: { sessTermId: form.sessTermId },
         });
-        showSnackbar(`SMS queued for ${phones.length} student(s)`);
+        showSnackbar(
+          `SMS queued for ${recipients.length} student(s)${skipped ? `, ${skipped} skipped` : ''}`,
+        );
       } else {
         const res = await communicationApi.resultSend('whatsapp', { data: payloadRows });
         showSnackbar(res.data?.message || 'WhatsApp messages queued');
@@ -950,7 +962,6 @@ const MessagingTab = () => {
                         <TableCell sx={cellHeaderSx}>
                           {dialogChannel?.contactLabel ?? 'Contact'}
                         </TableCell>
-                        <TableCell sx={cellHeaderSx}>Reg. No</TableCell>
                         <TableCell sx={cellHeaderSx}>Status</TableCell>
                         <TableCell sx={cellHeaderSx} align="right">
                           Action
@@ -1002,7 +1013,7 @@ const MessagingTab = () => {
                                     {name}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {r.userid || r.user_id || '—'}
+                                    {r.user_id || '—'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -1010,7 +1021,7 @@ const MessagingTab = () => {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <TextField
                                 size="small"
-                                value={contactEdits[r.res_msg_id] ?? ''}
+                                value={contactEdits[r.res_msg_id] ?? contactValue(r, sendDialog.channel)}
                                 placeholder={dialogChannel?.contactPlaceholder}
                                 onChange={(e) =>
                                   setContactEdits((ed) => ({
@@ -1019,21 +1030,10 @@ const MessagingTab = () => {
                                   }))
                                 }
                                 onBlur={() => saveContact(r)}
-                                error={!(contactEdits[r.res_msg_id] ?? '').trim()}
-                                helperText={
-                                  !(contactEdits[r.res_msg_id] ?? '').trim() ? 'Required' : ' '
-                                }
-                                sx={{
-                                  minWidth: 180,
-                                  '& .MuiFormHelperText-root': { mx: 0, mt: 0, mb: -0.5 },
-                                }}
+                                sx={{ minWidth: 180 }}
                               />
                             </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {r.reg_id || r.userid || '—'}
-                              </Typography>
-                            </TableCell>
+                           
                             <TableCell>
                               <Chip
                                 icon={

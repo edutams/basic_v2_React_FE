@@ -5,6 +5,7 @@ import {
   CircularProgress, useTheme, Pagination, MenuItem, FormControl, InputLabel, Select,
   Divider, Stack, InputAdornment, Paper as PaperSurface,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { IconInbox, IconSend, IconArchive, IconPencil, IconTrash, IconEye, IconArrowLeft, IconMail, IconMailForward, IconMailOpened, IconSearch, IconUsers, IconWand } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -32,7 +33,7 @@ const MailTab = () => {
   const [detail, setDetail] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({ all: 0, term_message: 0, received: 0 });
+  const [stats, setStats] = useState({ all: 0, term_message: 0, received: 0, sent: 0, archive: 0 });
   const [unread, setUnread] = useState(0);
   const [composeOpen, setComposeOpen] = useState(false);
   const [compose, setCompose] = useState(emptyCompose);
@@ -261,14 +262,20 @@ const MailTab = () => {
   return (
     <Box>
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.all ?? 0} label="Total Messages" subtitle="All mail in your mailbox" icon={IconMail} colorIndex={0} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.term_message ?? 0} label="This Term" subtitle="Messages this academic term" icon={IconMailForward} colorIndex={1} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.received ?? 0} label="Received" subtitle="Inbox messages received" icon={IconMailOpened} colorIndex={2} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard count={stats.sent ?? 0} label="Sent Mails" subtitle="Mails you have sent" icon={IconSend} colorIndex={3} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard count={stats.archive ?? 0} label="Archived Mails" subtitle="Mails in your archive" icon={IconArchive} colorIndex={4} />
         </Grid>
       </Grid>
 
@@ -294,9 +301,10 @@ const MailTab = () => {
                   sx={{
                     borderRadius: '8px',
                     cursor: 'pointer',
+                    '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.1) },
                     '&.Mui-selected': {
-                      bgcolor: 'action.selected',
-                      '&:hover': { bgcolor: 'action.hover' },
+                      bgcolor: (t) => alpha(t.palette.primary.main, 0.2),
+                      '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.3) },
                       '& .MuiListItemText-primary': { fontWeight: 700 },
                     },
                   }}
@@ -311,7 +319,7 @@ const MailTab = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 9 }}>
-          <Paper elevation={0} sx={{ p: 2, minHeight: 360, ...border }}>
+          <Paper elevation={0} sx={{ p: 2, minHeight: 240, maxHeight: 420, overflowY: 'auto', ...border }}>
             {detail ? (
               <Box>
                 <Button startIcon={<IconArrowLeft size={16} />} onClick={() => setDetail(null)} sx={{ mb: 1.5, textTransform: 'none' }}>

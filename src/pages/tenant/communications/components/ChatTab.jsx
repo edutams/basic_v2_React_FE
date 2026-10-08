@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
-  Box, Grid, Typography, Paper, TextField, List, ListItem, ListItemAvatar, ListItemText,
+  Box, Grid, Typography, Paper, TextField, List, ListItemAvatar, ListItemText, ListItemButton,
   Avatar, Chip, IconButton, InputAdornment, Snackbar, Alert, CircularProgress, useTheme, Divider, Button,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { IconSend, IconSearch, IconTrash, IconPaperclip, IconPencilPlus, IconCornerUpLeft, IconX, IconChecks } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
@@ -206,12 +207,19 @@ const ChatTab = () => {
             ) : (
               <List dense sx={{ maxHeight: 420, overflowY: 'auto' }}>
                 {users.map((u) => (
-                  <ListItem
+                  <ListItemButton
                     key={u.id}
-                    button
                     selected={receiver?.id === u.id}
                     onClick={() => openChat(u)}
-                    sx={{ borderRadius: '8px', cursor: 'pointer' }}
+                    sx={{
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.1) },
+                      '&.Mui-selected': {
+                        bgcolor: (t) => alpha(t.palette.primary.main, 0.2),
+                        '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.3) },
+                      },
+                    }}
                   >
                     <ListItemAvatar sx={{ minWidth: 40 }}>
                       <Avatar src={u.avatar ? undefined : undefined} sx={{ width: 32, height: 32 }}>
@@ -224,7 +232,7 @@ const ChatTab = () => {
                       primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
                       secondaryTypographyProps={{ fontSize: 12 }}
                     />
-                  </ListItem>
+                  </ListItemButton>
                 ))}
                 {!loadingUsers && users.length === 0 && (
                   <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>No users found.</Typography>

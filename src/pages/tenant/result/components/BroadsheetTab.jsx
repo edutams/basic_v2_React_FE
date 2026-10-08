@@ -1177,14 +1177,24 @@ const BroadsheetTab = () => {
     showSnackbar('Broadsheet exported');
   };
 
+  // A checkmark (promoted / promoted on trial / graduated) is a decided,
+  // locked-in outcome — not editable from here. Only the X (not promoted /
+  // advised to repeat / no recommendation yet) stays clickable, and only
+  // ever offers the two real alternatives: Promote on Trial or Advise to
+  // Repeat.
+  const isPromotionLocked = (recommendation) =>
+    ['promoted', 'promoted on trial', 'graduated'].includes(recommendation);
+
   const promotionIcon = (recommendation) => {
+    const locked = isPromotionLocked(recommendation);
+    const cursor = locked ? 'default' : 'pointer';
     if (recommendation === 'promoted')
-      return <IconCheck size={18} color="#16A34A" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#16A34A" style={{ cursor }} />;
     if (recommendation === 'promoted on trial')
-      return <IconCheck size={18} color="#D97706" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#D97706" style={{ cursor }} />;
     if (recommendation === 'graduated')
-      return <IconCheck size={18} color="#2563EB" style={{ cursor: 'pointer' }} />;
-    return <IconX size={18} color="#DC2626" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#2563EB" style={{ cursor }} />;
+    return <IconX size={18} color="#DC2626" style={{ cursor }} />;
   };
 
   const avatarInitials = (user) => `${user?.lname?.[0] ?? ''}${user?.fname?.[0] ?? ''}`;
@@ -2776,44 +2786,52 @@ const BroadsheetTab = () => {
                                     {row.promotion_recommendation || '-'}
                                   </TableCell>
                                   <TableCell align="center" sx={{ minWidth: { xs: 40, sm: 50 } }}>
-                                    <Tooltip title="Click to change recommendation">
-                                      <Box
-                                        component="span"
-                                        onClick={(e) =>
-                                          setRecMenu({
-                                            rowId: row.student_registration_id,
-                                            anchorEl: e.currentTarget,
-                                          })
-                                        }
-                                        sx={{ display: 'inline-flex', cursor: 'pointer' }}
-                                      >
-                                        {promotionIcon(row.promotion_recommendation)}
-                                      </Box>
-                                    </Tooltip>
-                                    <Menu
-                                      anchorEl={recMenu.anchorEl}
-                                      open={
-                                        Boolean(recMenu.anchorEl) &&
-                                        recMenu.rowId === row.student_registration_id
-                                      }
-                                      onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
-                                    >
-                                      {[
-                                        'promoted',
-                                        'promoted on trial',
-                                        'not promoted',
-                                        'advised to repeat',
-                                      ].map((opt) => (
-                                        <MenuItem
-                                          key={opt}
-                                          dense
-                                          selected={row.promotion_recommendation === opt}
-                                          onClick={() => handleSetRecommendation(row, opt)}
+                                    {isPromotionLocked(row.promotion_recommendation) ? (
+                                      <Tooltip title="Already decided — not editable">
+                                        <Box component="span" sx={{ display: 'inline-flex' }}>
+                                          {promotionIcon(row.promotion_recommendation)}
+                                        </Box>
+                                      </Tooltip>
+                                    ) : (
+                                      <>
+                                        <Tooltip title="Promote on trial or advise to repeat">
+                                          <Box
+                                            component="span"
+                                            onClick={(e) =>
+                                              setRecMenu({
+                                                rowId: row.student_registration_id,
+                                                anchorEl: e.currentTarget,
+                                              })
+                                            }
+                                            sx={{ display: 'inline-flex', cursor: 'pointer' }}
+                                          >
+                                            {promotionIcon(row.promotion_recommendation)}
+                                          </Box>
+                                        </Tooltip>
+                                        <Menu
+                                          anchorEl={recMenu.anchorEl}
+                                          open={
+                                            Boolean(recMenu.anchorEl) &&
+                                            recMenu.rowId === row.student_registration_id
+                                          }
+                                          onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
                                         >
-                                          {opt}
-                                        </MenuItem>
-                                      ))}
-                                    </Menu>
+                                          {[
+                                            { value: 'promoted on trial', label: 'Promote on Trial' },
+                                            { value: 'advised to repeat', label: 'Advise to Repeat' },
+                                          ].map((opt) => (
+                                            <MenuItem
+                                              key={opt.value}
+                                              dense
+                                              selected={row.promotion_recommendation === opt.value}
+                                              onClick={() => handleSetRecommendation(row, opt.value)}
+                                            >
+                                              {opt.label}
+                                            </MenuItem>
+                                          ))}
+                                        </Menu>
+                                      </>
+                                    )}
                                   </TableCell>
                                   <TableCell align="center" sx={{ minWidth: { xs: 72, sm: 80 } }}>
                                     {row.promotion_recommendation === 'promoted' ||

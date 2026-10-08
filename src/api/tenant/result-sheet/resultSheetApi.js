@@ -86,15 +86,8 @@ const resultSheetApi = {
   // POST /result-sheet/summary-breakdown { class_arm_id, session_term_id, subject_id, grade }
   getSummaryBreakdown: (data) => tenantApi.post('/result-sheet/summary-breakdown', data),
 
-  // ── Comment bank ────────────────────────────────────────────
-  // GET /result-sheet/comment-bank — comment grades + the current user's
-  // saved cells (comment1..comment4 = domain-average bands), plus `meta`
-  // describing which role/report-card field this user's bank feeds and
-  // how many of its cells are filled.
-  getCommentBank: () => tenantApi.get('/result-sheet/comment-bank'),
-
-  // POST /result-sheet/comment-bank { comment_grade_id, field: 'comment1'..'comment4', value }
-  saveCommentBank: (data) => tenantApi.post('/result-sheet/comment-bank', data),
+  // Comment Bank now lives under its own API module — see
+  // @/api/tenant/comment-bank/commentBankApi.
 };
 
 export default resultSheetApi;

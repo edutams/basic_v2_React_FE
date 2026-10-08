@@ -5,6 +5,7 @@ import {
   CircularProgress, useTheme, Pagination, MenuItem, FormControl, InputLabel, Select,
   Divider, Stack, InputAdornment, Paper as PaperSurface,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { IconInbox, IconSend, IconArchive, IconPencil, IconTrash, IconEye, IconArrowLeft, IconMail, IconMailForward, IconMailOpened, IconSearch, IconUsers, IconWand } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -300,9 +301,10 @@ const MailTab = () => {
                   sx={{
                     borderRadius: '8px',
                     cursor: 'pointer',
+                    '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.1) },
                     '&.Mui-selected': {
-                      bgcolor: 'action.selected',
-                      '&:hover': { bgcolor: 'action.hover' },
+                      bgcolor: (t) => alpha(t.palette.primary.main, 0.2),
+                      '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.3) },
                       '& .MuiListItemText-primary': { fontWeight: 700 },
                     },
                   }}

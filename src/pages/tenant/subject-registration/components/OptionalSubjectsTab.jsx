@@ -55,6 +55,8 @@ const OptionalSubjectsTab = forwardRef(function OptionalSubjectsTab(
       const [subjRes, learnerRes] = await Promise.all([
         subjectRegistrationApi.getOptionalSubjects(classLevel, {
           programme_id: programme || undefined,
+          term_id: termId || undefined,
+          session_id: session || undefined,
         }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
           programme_id: programme || undefined,
@@ -233,10 +235,9 @@ const OptionalSubjectsTab = forwardRef(function OptionalSubjectsTab(
         l.id === learnerId
           ? {
               ...l,
-              registered: subjects.reduce(
-                (acc, subj) => ({ ...acc, [subj.id]: true }),
-                { ...l.registered },
-              ),
+              registered: subjects.reduce((acc, subj) => ({ ...acc, [subj.id]: true }), {
+                ...l.registered,
+              }),
             }
           : l,
       ),
@@ -256,10 +257,7 @@ const OptionalSubjectsTab = forwardRef(function OptionalSubjectsTab(
       return next;
     });
 
-    notify(
-      `Learner marked for every subject — click Save Selected to save to the server.`,
-      'info',
-    );
+    notify(`Learner marked for every subject — click Save Selected to save to the server.`, 'info');
   };
 
   return (
@@ -315,7 +313,12 @@ const OptionalSubjectsTab = forwardRef(function OptionalSubjectsTab(
         </Stack>
       )}
 
-      <Dialog open={confirmSaveOpen} onClose={() => setConfirmSaveOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={confirmSaveOpen}
+        onClose={() => setConfirmSaveOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Save Subject Registrations?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

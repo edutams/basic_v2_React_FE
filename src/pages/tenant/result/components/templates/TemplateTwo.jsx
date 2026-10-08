@@ -57,7 +57,7 @@ const AccordionSection = ({ title, children }) => (
 
 const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) => {
   const hosSignature = report?.signatures?.head_of_school;
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
   const affectiveAvg = Object.values(report.affective).length
     ? Math.round(Object.values(report.affective).reduce((a, b) => a + b, 0) / Object.values(report.affective).length)
     : 0;
@@ -231,7 +231,7 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="SCORE">
             <Table size="small">
               <TableBody>
-                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</TableCell></TableRow>
+                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Class Position</strong><br />{report.position}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center' }}><strong>Percentage</strong><br />{avg}%</TableCell></TableRow>
               </TableBody>

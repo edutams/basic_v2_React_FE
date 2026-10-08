@@ -27,7 +27,7 @@ const responsiveCSS = `
 const TemplateSix = ({ student, report, sessionTerm, className, gradeScale }) => {
   const hosSignature = report?.signatures?.head_of_school;
   const classTeacherSignature = report?.signatures?.class_teacher;
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>

@@ -477,7 +477,12 @@ const ReportCardTab = () => {
           ) : publishBlocked ? (
             <Box sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gap: 2 }}>
               {!spaApproved && (
-                <Alert severity="warning">
+                <Alert
+                  sx={{
+                    bgcolor: '#fc9d49',
+                    color: '#fff',
+                  }}
+                >
                   <Typography variant="subtitle2" fontWeight={900}>
                     SPA Approval Notification
                   </Typography>
@@ -486,7 +491,12 @@ const ReportCardTab = () => {
                 </Alert>
               )}
               {!hosPublished && (
-                <Alert severity="warning">
+                <Alert
+                  sx={{
+                    bgcolor: '#fc9d49',
+                    color: '#fff',
+                  }}
+                >
                   <Typography variant="subtitle2" fontWeight={900}>
                     HoS Approval Notification
                   </Typography>

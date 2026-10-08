@@ -39,6 +39,7 @@ import {
   InputAdornment,
   Switch,
   FormControlLabel,
+  Popover,
 } from '@mui/material';
 import {
   IconCheck,
@@ -120,6 +121,12 @@ const PUBLISH_CONFIRM = {
     body: 'The SPA approval is cleared and the broadsheet goes back to awaiting approval. Nothing has been published yet, so there is nothing else to undo.',
     confirm: 'Reverse approval',
     color: 'error',
+  },
+  recommend_promotions: {
+    title: 'Recommend promotions for this class?',
+    body: 'Computes each student\'s promotion recommendation and next class arm based on their results, for review — this does not move anyone yet. Any existing recommendation will be recalculated.',
+    confirm: 'Recommend',
+    color: 'primary',
   },
 };
 
@@ -239,7 +246,6 @@ const BroadsheetTab = () => {
   const [classes, setClasses] = useState([]);
   const [classArms, setClassArms] = useState([]);
   const [allArms, setAllArms] = useState([]);
-  const [schoolInfo, setSchoolInfo] = useState(null);
   const activeSessionTermRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState(0);
@@ -251,6 +257,14 @@ const BroadsheetTab = () => {
     class_arm_id: '',
     perf_range: '',
   });
+
+  // Term Cumulative only makes sense once the session has reached Third
+  // Term (cumulating 3 terms before the 3rd exists is meaningless) — same
+  // term_id === 3 check the backend uses for is_third_term. Declared this
+  // early since an effect further down (gating the Term Cumulative tab)
+  // reads it before render reaches where the rest of the derived values
+  // are computed.
+  const isThirdTermSelected = Number(filters.term_id) === 3;
 
   const [loading, setLoading] = useState(false);
   const [sheet, setSheet] = useState(null);
@@ -362,17 +376,6 @@ const BroadsheetTab = () => {
       });
 
     loadDropdowns();
-    getTenantInfo()
-      .then((data) => {
-        if (!cancelled) setSchoolInfo(data?.data || null);
-      })
-      .catch(() => {
-        if (!cancelled) setSchoolInfo(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // ── Terms for the selected session (defaults to the active term) ──
@@ -513,6 +516,11 @@ const BroadsheetTab = () => {
       closePublishConfirm();
       return;
     }
+    if (action === 'recommend_promotions') {
+      await handleRecommendPromotions();
+      closePublishConfirm();
+      return;
+    }
     handlePublishAction(action);
   };
 
@@ -543,6 +551,16 @@ const BroadsheetTab = () => {
       closePublishConfirm();
     }
   };
+
+  // The Term Cumulative tab is only ever rendered while Third Term is
+  // selected (see the Tabs block below) — if the term filter changes out
+  // from under it while it's active, fall back to Termly rather than
+  // leaving an invisible tab "selected".
+  useEffect(() => {
+    if (activeTab === 1 && !isThirdTermSelected) {
+      setActiveTab(0);
+    }
+  }, [activeTab, isThirdTermSelected]);
 
   // Auto-fetch once every required filter has resolved — they're all
   // preselected now (active session/term, first programme/class/arm), so
@@ -646,11 +664,14 @@ const BroadsheetTab = () => {
         return name.includes(q) || admNo.includes(q);
       });
     }
-    if (statusFilter === 'incomplete') {
+    // Status/Subject filters are Termly-only concepts (per-term scores,
+    // remarks, positions) — a stale value from tab 0 must not silently
+    // empty out the Term Cumulative summary after switching tabs.
+    if (activeTab === 0 && statusFilter === 'incomplete') {
       rows = rows.filter((s) => s.subjects_scored < s.total_subjects);
-    } else if (statusFilter === 'remarks_pending') {
+    } else if (activeTab === 0 && statusFilter === 'remarks_pending') {
       rows = rows.filter((s) => !s.class_teachers_comment);
-    } else if (statusFilter === 'position_missing') {
+    } else if (activeTab === 0 && statusFilter === 'position_missing') {
       rows = rows.filter((s) => s.persisted_class_position === null);
     }
     if (atRiskOnly) {
@@ -662,7 +683,19 @@ const BroadsheetTab = () => {
     return rows;
   })();
 
-  const showPromotionButtons = activeTab === 0 && showData && Boolean(sheet?.is_third_term);
+  // Promotion only makes sense once every Results Workflow stage is
+  // actually done — Remarks, Positioning, SPA Approval, and HOS Publish —
+  // not just "we've reached Third Term". Mirrors the same completion
+  // checks the workflow-stage cards below compute for themselves.
+  const allWorkflowStagesComplete = Boolean(
+    sheet?.workflow &&
+      (sheet.workflow.checks?.remarks_pending ?? 1) === 0 &&
+      (sheet.workflow.checks?.positions_missing ?? 1) === 0 &&
+      sheet.result_publish?.spa_publish === 'yes' &&
+      sheet.result_publish?.head_of_school_publish === 'yes',
+  );
+  const showPromotionButtons =
+    activeTab === 0 && showData && Boolean(sheet?.is_third_term) && allWorkflowStagesComplete;
   const stats = sheet?.stats ?? {};
   const gradeSettings = sheet?.grade_settings ?? [];
   const markConfig = sheet?.mark_config;
@@ -679,7 +712,15 @@ const BroadsheetTab = () => {
     ? subjects.filter((s) => String(s.subject_id) === String(subjectFilter))
     : subjects;
 
-  const summaryColSpan = activeTab === 1 ? 11 : showPromotionButtons ? 10 : 7;
+  // Tab 1 (Term Cumulative): CWA + Position + No. Subj + Remark only.
+  // Tab 0 (Termly): same 4 + Total Score, + promotion cols when shown, +
+  // the 2 comment columns + Action.
+  const summaryColSpan = activeTab === 1 ? 4 : showPromotionButtons ? 11 : 8;
+  // Termly: CA/EXAM/TOTAL/GRADE per subject (4). Term Cumulative: one TOTAL
+  // column per term in the session + CUM AVG + GRADE.
+  const cumulativeTermCount = sheet?.terms?.length || 3;
+  const subjectColSpan = activeTab === 0 ? 4 : cumulativeTermCount + 2;
+  const termOrdinalLabels = ['1ST', '2ND', '3RD', '4TH'].slice(0, cumulativeTermCount);
 
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
@@ -909,6 +950,9 @@ const BroadsheetTab = () => {
 
   // ── Promotion ───────────────────────────────────────────────
   const [recMenu, setRecMenu] = useState({ rowId: null, anchorEl: null });
+  const [subjectsPopover, setSubjectsPopover] = useState({ anchorEl: null, row: null });
+  const openSubjectsPopover = (e, row) => setSubjectsPopover({ anchorEl: e.currentTarget, row });
+  const closeSubjectsPopover = () => setSubjectsPopover({ anchorEl: null, row: null });
 
   const handleRecommendPromotions = async () => {
     setLoading(true);
@@ -1050,20 +1094,27 @@ const BroadsheetTab = () => {
       'Student ID',
       'Name',
       'Sex',
-      ...subjects.flatMap((s) => [
-        `${s.subject_name} CA (${caMax})`,
-        `${s.subject_name} EXAM (${examMax})`,
-        `${s.subject_name} TOTAL (${totalMax})`,
-        `${s.subject_name} GRADE`,
-      ]),
-      ...(isCumulative ? ['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'] : []),
+      ...subjects.flatMap((s) =>
+        isCumulative
+          ? [
+              ...termOrdinalLabels.map((label) => `${s.subject_name} ${label} TERM`),
+              `${s.subject_name} CUM AVG`,
+              `${s.subject_name} GRADE`,
+            ]
+          : [
+              `${s.subject_name} CA (${caMax})`,
+              `${s.subject_name} EXAM (${examMax})`,
+              `${s.subject_name} TOTAL (${totalMax})`,
+              `${s.subject_name} GRADE`,
+            ],
+      ),
+      ...(isCumulative ? [] : ['TOTAL SCORE']),
       'CWA',
       'POSITION',
       'NO. SUBJ',
       'REMARK',
       ...(showPromotionButtons ? ['RECOMMENDATION', 'NEXT CLASS'] : []),
-      'CLASS TEACHER COMMENT',
-      'HEAD OF SCHOOL COMMENT',
+      ...(isCumulative ? [] : ['CLASS TEACHER COMMENT', 'HEAD OF SCHOOL COMMENT']),
     ];
 
     const rows = visibleStudents.map((row, index) => {
@@ -1081,6 +1132,14 @@ const BroadsheetTab = () => {
         row.user?.sex === 'female' ? 'F' : 'M',
         ...subjects.flatMap((s) => {
           const result = resultMap[s.subject_id];
+          if (isCumulative) {
+            const termTotals = result?.term_totals ?? [];
+            return [
+              ...termOrdinalLabels.map((_, i) => termTotals[i] ?? ''),
+              result?.cum_avg ?? '',
+              result?.grade ?? '',
+            ];
+          }
           return [
             result?.ca_total ?? '',
             result?.exam_score ?? '',
@@ -1088,21 +1147,13 @@ const BroadsheetTab = () => {
             result?.grade ?? '',
           ];
         }),
-        ...(isCumulative
-          ? [
-              row.first_term_average ?? '',
-              row.second_term_average ?? '',
-              row.third_term_average ?? '',
-              row.all_term_average ?? '',
-            ]
-          : []),
+        ...(isCumulative ? [] : [row.total_score ?? '']),
         cwa ?? '',
-        isCumulative ? (row.all_term_overall_class_position ?? '') : (row.position ?? ''),
-        row.total_subjects ?? '',
+        isCumulative ? (row.all_term_overall_class_position ?? '') : (row.persisted_class_position ?? ''),
+        row.registered_subjects ?? '',
         row.remark ?? remarkFor(cwa, gradeSettings),
         ...(showPromotionButtons ? [row.promotion_recommendation || '', armName] : []),
-        row.class_teachers_comment || '',
-        row.hos_comment || '',
+        ...(isCumulative ? [] : [row.class_teachers_comment || '', row.hos_comment || '']),
       ];
     });
 
@@ -1163,8 +1214,8 @@ const BroadsheetTab = () => {
             }}
             sx={{ borderBottom: 0, minHeight: 0 }}
           >
-            <Tab label="Termly" sx={{ py: 1.25 }} />
-            <Tab label="Term Cummulative" sx={{ py: 1.25 }} />
+            <Tab label="Termly" value={0} sx={{ py: 1.25 }} />
+            {isThirdTermSelected && <Tab label="Term Cummulative" value={1} sx={{ py: 1.25 }} />}
           </Tabs>
 
           {activeTab === 0 && showData && (sheet || loading) && (
@@ -1899,7 +1950,7 @@ const BroadsheetTab = () => {
                 variant="outlined"
                 color="primary"
                 size="small"
-                onClick={handleRecommendPromotions}
+                onClick={() => setPublishConfirm({ open: true, action: 'recommend_promotions' })}
                 disabled={loading}
               >
                 Recommend Promotion
@@ -1946,20 +1997,22 @@ const BroadsheetTab = () => {
                       ),
                     }}
                   />
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
-                    <InputLabel id="broadsheet-status-filter-label">Status</InputLabel>
-                    <Select
-                      labelId="broadsheet-status-filter-label"
-                      label="Status"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <MenuItem value="">All students</MenuItem>
-                      <MenuItem value="incomplete">Missing scores</MenuItem>
-                      <MenuItem value="remarks_pending">Remarks pending</MenuItem>
-                      <MenuItem value="position_missing">Positions missing</MenuItem>
-                    </Select>
-                  </FormControl>
+                  {activeTab === 0 && (
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
+                      <InputLabel id="broadsheet-status-filter-label">Status</InputLabel>
+                      <Select
+                        labelId="broadsheet-status-filter-label"
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <MenuItem value="">All students</MenuItem>
+                        <MenuItem value="incomplete">Missing scores</MenuItem>
+                        <MenuItem value="remarks_pending">Remarks pending</MenuItem>
+                        <MenuItem value="position_missing">Positions missing</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
                   <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
                     <InputLabel id="broadsheet-subject-filter-label">Subject</InputLabel>
                     <Select
@@ -2097,7 +2150,7 @@ const BroadsheetTab = () => {
                       {visibleSubjects.map((subj, subjIdx) => (
                         <TableCell
                           key={subj.subject_id}
-                          colSpan={4}
+                          colSpan={subjectColSpan}
                           align="center"
                           sx={{
                             bgcolor: subjectBandColor(subjIdx).dark,
@@ -2122,76 +2175,110 @@ const BroadsheetTab = () => {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      {visibleSubjects.map((subj, subjIdx) => (
-                        <Fragment key={`sub-${subj.subject_id}`}>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 40, sm: 48 },
-                              borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            CA ({caMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 40, sm: 48 },
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            EXAM ({examMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 44, sm: 56 },
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            TOTAL ({totalMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 44, sm: 56 },
-                              borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                            }}
-                          >
-                            GRADE
-                          </TableCell>
-                        </Fragment>
-                      ))}
-                      {activeTab === 1 && (
-                        <>
-                          {['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'].map((label) => (
+                      {visibleSubjects.map((subj, subjIdx) =>
+                        activeTab === 0 ? (
+                          <Fragment key={`sub-${subj.subject_id}`}>
                             <TableCell
-                              key={label}
                               align="center"
                               sx={{
-                                bgcolor: '#ffcb15',
                                 fontWeight: 700,
-                                minWidth: { xs: 44, sm: 60 },
+                                minWidth: { xs: 40, sm: 48 },
+                                borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                borderRight: `1px solid ${borderColor}`,
                               }}
                             >
-                              <Typography
-                                variant="caption"
+                              CA ({caMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 40, sm: 48 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              EXAM ({examMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              TOTAL ({totalMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                              }}
+                            >
+                              GRADE
+                            </TableCell>
+                          </Fragment>
+                        ) : (
+                          <Fragment key={`sub-${subj.subject_id}`}>
+                            {termOrdinalLabels.map((label, i) => (
+                              <TableCell
+                                key={label}
+                                align="center"
                                 sx={{
-                                  writingMode: 'vertical-rl',
-                                  transform: 'rotate(180deg)',
-                                  display: 'inline-block',
+                                  fontWeight: 700,
+                                  minWidth: { xs: 40, sm: 48 },
+                                  borderLeft:
+                                    i === 0
+                                      ? `2px solid ${subjectBandColor(subjIdx).dark}`
+                                      : undefined,
+                                  borderRight: `1px solid ${borderColor}`,
                                 }}
                               >
                                 {label}
-                              </Typography>
+                              </TableCell>
+                            ))}
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              CUM AVG
                             </TableCell>
-                          ))}
-                        </>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                              }}
+                            >
+                              GRADE
+                            </TableCell>
+                          </Fragment>
+                        ),
+                      )}
+                      {activeTab === 0 && (
+                        <TableCell
+                          align="center"
+                          sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 44, sm: 60 } }}
+                        >
+                          <Typography
+                            variant="caption"
+                            fontWeight={700}
+                            sx={{
+                              writingMode: 'vertical-rl',
+                              transform: 'rotate(180deg)',
+                              display: 'inline-block',
+                            }}
+                          >
+                            TOTAL SCORE
+                          </Typography>
+                        </TableCell>
                       )}
                       <TableCell
                         align="center"
@@ -2199,6 +2286,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2214,6 +2302,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2229,6 +2318,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2244,6 +2334,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2306,51 +2397,70 @@ const BroadsheetTab = () => {
                           </TableCell>
                         </>
                       )}
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          CLASS TEACHER COMMENT
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          HEAD OF SCHOOL COMMENT
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 96, sm: 100 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          ACTION
-                        </Typography>
-                      </TableCell>
+                      {activeTab === 0 && (
+                        <>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 80, sm: 96 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              CLASS TEACHER COMMENT
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 80, sm: 96 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              HEAD OF SCHOOL COMMENT
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 96, sm: 100 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              ACTION
+                            </Typography>
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2489,31 +2599,79 @@ const BroadsheetTab = () => {
                               {visibleSubjects.map((subj, subjIdx) => {
                                 const result = resultMap[subj.subject_id];
                                 const gradeColors = getGradeColors(result?.grade);
+                                if (activeTab === 0) {
+                                  return (
+                                    <Fragment key={`sub-${subj.subject_id}`}>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.ca_total ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.exam_score ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          fontWeight: 700,
+                                          minWidth: { xs: 44, sm: 56 },
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.overall_total ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: result?.grade ? gradeColors.bg : undefined,
+                                          color: result?.grade ? gradeColors.color : undefined,
+                                          fontWeight: 700,
+                                          minWidth: { xs: 44, sm: 56 },
+                                          borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                        }}
+                                      >
+                                        {result?.grade ?? '-'}
+                                      </TableCell>
+                                    </Fragment>
+                                  );
+                                }
+
+                                const termTotals = result?.term_totals ?? [];
                                 return (
                                   <Fragment key={`sub-${subj.subject_id}`}>
-                                    <TableCell
-                                      align="center"
-                                      sx={{
-                                        bgcolor: subjectBandColor(subjIdx).bg,
-                                        fontWeight: 600,
-                                        minWidth: { xs: 40, sm: 48 },
-                                        borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                                        borderRight: `1px solid ${borderColor}`,
-                                      }}
-                                    >
-                                      {displayScore(result?.ca_total ?? null)}
-                                    </TableCell>
-                                    <TableCell
-                                      align="center"
-                                      sx={{
-                                        bgcolor: subjectBandColor(subjIdx).bg,
-                                        fontWeight: 600,
-                                        minWidth: { xs: 40, sm: 48 },
-                                        borderRight: `1px solid ${borderColor}`,
-                                      }}
-                                    >
-                                      {displayScore(result?.exam_score ?? null)}
-                                    </TableCell>
+                                    {termOrdinalLabels.map((label, i) => (
+                                      <TableCell
+                                        key={label}
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderLeft:
+                                            i === 0
+                                              ? `2px solid ${subjectBandColor(subjIdx).dark}`
+                                              : undefined,
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(termTotals[i] ?? null)}
+                                      </TableCell>
+                                    ))}
                                     <TableCell
                                       align="center"
                                       sx={{
@@ -2522,7 +2680,7 @@ const BroadsheetTab = () => {
                                         borderRight: `1px solid ${borderColor}`,
                                       }}
                                     >
-                                      {displayScore(result?.overall_total ?? null)}
+                                      {displayScore(result?.cum_avg ?? null)}
                                     </TableCell>
                                     <TableCell
                                       align="center"
@@ -2539,55 +2697,23 @@ const BroadsheetTab = () => {
                                   </Fragment>
                                 );
                               })}
-                              {activeTab === 1 && (
-                                <>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.first_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.second_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.third_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.all_term_average ?? null)}
-                                  </TableCell>
-                                </>
+                              {activeTab === 0 && (
+                                <TableCell
+                                  align="center"
+                                  sx={{
+                                    bgcolor: '#ffcb15',
+                                    fontWeight: 700,
+                                    minWidth: { xs: 44, sm: 60 },
+                                  }}
+                                >
+                                  {displayScore(row.total_score ?? null)}
+                                </TableCell>
                               )}
                               <TableCell
                                 align="center"
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 44, sm: 60 },
                                 }}
                               >
@@ -2599,27 +2725,37 @@ const BroadsheetTab = () => {
                                 align="center"
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 40, sm: 50 },
                                 }}
                               >
                                 {activeTab === 0
-                                  ? (row.position ?? '-')
+                                  ? // The PERSISTED position (written by Generate
+                                    // Positioning / SPA Approve) — not the live-
+                                    // ranked `row.position`, which would otherwise
+                                    // show a position before that stage has
+                                    // actually run, making the Positioning
+                                    // workflow stage look pointless.
+                                    (row.persisted_class_position ?? '-')
                                   : (row.all_term_overall_class_position ?? '-')}
                               </TableCell>
                               <TableCell
                                 align="center"
+                                onClick={(e) => openSubjectsPopover(e, row)}
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 40, sm: 50 },
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  textDecorationStyle: 'dotted',
                                 }}
                               >
-                                {row.total_subjects ?? '-'}
+                                {row.registered_subjects ?? '-'}
                               </TableCell>
                               <TableCell
                                 align="center"
-                                sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}
+                                sx={{ fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}
                               >
                                 {row.remark ??
                                   remarkFor(
@@ -2707,83 +2843,87 @@ const BroadsheetTab = () => {
                                   </TableCell>
                                 </>
                               )}
-                              <CommentCell value={row.class_teachers_comment} />
-                              <CommentCell value={row.hos_comment} />
-                              <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
-                                {can('result.admin.spa_approve_broadsheet') ? (
-                                  <>
-                                    <Tooltip
-                                      title={
-                                        hasNoResults
-                                          ? 'No scores uploaded for this student yet — upload scores before adding comments'
-                                          : 'Add or edit comments and scores'
-                                      }
-                                    >
-                                      <span>
-                                        <Button
-                                          size="small"
-                                          variant="contained"
-                                          color="primary"
-                                          sx={{
-                                            fontSize: 12,
-                                            px: 1,
-                                            minWidth: 0,
-                                            textTransform: 'none',
-                                          }}
-                                          onClick={(e) => handleAddEditClick(e, row)}
-                                          disabled={hasNoResults}
+                              {activeTab === 0 && (
+                                <>
+                                  <CommentCell value={row.class_teachers_comment} />
+                                  <CommentCell value={row.hos_comment} />
+                                  <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
+                                    {can('result.admin.spa_approve_broadsheet') ? (
+                                      <>
+                                        <Tooltip
+                                          title={
+                                            hasNoResults
+                                              ? 'No scores uploaded for this student yet — upload scores before adding comments'
+                                              : 'Add or edit comments and scores'
+                                          }
                                         >
-                                          Add/Edit
-                                        </Button>
-                                      </span>
-                                    </Tooltip>
-                                    <Menu
-                                      anchorEl={addEditMenu.anchorEl}
-                                      open={
-                                        Boolean(addEditMenu.anchorEl) &&
-                                        addEditMenu.rowId === row.student_registration_id
-                                      }
-                                      onClose={closeAddEditMenu}
-                                    >
-                                      <MenuItem
-                                        dense
-                                        onClick={() => {
-                                          closeAddEditMenu();
-                                          handleOpenComment(row, 'teacher');
-                                        }}
-                                      >
-                                        <IconMessage size={16} style={{ marginRight: 8 }} /> Class
-                                        Teacher
-                                      </MenuItem>
-                                      <MenuItem
-                                        dense
-                                        onClick={() => {
-                                          closeAddEditMenu();
-                                          handleOpenComment(row, 'hos');
-                                        }}
-                                      >
-                                        <IconMessage size={16} style={{ marginRight: 8 }} /> HoS
-                                        Comment
-                                      </MenuItem>
-                                      {activeTab === 0 &&
-                                        sheet?.result_publish?.head_of_school_publish !== 'yes' && (
+                                          <span>
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="primary"
+                                              sx={{
+                                                fontSize: 12,
+                                                px: 1,
+                                                minWidth: 0,
+                                                textTransform: 'none',
+                                              }}
+                                              onClick={(e) => handleAddEditClick(e, row)}
+                                              disabled={hasNoResults}
+                                            >
+                                              Add/Edit
+                                            </Button>
+                                          </span>
+                                        </Tooltip>
+                                        <Menu
+                                          anchorEl={addEditMenu.anchorEl}
+                                          open={
+                                            Boolean(addEditMenu.anchorEl) &&
+                                            addEditMenu.rowId === row.student_registration_id
+                                          }
+                                          onClose={closeAddEditMenu}
+                                        >
                                           <MenuItem
                                             dense
                                             onClick={() => {
                                               closeAddEditMenu();
-                                              handleOpenEditScores(row);
+                                              handleOpenComment(row, 'teacher');
                                             }}
                                           >
-                                            <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
-                                            Scores
+                                            <IconMessage size={16} style={{ marginRight: 8 }} />{' '}
+                                            Class Teacher
                                           </MenuItem>
-                                        )}
-                                    </Menu>
-                                  </>
-                                ) : (
-                                  '-'
-                                )}
-                              </TableCell>
+                                          <MenuItem
+                                            dense
+                                            onClick={() => {
+                                              closeAddEditMenu();
+                                              handleOpenComment(row, 'hos');
+                                            }}
+                                          >
+                                            <IconMessage size={16} style={{ marginRight: 8 }} /> HoS
+                                            Comment
+                                          </MenuItem>
+                                          {sheet?.result_publish?.head_of_school_publish !==
+                                            'yes' && (
+                                            <MenuItem
+                                              dense
+                                              onClick={() => {
+                                                closeAddEditMenu();
+                                                handleOpenEditScores(row);
+                                              }}
+                                            >
+                                              <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
+                                              Scores
+                                            </MenuItem>
+                                          )}
+                                        </Menu>
+                                      </>
+                                    ) : (
+                                      '-'
+                                    )}
+                                  </TableCell>
+                                </>
+                              )}
                             </TableRow>
                           );
                         })
@@ -2828,6 +2968,38 @@ const BroadsheetTab = () => {
           )}
         </Box>
       </Card>
+
+      {/* ── Registered subjects popover (click NO. SUBJ) ───────── */}
+      <Popover
+        open={Boolean(subjectsPopover.anchorEl)}
+        anchorEl={subjectsPopover.anchorEl}
+        onClose={closeSubjectsPopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Box sx={{ p: 1.5, maxWidth: 260 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+            {subjectsPopover.row
+              ? `${subjectsPopover.row.user?.lname ?? ''} ${subjectsPopover.row.user?.fname ?? ''}`.trim()
+              : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Registered for {subjectsPopover.row?.registered_subjects ?? 0} subject(s)
+          </Typography>
+          <Stack spacing={0.4}>
+            {(subjectsPopover.row?.registered_subject_names ?? []).map((name) => (
+              <Typography key={name} variant="body2">
+                &bull; {name}
+              </Typography>
+            ))}
+            {(subjectsPopover.row?.registered_subject_names ?? []).length === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No subjects registered.
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+      </Popover>
 
       {/* ── Review checks ───────────────────────────────────── */}
       <Dialog

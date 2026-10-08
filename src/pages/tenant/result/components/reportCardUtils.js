@@ -174,6 +174,12 @@ export const buildReportProp = (report) => {
     exam_max: Number(report.mark_config?.exam_max_score || 0),
     no_of_ca: report.mark_config?.no_of_ca ?? caColumns.length,
     class_population: report.summary?.class_population ?? 0,
+    // How many subjects actually HAVE a score — not subjects.length (every
+    // registered subject, scored or not). Templates must use this (times
+    // ca_max + exam_max) for "Total Score X/Y", not a hardcoded per-subject
+    // max times the full subject count, which only matches by coincidence
+    // when every subject happens to be scored.
+    subjects_scored: report.summary?.subjects_scored ?? 0,
     position: report.summary?.overall_position || '-',
     total_score: report.summary?.total_score ?? 0,
     average_score: report.summary?.average_score ?? 0,

@@ -104,6 +104,59 @@ const parseCsv = (text) => {
   return rows.filter((r) => r.length > 1 || r[0] !== '');
 };
 
+// Every mutating action in Comment Bank confirms before it runs — keyed
+// by action, shown in one shared dialog.
+const CONFIRM_COPY = {
+  'quick-clear': {
+    title: 'Clear this comment?',
+    body: 'This cell will be emptied. You can always write a new one back in.',
+    confirm: 'Clear',
+    color: 'error',
+  },
+  'auto-fill': {
+    title: 'Auto-fill empty comments?',
+    body: 'Generates a comment for every empty cell using the template engine and your selected tone. Cells that already have text are left untouched.',
+    confirm: 'Auto-fill',
+    color: 'primary',
+  },
+  improve: {
+    title: 'Improve all comments?',
+    body: "Rewrites every non-empty comment — normalises punctuation and appends a tone-appropriate closing line if one isn't already there.",
+    confirm: 'Improve',
+    color: 'primary',
+  },
+  'copy-higher': {
+    title: 'Copy from higher range?',
+    body: "Overwrites each selected cell with the same column's comment from the next higher academic range. Skips any cell with no higher range to copy from.",
+    confirm: 'Copy',
+    color: 'primary',
+  },
+  'clear-selected': {
+    title: 'Clear selected cells?',
+    body: 'Removes the comment from every currently selected cell. This cannot be undone.',
+    confirm: 'Clear',
+    color: 'error',
+  },
+  'reset-default': {
+    title: 'Reset to default comments?',
+    body: "Overwrites EVERY cell with the system default (Balanced tone) template — including cells you've already filled in yourself. This cannot be undone.",
+    confirm: 'Reset all',
+    color: 'error',
+  },
+  import: {
+    title: 'Import this file?',
+    body: 'Overwrites any matching cells with the values from the imported file.',
+    confirm: 'Import',
+    color: 'primary',
+  },
+  'delete-general': {
+    title: 'Delete this comment?',
+    body: 'This general comment will be permanently removed.',
+    confirm: 'Delete',
+    color: 'error',
+  },
+};
+
 const panelTitleSx = { fontWeight: 800, fontSize: 15, color: '#0f172a' };
 const cardSx = {
   borderRadius: '14px',
@@ -145,6 +198,26 @@ const CommentBankTab = () => {
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [exampleOpen, setExampleOpen] = useState(false);
   const [addDialog, setAddDialog] = useState({ open: false, gradeId: '', field: '', category: '', comment: '' });
+
+  // Every mutating action confirms through this one dialog before it runs.
+  const [confirmState, setConfirmState] = useState({ open: false, key: null, run: null });
+  const askConfirm = (key, run) => setConfirmState({ open: true, key, run });
+  const closeConfirm = () => setConfirmState({ open: false, key: null, run: null });
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const handleConfirm = async () => {
+    const { run } = confirmState;
+    if (!run) {
+      closeConfirm();
+      return;
+    }
+    setConfirmLoading(true);
+    try {
+      await run();
+    } finally {
+      setConfirmLoading(false);
+      closeConfirm();
+    }
+  };
   const importInputRef = useRef(null);
 
   // General comments
@@ -259,9 +332,9 @@ const CommentBankTab = () => {
     cancelEdit();
   };
 
-  const handleQuickClear = async (e, gradeId, field) => {
+  const handleQuickClear = (e, gradeId, field) => {
     e.stopPropagation();
-    await persistCell(gradeId, field, null);
+    askConfirm('quick-clear', () => persistCell(gradeId, field, null));
   };
 
   /* ── Selection + preview ───────────────────────────────────── */
@@ -404,13 +477,15 @@ const CommentBankTab = () => {
       return;
     }
 
-    try {
-      const res = await commentBankApi.importCells({ cells });
-      await loadMatrix();
-      showSnackbar(res?.data?.message || 'Imported successfully');
-    } catch (err) {
-      showSnackbar(err?.response?.data?.message || 'Import failed', 'error');
-    }
+    askConfirm('import', async () => {
+      try {
+        const res = await commentBankApi.importCells({ cells });
+        await loadMatrix();
+        showSnackbar(res?.data?.message || 'Imported successfully');
+      } catch (err) {
+        showSnackbar(err?.response?.data?.message || 'Import failed', 'error');
+      }
+    });
   };
 
   /* ── Add Custom Comment dialog ─────────────────────────────── */
@@ -851,7 +926,7 @@ const CommentBankTab = () => {
                         <IconSparkles size={15} />
                       )
                     }
-                    onClick={() => handleAutoFill(false)}
+                    onClick={() => askConfirm('auto-fill', () => handleAutoFill(false))}
                     disabled={Boolean(aiLoading)}
                     sx={{
                       textTransform: 'none',
@@ -867,7 +942,7 @@ const CommentBankTab = () => {
                     variant="outlined"
                     size="small"
                     startIcon={aiLoading === 'improve' ? <Skeleton variant="circular" width={15} height={15} /> : <IconWand size={15} />}
-                    onClick={() => handleImprove(false)}
+                    onClick={() => askConfirm('improve', () => handleImprove(false))}
                     disabled={Boolean(aiLoading)}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
@@ -912,7 +987,7 @@ const CommentBankTab = () => {
                       color: '#9333ea',
                       title: 'Auto-fill empty cells',
                       subtitle: 'Generate comments for all remaining cells',
-                      onClick: () => handleAutoFill(false),
+                      onClick: () => askConfirm('auto-fill', () => handleAutoFill(false)),
                     },
                     {
                       key: 'copy',
@@ -920,7 +995,13 @@ const CommentBankTab = () => {
                       color: '#2563eb',
                       title: 'Copy from higher range',
                       subtitle: 'Use comments from higher performance range',
-                      onClick: handleCopyFromHigher,
+                      onClick: () => {
+                        if (selectedKeys.size === 0) {
+                          showSnackbar('Select at least one cell first', 'error');
+                          return;
+                        }
+                        askConfirm('copy-higher', handleCopyFromHigher);
+                      },
                     },
                     {
                       key: 'clear',
@@ -928,7 +1009,13 @@ const CommentBankTab = () => {
                       color: '#dc2626',
                       title: 'Clear selected cells',
                       subtitle: 'Remove comments from selected cells',
-                      onClick: handleClearSelected,
+                      onClick: () => {
+                        if (selectedKeys.size === 0) {
+                          showSnackbar('Select at least one cell first', 'error');
+                          return;
+                        }
+                        askConfirm('clear-selected', handleClearSelected);
+                      },
                     },
                     {
                       key: 'reset',
@@ -936,7 +1023,7 @@ const CommentBankTab = () => {
                       color: '#d97706',
                       title: 'Reset to default',
                       subtitle: 'Restore system default comments',
-                      onClick: handleResetDefault,
+                      onClick: () => askConfirm('reset-default', handleResetDefault),
                     },
                   ].map((action) => (
                     <Stack
@@ -1019,7 +1106,7 @@ const CommentBankTab = () => {
                     )}
                     <Typography sx={{ fontSize: 12.5, color: '#334155' }}>{c.comment}</Typography>
                   </Box>
-                  <IconButton size="small" onClick={() => handleDeleteGeneral(c.id)} sx={{ color: '#dc2626' }}>
+                  <IconButton size="small" onClick={() => askConfirm('delete-general', () => handleDeleteGeneral(c.id))} sx={{ color: '#dc2626' }}>
                     <IconTrash size={15} />
                   </IconButton>
                 </Stack>
@@ -1028,6 +1115,27 @@ const CommentBankTab = () => {
           )}
         </Box>
       )}
+
+      {/* ── Confirm dialog — every mutating action routes through this ── */}
+      <Dialog open={confirmState.open} onClose={closeConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle>{CONFIRM_COPY[confirmState.key]?.title}</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13, color: '#475569' }}>{CONFIRM_COPY[confirmState.key]?.body}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeConfirm} disabled={confirmLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={CONFIRM_COPY[confirmState.key]?.color || 'primary'}
+            onClick={handleConfirm}
+            disabled={confirmLoading}
+          >
+            {confirmLoading ? <Skeleton variant="text" width={50} height={18} sx={{ bgcolor: 'rgba(255,255,255,0.6)' }} /> : CONFIRM_COPY[confirmState.key]?.confirm}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── View Example dialog ────────────────────────────────── */}
       <Dialog open={exampleOpen} onClose={() => setExampleOpen(false)} maxWidth="xs" fullWidth>

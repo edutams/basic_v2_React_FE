@@ -27,7 +27,7 @@ const responsiveCSS = `
 
 const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale }) => {
   const hosSignature = report?.signatures?.head_of_school;
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -266,7 +266,7 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
           <div style={{ border: '2px solid #000', borderRadius: 8, marginTop: 10 }}>
             <Table size="small"><TableBody>
               <tr>
-                <td style={{ textAlign: 'center', borderBottom: '2px solid #000', padding: '4px 8px' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</td>
+                <td style={{ textAlign: 'center', borderBottom: '2px solid #000', padding: '4px 8px' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</td>
               </tr>
               <tr>
                 <td style={{ textAlign: 'center', padding: '4px 8px' }}><strong>Percentage</strong><br />{avg}%</td>

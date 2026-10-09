@@ -3,6 +3,7 @@ import { Box, Tabs, Tab, Paper, useTheme } from '@mui/material';
 import BroadsheetTab from './BroadsheetTab';
 import SummarySheetTab from './SummarySheetTab';
 import CommentBankTab from './CommentBankTab';
+import PhysicalDevelopmentTab from './PhysicalDevelopmentTab';
 import { usePermissions } from '@/context/TenantContext/permissions';
 
 // Combined shell for the Result Sheet module: Broadsheet, Summary Sheet
@@ -19,6 +20,7 @@ const ResultSheetTab = () => {
   const [activeTab, setActiveTab] = useState(0);
   const { can } = usePermissions();
   const canManageCommentBank = can('result.admin.manage_comment_bank');
+  const canManagePhysicalRecord = can('result.admin.manage_physical_record');
 
   // If the tab a user was on disappears (e.g. permissions changed), don't
   // strand them on a hidden panel.
@@ -26,7 +28,10 @@ const ResultSheetTab = () => {
     if (activeTab === 2 && !canManageCommentBank) {
       setActiveTab(0);
     }
-  }, [activeTab, canManageCommentBank]);
+    if (activeTab === 3 && !canManagePhysicalRecord) {
+      setActiveTab(0);
+    }
+  }, [activeTab, canManageCommentBank, canManagePhysicalRecord]);
 
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
@@ -43,6 +48,7 @@ const ResultSheetTab = () => {
           <Tab label="Broadsheet." />
           <Tab label="Summary Sheet." />
           {canManageCommentBank && <Tab label="Comment Bank." />}
+          {canManagePhysicalRecord && <Tab label="Physical Development." />}
         </Tabs>
       </Box>
 
@@ -50,6 +56,7 @@ const ResultSheetTab = () => {
         {activeTab === 0 && <BroadsheetTab />}
         {activeTab === 1 && <SummarySheetTab />}
         {activeTab === 2 && canManageCommentBank && <CommentBankTab />}
+        {activeTab === 3 && canManagePhysicalRecord && <PhysicalDevelopmentTab />}
       </Box>
     </Paper>
   );

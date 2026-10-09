@@ -2,7 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine, caTotal, pctLabel } from '../reportCardUtils';
+import { promotionLine, caTotal, pctLabel , physicalValue } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -71,17 +71,17 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
         <Table size="small"><TableBody>
           <tr>
             <td style={{ ...innerCellBorder, width: '15%' }}>Beginning Of Term Weight:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>32 kg</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{physicalValue(report, 'beginning_weight_kg', 'kg')}</td>
             <td style={{ ...innerCellBorder, width: '15%' }}>End Of Term Weight:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>34 kg</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{physicalValue(report, 'end_weight_kg', 'kg')}</td>
             <td style={{ ...innerCellBorder, width: '15%' }}>Cleanliness Rating:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>Good</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{report.physical_record?.cleanliness_rating || '-'}</td>
           </tr>
           <tr>
             <td style={innerCellBorder}>Beginning Of Term Height:</td>
-            <td style={{ ...innerCellBorder, fontWeight: 700 }}>140 cm</td>
+            <td style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'beginning_height_cm', 'cm')}</td>
             <td style={innerCellBorder}>End Of Term Height:</td>
-            <td style={{ ...innerCellBorder, fontWeight: 700 }}>142 cm</td>
+            <td style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'end_height_cm', 'cm')}</td>
             <td style={innerCellBorder}></td>
             <td style={innerCellBorder}></td>
           </tr>

@@ -40,12 +40,59 @@ const SummaryStat = ({ label, value }) => (
   </Box>
 );
 
-const TableSkeleton = () => (
-  <Stack spacing={1}>
-    {Array.from({ length: 6 }).map((_, i) => (
-      <Skeleton key={i} variant="rounded" height={32} />
-    ))}
-  </Stack>
+// Shaped like the real content below: the summary strip's 5 stats, then a
+// table with the same columns as the actual subject breakdown.
+const ReportSkeleton = () => (
+  <>
+    <Stack
+      direction="row"
+      flexWrap="wrap"
+      sx={{
+        bgcolor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
+        borderRadius: '8px',
+        py: 1.25,
+        px: 1,
+        mb: 2,
+      }}
+    >
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Box key={i} sx={{ textAlign: 'center', flex: 1, minWidth: 90 }}>
+          <Skeleton variant="text" width={40} height={24} sx={{ mx: 'auto' }} />
+          <Skeleton variant="text" width={70} height={16} sx={{ mx: 'auto' }} />
+        </Box>
+      ))}
+    </Stack>
+
+    <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Subject</TableCell>
+            <TableCell align="right">CA</TableCell>
+            <TableCell align="right">Exam</TableCell>
+            <TableCell align="right">Total</TableCell>
+            <TableCell align="center">Grade</TableCell>
+            <TableCell align="right">Position</TableCell>
+            <TableCell>Remark</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <TableRow key={i}>
+              <TableCell><Skeleton variant="text" width="80%" /></TableCell>
+              <TableCell align="right"><Skeleton variant="text" sx={{ ml: 'auto' }} width={24} /></TableCell>
+              <TableCell align="right"><Skeleton variant="text" sx={{ ml: 'auto' }} width={24} /></TableCell>
+              <TableCell align="right"><Skeleton variant="text" sx={{ ml: 'auto' }} width={28} /></TableCell>
+              <TableCell align="center"><Skeleton variant="rounded" width={28} height={20} sx={{ mx: 'auto' }} /></TableCell>
+              <TableCell align="right"><Skeleton variant="text" sx={{ ml: 'auto' }} width={24} /></TableCell>
+              <TableCell><Skeleton variant="text" width="60%" /></TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </>
 );
 
 /**
@@ -107,7 +154,7 @@ const AcademicPerformanceModal = ({ open, onClose, sessionTermId }) => {
 
       <DialogContent dividers>
         {loading ? (
-          <TableSkeleton />
+          <ReportSkeleton />
         ) : error ? (
           <Alert severity="warning">{error}</Alert>
         ) : subjects.length === 0 ? (

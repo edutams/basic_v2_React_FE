@@ -7,6 +7,14 @@ export const displayScore = (value) => {
   return value;
 };
 
+// A physical-development field (beginning/end weight or height), formatted
+// with its unit — '-' until a staff member has actually entered a value for
+// this student/term via the Physical Development tab.
+export const physicalValue = (report, field, unit) => {
+  const value = report.physical_record?.[field];
+  return value !== null && value !== undefined && value !== '' ? `${value} ${unit}` : '-';
+};
+
 // Stored `ca` JSON may be an array (manual entry) or a keyed object
 // (combined Excel upload) — normalise both to an entity array per CA type.
 export const normalizeCa = (ca) => {
@@ -188,6 +196,7 @@ export const buildReportProp = (report) => {
     failed_count: report.summary?.failed_count ?? 0,
     affective: report.affective || {},
     psychomotor: report.psychomotor || {},
+    physical_record: report.physical_record || null,
     // Saved on the registration by the broadsheet
     // (student_registrations.class_teachers_comment / hos_comment).
     teacherComment: report.class_teachers_comment || report.teacher_comment || '',

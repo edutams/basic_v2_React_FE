@@ -64,6 +64,10 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
   const psychomotorAvg = Object.values(report.psychomotor).length
     ? Math.round(Object.values(report.psychomotor).reduce((a, b) => a + b, 0) / Object.values(report.psychomotor).length)
     : 0;
+  const gradeAvg = Math.round(avg / 20);
+  // Composite of the other three ratings — distinct from BEHAVIOUR
+  // PERFORMANCE below, which used to duplicate this exact affective value.
+  const generalAvg = Math.round((affectiveAvg + gradeAvg + psychomotorAvg) / 3);
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -212,11 +216,11 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="PERFORMANCES">
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GENERAL PERFORMANCE</Typography>
-              <StarRating value={affectiveAvg} />
+              <StarRating value={generalAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GRADE PERFORMANCE</Typography>
-              <StarRating value={Math.round(avg / 20)} />
+              <StarRating value={gradeAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>SKILL PERFORMANCE</Typography>

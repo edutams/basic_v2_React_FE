@@ -162,9 +162,13 @@ export const buildReportProp = (report) => {
     subject.exam = s.exam_score;
     subject.exam_max = Number(report.mark_config?.exam_max_score || 100);
     subject.total = s.overall_total;
-    subject.highest = s.highest;
-    subject.lowest = s.lowest;
-    subject.class_average = s.class_average;
+    // Class-wide context, shown only once this student actually has a score
+    // for the subject — otherwise a blank row (no CA/exam/total/grade) would
+    // still show a real-looking class high/low/average, which reads as if
+    // the system computed something for a student it didn't.
+    subject.highest = s.overall_total !== null ? s.highest : null;
+    subject.lowest = s.overall_total !== null ? s.lowest : null;
+    subject.class_average = s.overall_total !== null ? s.class_average : null;
     subject.position = s.position ? `${s.position}${ordinalSuffix(s.position)}` : '-';
     subject.grade = s.grade || '-';
     subject.remark = s.remark || '-';

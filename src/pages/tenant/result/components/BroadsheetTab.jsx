@@ -668,7 +668,7 @@ const BroadsheetTab = () => {
     // remarks, positions) — a stale value from tab 0 must not silently
     // empty out the Term Cumulative summary after switching tabs.
     if (activeTab === 0 && statusFilter === 'incomplete') {
-      rows = rows.filter((s) => s.subjects_scored < s.total_subjects);
+      rows = rows.filter((s) => s.subjects_scored < s.registered_subjects);
     } else if (activeTab === 0 && statusFilter === 'remarks_pending') {
       rows = rows.filter((s) => !s.class_teachers_comment);
     } else if (activeTab === 0 && statusFilter === 'position_missing') {
@@ -926,11 +926,23 @@ const BroadsheetTab = () => {
       0,
     );
     const examScore = Number(subj.exam_score) || 0;
+    // Send the per-test breakdown, not just its sum — otherwise the score
+    // sheet and report card's individual CA columns show blank even though
+    // ca_total/exam are correct (they read the `ca` JSON, not ca_total).
+    const ca = subj.ca_breakdown.map((g) => ({
+      display_name: g.display_name,
+      entities: g.entities.map((e) => ({
+        display_name: e.display_name,
+        max_score: e.max_score,
+        score: Number(e.score) || 0,
+      })),
+    }));
 
     try {
       await scoreManagerApi.editResult({
         user_id: student.user_id,
         course_registration_id: subj.course_registration_id,
+        ca,
         ca_total: caTotal,
         exam_score: examScore,
         session_term_id: loadedQuery?.payload?.session_term_id,
@@ -2921,8 +2933,9 @@ const BroadsheetTab = () => {
                                             <IconMessage size={16} style={{ marginRight: 8 }} /> HoS
                                             Comment
                                           </MenuItem>
-                                          {sheet?.result_publish?.head_of_school_publish !==
-                                            'yes' && (
+                                          {(sheet?.result_publish?.head_of_school_publish !==
+                                            'yes' ||
+                                            can('result.admin.spa_approve_broadsheet')) && (
                                             <MenuItem
                                               dense
                                               onClick={() => {
@@ -3030,10 +3043,18 @@ const BroadsheetTab = () => {
         <DialogContent dividers>
           {(() => {
             const students = sheet?.students || [];
-            const missingScores = students.filter((s) => s.subjects_scored < s.total_subjects);
+            const missingScores = students.filter((s) => s.subjects_scored < s.registered_subjects);
             const remarksPending = students.filter((s) => !s.class_teachers_comment);
             const positionsMissing = students.filter((s) => s.persisted_class_position === null);
-            const Section = ({ title, list, hint }) => (
+            // Registered-but-unscored subject names for a student — reads
+            // course_registration_id (only set for subjects this student is
+            // actually registered for, see KI-037) so an elective the
+            // student never picked never shows up here as "missing".
+            const missingSubjectNames = (s) =>
+              (s.results || [])
+                .filter((r) => r.course_registration_id && r.overall_total === null)
+                .map((r) => r.subject_name);
+            const Section = ({ title, list, hint, subtitleFor }) => (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
                   {title} ({list.length})
@@ -3051,16 +3072,33 @@ const BroadsheetTab = () => {
                     >
                       {hint}
                     </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                      {list.map((s) => (
-                        <Chip
-                          key={s.id}
-                          size="small"
-                          label={`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
-                          variant="outlined"
-                        />
-                      ))}
-                    </Stack>
+                    {subtitleFor ? (
+                      <Stack spacing={0.75}>
+                        {list.map((s) => (
+                          <Box key={s.id}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
+                            </Typography>
+                            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.25 }}>
+                              {subtitleFor(s).map((name) => (
+                                <Chip key={name} size="small" label={name} variant="outlined" color="warning" />
+                              ))}
+                            </Stack>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                        {list.map((s) => (
+                          <Chip
+                            key={s.id}
+                            size="small"
+                            label={`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
+                    )}
                   </>
                 )}
               </Box>
@@ -3070,7 +3108,8 @@ const BroadsheetTab = () => {
                 <Section
                   title="Missing scores"
                   list={missingScores}
-                  hint="Hasn't been scored in every subject yet."
+                  hint="Hasn't been scored in every subject yet — subjects shown below."
+                  subtitleFor={missingSubjectNames}
                 />
                 <Section
                   title="Remarks pending"

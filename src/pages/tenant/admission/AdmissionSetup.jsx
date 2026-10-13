@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -29,19 +29,29 @@ import {
   Tooltip,
   Tabs,
   Tab,
-  Card,
-  CardContent,
-  OutlinedInput,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
   Divider,
+  Skeleton,
+  InputAdornment,
+  TablePagination,
+  Checkbox,
+  alpha,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
   ContentCopy as ContentCopyIcon,
   Save as SaveIcon,
+  Search as SearchIcon,
+  CalendarMonth as SessionStepIcon,
+  Layers as BatchStepIcon,
+  Assignment as ExamStepIcon,
+  Payment as PaymentStepIcon,
+  MailOutline as LetterStepIcon,
+  CheckCircle as StepCompleteIcon,
+  Schedule as StepInProgressIcon,
+  ReportProblem as StepNotConfiguredIcon,
+  ArrowForwardIos as StepArrowIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import {
   IconEye,
@@ -50,11 +60,6 @@ import {
   IconCalendar,
   IconHash,
   IconId,
-  IconCopy,
-  IconCheck,
-  IconSparkles,
-  IconWand,
-  IconPlus,
   IconInfoCircle,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
@@ -73,6 +78,7 @@ import {
   fetchAdmissionCodeFormat,
   updateAdmissionCodeFormat,
 } from '@/api/tenant/admission/admissionApi';
+import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
 
@@ -189,6 +195,114 @@ const ViewEditPair = ({ onView, onEdit }) => (
   </Stack>
 );
 
+const STEP_STATUS_META = {
+  completed: { color: '#16A34A', bg: '#DCFCE7', label: 'Completed' },
+  in_progress: { color: '#D97706', bg: '#FEF3C7', label: 'In Progress' },
+  not_configured: { color: '#DC2626', bg: '#FEE2E2', label: 'Not Configured' },
+};
+
+const StepCard = ({ step, index }) => {
+  const meta = STEP_STATUS_META[step.status];
+  const Icon = step.icon;
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        flex: 1,
+        minWidth: 150,
+        p: 1.25,
+        borderRadius: '12px',
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 0.5,
+      }}
+    >
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              bgcolor: meta.bg,
+              color: meta.color,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon sx={{ fontSize: 19 }} />
+          </Box>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -4,
+              left: -4,
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              bgcolor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'text.secondary',
+            }}
+          >
+            {index + 1}
+          </Box>
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={700} noWrap>
+            {step.label}
+          </Typography>
+          <Typography variant="h6" fontWeight={800} lineHeight={1.1}>
+            {step.count}
+          </Typography>
+        </Box>
+      </Stack>
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+        {step.caption}
+      </Typography>
+      <Chip
+        label={meta.label}
+        size="small"
+        sx={{
+          bgcolor: meta.bg,
+          color: meta.color,
+          fontWeight: 700,
+          fontSize: 10,
+          height: 20,
+          alignSelf: 'flex-start',
+        }}
+      />
+    </Paper>
+  );
+};
+
+const StepperSkeleton = () => (
+  <Stack direction="row" spacing={1.5} sx={{ mb: 2.5, overflowX: 'auto' }}>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <Paper key={i} elevation={0} sx={{ flex: 1, minWidth: 150, p: 1.25, borderRadius: '12px', border: '1px solid', borderColor: 'divider' }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+          <Skeleton variant="circular" width={38} height={38} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="80%" />
+            <Skeleton variant="text" width="40%" height={28} />
+          </Box>
+        </Stack>
+        <Skeleton variant="text" width="90%" />
+        <Skeleton variant="rounded" width={70} height={20} sx={{ mt: 0.5 }} />
+      </Paper>
+    ))}
+  </Stack>
+);
+
 const TabPanel = ({ children, value, index, ...other }) => (
   <div
     role="tabpanel"
@@ -221,11 +335,20 @@ const sanitizeCodeFormat = (value) => {
     .join('/');
 };
 
-const FORMAT_PRESETS = [
-  { label: 'Shortname / Year / Seq', value: '[:shortname]/[:year]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
-  { label: 'Year / Shortname / Seq', value: '[:year]/[:shortname]/[:stdNum_3]', stdNum: '[:stdNum_3]' },
-  { label: 'Year / Seq (4 digits)', value: '[:year]/[:stdNum_4]', stdNum: '[:stdNum_4]' },
-  { label: 'Shortname / Seq (4 digits)', value: '[:shortname]/[:stdNum_4]', stdNum: '[:stdNum_4]' },
+const CODE_FORMAT_STEPS = [
+  { key: 'select', title: 'Select Components', subtitle: 'Choose what to include', color: '#9333EA' },
+  { key: 'configure', title: 'Configure Settings', subtitle: 'Set format options', color: '#2563EB' },
+  { key: 'preview', title: 'Preview & Save', subtitle: 'Confirm and save', color: '#16A34A' },
+];
+
+const CODE_FORMAT_COMPONENTS = [
+  { key: 'shortname', label: 'School Short Name', example: 'e.g. IMC', icon: IconSchool, color: '#9333EA', real: true },
+  { key: 'year', label: 'Admission Year', example: 'e.g. 2026', icon: IconCalendar, color: '#2563EB', real: true },
+  { key: 'stdnum', label: 'Sequential Number', example: 'e.g. 01, 02, 03', icon: IconHash, color: '#16A34A', real: true },
+  { key: 'programme', label: 'Programme Code', example: 'e.g. SCI, COM', icon: IconId, color: '#9CA3AF', real: false },
+  { key: 'department', label: 'Department Code', example: 'e.g. BIO, MAT, ENG', icon: IconId, color: '#9CA3AF', real: false },
+  { key: 'campus', label: 'Campus Code', example: 'e.g. MAIN, LAG', icon: IconId, color: '#9CA3AF', real: false },
+  { key: 'customtext', label: 'Custom Text', example: 'e.g. ADM, STU', icon: IconId, color: '#9CA3AF', real: false },
 ];
 
 const AdmissionSetup = () => {
@@ -243,12 +366,21 @@ const AdmissionSetup = () => {
 
   const [batches, setBatches] = useState([]);
 
+  // ── New-design state: search/filter, pagination, selected-batch panel ──
+  const [batchSearch, setBatchSearch] = useState('');
+  const [batchProgrammeFilter, setBatchProgrammeFilter] = useState('all');
+  const [batchStatusFilter, setBatchStatusFilter] = useState('all');
+  const [batchPage, setBatchPage] = useState(0);
+  const BATCHES_PER_PAGE = 10;
+  const [selectedBatchId, setSelectedBatchId] = useState(null);
+  // Real term date range (first week's start → last week's end), reused
+  // from the same /attendance/weeks endpoint the Attendance pages use —
+  // session_terms itself has no start_date/end_date columns.
+  const [termDateRange, setTermDateRange] = useState({ start: null, end: null });
+
   const [loading, setLoading] = useState(false);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [menuTerm, setMenuTerm] = useState(null);
-
   const [batchMenuAnchor, setBatchMenuAnchor] = useState(null);
   const [menuBatch, setMenuBatch] = useState(null);
 
@@ -278,10 +410,38 @@ const AdmissionSetup = () => {
   useEffect(() => {
     if (selectedSessionTermId) {
       loadBatches(selectedSessionTermId);
+      loadTermDateRange();
     } else {
       setBatches([]);
+      setTermDateRange({ start: null, end: null });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSessionTermId]);
+
+  const loadTermDateRange = async () => {
+    const termId = selectedSessionTermObj?.term_id ?? selectedSessionTermObj?.term?.id;
+    if (!selectedSessionId || !termId) return;
+    try {
+      const res = await attendanceApi.getWeeksBySessionTerm({
+        session_id: selectedSessionId,
+        term_id: termId,
+      });
+      const weeks = res.data?.data || [];
+      if (weeks.length === 0) {
+        setTermDateRange({ start: null, end: null });
+        return;
+      }
+      const sorted = [...weeks].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+      const first = sorted[0].start_date;
+      const lastStart = new Date(sorted[sorted.length - 1].start_date + 'T00:00:00');
+      lastStart.setDate(lastStart.getDate() + 6);
+      const last = lastStart.toISOString().slice(0, 10);
+      setTermDateRange({ start: first, end: last });
+    } catch (err) {
+      console.error('Failed to load term date range', err);
+      setTermDateRange({ start: null, end: null });
+    }
+  };
 
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
@@ -341,7 +501,13 @@ const AdmissionSetup = () => {
     setBatchesLoading(true);
     try {
       const res = await fetchAdmissionBatches(termId);
-      setBatches(extractList(res));
+      const list = extractList(res);
+      setBatches(list);
+      setSelectedBatchId(list.length > 0 ? list[0].id : null);
+      setBatchPage(0);
+      setBatchSearch('');
+      setBatchProgrammeFilter('all');
+      setBatchStatusFilter('all');
     } catch (err) {
       console.error('Failed to load batches', err);
       showSnackbar('Failed to load admission batches', 'error');
@@ -392,32 +558,6 @@ const AdmissionSetup = () => {
     setSelectedSessionTermLabel(
       `${session_term.session.session_name} - ${session_term.term?.term_name}`,
     );
-  };
-
-  const handleMenuOpen = (e, session_term) => {
-    e.stopPropagation();
-    setAnchorEl(e.currentTarget);
-    setMenuTerm(session_term);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setMenuTerm(null);
-  };
-
-  const handleToggleTermStatus = () => {
-    if (!menuTerm) return;
-    setSessionTerms((prev) =>
-      prev.map((term) =>
-        term.session_term_id === menuTerm.session_term_id
-          ? { ...term, status: term.status === 'active' ? 'inactive' : 'active' }
-          : term,
-      ),
-    );
-    showSnackbar(
-      `Term ${menuTerm.display_name} ${menuTerm.status === 'active' ? 'deactivated' : 'activated'} successfully`,
-      'success',
-    );
-    handleMenuClose();
   };
 
   const handleToggleBatchStatus = async () => {
@@ -498,13 +638,6 @@ const AdmissionSetup = () => {
 
   // ── Code Format handlers (school-level, no batch) ──────────────────────────
 
-  const handleApplyPreset = (preset) => {
-    setCodeFormatInput(preset.value);
-    setSelectedStdNum(preset.stdNum);
-    setCopiedPlaceholder(`Preset applied`);
-    setTimeout(() => setCopiedPlaceholder(null), 1500);
-  };
-
   // Helper: append a placeholder to codeFormatInput with auto-slash
   const appendToFormat = (placeholder) => {
     setCodeFormatInput((prev) => {
@@ -577,80 +710,6 @@ const AdmissionSetup = () => {
     setTimeout(() => setCopiedPlaceholder(null), 1500);
   };
 
-  // Handle manual edits to the code format input field
-  // Rules:
-  //   1. No typing — any addition or replacement is reverted
-  //   2. Delete inside a placeholder → remove the entire placeholder
-  //   3. Delete outside a placeholder → clear everything before the deletion point
-  const handleCodeFormatInputChange = (e) => {
-    const oldValue = codeFormatInput;
-    const newValue = e.target.value;
-
-    const allPlaceholders = ['[:shortname]', '[:year]', ...STD_NUM_OPTIONS.map((o) => o.key)];
-
-    // ── Rule 1: No typing allowed — reject additions & replacements ──────────
-    if (newValue.length >= oldValue.length) {
-      setCodeFormatInput(oldValue);
-      return;
-    }
-
-    // ── Deletion: newValue is shorter ────────────────────────────────────────
-
-    // Find the exact position where a character was removed
-    let delPos = 0;
-    while (delPos < newValue.length && oldValue[delPos] === newValue[delPos]) {
-      delPos++;
-    }
-
-    // Check if the deletion point falls within a known placeholder in the OLD value
-    let targetPlaceholder = null;
-    let phStart = -1;
-
-    for (const ph of allPlaceholders) {
-      let idx = oldValue.indexOf(ph);
-      while (idx !== -1) {
-        const end = idx + ph.length - 1;
-        if (delPos >= idx && delPos <= end) {
-          targetPlaceholder = ph;
-          phStart = idx;
-          break;
-        }
-        idx = oldValue.indexOf(ph, idx + 1);
-      }
-      if (targetPlaceholder) break;
-    }
-
-    if (targetPlaceholder) {
-      // ── Rule 2: Delete inside a placeholder → remove the entire placeholder ──
-      // Remove everything from the placeholder's start in old up to the next /
-      // or end of string in the new value
-      const endIdx = newValue.indexOf('/', phStart);
-      const removeEnd = endIdx !== -1 ? endIdx : newValue.length;
-
-      let result = newValue.substring(0, phStart) + newValue.substring(removeEnd);
-
-      // Clean up double slashes and trim
-      result = result.replace(/\/+/g, '/').replace(/^\//, '').replace(/\/$/, '').trim();
-
-      setCodeFormatInput(result || '');
-
-      // Update component states
-      if (targetPlaceholder === '[:shortname]') setSchoolShortName('');
-      if (STD_NUM_OPTIONS.some((o) => o.key === targetPlaceholder)) setSelectedStdNum('');
-
-      return;
-    }
-
-    // ── Rule 3: Delete outside any placeholder → clear everything before ────
-    const preserved = newValue.substring(delPos).replace(/^\//, '').trim();
-
-    setCodeFormatInput(preserved || '');
-
-    // Sync component states based on what survived
-    if (!preserved.includes('[:shortname]')) setSchoolShortName('');
-    if (!STD_NUM_OPTIONS.some((o) => preserved.includes(o.key))) setSelectedStdNum('');
-  };
-
   const handleSaveCodeFormat = async () => {
     const fullFormat = getFullCodeFormat().trim();
     if (!fullFormat) {
@@ -685,9 +744,232 @@ const AdmissionSetup = () => {
     // .replace(/\[:stdNum_6\]/g, '000001');
   };
 
+  // ── Code Format wizard: which real components are currently included ──────
+  const componentActive = {
+    shortname: codeFormatInput.includes('[:shortname]'),
+    year: codeFormatInput.includes('[:year]'),
+    stdnum: Boolean(selectedStdNum) && codeFormatInput.includes(selectedStdNum),
+  };
+
+  const toggleComponent = (key) => {
+    if (key === 'year') {
+      if (componentActive.year) {
+        setCodeFormatInput((prev) =>
+          prev
+            .split('/[:year]')
+            .join('')
+            .split('[:year]/')
+            .join('')
+            .split('[:year]')
+            .join('')
+            .replace(/\/+$/, '')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/'),
+        );
+      } else {
+        appendToFormat('[:year]');
+      }
+      return;
+    }
+
+    if (key === 'stdnum') {
+      if (componentActive.stdnum) {
+        setCodeFormatInput((prev) => {
+          let cleaned = prev;
+          for (const opt of STD_NUM_OPTIONS) {
+            cleaned = cleaned.split(`/${opt.key}`).join('').split(`${opt.key}/`).join('').split(opt.key).join('');
+          }
+          return cleaned.replace(/\/+$/, '').replace(/^\/+/, '').replace(/\/+/g, '/');
+        });
+        setSelectedStdNum('');
+      } else {
+        handleStdNumChange({ target: { value: selectedStdNum || STD_NUM_OPTIONS[0].key } });
+      }
+      return;
+    }
+
+    if (key === 'shortname' && componentActive.shortname) {
+      handleShortNameChange({ target: { value: '' } });
+    }
+    // else (shortname, currently off): no-op — the name is typed in the
+    // Configure Settings column, there's nothing to toggle on here
+  };
+
+  // ── Code Format wizard: colored breakdown of the active format string ─────
+  const codeFormatBreakdown = useMemo(() => {
+    const tokens = getFullCodeFormat().split('/').filter(Boolean);
+    const shortNameValue = schoolShortName.trim() || 'STPAULS';
+
+    return tokens.map((token) => {
+      if (token === '[:shortname]') {
+        return { label: 'School Short Name', value: shortNameValue, color: '#9333EA' };
+      }
+      if (token === '[:year]') {
+        return { label: 'Admission Year', value: '2026', color: '#2563EB' };
+      }
+      const stdOpt = STD_NUM_OPTIONS.find((o) => o.key === token);
+      if (stdOpt) {
+        return { label: 'Sequential Number', value: stdOpt.example, color: '#16A34A' };
+      }
+      return { label: token, value: token, color: '#6B7280' };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeFormatInput, schoolShortName]);
+
+  // ── Code Format wizard: a few more incrementing sample numbers ─────────────
+  const moreExamples = useMemo(() => {
+    const stdOpt = STD_NUM_OPTIONS.find((o) => o.key === selectedStdNum);
+    if (!stdOpt || !getFullCodeFormat()) return [];
+    const digits = stdOpt.example.length;
+    const shortNameValue = schoolShortName.trim() || 'STPAULS';
+
+    return [1, 2, 3].map((n) =>
+      getFullCodeFormat()
+        .replace(/\[:shortname\]/g, shortNameValue)
+        .replace(/\[:year\]/g, '2026')
+        .split(stdOpt.key)
+        .join(String(n).padStart(digits, '0')),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeFormatInput, schoolShortName, selectedStdNum]);
+
   // Dynamic session name for header chip
   const currentSessionObj = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
   const currentSessionName = currentSessionObj?.session_name || currentSessionObj?.name || '';
+
+  // The currently-selected session term record (for the "Active Session"
+  // info card's start/end/application-period/status fields).
+  const selectedSessionTermObj = sessionTerms.find((st) => st.id === selectedSessionTermId) || null;
+
+  // ── 5-step completion overview — real counts/status derived from the
+  // batches already loaded for this session term, not a static mockup. ──
+  const stepData = useMemo(() => {
+    const total = batches.length;
+    const examBatches = batches.filter((b) => b.has_entrance_exam);
+    const paymentBatches = batches.filter((b) => b.require_payment);
+    const letterBatches = batches.filter((b) => b.enable_letter);
+    const examConfigured = examBatches.filter((b) => b.exam_date && b.pass_mark).length;
+    const paymentConfigured = paymentBatches.filter((b) => b.application_fee).length;
+    const letterConfigured = letterBatches.filter((b) => b.admission_letter_template).length;
+
+    const statusFor = (required, configured) => {
+      if (required === 0) return 'not_configured';
+      return configured === required ? 'completed' : 'in_progress';
+    };
+
+    return [
+      {
+        key: 'session',
+        icon: SessionStepIcon,
+        label: 'Session Setup',
+        count: total,
+        caption: 'Using this session & term',
+        status: selectedSessionTermId ? 'completed' : 'not_configured',
+      },
+      {
+        key: 'batch',
+        icon: BatchStepIcon,
+        label: 'Batch Configuration',
+        count: total,
+        caption: 'Created and active',
+        status: total > 0 ? 'completed' : 'not_configured',
+      },
+      {
+        key: 'exam',
+        icon: ExamStepIcon,
+        label: 'Entrance Exam',
+        count: examBatches.length,
+        caption: 'Require entrance exam',
+        status: statusFor(examBatches.length, examConfigured),
+      },
+      {
+        key: 'payment',
+        icon: PaymentStepIcon,
+        label: 'Payment Settings',
+        count: paymentBatches.length,
+        caption: 'Require application payment',
+        status: statusFor(paymentBatches.length, paymentConfigured),
+      },
+      {
+        key: 'letter',
+        icon: LetterStepIcon,
+        label: 'Admission Letter',
+        count: letterBatches.length,
+        caption: 'Require offer letter template',
+        status: statusFor(letterBatches.length, letterConfigured),
+      },
+    ];
+  }, [batches, selectedSessionTermId]);
+
+  // ── Programme filter options + client-side search/filter over the
+  // already-loaded batches (the list endpoint has no server-side
+  // search/pagination today — see the "known limitation" note below). ──
+  const programmeOptions = useMemo(() => {
+    const seen = new Map();
+    batches.forEach((b) => {
+      const p = b.programme;
+      if (p?.id && !seen.has(p.id)) seen.set(p.id, p.programme_name || p.name);
+    });
+    return [...seen.entries()];
+  }, [batches]);
+
+  const filteredBatches = useMemo(() => {
+    const q = batchSearch.trim().toLowerCase();
+    return batches.filter((b) => {
+      if (q && !(b.batch_name || '').toLowerCase().includes(q)) return false;
+      if (batchProgrammeFilter !== 'all' && b.programme?.id !== batchProgrammeFilter) return false;
+      if (batchStatusFilter !== 'all' && b.status !== batchStatusFilter) return false;
+      return true;
+    });
+  }, [batches, batchSearch, batchProgrammeFilter, batchStatusFilter]);
+
+  const pagedBatches = filteredBatches.slice(
+    batchPage * BATCHES_PER_PAGE,
+    batchPage * BATCHES_PER_PAGE + BATCHES_PER_PAGE,
+  );
+  const batchPageCount = Math.max(1, Math.ceil(filteredBatches.length / BATCHES_PER_PAGE));
+
+  const selectedBatch = batches.find((b) => b.id === selectedBatchId) || null;
+
+  // ── Selected Batch Configuration checklist — real completion state per
+  // category, not a static list. "Application Portal" has no backing field
+  // yet (there's no such concept in the data model today), so it's shown as
+  // a pending/informational step rather than faked as complete.
+  const batchChecklist = selectedBatch
+    ? [
+        {
+          key: 'details',
+          label: 'Batch Details',
+          caption: 'Programme, level, capacity and dates',
+          done: true,
+        },
+        {
+          key: 'exam',
+          label: 'Entrance Exam',
+          caption: 'Set subjects, date, rules and venues',
+          done: !selectedBatch.has_entrance_exam || Boolean(selectedBatch.exam_date && selectedBatch.pass_mark),
+        },
+        {
+          key: 'payment',
+          label: 'Payment Settings',
+          caption: 'Set application fee and payment methods',
+          done: !selectedBatch.require_payment || Boolean(selectedBatch.application_fee),
+        },
+        {
+          key: 'letter',
+          label: 'Admission Letter',
+          caption: 'Configure offer letter template',
+          done: !selectedBatch.enable_letter || Boolean(selectedBatch.admission_letter_template),
+        },
+        {
+          key: 'portal',
+          label: 'Application Portal',
+          caption: 'Review and activate for this batch',
+          done: null,
+          pending: true,
+        },
+      ]
+    : [];
 
   return (
     <PageContainer title="Admission Setup" description="Manage admission batches">
@@ -720,26 +1002,39 @@ const AdmissionSetup = () => {
           TAB 1 — ADMISSION SETUP (existing content)
           ══════════════════════════════════════════════════════════════════════════ */}
       <TabPanel value={tabValue} index={0}>
-        <Grid container spacing={3} alignItems="flex-start">
-          <Grid size={{ xs: 12, md: 4 }}>
+        {/* ── 5-step completion overview, real counts from the loaded batches ── */}
+        {loading ? (
+          <StepperSkeleton />
+        ) : (
+          <Stack direction="row" spacing={2} sx={{ mb: 2, overflowX: 'auto' }}>
+            {stepData.map((step, i) => (
+              <StepCard key={step.key} step={step} index={i} />
+            ))}
+          </Stack>
+        )}
+
+        <Grid container spacing={2} alignItems="flex-start">
+          <Grid size={{ xs: 12, md: 3 }}>
             <ParentCard
-              title="Manage Admissions"
+              title="Admission Session"
               sx={{
                 '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
                 '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
               }}
             >
               {loading ? (
-                <Box display="flex" justifyContent="center" py={4}>
-                  <CircularProgress size={28} />
+                <Box>
+                  <Skeleton variant="rounded" height={40} sx={{ mb: 1.5 }} />
+                  <Skeleton variant="rounded" height={40} sx={{ mb: 1.5 }} />
+                  <Skeleton variant="rounded" height={100} />
                 </Box>
               ) : (
                 <>
-                  <Box sx={{ mb: 2 }}>
+                  <Box sx={{ mb: 1.5 }}>
                     <TextField
                       select
                       fullWidth
-                      label="Select Session Term"
+                      label="Academic Session"
                       value={selectedSessionId}
                       onChange={handleSessionChange}
                       size="small"
@@ -752,65 +1047,72 @@ const AdmissionSetup = () => {
                     </TextField>
                   </Box>
 
-                  {sessionTerms.length === 0 ? (
+                  <Box sx={{ mb: 1.5 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      label="Term"
+                      value={selectedSessionTermId || ''}
+                      onChange={(e) => {
+                        const st = sessionTerms.find((t) => t.id === Number(e.target.value));
+                        if (st) handleTermSelect(st);
+                      }}
+                      size="small"
+                      disabled={sessionTerms.length === 0}
+                    >
+                      {sessionTerms.map((st) => (
+                        <MenuItem key={st.id} value={st.id}>
+                          {st.term?.term_name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+
+                  {!selectedSessionTermObj ? (
                     <Alert severity="info">No session terms found.</Alert>
                   ) : (
-                    <Box>
-                      <TableContainer>
-                        <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                              <TableCell sx={{ fontWeight: 700 }}>Session</TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                Status
-                              </TableCell>
-                              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                                Actions
-                              </TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {sessionTerms.map((session_term, i) => {
-                              const isSelected = selectedSessionTermId === session_term.id;
-                              return (
-                                <TableRow
-                                  key={session_term.id}
-                                  hover
-                                  selected={isSelected}
-                                  onClick={() => handleTermSelect(session_term)}
-                                  sx={{ cursor: 'pointer' }}
-                                >
-                                  <TableCell>{i + 1}</TableCell>
-                                  <TableCell sx={{ fontWeight: isSelected ? 700 : 400 }}>
-                                    {session_term?.session?.session_name}{' '}
-                                    {session_term?.term?.term_name}
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <StatusChip status={session_term?.status} />
-                                  </TableCell>
-                                  <TableCell align="center">
-                                    <IconButton
-                                      size="small"
-                                      onClick={(e) => handleMenuOpen(e, term)}
-                                    >
-                                      <MoreVertIcon fontSize="small" />
-                                    </IconButton>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Box>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 1.25,
+                        borderRadius: 2,
+                        bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(16,185,129,0.08)' : '#ECFDF5'),
+                        border: '1px solid',
+                        borderColor: 'success.light',
+                      }}
+                    >
+                      <Chip label="Active Session" size="small" color="success" sx={{ fontWeight: 700, fontSize: 10, mb: 1 }} />
+                      <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.75 }}>
+                        {selectedSessionTermObj.session?.session_name} – {selectedSessionTermObj.term?.term_name}
+                      </Typography>
+                      <Stack spacing={0.4}>
+                        <Typography variant="caption" color="text.secondary">
+                          Start Date: <strong>{termDateRange.start || '—'}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          End Date: <strong>{termDateRange.end || '—'}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Application Period:{' '}
+                          <strong>
+                            {termDateRange.start || '—'} - {selectedBatch?.closing_date || '—'}
+                          </strong>
+                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <Typography variant="caption" color="text.secondary">
+                            Status:
+                          </Typography>
+                          <StatusChip status={selectedSessionTermObj.status} />
+                        </Stack>
+                      </Stack>
+                    </Paper>
                   )}
                 </>
               )}
             </ParentCard>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ParentCard
               title={
                 <Box
@@ -856,11 +1158,80 @@ const AdmissionSetup = () => {
             >
               {!selectedSessionTermId ? (
                 <Alert severity="info">Select a session term on the left to manage batches.</Alert>
-              ) : batchesLoading ? (
-                <Box display="flex" justifyContent="center" py={4}>
-                  <CircularProgress size={28} />
-                </Box>
-              ) : batches.length === 0 ? (
+              ) : (
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 1.5 }}>
+                  <TextField
+                    size="small"
+                    placeholder="Search by batch name..."
+                    value={batchSearch}
+                    onChange={(e) => {
+                      setBatchSearch(e.target.value);
+                      setBatchPage(0);
+                    }}
+                    sx={{ flex: 1, minWidth: 160 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <TextField
+                    select
+                    size="small"
+                    label="Programme"
+                    value={batchProgrammeFilter}
+                    onChange={(e) => {
+                      setBatchProgrammeFilter(e.target.value);
+                      setBatchPage(0);
+                    }}
+                    sx={{ minWidth: 130 }}
+                  >
+                    <MenuItem value="all">All Programmes</MenuItem>
+                    {programmeOptions.map(([id, name]) => (
+                      <MenuItem key={id} value={id}>
+                        {name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <TextField
+                    select
+                    size="small"
+                    label="Status"
+                    value={batchStatusFilter}
+                    onChange={(e) => {
+                      setBatchStatusFilter(e.target.value);
+                      setBatchPage(0);
+                    }}
+                    sx={{ minWidth: 110 }}
+                  >
+                    <MenuItem value="all">All Statuses</MenuItem>
+                    <MenuItem value="open">Open</MenuItem>
+                    <MenuItem value="close">Closed</MenuItem>
+                  </TextField>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setBatchSearch('');
+                      setBatchProgrammeFilter('all');
+                      setBatchStatusFilter('all');
+                      setBatchPage(0);
+                    }}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    Clear Filters
+                  </Button>
+                </Stack>
+              )}
+
+              {!selectedSessionTermId ? null : batchesLoading ? (
+                <Stack spacing={1}>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} variant="rounded" height={44} />
+                  ))}
+                </Stack>
+              ) : filteredBatches.length === 0 ? (
                 <Alert
                   severity="info"
                   sx={{
@@ -869,8 +1240,9 @@ const AdmissionSetup = () => {
                     textAlign: 'center',
                   }}
                 >
-                  No admission batches yet for this term. Click &quot;Create New Admission&quot; to
-                  add one.
+                  {batches.length === 0
+                    ? 'No admission batches yet for this term. Click "Create New Admission" to add one.'
+                    : 'No batches match your search/filters.'}
                 </Alert>
               ) : (
                 <Box>
@@ -898,9 +1270,15 @@ const AdmissionSetup = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {batches.map((batch, i) => (
-                          <TableRow key={batch.id} hover>
-                            <TableCell>{i + 1}</TableCell>
+                        {pagedBatches.map((batch, i) => (
+                          <TableRow
+                            key={batch.id}
+                            hover
+                            selected={batch.id === selectedBatchId}
+                            onClick={() => setSelectedBatchId(batch.id)}
+                            sx={{ cursor: 'pointer' }}
+                          >
+                            <TableCell>{batchPage * BATCHES_PER_PAGE + i + 1}</TableCell>
 
                             <TableCell sx={{ fontWeight: 600 }}>{batch.batch_name}</TableCell>
 
@@ -973,7 +1351,105 @@ const AdmissionSetup = () => {
                       </TableBody>
                     </Table>
                   </TableContainer>
+                  <TablePagination
+                    component="div"
+                    count={filteredBatches.length}
+                    page={batchPage}
+                    onPageChange={(_, p) => setBatchPage(p)}
+                    rowsPerPage={BATCHES_PER_PAGE}
+                    rowsPerPageOptions={[BATCHES_PER_PAGE]}
+                    labelDisplayedRows={({ from, to, count }) => `Showing ${from}-${to} of ${count} batches`}
+                  />
                 </Box>
+              )}
+            </ParentCard>
+          </Grid>
+
+          {/* ── Selected Batch Configuration ─────────────────────── */}
+          <Grid size={{ xs: 12, md: 3 }}>
+            <ParentCard
+              title={
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Selected Batch Configuration
+                  </Typography>
+                  {selectedBatch && (
+                    <Button
+                      size="small"
+                      startIcon={<EditIcon fontSize="small" />}
+                      onClick={() => handleEditBatch(selectedBatch)}
+                    >
+                      Edit Batch
+                    </Button>
+                  )}
+                </Box>
+              }
+              sx={{
+                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+              }}
+            >
+              {batchesLoading ? (
+                <Stack spacing={1}>
+                  <Skeleton variant="rounded" height={44} />
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} variant="rounded" height={38} />
+                  ))}
+                </Stack>
+              ) : !selectedBatch ? (
+                <Alert severity="info">Select a batch from the list to view its configuration.</Alert>
+              ) : (
+                <Stack spacing={1}>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 1,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2" fontWeight={700}>
+                        {selectedBatch.batch_name}
+                      </Typography>
+                      <BatchStatusChip status={selectedBatch.status} />
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                      {selectedBatch.programme?.programme_name || selectedBatch.programme?.name || '—'} |{' '}
+                      {selectedSessionTermLabel}
+                    </Typography>
+                  </Paper>
+
+                  <Stack divider={<Divider />}>
+                    {batchChecklist.map((item) => (
+                      <Stack
+                        key={item.key}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        sx={{ py: 0.6 }}
+                      >
+                        {item.pending ? (
+                          <StepInProgressIcon sx={{ color: 'text.disabled', fontSize: 22 }} />
+                        ) : item.done ? (
+                          <StepCompleteIcon sx={{ color: 'success.main', fontSize: 22 }} />
+                        ) : (
+                          <StepNotConfiguredIcon sx={{ color: 'error.main', fontSize: 22 }} />
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={700}>
+                            {item.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {item.caption}
+                          </Typography>
+                        </Box>
+                        <ChevronRightIcon sx={{ color: 'text.disabled' }} />
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Stack>
               )}
             </ParentCard>
           </Grid>
@@ -984,557 +1460,334 @@ const AdmissionSetup = () => {
           TAB 2 — ADMISSION CODE FORMAT (school-level, no batch needed)
           ══════════════════════════════════════════════════════════════════════════ */}
       <TabPanel value={tabValue} index={1}>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12 }}>
-            <ParentCard
-              title="Admission Code Format Configurator"
-              sx={{
-                '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
-                '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
-              }}
-            >
-              <Alert severity="info" sx={{ mb: 2 }}>
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  alignItems={{ xs: 'flex-start', sm: 'center' }}
-                  justifyContent="space-between"
-                  spacing={1.5}
-                  sx={{ width: '100%' }}
+        {codeFormatLoading ? (
+          <Box>
+            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} variant="rounded" height={64} sx={{ flex: 1, borderRadius: 2 }} />
+              ))}
+            </Stack>
+            <Grid container spacing={2}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Grid key={i} size={{ xs: 12, md: 4 }}>
+                  <Skeleton variant="rounded" height={340} sx={{ borderRadius: 2 }} />
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        ) : (
+          <>
+            {/* ── 3-step header (all 3 columns below are always visible —
+                this row is a visual progress indicator, not a gate) ── */}
+            <Stack direction="row" spacing={2} sx={{ mb: 2, overflowX: 'auto' }}>
+              {CODE_FORMAT_STEPS.map((step, i) => (
+                <Paper
+                  key={step.key}
+                  elevation={0}
+                  sx={{
+                    flex: 1,
+                    minWidth: 220,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '2px solid',
+                    borderColor: i === 0 ? step.color : 'divider',
+                    bgcolor: i === 0 ? alpha(step.color, 0.06) : 'background.paper',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                  }}
                 >
-                  <Box>
-                    Define the admission code format for your school. Type your school&apos;s short name,
-                    insert <strong>[:year]</strong>, and choose the student number digit length. A slash{' '}
-                    <strong>/</strong> is automatically added between segments.
+                  <Box
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: '50%',
+                      bgcolor: step.color,
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {i + 1}
                   </Box>
-                  {currentSessionName && (
-                    <Chip
-                      icon={<IconSchool size={14} />}
-                      label={`Session: ${currentSessionName}`}
-                      size="small"
-                      color="info"
-                      sx={{ fontWeight: 600, flexShrink: 0 }}
-                    />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={700}>
+                      {step.title}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                      {step.subtitle}
+                    </Typography>
+                  </Box>
+                  {i < CODE_FORMAT_STEPS.length - 1 && (
+                    <StepArrowIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
                   )}
-                </Stack>
-              </Alert>
+                </Paper>
+              ))}
+            </Stack>
 
-              {codeFormatLoading ? (
-                <Box display="flex" justifyContent="center" alignItems="center" py={8}>
-                  <CircularProgress size={32} />
-                </Box>
-              ) : (
-                <Grid container spacing={2.5}>
-                  {/* ── Left Column (xs=12, md=6) — Component Controls ── */}
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 3,
-                        border: '2px solid #c7c9cbff',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
-                        '&:hover': {
-                          borderColor: 'primary.main',
-                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.06)',
-                        },
-                      }}
-                    >
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="subtitle1" fontWeight={700}>
-                              Format Building Blocks
+            <Grid container spacing={2} alignItems="stretch">
+              {/* ── Column 1: Select Components ── */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Select Components"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                    Choose the information to include in the admission number.
+                  </Typography>
+                  <Stack spacing={1}>
+                    {CODE_FORMAT_COMPONENTS.map((comp) => {
+                      const Icon = comp.icon;
+                      const active = comp.real && componentActive[comp.key];
+                      return (
+                        <Box
+                          key={comp.key}
+                          onClick={() => comp.real && toggleComponent(comp.key)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            p: 1,
+                            borderRadius: 1.5,
+                            border: '1px solid',
+                            borderColor: active ? comp.color : 'divider',
+                            bgcolor: active ? alpha(comp.color, 0.06) : 'transparent',
+                            opacity: comp.real ? 1 : 0.55,
+                            cursor: comp.real ? 'pointer' : 'not-allowed',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 1.5,
+                              bgcolor: alpha(comp.color, 0.12),
+                              color: comp.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Icon size={16} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              {comp.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                              {comp.example}
+                            </Typography>
+                          </Box>
+                          {comp.real ? (
+                            <Checkbox checked={active} size="small" sx={{ p: 0.5 }} />
+                          ) : (
+                            <Chip label="Coming soon" size="small" sx={{ height: 18, fontSize: 9, fontWeight: 700 }} />
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                </ParentCard>
+              </Grid>
+
+              {/* ── Column 2: Configure Settings ── */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Configure Settings"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                    Set options for each selected component.
+                  </Typography>
+                  {!componentActive.shortname && !componentActive.year && !componentActive.stdnum ? (
+                    <Alert severity="info">Select a component on the left to configure it.</Alert>
+                  ) : (
+                    <Stack spacing={2} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
+                      {componentActive.shortname && (
+                        <Box>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                            <IconSchool size={16} color="var(--mui-palette-primary-main)" />
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              School Short Name
                             </Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            Step 1 of 2
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                            Use your school&apos;s short name (2-10 characters).
                           </Typography>
-                        </Box>
-
-                        <Stack spacing={2}>
-                          {/* ── Component 1: School Short Name ── */}
-                          <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <IconSchool size={18} color="var(--mui-palette-primary-main)" />
-                                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
-                                  School Short Name
-                                </Typography>
-                              </Stack>
-                              <Chip
-                                label={codeFormatInput.includes('[:shortname]') ? 'Active' : 'Optional'}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  bgcolor: codeFormatInput.includes('[:shortname]') ? 'success.light' : 'warning.light',
-                                  color: codeFormatInput.includes('[:shortname]') ? 'success.dark' : 'warning.dark',
-                                }}
-                              />
-                            </Stack>
-                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                              Abbreviation used in admission numbers (e.g., STPAULS)
-                            </Typography>
-                            <TextField
-                              fullWidth
-                              size="small"
-                              placeholder="e.g. STPAULS"
-                              value={schoolShortName}
-                              onChange={handleShortNameChange}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                  bgcolor: 'background.paper',
-                                },
-                                '& .MuiOutlinedInput-input': {
-                                  fontFamily: 'monospace',
-                                  fontWeight: 700,
-                                  fontSize: 14,
-                                  letterSpacing: 0.5,
-                                  textTransform: 'uppercase',
-                                },
-                              }}
-                            />
-                          </Box>
-
-                          <Divider sx={{ borderStyle: 'dashed' }} />
-
-                          {/* ── Component 2: Admission Year Token ── */}
-                          <Box>
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <IconCalendar size={18} color="var(--mui-palette-primary-main)" />
-                                <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
-                                  Admission Year Token
-                                </Typography>
-                              </Stack>
-                              <Chip
-                                label={codeFormatInput.includes('[:year]') ? 'Inserted' : 'Available'}
-                                size="small"
-                                sx={{
-                                  height: 20,
-                                  fontSize: 10,
-                                  fontWeight: 700,
-                                  bgcolor: codeFormatInput.includes('[:year]') ? 'primary.light' : 'info.light',
-                                  color: codeFormatInput.includes('[:year]') ? 'primary.main' : 'info.dark',
-                                }}
-                              />
-                            </Stack>
-                            <Typography variant="caption" color="text.secondary" display="block" mb={1}>
-                              Click token button below to append dynamic year placeholder <strong>[:year]</strong>
-                            </Typography>
-                            <Button
-                              variant={codeFormatInput.includes('[:year]') ? 'soft' : 'outlined'}
-                              size="medium"
-                              onClick={handleYearClick}
-                              startIcon={
-                                copiedPlaceholder === '[:year]' ? (
-                                  <IconCheck size={16} />
-                                ) : (
-                                  <IconPlus size={16} />
-                                )
-                              }
-                              sx={{
-                                borderRadius: 2,
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="e.g. IMC"
+                            value={schoolShortName}
+                            onChange={handleShortNameChange}
+                            sx={{
+                              '& .MuiOutlinedInput-input': {
                                 fontFamily: 'monospace',
                                 fontWeight: 700,
-                                px: 2,
-                                py: 0.8,
-                                textTransform: 'none',
-                                borderColor: codeFormatInput.includes('[:year]') ? 'primary.main' : 'divider',
-                                bgcolor: codeFormatInput.includes('[:year]') ? 'primary.light' : 'transparent',
-                                color: 'primary.main',
-                                transition: 'all 0.2s ease',
-                                '&:hover': {
-                                  bgcolor: 'primary.main',
-                                  color: 'white',
-                                  borderColor: 'primary.main',
-                                },
-                              }}
-                            >
-                              {copiedPlaceholder === '[:year]' ? 'Inserted [:year]!' : '[:year] (Admission Year)'}
-                            </Button>
-                          </Box>
-
-                          {/* ── Component 3: Student Number Digit Length (Visible only when [:year] is present) ── */}
-                          {codeFormatInput.includes('[:year]') && (
-                            <>
-                              <Divider sx={{ borderStyle: 'dashed' }} />
-
-                              <Box>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.6}>
-                                  <Stack direction="row" spacing={1} alignItems="center">
-                                    <IconHash size={18} color="var(--mui-palette-primary-main)" />
-                                    <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13.5 }}>
-                                      Sequential Student Number
-                                    </Typography>
-                                  </Stack>
-                                  <Chip
-                                    label="Pick 1 Length"
-                                    size="small"
-                                    sx={{
-                                      height: 20,
-                                      fontSize: 10,
-                                      fontWeight: 700,
-                                      bgcolor: 'warning.light',
-                                      color: 'warning.dark',
-                                    }}
-                                  />
-                                </Stack>
-                                <Typography variant="caption" color="text.secondary" display="block" mb={1.2}>
-                                  Select the padding length for sequential student registration numbers
-                                </Typography>
-
-                                <RadioGroup value={selectedStdNum} onChange={handleStdNumChange}>
-                                  <Grid container spacing={1.5}>
-                                    {STD_NUM_OPTIONS.map((opt) => {
-                                      const isSelected = selectedStdNum === opt.key;
-                                      return (
-                                        <Grid size={{ xs: 6 }} key={opt.key}>
-                                          <Box
-                                            onClick={() => handleStdNumChange({ target: { value: opt.key } })}
-                                            sx={{
-                                              p: 1.2,
-                                              borderRadius: 2,
-                                              border: '1.5px solid',
-                                              borderColor: isSelected ? 'primary.main' : 'divider',
-                                              bgcolor: isSelected
-                                                ? (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(238, 242, 255, 0.8)')
-                                                : 'background.paper',
-                                              cursor: 'pointer',
-                                              transition: 'all 0.2s ease',
-                                              boxShadow: isSelected ? '0 2px 8px rgba(99, 102, 241, 0.2)' : 'none',
-                                              '&:hover': {
-                                                borderColor: 'primary.main',
-                                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(238, 242, 255, 0.4)'),
-                                              },
-                                            }}
-                                          >
-                                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
-                                              <Typography variant="caption" fontWeight={700} color={isSelected ? 'primary.main' : 'text.primary'}>
-                                                {opt.label}
-                                              </Typography>
-                                              <Radio
-                                                checked={isSelected}
-                                                value={opt.key}
-                                                size="small"
-                                                sx={{ p: 0, '&.Mui-checked': { color: 'primary.main' } }}
-                                              />
-                                            </Stack>
-                                            <Stack direction="row" alignItems="center" spacing={1}>
-                                              <Typography
-                                                variant="body2"
-                                                fontWeight={700}
-                                                sx={{ fontFamily: 'monospace', fontSize: 13, color: 'text.secondary' }}
-                                              >
-                                                {opt.key}
-                                              </Typography>
-                                              <Chip
-                                                label={opt.example}
-                                                size="small"
-                                                color={isSelected ? 'primary' : 'default'}
-                                                sx={{
-                                                  height: 18,
-                                                  fontSize: 10,
-                                                  fontFamily: 'monospace',
-                                                  fontWeight: 700,
-                                                }}
-                                              />
-                                            </Stack>
-                                          </Box>
-                                        </Grid>
-                                      );
-                                    })}
-                                  </Grid>
-                                </RadioGroup>
-                              </Box>
-                            </>
-                          )}
-
-                          <Divider sx={{ borderStyle: 'dashed' }} />
-
-                          {/* ── Component 4: Quick Presets ── */}
-                          <Box>
-                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13, mb: 1 }}>
-                              Quick Format Presets
-                            </Typography>
-                            <Stack direction="row" flexWrap="wrap" gap={1}>
-                              {FORMAT_PRESETS.map((preset, idx) => (
-                                <Chip
-                                  key={idx}
-                                  icon={<IconWand size={12} />}
-                                  label={preset.label}
-                                  clickable
-                                  size="small"
-                                  onClick={() => handleApplyPreset(preset)}
-                                  sx={{
-                                    borderRadius: 2,
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    bgcolor: 'primary.light',
-                                    color: 'primary.main',
-                                    border: '1px solid',
-                                    borderColor: 'primary.light',
-                                    transition: 'all 0.2s ease',
-                                    '&:hover': {
-                                      bgcolor: 'primary.main',
-                                      color: 'white',
-                                    },
-                                  }}
-                                />
-                              ))}
-                            </Stack>
-                          </Box>
-                        </Stack>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Card
-                      variant="outlined"
-                      sx={{
-                        borderRadius: 3,
-                        height: '100%',
-                        border: '2px solid #c7c9cbff',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        boxShadow: '0 2px 12px rgba(0, 0, 0, 0.03)',
-                      }}
-                    >
-                      <CardContent sx={{ p: 1.5, flexGrow: 1 }}>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2.5}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Typography variant="subtitle1" fontWeight={700}>
-                              Format Canvas & Live Preview
-                            </Typography>
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            Step 2 of 2
-                          </Typography>
-                        </Box>
-
-                        <Typography variant="caption" color="text.secondary" display="block" mb={2}>
-                          Format tokens automatically construct your student code pattern. You can also fine-tune or trim components below.
-                        </Typography>
-
-                        {/* ── Visual Token Pills Preview ── */}
-                        {getFullCodeFormat() && (
-                          <Box mb={2.5}>
-                            <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={1}>
-                              Active Format Token Pattern:
-                            </Typography>
-                            <Paper
-                              variant="outlined"
-                              sx={{
-                                p: 1.5,
-                                borderRadius: 2.5,
-                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.9)'),
-                                border: '1px dashed',
-                                borderColor: 'divider',
-                                display: 'flex',
-                                alignItems: 'center',
-                                flexWrap: 'wrap',
-                                gap: 1,
-                              }}
-                            >
-                              {getFullCodeFormat()
-                                .split('/')
-                                .filter(Boolean)
-                                .map((token, i) => {
-                                  let isShort = token === '[:shortname]';
-                                  let isYear = token === '[:year]';
-                                  let isStdNum = STD_NUM_OPTIONS.some((o) => o.key === token);
-
-                                  return (
-                                    <Stack key={i} direction="row" alignItems="center" spacing={1}>
-                                      {i > 0 && (
-                                        <Typography variant="body2" fontWeight={800} color="text.disabled" sx={{ fontFamily: 'monospace' }}>
-                                          /
-                                        </Typography>
-                                      )}
-                                      <Chip
-                                        size="medium"
-                                        label={
-                                          isShort
-                                            ? `Shortname [${schoolShortName.trim() || 'STPAULS'}]`
-                                            : isYear
-                                              ? 'Year [:year]'
-                                              : isStdNum
-                                                ? `Seq No [${token.replace('[:stdNum_', '').replace(']', '')} Digits]`
-                                                : token
-                                        }
-                                        color={isShort ? 'primary' : isYear ? 'info' : isStdNum ? 'success' : 'default'}
-                                        sx={{
-                                          fontFamily: 'monospace',
-                                          fontWeight: 700,
-                                          fontSize: 12,
-                                          borderRadius: 2,
-                                        }}
-                                      />
-                                    </Stack>
-                                  );
-                                })}
-                            </Paper>
-                          </Box>
-                        )}
-
-                        {/* ── Monospace Format Field ── */}
-                        <Box mb={3}>
-                          <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={0.8}>
-                            Raw Format String (Editable)
-                          </Typography>
-                          <OutlinedInput
-                            fullWidth
-                            value={codeFormatInput}
-                            onChange={handleCodeFormatInputChange}
-                            placeholder="Construct components from the left panel..."
-                            size="small"
-                            sx={{
-                              fontFamily: 'monospace',
-                              fontWeight: 700,
-                              fontSize: 14,
-                              borderRadius: 2.5,
-                              '& .MuiOutlinedInput-input': {
-                                py: 1.5,
-                                px: 2,
+                                letterSpacing: 0.5,
+                                textTransform: 'uppercase',
                               },
                             }}
                           />
                         </Box>
+                      )}
 
-                        {/* ── Live Example Output Container ── */}
-                        {getFullCodeFormat() ? (
-                          <Paper
-                            elevation={0}
-                            sx={{
-                              p: 2.5,
-                              borderRadius: 3,
-                              bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(6, 78, 59, 0.25)' : 'rgba(236, 253, 245, 0.9)'),
-                              border: '1.5px solid',
-                              borderColor: 'success.main',
-                              boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)',
-                              position: 'relative',
-                            }}
+                      {componentActive.year && (
+                        <Box>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                            <IconCalendar size={16} color="var(--mui-palette-primary-main)" />
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              Admission Year
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                            Full calendar year (e.g. 2026) — automatically inserted into the format.
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {componentActive.stdnum && (
+                        <Box>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                            <IconHash size={16} color="var(--mui-palette-primary-main)" />
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              Sequential Number
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                            Number of digits
+                          </Typography>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            value={selectedStdNum}
+                            onChange={handleStdNumChange}
                           >
-                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <IconSparkles size={18} color="var(--mui-palette-success-main)" />
-                                <Typography variant="caption" fontWeight={800} color="success.dark" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                                  Live Generated Sample Output
-                                </Typography>
-                              </Stack>
-                              <Tooltip title="Copy example format">
-                                <IconButton
-                                  size="small"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(getExampleOutput());
-                                    showSnackbar('Copied example code to clipboard', 'info');
-                                  }}
-                                  sx={{ color: 'success.dark', bgcolor: 'rgba(16, 185, 129, 0.15)' }}
-                                >
-                                  <IconCopy size={15} />
-                                </IconButton>
-                              </Tooltip>
-                            </Stack>
-
-                            <Typography
-                              variant="h5"
-                              fontWeight={800}
-                              color="success.dark"
-                              sx={{
-                                fontFamily: 'monospace',
-                                letterSpacing: 1,
-                                py: 1,
-                                px: 2,
-                                bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)'),
-                                borderRadius: 2,
-                                display: 'inline-block',
-                                border: '1px solid',
-                                borderColor: 'rgba(16, 185, 129, 0.3)',
-                                mb: 1.5,
-                              }}
-                            >
-                              {getExampleOutput()}
-                            </Typography>
-
-                            <Typography variant="caption" color="success.dark" display="block" sx={{ opacity: 0.9, fontSize: 12.5, lineHeight: 1.5 }}>
-                              <strong>Breakdown:</strong> Prefix: &quot;{schoolShortName.trim() || 'STPAULS'}&quot; &bull; Admission Year: 2026 &bull; Sequential Number starting from {selectedStdNum ? STD_NUM_OPTIONS.find(o => o.key === selectedStdNum)?.example : '001'}
-                            </Typography>
-                          </Paper>
-                        ) : (
-                          <Alert severity="info" sx={{ borderRadius: 2 }}>
-                            Select or type components on the left to start building your admission code format.
+                            {STD_NUM_OPTIONS.map((opt) => (
+                              <MenuItem key={opt.key} value={opt.key}>
+                                {opt.label} (e.g. {opt.example})
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <Alert severity="info" sx={{ mt: 1.5, fontSize: 11.5 }} icon={<IconInfoCircle size={16} />}>
+                            The sequential number will automatically increase for each new admitted student in this session.
                           </Alert>
-                        )}
-                      </CardContent>
+                        </Box>
+                      )}
+                    </Stack>
+                  )}
+                </ParentCard>
+              </Grid>
 
-                      {/* ── Save Action Footer ── */}
-                      <Box p={3} pt={0}>
-                        <Divider sx={{ mb: 2.5 }} />
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          size="large"
-                          startIcon={
-                            codeFormatSaving ? (
-                              <CircularProgress size={20} color="inherit" />
-                            ) : (
-                              <SaveIcon />
-                            )
-                          }
-                          onClick={handleSaveCodeFormat}
-                          disabled={codeFormatSaving || !getFullCodeFormat().trim()}
-                          sx={{
-                            fontWeight: 700,
-                            py: 1.4,
-                            borderRadius: 2.5,
-                            fontSize: 15,
-                            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-                            transition: 'all 0.2s ease',
-                            '&:hover': {
-                              boxShadow: '0 6px 20px rgba(99, 102, 241, 0.45)',
-                            },
-                          }}
+              {/* ── Column 3: Preview & Save ── */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Preview & Save"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                    See how the admission number will look.
+                  </Typography>
+
+                  {!getFullCodeFormat() ? (
+                    <Alert severity="info">Select components on the left to preview your format.</Alert>
+                  ) : (
+                    <>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 1.5,
+                          mb: 1.5,
+                          borderRadius: 2,
+                          bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(6,78,59,0.2)' : '#ECFDF5'),
+                          border: '1px solid',
+                          borderColor: 'success.light',
+                        }}
+                      >
+                        <Chip label="Sample Admission Number" size="small" color="success" sx={{ fontWeight: 700, fontSize: 10, mb: 1 }} />
+                        <Typography
+                          variant="h5"
+                          fontWeight={800}
+                          sx={{ fontFamily: 'monospace', letterSpacing: 1 }}
                         >
-                          {codeFormatSaving ? 'Saving Code Format...' : 'Update Code Format'}
-                        </Button>
-                      </Box>
-                    </Card>
-                  </Grid>
-                </Grid>
-              )}
-            </ParentCard>
-          </Grid>
-        </Grid>
+                          {codeFormatBreakdown.map((seg, i) => (
+                            <Fragment key={i}>
+                              {i > 0 && <Box component="span" sx={{ color: 'text.disabled', mx: 0.25 }}>/</Box>}
+                              <Box component="span" sx={{ color: seg.color }}>
+                                {seg.value}
+                              </Box>
+                            </Fragment>
+                          ))}
+                        </Typography>
+                      </Paper>
+
+                      <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                        Breakdown
+                      </Typography>
+                      <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+                        {codeFormatBreakdown.map((seg, i) => (
+                          <Stack key={i} direction="row" alignItems="center" justifyContent="space-between">
+                            <Stack direction="row" alignItems="center" spacing={0.75}>
+                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: seg.color }} />
+                              <Typography variant="caption" color="text.secondary">
+                                {seg.label}
+                              </Typography>
+                            </Stack>
+                            <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
+                              {seg.value}
+                            </Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+
+                      {moreExamples.length > 0 && (
+                        <>
+                          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                            More Examples
+                          </Typography>
+                          <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mb: 2 }}>
+                            {moreExamples.map((ex, i) => (
+                              <Chip key={i} label={ex} size="small" sx={{ fontFamily: 'monospace', fontSize: 10.5, fontWeight: 700 }} />
+                            ))}
+                            <Chip label="..." size="small" sx={{ fontFamily: 'monospace', fontSize: 10.5 }} />
+                          </Stack>
+                        </>
+                      )}
+                    </>
+                  )}
+
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    startIcon={codeFormatSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+                    onClick={handleSaveCodeFormat}
+                    disabled={codeFormatSaving || !getFullCodeFormat().trim()}
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {codeFormatSaving ? 'Saving...' : 'Save Admission Code Format'}
+                  </Button>
+                </ParentCard>
+              </Grid>
+            </Grid>
+          </>
+        )}
       </TabPanel>
 
       {/* ── Shared menus & dialogs ────────────────────────────────────────────── */}
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <MenuItem
-          onClick={() => {
-            handleTermSelect(menuTerm);
-            handleMenuClose();
-          }}
-        >
-          View Batches
-        </MenuItem>
-        <MenuItem
-          sx={{ color: menuTerm?.status === 'active' ? 'error.main' : 'success.main' }}
-          onClick={handleToggleTermStatus}
-        >
-          {menuTerm?.status === 'active' ? 'Deactivate Term' : 'Activate Term'}
-        </MenuItem>
-      </Menu>
 
       <Menu
         anchorEl={batchMenuAnchor}

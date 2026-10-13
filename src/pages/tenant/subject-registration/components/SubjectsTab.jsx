@@ -131,11 +131,18 @@ const SubjectsTab = forwardRef(function SubjectsTab(
 
       const genData = genRes.data?.data;
       const optData = optRes.data?.data;
-      const merged = [
-        ...(Array.isArray(genData) ? genData : []),
-        ...(Array.isArray(optData) ? optData : []),
-      ];
-      setSubjects(merged);
+      // Deduped by subject id — an unscoped programme/class filter (e.g. no
+      // arm configured) can make the backend return the same subject in
+      // both the compulsory and optional lists, which previously produced
+      // duplicate React keys in the matrix table and an inflated subject
+      // count.
+      const mergedById = new Map();
+      [...(Array.isArray(genData) ? genData : []), ...(Array.isArray(optData) ? optData : [])].forEach(
+        (s) => {
+          if (!mergedById.has(s.id)) mergedById.set(s.id, s);
+        },
+      );
+      setSubjects([...mergedById.values()]);
 
       if (learnerRes.data?.data) {
         const learnerData = learnerRes.data.data;

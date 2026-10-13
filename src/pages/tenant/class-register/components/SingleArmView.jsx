@@ -686,7 +686,7 @@ const SingleArmView = () => {
       </Stack>
 
       {/* ── Body ────────────────────────────────────────────── */}
-      <Grid container spacing={1.5}>
+      <Grid container spacing={1}>
         {(isAdmin || teacherArms.length > 1) && (
           <Grid size={{ xs: 12, md: isAdmin ? 2.2 : 2 }}>
             {isAdmin ? (

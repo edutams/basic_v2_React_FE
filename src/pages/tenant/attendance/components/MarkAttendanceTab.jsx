@@ -24,7 +24,6 @@ import {
   useTheme,
   useMediaQuery,
   alpha,
-  Divider,
   Alert,
   Snackbar,
   Checkbox,
@@ -36,13 +35,19 @@ import {
   Skeleton,
   TextField,
   Avatar,
+  TablePagination,
+  InputAdornment,
+  LinearProgress,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
-  Email as EmailIcon,
   NotificationsActive as NotificationsActiveIcon,
   CheckCircle as CheckCircleIcon,
+  CheckCircleOutline as CheckCircleOutlineIcon,
   CancelOutlined as CancelOutlinedIcon,
+  Cancel as CancelIcon,
+  AccessTime as LateClockOutlineIcon,
+  AccessTimeFilled as LateClockIcon,
   RadioButtonUnchecked as RadioButtonUncheckedIcon,
   WbSunny as MorningIcon,
   NightsStay as AfternoonIcon,
@@ -50,9 +55,12 @@ import {
   PictureAsPdf as PdfIcon,
   TableChart as ExcelIcon,
   ArrowDropDown as ArrowDropDownIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
+import debounce from 'lodash/debounce';
 import ReusableDialog from '@/components/shared/ReusableDialog';
-import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
+import MarkAttendanceStatCards from './MarkAttendanceStatCards';
+import MarkAttendanceSidebar from './MarkAttendanceSidebar';
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 import {
   fetchSessions,
@@ -64,7 +72,6 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchAcademicInfo } from '@/api/tenant/tenant_api';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
-import ParentCard from '@/components/shared/ParentCard';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
@@ -232,6 +239,44 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   // ── Selected weekdays (checkboxes) ────────────────────────
   const [selectedDays, setSelectedDays] = useState({});
 
+  // ── Search / status filter / pagination (new design) ─────
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [followUpModalOpen, setFollowUpModalOpen] = useState(false);
+  const [followUpLearners, setFollowUpLearners] = useState([]);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [todayDetailsOpen, setTodayDetailsOpen] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [insightDialog, setInsightDialog] = useState({ open: false, title: '', learners: [] });
+
+  const debouncedSetSearch = React.useMemo(() => debounce((val) => setSearch(val), 400), []);
+  useEffect(() => () => debouncedSetSearch.cancel(), [debouncedSetSearch]);
+  const handleSearchInputChange = (e) => {
+    setSearchInput(e.target.value);
+    debouncedSetSearch(e.target.value);
+  };
+
+  // Guards the one-time auto "Filter" trigger below so a teacher/admin sees
+  // real data on first paint instead of an empty state requiring a manual
+  // click — but never re-fires once the viewer starts changing filters.
+  const autoFilterAppliedRef = useRef(false);
+  // While Session/Term/Week/Programme/Class/Arm are still auto-resolving on
+  // first load, the table has nothing to show yet even though the viewer
+  // didn't leave anything unselected — shows a loading skeleton instead of
+  // the "pick your filters" message during that window. Falls back to false
+  // after 8s regardless, so a school with no programmes/classes configured
+  // doesn't skeleton-load forever.
+  const [initialResolving, setInitialResolving] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setInitialResolving(false), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
   // ── Load filter options and auto-select active session/term ──
   useEffect(() => {
     const load = async () => {
@@ -294,6 +339,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           } catch (e) {
             console.error('Failed to load teacher class:', e);
           }
+        } else if (programmesData.length > 0) {
+          // Admin view: preselect the first programme so data loads on
+          // first paint instead of sitting on an empty state — the
+          // Class/Arm chain auto-selects in turn via their own effects.
+          setAttProgramme(programmesData[0].id);
         }
       } catch (e) {
         console.error(e);
@@ -321,24 +371,38 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   }, [attSession]);
 
   useEffect(() => {
-    if (!attProgramme) return;
+    if (!attProgramme || isClassTeacher) return;
     fetchClassesByProgramme(attProgramme)
       .then((r) => {
         const d = r.data?.data || r.data || [];
-        setClasses(Array.isArray(d) ? d : []);
+        const list = Array.isArray(d) ? d : [];
+        setClasses(list);
+        // Admin view only — preselect the first class under this programme
+        // so the Arm chain (and ultimately the roster) resolves without a
+        // manual pick. Class teachers already get their exact class/arm
+        // from getTeacherClass() above.
+        if (list.length > 0 && !list.some((c) => String(c.id) === String(attClass))) {
+          setAttClass(list[0].id);
+        }
       })
       .catch(console.error);
-  }, [attProgramme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attProgramme, isClassTeacher]);
 
   useEffect(() => {
-    if (!attClass) return;
+    if (!attClass || isClassTeacher) return;
     fetchClassArmsByClass(attClass, { programme_id: attProgramme || undefined })
       .then((r) => {
         const d = r.data || [];
-        setArms(Array.isArray(d) ? d : []);
+        const list = Array.isArray(d) ? d : [];
+        setArms(list);
+        if (list.length > 0 && !list.some((a) => String(a.id) === String(attArm))) {
+          setAttArm(list[0].id);
+        }
       })
       .catch(console.error);
-  }, [attClass, attProgramme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attClass, attProgramme, isClassTeacher]);
 
   // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
@@ -481,6 +545,21 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       setLoading(false);
     }
   }, [attArm, attWeek]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-apply the filter the first time Arm + Week resolve ──
+  // Both class-teacher and admin views now preselect Session/Term/Week/
+  // Programme/Class/Arm on load — this fires the actual roster fetch once
+  // that chain settles, so the teacher/admin sees real data immediately
+  // instead of the "click Filter" empty state. Never re-fires after that,
+  // so a later manual filter change still goes through handleApplyFilter.
+  useEffect(() => {
+    if (autoFilterAppliedRef.current) return;
+    if (!attArm || !attWeek) return;
+    autoFilterAppliedRef.current = true;
+    setInitialResolving(false);
+    handleApplyFilter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attArm, attWeek]);
 
   // ── Handlers ──────────────────────────────────────────────
 
@@ -759,6 +838,60 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     }
   };
 
+  // ── Quick Actions / sidebar handlers (new design) ───────────
+  const handleMarkAllPresentToday = () => {
+    if (focusDate) bulkSetDayStatus(focusDate, 'present');
+  };
+
+  const handleOpenFollowUpModal = async () => {
+    setFollowUpModalOpen(true);
+    if (!attArm) return;
+    setFollowUpLoading(true);
+    try {
+      const res = await attendanceApi.getAtRiskLearners({
+        class_arm_id: attArm,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+        week_term_id: attWeek || undefined,
+      });
+      setFollowUpLearners(res.data?.data?.learners || []);
+    } catch (e) {
+      console.error('Failed to load at-risk learners:', e);
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+  const handleOpenHistoryModal = async () => {
+    setHistoryModalOpen(true);
+    if (!attArm) return;
+    setHistoryLoading(true);
+    try {
+      const res = await attendanceApi.getDailyBreakdown({
+        class_arm_id: attArm,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+        week_term_id: attWeek || undefined,
+      });
+      setHistoryRows(res.data?.data?.days || res.data?.data || []);
+    } catch (e) {
+      console.error('Failed to load attendance history:', e);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleViewInsight = (insight) =>
+    setInsightDialog({ open: true, title: insight.text, learners: insight.learners || [] });
+
+  const handleViewAllInsights = () =>
+    setInsightDialog({
+      open: true,
+      title: 'Detailed Insights',
+      learners: [],
+      allInsights: aiInsights,
+    });
+
   // ── Derive days ────────────────────────────────────────────
   const days = React.useMemo(() => {
     if (weekDates.length > 0) return weekDates;
@@ -774,347 +907,583 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     return DAY_NAMES;
   }, [weekDates, learners, attendanceData]);
 
-  // ── Live summary-card stats ─────────────────────────────────
-  // Recomputed straight from the in-memory marking grid on every render, so
-  // the gauge/counts in the side card update instantly as a teacher taps
-  // radios — previously frozen at whatever the last fetch/submit returned.
-  // Formula mirrors the backend's computeLearnersPresentPercent() exactly:
-  // a student "counts present" for a day if morning OR afternoon is
-  // present/late; the percent is present-student-days over
-  // (learners × non-holiday school days).
-  const liveAttendanceStats = React.useMemo(() => {
-    const isPresentStatus = (status) => status === 'present' || status === 'late';
-    const schoolDays = days.filter((day) => !holidayDates?.[day]);
+  const totalLearners = totalLearnerCount || learners.length;
 
-    let presentStudentDayCount = 0;
-    let learnersPresentCount = 0;
+  // ── "Today" / focus day resolution ──────────────────────────
+  // The grid already shows the whole selected week as columns — "today"
+  // is simply whichever of those columns matches the real calendar date.
+  // If today isn't in the currently-selected week (weekend, or an older
+  // week picked to catch up), fall back to the most recent day in view so
+  // the stats row/sidebar never show an all-zero focus date for no reason.
+  const todayDateStr = React.useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+
+  const focusDate = React.useMemo(() => {
+    if (days.includes(todayDateStr)) return todayDateStr;
+    const schoolDays = days.filter((d) => !holidayDates?.[d] && d.match(/^\d{4}-\d{2}-\d{2}$/));
+    return schoolDays.length > 0 ? schoolDays[schoolDays.length - 1] : null;
+  }, [days, todayDateStr, holidayDates]);
+
+  const focusDateLabel = React.useMemo(() => {
+    if (!focusDate) return '';
+    const label = formatDayHeader(focusDate);
+    return focusDate === todayDateStr ? `Today — ${label}, ${focusDate}` : `${label}, ${focusDate}`;
+  }, [focusDate, todayDateStr]);
+
+  /** Each learner's effective status for the focus day + current AM/PM period. */
+  const statusByLearner = React.useMemo(() => {
+    const map = {};
+    learners.forEach((learner) => {
+      const content = attendanceData[learner.student_registration_id]?.[focusDate];
+      if (!content || content.__holiday) {
+        map[learner.student_registration_id] = 'not_marked';
+        return;
+      }
+      const status = getPeriodStatus(content[attendanceType]);
+      map[learner.student_registration_id] =
+        status === 'unknown' ? 'not_marked' : status === 'excused' ? 'absent' : status;
+    });
+    return map;
+  }, [learners, attendanceData, focusDate, attendanceType]);
+
+  const todayStats = React.useMemo(() => {
+    const total = learners.length;
+    let present = 0;
+    let absent = 0;
+    let late = 0;
+    Object.values(statusByLearner).forEach((status) => {
+      if (status === 'present') present++;
+      else if (status === 'absent') absent++;
+      else if (status === 'late') late++;
+    });
+    const marked = present + absent + late;
+    const pct = (n) => (total > 0 ? Math.round((n / total) * 100) : 0);
+    return {
+      total,
+      present,
+      absent,
+      late,
+      marked,
+      presentPct: pct(present),
+      absentPct: pct(absent),
+      latePct: pct(late),
+      markedPct: pct(marked),
+    };
+  }, [statusByLearner, learners.length]);
+
+  /** Week-to-date attendance rate per learner, for the new "Attendance Rate" column. */
+  const attendanceRateByLearner = React.useMemo(() => {
+    const isPresentStatus = (status) => status === 'present' || status === 'late';
+    const map = {};
     learners.forEach((learner) => {
       const att = attendanceData[learner.student_registration_id] || {};
-      let hasPresent = false;
-      schoolDays.forEach((day) => {
+      let counted = 0;
+      let presentCount = 0;
+      days.forEach((day) => {
         const content = att[day];
         if (!content || content.__holiday) return;
-        const dayPresent =
-          isPresentStatus(content.morning?.is_present) ||
-          isPresentStatus(content.afternoon?.is_present);
-        if (dayPresent) {
-          presentStudentDayCount++;
-          hasPresent = true;
+        ['morning', 'afternoon'].forEach((period) => {
+          const status = getPeriodStatus(content[period]);
+          if (status === 'unknown') return;
+          counted++;
+          if (isPresentStatus(status)) presentCount++;
+        });
+      });
+      map[learner.student_registration_id] =
+        counted > 0 ? Math.round((presentCount / counted) * 100) : null;
+    });
+    return map;
+  }, [learners, attendanceData, days]);
+
+  /** Day-level (not period-level) present tally — "3/5" format for the "Days Present" column. */
+  const schoolDaysInView = React.useMemo(
+    () => days.filter((d) => !holidayDates?.[d]),
+    [days, holidayDates],
+  );
+  const daysPresentByLearner = React.useMemo(() => {
+    const isPresentStatus = (status) => status === 'present' || status === 'late';
+    const map = {};
+    learners.forEach((learner) => {
+      const att = attendanceData[learner.student_registration_id] || {};
+      let daysPresent = 0;
+      schoolDaysInView.forEach((day) => {
+        const content = att[day];
+        if (!content || content.__holiday) return;
+        if (
+          isPresentStatus(getPeriodStatus(content.morning)) ||
+          isPresentStatus(getPeriodStatus(content.afternoon))
+        ) {
+          daysPresent++;
         }
       });
-      if (hasPresent) learnersPresentCount++;
+      map[learner.student_registration_id] = daysPresent;
     });
+    return map;
+  }, [learners, attendanceData, schoolDaysInView]);
 
-    const totalPossible = learners.length * schoolDays.length;
-    const percent =
-      totalPossible > 0 ? Math.round((presentStudentDayCount / totalPossible) * 100) : 0;
+  // ── Search + status-filter pill row ─────────────────────────
+  const statusPillCounts = React.useMemo(
+    () => ({
+      all: learners.length,
+      present: todayStats.present,
+      absent: todayStats.absent,
+      late: todayStats.late,
+      not_marked: learners.length - todayStats.marked,
+    }),
+    [learners.length, todayStats],
+  );
 
-    return { learnersPresentCount, percent, schoolDaysCount: schoolDays.length };
-  }, [learners, attendanceData, days, holidayDates]);
+  const filteredLearners = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return learners.filter((learner) => {
+      if (
+        statusFilter !== 'all' &&
+        statusByLearner[learner.student_registration_id] !== statusFilter
+      ) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        (learner.name || '').toLowerCase().includes(q) ||
+        (learner.admission_no || '').toLowerCase().includes(q)
+      );
+    });
+  }, [learners, search, statusFilter, statusByLearner]);
 
-  const learnersPresent =
-    learners.length > 0 ? liveAttendanceStats.learnersPresentCount : learnersPresentCount;
-  const totalLearners = totalLearnerCount || learners.length;
-  const attendancePercentLive = learners.length > 0 ? liveAttendanceStats.percent : 0;
+  useEffect(() => {
+    setPage(0);
+  }, [search, statusFilter, attArm, attWeek]);
+
+  const visibleLearners = React.useMemo(
+    () => filteredLearners.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+    [filteredLearners, page, rowsPerPage],
+  );
+
+  // ── Rule-based "AI Smart Insights" ───────────────────────────
+  // Deterministic templates over real computed numbers — no LLM call,
+  // same convention as the Class Register overview's AI Insights and
+  // CommentBankService's "AI Comment Assistant".
+  const aiInsights = React.useMemo(() => {
+    const items = [];
+    if (todayStats.absent > 0) {
+      const names = learners
+        .filter((l) => statusByLearner[l.student_registration_id] === 'absent')
+        .map((l) => l.name);
+      items.push({
+        text: `${todayStats.absent} learner${todayStats.absent > 1 ? 's were' : ' was'} absent today`,
+        detail: 'Follow up to understand the reason for their absence.',
+        learners: names,
+      });
+    }
+    if (todayStats.late > 0) {
+      const names = learners
+        .filter((l) => statusByLearner[l.student_registration_id] === 'late')
+        .map((l) => l.name);
+      items.push({
+        text: `${todayStats.late} learner${todayStats.late > 1 ? 's were' : ' was'} late today`,
+        detail: 'Repeated lateness is worth a quiet word with the learner or guardian.',
+        learners: names,
+      });
+    }
+    if (
+      metrics?.weekRateChange !== null &&
+      metrics?.weekRateChange !== undefined &&
+      metrics.weekRateChange !== 0
+    ) {
+      const up = metrics.weekRateChange > 0;
+      items.push({
+        text: `Class attendance is ${Math.abs(metrics.weekRateChange)}% ${up ? 'higher' : 'lower'} than last week`,
+        detail: up
+          ? 'Good improvement — keep it up!'
+          : 'Worth checking in on what changed this week.',
+        learners: [],
+      });
+    }
+    if (metrics?.atRisk > 0) {
+      items.push({
+        text: `${metrics.atRisk} learner${metrics.atRisk > 1 ? 's need' : ' needs'} follow-up for chronic absence this term`,
+        detail: 'See the Needs Follow-up stat card for the full list.',
+        learners: [],
+      });
+    }
+    return items;
+  }, [todayStats, learners, statusByLearner, metrics]);
 
   // ── Period icon/label helper ───────────────────────────────
   const periodLabel = attendanceType === 'morning' ? 'Morning' : 'Afternoon';
   const PeriodIcon = attendanceType === 'morning' ? MorningIcon : AfternoonIcon;
 
-  // Get gauge color based on percentage
-  const gaugeColorRanges = [
-    { from: 0, to: 25, color: theme.palette.error.main },
-    { from: 26, to: 50, color: theme.palette.warning.main },
-    { from: 51, to: 75, color: theme.palette.info.main },
-    { from: 76, to: 100, color: theme.palette.success.main },
-  ];
-
   return (
     <Box>
-      {/* ── Filters ─────────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Session</InputLabel>
-            <Select
-              value={attSession}
-              label="Session"
-              onChange={(e) => setAttSession(e.target.value)}
-            >
-              {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.session_name || s.name || s.id}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Term</InputLabel>
-            <Select
-              value={attTerm}
-              label="Term"
-              onChange={(e) => {
-                const val = e.target.value;
-                setAttTerm(val);
-                const term = terms.find((t) => t.id === val);
-                if (term) setAttTermId(term.id);
-              }}
-            >
-              {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.term_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Week</InputLabel>
-            <Select value={attWeek} label="Week" onChange={(e) => setAttWeek(e.target.value)}>
-              {weeks.map((w) => {
-                const weekId = w.wk_id ?? w.week_id ?? w.id;
-                // A week that hasn't started yet has nothing to mark —
-                // only weeks up to and including the current one are
-                // selectable. Past weeks stay open so a teacher can catch
-                // up on attendance they missed.
-                const notReachedYet = isFutureDate(w.start_date);
-                return (
-                  <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
-                    {w.week_name || `Week ${weekId}`}
-                    {notReachedYet ? ' (upcoming)' : ''}
-                  </MenuItem>
-                );
-              })}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Programme</InputLabel>
-            <Select
-              value={attProgramme}
-              label="Programme"
-              onChange={(e) => setAttProgramme(e.target.value)}
-              disabled={isClassTeacher}
-            >
-              {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.programme_name || p.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Class</InputLabel>
-            <Select
-              value={attClass}
-              label="Class"
-              onChange={(e) => setAttClass(e.target.value)}
-              disabled={isClassTeacher}
-            >
-              {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.class_name || c.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Class/Arm</InputLabel>
-            <Select
-              value={attArm}
-              label="Class/Arm"
-              onChange={(e) => setAttArm(e.target.value)}
-              disabled={isClassTeacher}
-            >
-              {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.class_arm_names}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1.8 }}>
-          <Button
-            variant="contained"
-            size="small"
-            fullWidth
-            startIcon={<FilterIcon />}
-            onClick={handleApplyFilter}
-          >
-            Filter
-          </Button>
-        </Grid>
-      </Grid>
-
-      {/* ── Info Banner: Reminder to Submit ────────────── */}
-      {filterApplied && learners.length > 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          {isMobile ? (
-            <>
-              Attendance marks are saved <strong>locally</strong>. Scroll down & tap{' '}
-              <strong>Submit Attendance</strong> to save them permanently.
-            </>
-          ) : (
-            <>
-              Your attendance marks are saved <strong>locally</strong>. Click the{' '}
-              <strong>Submit Attendance</strong> button on the right to permanently save them to the
-              system.
-            </>
-          )}
-        </Alert>
-      )}
-
-      {/* ── Learner Attendance heading + AM/PM toggle — moved below the
-          filters/banner so it reads as part of the table beneath it, not
-          the page chrome above the filters. ── */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          flexWrap: 'wrap',
-          mb: 1.5,
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <Typography variant="h6" fontWeight={700}>
-            Learner Attendance
-          </Typography>
-
-          <ToggleButtonGroup
-          value={attendanceType}
-          exclusive
-          size="small"
-          onChange={(_, val) => val && setAttendanceType(val)}
-          sx={{
-            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
-            p: 0.5,
-            borderRadius: '10px',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
-            '& .MuiToggleButton-root': {
-              border: 'none',
-              borderRadius: '8px',
-              px: 1.75,
-              py: 0.5,
-              fontWeight: 600,
-              fontSize: '13px',
-              textTransform: 'none',
-              gap: 0.75,
-              color: isDark ? '#94a3b8' : '#475569',
-              transition: 'all 0.2s ease',
-            },
-          }}
-        >
-          <ToggleButton
-            value="morning"
-            sx={{
-              '&.Mui-selected': {
-                bgcolor: '#f97316 !important',
-                color: '#ffffff !important',
-                fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
-                '&:hover': {
-                  bgcolor: '#ea580c !important',
-                },
-              },
-            }}
-          >
-            <MorningIcon
-              sx={{
-                fontSize: 16,
-                color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
-              }}
-            />{' '}
-            Morning (AM)
-          </ToggleButton>
-
-          <ToggleButton
-            value="afternoon"
-            sx={{
-              '&.Mui-selected': {
-                bgcolor: '#0284c7 !important',
-                color: '#ffffff !important',
-                fontWeight: 700,
-                boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
-                '&:hover': {
-                  bgcolor: '#0369a1 !important',
-                },
-              },
-            }}
-          >
-            <AfternoonIcon
-              sx={{
-                fontSize: 16,
-                color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
-              }}
-            />{' '}
-            Afternoon (PM)
-          </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-
-        <Stack direction="row" spacing={1} alignItems="center">
-          {/* Same action as the button at the bottom of the summary card —
-              duplicated here so marking a whole week doesn't require
-              scrolling all the way down just to submit it. */}
-          <Button
-            variant="contained"
-            size="small"
-            onClick={openConfirmDialog}
-            disabled={
-              submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
-            }
-          >
-            {submitting ? 'Submitting...' : 'Submit Attendance'}
-          </Button>
-
-          {/* Export Dropdown */}
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DownloadIcon />}
-            endIcon={<ArrowDropDownIcon />}
-            onClick={(e) => setExportAnchorEl(e.currentTarget)}
-            disabled={!filterApplied || exportingPdf}
-          >
-            {exportingPdf ? 'Exporting...' : 'Export'}
-          </Button>
-          <Menu
-            anchorEl={exportAnchorEl}
-            open={Boolean(exportAnchorEl)}
-            onClose={() => setExportAnchorEl(null)}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem onClick={handleExportExcel}>
-              <ListItemIcon>
-                <ExcelIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Report by Excel</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleExportPdf}>
-              <ListItemIcon>
-                <PdfIcon fontSize="small" color="error" />
-              </ListItemIcon>
-              <ListItemText>Report by PDF</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Stack>
-      </Box>
-
-      {/* ── Attendance Table & Summary ──────────────────── */}
+      {/* ── Two-column page layout: stats/filters/table on the left,
+          the Today's Summary/AI Insights/Quick Actions sidebar on the
+          right starting at the very top, matching the design. ── */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, lg: 9.5 }}>
+          {/* ── New stats row ───────────────────────────────── */}
+          <MarkAttendanceStatCards
+            loading={loading && learners.length === 0}
+            totalLearners={totalLearners}
+            markedToday={{ marked: todayStats.marked, total: todayStats.total }}
+            weekRate={metrics?.weekRate}
+            weekRateChange={metrics?.weekRateChange}
+            needsFollowUp={metrics?.atRisk}
+            onNeedsFollowUpClick={handleOpenFollowUpModal}
+          />
+
+          {/* ── Filters ─────────────────────────────────────── */}
+          <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Session</InputLabel>
+                <Select
+                  value={attSession}
+                  label="Session"
+                  onChange={(e) => setAttSession(e.target.value)}
+                >
+                  {sessions.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.session_name || s.name || s.id}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select
+                  value={attTerm}
+                  label="Term"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setAttTerm(val);
+                    const term = terms.find((t) => t.id === val);
+                    if (term) setAttTermId(term.id);
+                  }}
+                >
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Week</InputLabel>
+                <Select value={attWeek} label="Week" onChange={(e) => setAttWeek(e.target.value)}>
+                  {weeks.map((w) => {
+                    const weekId = w.wk_id ?? w.week_id ?? w.id;
+                    // A week that hasn't started yet has nothing to mark —
+                    // only weeks up to and including the current one are
+                    // selectable. Past weeks stay open so a teacher can catch
+                    // up on attendance they missed.
+                    const notReachedYet = isFutureDate(w.start_date);
+                    return (
+                      <MenuItem key={weekId} value={weekId} disabled={notReachedYet}>
+                        {w.week_name || `Week ${weekId}`}
+                        {notReachedYet ? ' (upcoming)' : ''}
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Programme</InputLabel>
+                <Select
+                  value={attProgramme}
+                  label="Programme"
+                  onChange={(e) => setAttProgramme(e.target.value)}
+                  disabled={isClassTeacher}
+                >
+                  {programmes.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.programme_name || p.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Class</InputLabel>
+                <Select
+                  value={attClass}
+                  label="Class"
+                  onChange={(e) => setAttClass(e.target.value)}
+                  disabled={isClassTeacher}
+                >
+                  {classes.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.class_name || c.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.7 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Class/Arm</InputLabel>
+                <Select
+                  value={attArm}
+                  label="Class/Arm"
+                  onChange={(e) => setAttArm(e.target.value)}
+                  disabled={isClassTeacher}
+                >
+                  {arms.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>
+                      {a.class_arm_names}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 1.8 }}>
+              <Button
+                variant="contained"
+                size="small"
+                fullWidth
+                startIcon={<FilterIcon />}
+                onClick={handleApplyFilter}
+              >
+                Filter
+              </Button>
+            </Grid>
+          </Grid>
+
+          {/* ── Search + Filter by status + Morning/Afternoon ───── */}
+          <Stack
+            direction={{ xs: 'column', lg: 'row' }}
+            spacing={1.5}
+            alignItems={{ lg: 'center' }}
+            justifyContent="space-between"
+            sx={{ mb: 2 }}
+          >
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              alignItems={{ sm: 'center' }}
+            >
+              <TextField
+                size="small"
+                placeholder="Search learner by name or admission no."
+                value={searchInput}
+                onChange={handleSearchInputChange}
+                sx={{ minWidth: { sm: 360 } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <ToggleButtonGroup
+                value={statusFilter}
+                exclusive
+                size="small"
+                onChange={(_, val) => val && setStatusFilter(val)}
+                sx={{
+                  flexWrap: 'wrap',
+                  '& .MuiToggleButton-root': {
+                    textTransform: 'none',
+                    fontSize: 12.5,
+                    px: 1,
+                    py: 0.2,
+                  },
+                }}
+              >
+                <ToggleButton value="all">All ({statusPillCounts.all})</ToggleButton>
+                <ToggleButton value="present" color="success">
+                  Present ({statusPillCounts.present})
+                </ToggleButton>
+                <ToggleButton value="absent" color="error">
+                  Absent ({statusPillCounts.absent})
+                </ToggleButton>
+                <ToggleButton value="late" color="warning">
+                  Late ({statusPillCounts.late})
+                </ToggleButton>
+                <ToggleButton value="not_marked">
+                  Not Marked ({statusPillCounts.not_marked})
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+
+            <ToggleButtonGroup
+              value={attendanceType}
+              exclusive
+              size="small"
+              onChange={(_, val) => val && setAttendanceType(val)}
+              sx={{
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#e2e8f0',
+                p: 0.5,
+                borderRadius: '10px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#cbd5e1'}`,
+                flexShrink: 0,
+                '& .MuiToggleButton-root': {
+                  border: 'none',
+                  borderRadius: '8px',
+                  px: 1.75,
+                  py: 0.5,
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  textTransform: 'none',
+                  gap: 0.75,
+                  color: isDark ? '#94a3b8' : '#475569',
+                  transition: 'all 0.2s ease',
+                },
+              }}
+            >
+              <ToggleButton
+                value="morning"
+                sx={{
+                  '&.Mui-selected': {
+                    bgcolor: '#f97316 !important',
+                    color: '#ffffff !important',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 8px rgba(249, 115, 22, 0.4)',
+                    '&:hover': {
+                      bgcolor: '#ea580c !important',
+                    },
+                  },
+                }}
+              >
+                <MorningIcon
+                  sx={{
+                    fontSize: 16,
+                    color: attendanceType === 'morning' ? '#ffffff' : '#f97316',
+                  }}
+                />{' '}
+                Morning (AM)
+              </ToggleButton>
+
+              <ToggleButton
+                value="afternoon"
+                sx={{
+                  '&.Mui-selected': {
+                    bgcolor: '#0284c7 !important',
+                    color: '#ffffff !important',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 8px rgba(2, 132, 199, 0.4)',
+                    '&:hover': {
+                      bgcolor: '#0369a1 !important',
+                    },
+                  },
+                }}
+              >
+                <AfternoonIcon
+                  sx={{
+                    fontSize: 16,
+                    color: attendanceType === 'afternoon' ? '#ffffff' : '#0284c7',
+                  }}
+                />{' '}
+                Afternoon (PM)
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+
+          {/* ── Reminder-to-submit, inline where the "Learner Attendance"
+          heading used to be — saves a whole row versus a separate Alert. ── */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+              flexWrap: 'nowrap',
+              mb: 1.5,
+            }}
+          >
+            {filterApplied && learners.length > 0 ? (
+              <Alert
+                severity="info"
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  py: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  '& .MuiAlert-message': {
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  },
+                }}
+              >
+                {isMobile ? (
+                  <>
+                    Attendance marks are saved <strong>locally</strong>. Tap{' '}
+                    <strong>Submit Attendance</strong> to save them permanently.
+                  </>
+                ) : (
+                  <>
+                    Your attendance marks are saved <strong>locally</strong>. Click the{' '}
+                    <strong>Submit Attendance</strong> button on the right to permanently save them
+                    to the system.
+                  </>
+                )}
+              </Alert>
+            ) : (
+              <span />
+            )}
+
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+              {/* Same action as the button at the bottom of the summary card —
+              duplicated here so marking a whole week doesn't require
+              scrolling all the way down just to submit it. */}
+              <Button
+                variant="contained"
+                size="small"
+                onClick={openConfirmDialog}
+                disabled={
+                  submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
+                }
+              >
+                {submitting ? 'Submitting...' : 'Submit Attendance'}
+              </Button>
+
+              {/* Export Dropdown */}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                endIcon={<ArrowDropDownIcon />}
+                onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                disabled={!filterApplied || exportingPdf}
+              >
+                {exportingPdf ? 'Exporting...' : 'Export'}
+              </Button>
+              <Menu
+                anchorEl={exportAnchorEl}
+                open={Boolean(exportAnchorEl)}
+                onClose={() => setExportAnchorEl(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <MenuItem onClick={handleExportExcel}>
+                  <ListItemIcon>
+                    <ExcelIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Report by Excel</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={handleExportPdf}>
+                  <ListItemIcon>
+                    <PdfIcon fontSize="small" color="error" />
+                  </ListItemIcon>
+                  <ListItemText>Report by PDF</ListItemText>
+                </MenuItem>
+              </Menu>
+            </Stack>
+          </Box>
+
+          {/* ── Attendance Table & Summary ──────────────────── */}
           {error && (
             <Typography color="error" variant="body2" sx={{ mb: 2 }}>
               {error}
@@ -1135,7 +1504,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   : '0 4px 16px rgba(15, 23, 42, 0.05)',
               overflowX: 'auto',
               overflowY: 'auto',
-              height: { xs: '450px', md: '520px' },
+              height: { xs: '450px', md: '650px' },
               background: (theme) =>
                 theme.palette.mode === 'dark'
                   ? 'linear-gradient(90deg, #1e293b 268px, rgba(255, 255, 255, 0.18) 268px, rgba(255, 255, 255, 0.18) 270px, #121827 270px)'
@@ -1217,7 +1586,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       >
                         <Box>
                           {/* Weekday Checkbox - above the day name */}
-                          <Tooltip title={isFuture ? "Can't mark a day that hasn't happened yet" : ''}>
+                          <Tooltip
+                            title={isFuture ? "Can't mark a day that hasn't happened yet" : ''}
+                          >
                             <span>
                               <Checkbox
                                 size="small"
@@ -1339,12 +1710,21 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       bgcolor: isDark ? '#1e293b' : '#f8fafc',
                     }}
                   >
-                    Periods Present
+                    Days Present
+                  </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: isDark ? '#1e293b' : '#f8fafc',
+                    }}
+                  >
+                    Attendance Rate
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {loading ? (
+                {loading || (initialResolving && learners.length === 0) ? (
                   // Skeleton rows matching the real table's column layout —
                   // S/N + Name + one block per day + a tally column — instead
                   // of a generic centered spinner.
@@ -1392,9 +1772,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                       <TableCell align="center">
                         <Skeleton variant="text" width={30} sx={{ mx: 'auto' }} />
                       </TableCell>
+                      <TableCell align="center">
+                        <Skeleton variant="text" width={40} sx={{ mx: 'auto' }} />
+                      </TableCell>
                     </TableRow>
                   ))
-                ) : learners.length === 0 ? (
+                ) : filteredLearners.length === 0 ? (
                   <TableRow>
                     <TableCell
                       sx={{
@@ -1422,8 +1805,12 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                             : '2px solid #cbd5e1',
                       }}
                     />
-                    <TableCell colSpan={days.length + 1} align="center" sx={{ py: 6, px: 2 }}>
-                      {attArm && attWeek ? (
+                    <TableCell colSpan={days.length + 2} align="center" sx={{ py: 6, px: 2 }}>
+                      {attArm && attWeek && learners.length > 0 ? (
+                        <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                          No learners match the search/status filter.
+                        </Alert>
+                      ) : attArm && attWeek ? (
                         <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No learners found for the selected filters.
                         </Alert>
@@ -1440,8 +1827,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  learners.map((learner, idx) => {
+                  visibleLearners.map((learner, idx) => {
                     const att = attendanceData[learner.student_registration_id] || {};
+                    const rowNumber = page * rowsPerPage + idx + 1;
                     return (
                       <TableRow key={learner.student_registration_id} hover>
                         <TableCell
@@ -1457,7 +1845,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                 : '1px solid #cbd5e1',
                           }}
                         >
-                          {idx + 1}
+                          {rowNumber}
                         </TableCell>
                         <TableCell
                           sx={{
@@ -1590,9 +1978,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                         control={
                                           <Radio
                                             size="small"
-                                            color="success"
                                             sx={{ p: 0.25 }}
                                             disabled={!isSelected}
+                                            icon={
+                                              <CheckCircleOutlineIcon
+                                                sx={{ fontSize: 20, color: '#cbd5e1' }}
+                                              />
+                                            }
+                                            checkedIcon={
+                                              <CheckCircleIcon
+                                                sx={{ fontSize: 20, color: '#16A34A' }}
+                                              />
+                                            }
                                           />
                                         }
                                         label=""
@@ -1613,9 +2010,18 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                         control={
                                           <Radio
                                             size="small"
-                                            color="warning"
                                             sx={{ p: 0.25 }}
                                             disabled={!isSelected}
+                                            icon={
+                                              <LateClockOutlineIcon
+                                                sx={{ fontSize: 20, color: '#cbd5e1' }}
+                                              />
+                                            }
+                                            checkedIcon={
+                                              <LateClockIcon
+                                                sx={{ fontSize: 20, color: '#F59E0B' }}
+                                              />
+                                            }
                                           />
                                         }
                                         label=""
@@ -1630,9 +2036,16 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                         control={
                                           <Radio
                                             size="small"
-                                            color="error"
                                             sx={{ p: 0.25 }}
                                             disabled={!isSelected}
+                                            icon={
+                                              <CancelOutlinedIcon
+                                                sx={{ fontSize: 20, color: '#cbd5e1' }}
+                                              />
+                                            }
+                                            checkedIcon={
+                                              <CancelIcon sx={{ fontSize: 20, color: '#DC2626' }} />
+                                            }
                                           />
                                         }
                                         label=""
@@ -1704,17 +2117,47 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         })}
                         <TableCell align="center">
                           <Typography variant="body2" fontWeight={700}>
-                            {Object.values(att).reduce((count, content) => {
-                              if (!content || content.__holiday) return count;
-                              // Late counts as present for this tally too —
-                              // same rule as the backend's attendance rate.
-                              const isPresent = (status) =>
-                                status === 'present' || status === 'late';
-                              if (isPresent(content.morning?.is_present)) count++;
-                              if (isPresent(content.afternoon?.is_present)) count++;
-                              return count;
-                            }, 0)}
+                            {daysPresentByLearner[learner.student_registration_id] ?? 0}/
+                            {schoolDaysInView.length}
                           </Typography>
+                        </TableCell>
+                        <TableCell align="center" sx={{ minWidth: 100 }}>
+                          {attendanceRateByLearner[learner.student_registration_id] === null ? (
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
+                          ) : (
+                            (() => {
+                              const rate = attendanceRateByLearner[learner.student_registration_id];
+                              const barColor =
+                                rate >= 75 ? '#16A34A' : rate >= 50 ? '#F59E0B' : '#DC2626';
+                              return (
+                                <Box sx={{ px: 0.5 }}>
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight={700}
+                                    sx={{ color: barColor }}
+                                  >
+                                    {rate}%
+                                  </Typography>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={rate}
+                                    sx={{
+                                      height: 5,
+                                      borderRadius: 4,
+                                      mt: 0.25,
+                                      bgcolor: alpha(
+                                        theme.palette.mode === 'dark' ? '#fff' : '#000',
+                                        0.08,
+                                      ),
+                                      '& .MuiLinearProgress-bar': { bgcolor: barColor },
+                                    }}
+                                  />
+                                </Box>
+                              );
+                            })()
+                          )}
                         </TableCell>
                       </TableRow>
                     );
@@ -1723,150 +2166,64 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={filteredLearners.length}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 25, 50]}
+            labelRowsPerPage="Per page"
+          />
         </Grid>
 
-        {/* ── Right Summary Card with Gauge & Submit Button ── */}
+        {/* ── Right sidebar: Today's Summary / AI Insights / Quick Actions ── */}
         <Grid size={{ xs: 12, lg: 2.5 }}>
-          <ParentCard
-            elevation={0}
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
+          <MarkAttendanceSidebar
+            todaySummary={todayStats}
+            focusDateLabel={focusDateLabel}
+            insights={aiInsights}
+            onViewInsight={handleViewInsight}
+            onViewAllInsights={handleViewAllInsights}
+            onMarkAllPresent={handleMarkAllPresentToday}
+            onSendAbsenceNotifications={() => {
+              setAlertType('attendance');
+              setAlertConfirmOpen(true);
             }}
-          >
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              color="text.secondary"
-              sx={{ textTransform: 'uppercase', mb: 1 }}
-            >
-              LEARNER ATTENDANCE
-            </Typography>
-
-            {/* Speedometer/Gauge Chart — live: recomputed from the grid on
-                every mark, not frozen at the last fetch/submit response. */}
-            <ReusableGaugeChart
-              key={`gauge-${attendancePercentLive}-${learnersPresent}`}
-              value={attendancePercentLive}
-              label="Attendance"
-              subtitle={`${learnersPresent} present out of ${totalLearners} learners`}
-              height={240}
-              colorRanges={gaugeColorRanges}
-            />
-
-            <Divider sx={{ my: 1.5 }} />
-            <Stack spacing={1} sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">
-                  Learners
-                </Typography>
-                <Typography variant="body2" fontWeight={600}>
-                  {totalLearners}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">
-                  School Days
-                </Typography>
-                <Typography variant="body2" fontWeight={600}>
-                  {liveAttendanceStats.schoolDaysCount}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="caption" color="text.secondary">
-                  Present
-                </Typography>
-                <Typography variant="body2" fontWeight={600} color="success.main">
-                  {learnersPresent}
-                </Typography>
-              </Box>
-            </Stack>
-
-            {/* ── Send Attendance Notification Button ── */}
-            <Button
-              variant="outlined"
-              color="primary"
-              size="small"
-              fullWidth
-              startIcon={<EmailIcon />}
-              onClick={() => {
-                setAlertType('attendance');
-                setAlertConfirmOpen(true);
-              }}
-              disabled={sendingAlert || learners.length === 0}
-              sx={{ mb: 1, fontSize: 13 }}
-            >
-              {sendingAlert ? 'Sending...' : 'Send Attendance Notification'}
-            </Button>
-
-            <Box
-              sx={{
-                p: 1.5,
-                mb: 1.5,
-                borderRadius: 1,
-                bgcolor: isDark
-                  ? 'rgba(255,255,255,0.04)'
-                  : alpha(theme.palette.primary.main, 0.04),
-                border: '1px solid',
-                borderColor: isDark
-                  ? 'rgba(255,255,255,0.08)'
-                  : alpha(theme.palette.primary.main, 0.12),
-                opacity: togglingReport ? 0.6 : 1,
-                transition: 'opacity 0.2s',
-              }}
-            >
-              <Stack direction="row" alignItems="flex-start" spacing={1}>
-                <Checkbox
-                  checked={autoSendReport}
-                  disabled={togglingReport || !attArm}
-                  onChange={async (e) => {
-                    const newVal = e.target.checked;
-                    const previousVal = autoSendReport;
-                    setAutoSendReport(newVal);
-                    setTogglingReport(true);
-                    try {
-                      await attendanceApi.toggleWeeklyReport(attArm, newVal);
-                    } catch (err) {
-                      setAutoSendReport(previousVal);
-                      setAlertSnackbar({
-                        open: true,
-                        message: 'Failed to update weekly report setting',
-                        severity: 'error',
-                      });
-                    } finally {
-                      setTogglingReport(false);
-                    }
-                  }}
-                  size="small"
-                  sx={{ p: 0.25, mt: -0.25 }}
-                />
-                <Box>
-                  <Typography variant="body2" fontWeight={600} sx={{ mb: 0.25 }}>
-                    Weekly Report to Guardians
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {autoSendReport
-                      ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
-                      : 'Auto-send weekly attendance reports to guardians.'}
-                  </Typography>
-                </Box>
-              </Stack>
-            </Box>
-
-            {/* ── Submit Attendance Button moved here ── */}
-            <Button
-              variant="contained"
-              size="small"
-              fullWidth
-              onClick={openConfirmDialog}
-              disabled={
-                submitting || learners.length === 0 || !Object.values(selectedDays).some(Boolean)
+            onExportClick={(e) => setExportAnchorEl(e.currentTarget)}
+            onViewTodayDetails={() => setTodayDetailsOpen(true)}
+            onViewHistory={handleOpenHistoryModal}
+            onPrint={handleExportPdf}
+            autoSendReport={autoSendReport}
+            togglingReport={togglingReport}
+            canToggleReport={Boolean(attArm)}
+            onToggleReport={async (e) => {
+              const newVal = e.target.checked;
+              const previousVal = autoSendReport;
+              setAutoSendReport(newVal);
+              setTogglingReport(true);
+              try {
+                await attendanceApi.toggleWeeklyReport(attArm, newVal);
+              } catch (err) {
+                setAutoSendReport(previousVal);
+                setAlertSnackbar({
+                  open: true,
+                  message: 'Failed to update weekly report setting',
+                  severity: 'error',
+                });
+              } finally {
+                setTogglingReport(false);
               }
-              sx={{ mt: 'auto' }}
-            >
-              {submitting ? 'Submitting...' : 'Submit Attendance'}
-            </Button>
-          </ParentCard>
+            }}
+            submitting={submitting}
+            canSubmit={learners.length > 0 && Object.values(selectedDays).some(Boolean)}
+            onSubmit={openConfirmDialog}
+            learnersCount={learners.length}
+          />
         </Grid>
       </Grid>
 
@@ -1914,8 +2271,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
         content={
           <Box sx={{ py: 1 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              An excused absence doesn't count against the attendance rate. Enter the reason
-              below.
+              An excused absence doesn't count against the attendance rate. Enter the reason below.
             </Typography>
             <TextField
               autoFocus
@@ -1925,9 +2281,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
               label="Reason"
               placeholder="e.g. Medical appointment, family emergency..."
               value={excuseDialog.reason}
-              onChange={(e) =>
-                setExcuseDialog((prev) => ({ ...prev, reason: e.target.value }))
-              }
+              onChange={(e) => setExcuseDialog((prev) => ({ ...prev, reason: e.target.value }))}
             />
           </Box>
         }
@@ -2002,6 +2356,203 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           {alertSnackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* ── Today's Summary → View Details ──────────────── */}
+      <ReusableDialog
+        open={todayDetailsOpen}
+        onClose={() => setTodayDetailsOpen(false)}
+        title={focusDateLabel || "Today's Attendance"}
+        content={
+          <Box sx={{ py: 1, minWidth: { sm: 400 } }}>
+            {learners.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No learners loaded for this class arm yet.
+              </Typography>
+            ) : (
+              <Stack spacing={0.5}>
+                {learners.map((l) => {
+                  const status = statusByLearner[l.student_registration_id];
+                  const color =
+                    status === 'present'
+                      ? 'success.main'
+                      : status === 'absent'
+                        ? 'error.main'
+                        : status === 'late'
+                          ? 'warning.main'
+                          : 'text.disabled';
+                  const label =
+                    status === 'present'
+                      ? 'Present'
+                      : status === 'absent'
+                        ? 'Absent'
+                        : status === 'late'
+                          ? 'Late'
+                          : 'Not marked';
+                  return (
+                    <Stack
+                      key={l.student_registration_id}
+                      direction="row"
+                      justifyContent="space-between"
+                      sx={{ py: 0.4 }}
+                    >
+                      <Typography variant="body2">{l.name}</Typography>
+                      <Typography variant="caption" fontWeight={700} color={color}>
+                        {label}
+                      </Typography>
+                    </Stack>
+                  );
+                })}
+              </Stack>
+            )}
+          </Box>
+        }
+        actions={
+          <Button variant="outlined" size="small" onClick={() => setTodayDetailsOpen(false)}>
+            Close
+          </Button>
+        }
+      />
+
+      {/* ── Needs Follow-up (chronic-absence) list ──────── */}
+      <ReusableDialog
+        open={followUpModalOpen}
+        onClose={() => setFollowUpModalOpen(false)}
+        title="Needs Follow-up"
+        content={
+          <Box sx={{ py: 1, minWidth: { sm: 360 } }}>
+            {followUpLoading ? (
+              <Stack spacing={1}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} variant="rounded" height={40} />
+                ))}
+              </Stack>
+            ) : followUpLearners.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No learners currently need follow-up for this class arm.
+              </Typography>
+            ) : (
+              <Stack spacing={1}>
+                {followUpLearners.map((l) => (
+                  <Box
+                    key={l.student_registration_id}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      p: 1,
+                      borderRadius: 1,
+                      bgcolor: alpha(theme.palette.error.main, 0.06),
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight={600}>
+                      {l.name}
+                    </Typography>
+                    <Typography variant="caption" color="error.main" fontWeight={700}>
+                      {l.attendance_rate}% attendance · {l.absent_count} absence(s)
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        }
+        actions={
+          <Button variant="outlined" size="small" onClick={() => setFollowUpModalOpen(false)}>
+            Close
+          </Button>
+        }
+      />
+
+      {/* ── View attendance history ──────────────────────── */}
+      <ReusableDialog
+        open={historyModalOpen}
+        onClose={() => setHistoryModalOpen(false)}
+        title="Attendance History"
+        content={
+          <Box sx={{ py: 1, minWidth: { sm: 360 } }}>
+            {historyLoading ? (
+              <Stack spacing={1}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} variant="rounded" height={32} />
+                ))}
+              </Stack>
+            ) : historyRows.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No attendance history available for this selection yet.
+              </Typography>
+            ) : (
+              <Stack spacing={0.5}>
+                {historyRows.map((row, i) => (
+                  <Stack key={i} direction="row" justifyContent="space-between" sx={{ py: 0.5 }}>
+                    <Typography variant="body2">{row.date || row.label}</Typography>
+                    <Typography variant="body2" fontWeight={700}>
+                      {row.rate ?? row.percent ?? 0}%
+                    </Typography>
+                  </Stack>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        }
+        actions={
+          <Button variant="outlined" size="small" onClick={() => setHistoryModalOpen(false)}>
+            Close
+          </Button>
+        }
+      />
+
+      {/* ── AI insight detail ────────────────────────────── */}
+      <ReusableDialog
+        open={insightDialog.open}
+        onClose={() => setInsightDialog({ open: false, title: '', learners: [] })}
+        title={insightDialog.title}
+        content={
+          <Box sx={{ py: 1, minWidth: { sm: 360 } }}>
+            {insightDialog.allInsights ? (
+              <Stack spacing={1.5}>
+                {insightDialog.allInsights.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    No notable changes detected today.
+                  </Typography>
+                ) : (
+                  insightDialog.allInsights.map((insight, i) => (
+                    <Box key={i}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {insight.text}
+                      </Typography>
+                      {insight.detail && (
+                        <Typography variant="caption" color="text.secondary">
+                          {insight.detail}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))
+                )}
+              </Stack>
+            ) : insightDialog.learners.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                No specific learners tied to this insight.
+              </Typography>
+            ) : (
+              <Stack spacing={0.5}>
+                {insightDialog.learners.map((name, i) => (
+                  <Typography key={i} variant="body2">
+                    • {name}
+                  </Typography>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        }
+        actions={
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setInsightDialog({ open: false, title: '', learners: [] })}
+          >
+            Close
+          </Button>
+        }
+      />
     </Box>
   );
 };

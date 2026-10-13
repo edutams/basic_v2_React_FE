@@ -546,7 +546,7 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
         />
       </Stack>
 
-      <Grid container spacing={1.5}>
+      <Grid container spacing={1}>
         {(isAdmin || teacherClasses.length > 1) && (
           <Grid size={{ xs: 12, md: 2.2 }}>
             {isAdmin ? (

@@ -10,8 +10,6 @@ import { usePermissions } from '@/context/TenantContext/permissions';
 import SetupAffectivePsychomotorTab from './components/SetupAffectivePsychomotorTab';
 import MarkAttendanceTab from './components/MarkAttendanceTab';
 import MarkPsychomotorTab from './components/MarkPsychomotorTab';
-import AttendanceAnalyticsCards from './components/AttendanceAnalyticsCards';
-import PsychomotorAnalyticsCards from './components/PsychomotorAnalyticsCards';
 
 const BCrumb = [
   { to: '/', title: 'Home' },
@@ -63,18 +61,6 @@ const AttendancePsychomotor = () => {
     affectiveTrendText: '',
     psychoChange: null,
     psychoTrendText: '',
-  });
-
-  const [schoolDaysMetrics, setSchoolDaysMetrics] = useState({
-    scope: 'term',
-    termDaysOpen: 0,
-    termDaysElapsed: 0,
-    termDaysRemaining: 0,
-    termElapsedPercentage: 0,
-    weekDaysOpen: 0,
-    weekDaysElapsed: 0,
-    weekDaysRemaining: 0,
-    weekElapsedPercentage: 0,
   });
 
   // Start as loading so the analytics cards show skeletons on first paint
@@ -151,29 +137,6 @@ const AttendancePsychomotor = () => {
     }
   }, []);
 
-  // ── Fetch School Days Open from API ────────────────────────
-  const fetchSchoolDaysOpen = useCallback(async (params = {}) => {
-    try {
-      const res = await attendanceApi.getSchoolDaysOpen(params);
-      if (res.data?.data) {
-        const data = res.data.data;
-        setSchoolDaysMetrics({
-          scope: data.scope || 'term',
-          termDaysOpen: data.term?.days_open || 0,
-          termDaysElapsed: data.term?.days_elapsed || 0,
-          termDaysRemaining: data.term?.days_remaining || 0,
-          termElapsedPercentage: data.term?.elapsed_percentage || 0,
-          weekDaysOpen: data.week?.days_open || 0,
-          weekDaysElapsed: data.week?.days_elapsed || 0,
-          weekDaysRemaining: data.week?.days_remaining || 0,
-          weekElapsedPercentage: data.week?.elapsed_percentage || 0,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to fetch school days:', error);
-    }
-  }, []);
-
   // ── Filter update callbacks from child tabs ─────────────────
   const handleAttendanceFilter = (classArmId, sessionId, termId, weekId, programmeId, classId) => {
     if (classArmId) setSelectedClassArmId(classArmId);
@@ -184,11 +147,6 @@ const AttendancePsychomotor = () => {
     if (classId) setSelectedClassId(classId);
     fetchAttendanceStats({
       class_arm_id: classArmId || undefined,
-      session_id: sessionId || undefined,
-      term_id: termId || undefined,
-      week_term_id: weekId || undefined,
-    });
-    fetchSchoolDaysOpen({
       session_id: sessionId || undefined,
       term_id: termId || undefined,
       week_term_id: weekId || undefined,
@@ -231,19 +189,11 @@ const AttendancePsychomotor = () => {
       component: (
         <MarkAttendanceTab metrics={attendanceMetrics} onFilter={handleAttendanceFilter} />
       ),
-      analytics: (
-        <AttendanceAnalyticsCards
-          metrics={attendanceMetrics}
-          schoolDaysMetrics={schoolDaysMetrics}
-          loading={loading}
-          classArmId={selectedClassArmId}
-          sessionId={selectedSessionId}
-          termId={selectedTermId}
-          weekId={selectedWeekId}
-          programmeId={selectedProgrammeId}
-          classId={selectedClassId}
-        />
-      ),
+      // The redesigned Mark Attendance tab now renders its own stats row
+      // (Class Learners / Marked Today / Attendance This Week / Needs
+      // Follow-up) inline, so the old standalone analytics row would just
+      // duplicate it above the tab bar.
+      analytics: null,
     });
     counter++;
 
@@ -253,18 +203,11 @@ const AttendancePsychomotor = () => {
       component: (
         <MarkPsychomotorTab metrics={psychomotorMetrics} onFilter={handlePsychomotorFilter} />
       ),
-      analytics: (
-        <PsychomotorAnalyticsCards
-          metrics={psychomotorMetrics}
-          loading={loading}
-          classArmId={selectedClassArmId}
-          sessionId={selectedSessionId}
-          termId={selectedTermId}
-          weekId={selectedWeekId}
-          programmeId={selectedProgrammeId}
-          classId={selectedClassId}
-        />
-      ),
+      // The redesigned Mark Psychomotor tab now renders its own 6-card
+      // stats row inline (fed by this same `psychomotorMetrics`), so the
+      // old standalone analytics row would just duplicate it above the tab
+      // bar — same reasoning as Mark Attendance's `analytics: null` above.
+      analytics: null,
     });
 
     return tabs;
@@ -272,7 +215,6 @@ const AttendancePsychomotor = () => {
     can,
     attendanceMetrics,
     psychomotorMetrics,
-    schoolDaysMetrics,
     loading,
     handleAttendanceFilter,
     handlePsychomotorFilter,
@@ -295,14 +237,25 @@ const AttendancePsychomotor = () => {
   // Attendance"/"Mark Psychomotor" buttons) via ?tab=mark-attendance or
   // navigate(..., { state: { initialTabId: 'mark-psychomotor' } }) — tab
   // order depends on the viewer's permissions, so this matches by id, not
-  // a hardcoded index.
+  // a hardcoded index. Only re-applies once per distinct navigation
+  // (tracked via location.key) — `availableTabs` is still a dependency so
+  // this retries once permissions/stats finish loading and the tab
+  // actually exists, but otherwise `availableTabs` changing identity on
+  // every stat refresh must NOT re-force the URL's tab, or clicking a
+  // different tab while `?tab=` is still in the address bar would keep
+  // snapping back to it.
+  const appliedTabKeyRef = useRef(null);
   useEffect(() => {
+    if (appliedTabKeyRef.current === location.key) return;
     const desiredId = new URLSearchParams(location.search).get('tab') || location.state?.initialTabId;
     if (!desiredId) return;
     const idx = availableTabs.findIndex((t) => t.id === desiredId);
-    if (idx >= 0) setActiveTab(idx);
+    if (idx >= 0) {
+      setActiveTab(idx);
+      appliedTabKeyRef.current = location.key;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableTabs, location.search, location.state]);
+  }, [availableTabs, location.key, location.search, location.state]);
 
   // ── Load stats for the currently active tab only ─────────────
   // Fires on mount and whenever the user switches tabs so the
@@ -322,7 +275,6 @@ const AttendancePsychomotor = () => {
 
     if (tab.id === 'mark-attendance') {
       fetchAttendanceStats(params);
-      fetchSchoolDaysOpen(params);
     } else if (tab.id === 'mark-psychomotor') {
       fetchPsychomotorStats(params);
     }

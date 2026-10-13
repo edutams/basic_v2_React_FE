@@ -105,7 +105,11 @@ const SchoolLayout = () => {
   // only caught this reactively (after some other locked API call's 402
   // fired the global listener below) rather than the moment the dashboard
   // itself loads.
-  if (subscriptionTier === 'locked' && isSubscriptionOwner(roles) && location.pathname.startsWith('/dashboard')) {
+  if (
+    subscriptionTier === 'locked' &&
+    isSubscriptionOwner(roles) &&
+    location.pathname.startsWith('/dashboard')
+  ) {
     return <Navigate to="/subscriptions" replace />;
   }
 
@@ -149,13 +153,14 @@ const SchoolLayout = () => {
             sx={{
               maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',
               overflowX: 'auto',
+              overflowY: 'auto',
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              px: { xs: 2, sm: 3 },
+              px: { xs: 1, sm: 1.5 },
             }}
           >
-            <Box sx={{ flex: 1, overflowX: 'auto', py: 3, }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto', py: 1 }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

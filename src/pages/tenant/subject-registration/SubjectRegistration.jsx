@@ -97,7 +97,7 @@ const AnalyticsStatCard = ({
   const scheme = schemeMap[colorIndex % schemeMap.length];
 
   const cardSx = {
-    p: '10px 12px',
+    p: '12px 14px',
     borderRadius: '12px',
     bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
     border: '1px solid',
@@ -112,11 +112,11 @@ const AnalyticsStatCard = ({
   if (loading) {
     return (
       <Paper elevation={0} sx={cardSx}>
-        <Skeleton variant="rounded" width={38} height={38} sx={{ borderRadius: '10px', flexShrink: 0 }} />
+        <Skeleton variant="rounded" width={46} height={46} sx={{ borderRadius: '12px', flexShrink: 0 }} />
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Skeleton variant="text" width="50%" height={30} />
-          <Skeleton variant="text" width="70%" height={16} />
-          <Skeleton variant="text" width="55%" height={14} />
+          <Skeleton variant="text" width="50%" height={38} />
+          <Skeleton variant="text" width="70%" height={20} />
+          <Skeleton variant="text" width="55%" height={18} />
         </Box>
       </Paper>
     );
@@ -141,9 +141,9 @@ const AnalyticsStatCard = ({
     >
       <Box
         sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '10px',
+          width: 46,
+          height: 46,
+          borderRadius: '12px',
           bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
           color: isDark ? '#ffffff' : scheme.color,
           display: 'flex',
@@ -152,20 +152,20 @@ const AnalyticsStatCard = ({
           flexShrink: 0,
         }}
       >
-        {Icon && <Icon sx={{ fontSize: 22, color: 'inherit' }} />}
+        {Icon && <Icon sx={{ fontSize: 26, color: 'inherit' }} />}
       </Box>
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Typography variant="h4" fontWeight={700} sx={{ color: isDark ? '#fff' : scheme.color, lineHeight: 1.15 }}>
+        <Typography variant="h3" fontWeight={700} sx={{ color: isDark ? '#fff' : scheme.color, lineHeight: 1.15, fontSize: '2rem' }}>
           {value}
         </Typography>
         <Typography
-          variant="caption"
+          variant="body2"
           fontWeight={700}
           sx={{
             color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563',
             textTransform: 'uppercase',
             display: 'block',
-            fontSize: '0.75rem',
+            fontSize: '0.85rem',
           }}
         >
           {label}
@@ -175,20 +175,20 @@ const AnalyticsStatCard = ({
             <LinearProgress
               variant="determinate"
               value={progress}
-              sx={{ flex: 1, height: 6, borderRadius: 4, bgcolor: scheme.bg, '& .MuiLinearProgress-bar': { bgcolor: scheme.color } }}
+              sx={{ flex: 1, height: 7, borderRadius: 4, bgcolor: scheme.bg, '& .MuiLinearProgress-bar': { bgcolor: scheme.color } }}
             />
-            <Typography variant="caption" fontWeight={700} sx={{ color: scheme.color, fontSize: '0.75rem', flexShrink: 0 }}>
+            <Typography variant="body2" fontWeight={700} sx={{ color: scheme.color, fontSize: '0.85rem', flexShrink: 0 }}>
               {progress}%
             </Typography>
           </Stack>
         ) : (
           subtitle && (
             <Typography
-              variant="caption"
+              variant="body2"
               sx={{
-                color: isDark ? 'rgba(255,255,255,0.6)' : '#6B7280',
+                color: isDark ? 'rgba(255,255,255,0.65)' : '#6B7280',
                 display: 'block',
-                fontSize: '0.72rem',
+                fontSize: '0.8rem',
               }}
             >
               {subtitle}

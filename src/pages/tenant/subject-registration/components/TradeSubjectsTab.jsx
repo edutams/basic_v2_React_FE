@@ -26,7 +26,7 @@ import SubjectMatrixTable from './SubjectMatrixTable';
 import SubjectMatrixTableSkeleton from './SubjectMatrixTableSkeleton';
 
 const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
-  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved },
+  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved, search = '' },
   ref,
 ) {
   const navigate = useNavigate();
@@ -174,7 +174,25 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
     await runSave();
   };
 
-  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData }));
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData, learners }));
+
+  const filteredLearners = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return learners;
+    return learners.filter(
+      (l) => (l.name || '').toLowerCase().includes(q) || (l.admissionNo || '').toLowerCase().includes(q),
+    );
+  }, [learners, search]);
+
+  // Per-subject registered-learner counts, over the FULL roster — must not
+  // shrink when a search filter narrows which rows are visible.
+  const registeredCount = useMemo(() => {
+    const counts = {};
+    subjects.forEach((subj) => {
+      counts[subj.id] = learners.filter((l) => l.registered[subj.id]).length;
+    });
+    return counts;
+  }, [subjects, learners]);
 
   useEffect(() => {
     onStatusChange?.({ pendingCount, saving });
@@ -285,10 +303,14 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
           No trade subjects have been created for this class. Please go to the Curriculum step to
           create subjects before registering learners.
         </Alert>
+      ) : filteredLearners.length === 0 ? (
+        <Alert severity="info">No learners match your search.</Alert>
       ) : (
         <SubjectMatrixTable
           subjects={subjects}
-          learners={learners}
+          learners={filteredLearners}
+          registeredCount={registeredCount}
+          requiredSubjectIds={subjects.map((s) => s.id)}
           onToggle={toggleRegistration}
           onRegisterAll={registerAll}
           onUnregisterAll={unregisterAll}

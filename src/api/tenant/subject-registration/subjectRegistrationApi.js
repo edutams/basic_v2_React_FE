@@ -65,6 +65,12 @@ const subjectRegistrationApi = {
     }),
   bulkToggle: (changes, term = {}) =>
     tenantApi.post(`/subject-registration/bulk-toggle`, { changes, ...term }),
+  copyChoices: (sourceLearnerId, targetLearnerIds, term = {}) =>
+    tenantApi.post(`/subject-registration/copy-choices`, {
+      source_learner_id: sourceLearnerId,
+      target_learner_ids: targetLearnerIds,
+      ...term,
+    }),
 
   // ── Stats ────────────────────────────────────────────────
   getRegistrationStats: (params = {}) =>

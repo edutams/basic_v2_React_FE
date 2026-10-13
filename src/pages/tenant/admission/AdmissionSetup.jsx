@@ -52,6 +52,10 @@ import {
   ReportProblem as StepNotConfiguredIcon,
   ArrowForwardIos as StepArrowIcon,
   ChevronRight as ChevronRightIcon,
+  EventAvailable as StartDateIcon,
+  EventBusy as EndDateIcon,
+  DateRange as ApplicationPeriodIcon,
+  FiberManualRecord as StatusDotIcon,
 } from '@mui/icons-material';
 import {
   IconEye,
@@ -81,6 +85,14 @@ import {
 import attendanceApi from '@/api/tenant/attendance/attendanceApi';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Setup' }];
+
+// helper — e.g. "2026-09-07" -> "Sep 07, 2026"
+const formatDisplayDate = (d) => {
+  if (!d) return null;
+  const date = new Date(`${d}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+};
 
 // helper — safely extract array from various API response shapes
 const extractList = (res) => {
@@ -126,8 +138,8 @@ const YesNoPill = ({ value }) => (
     label={value ? 'Yes' : 'No'}
     size="small"
     sx={{
-      bgcolor: value ? 'primary.light' : 'warning.light',
-      color: value ? 'primary.main' : 'warning.main',
+      bgcolor: value ? 'primary.light' : '#FFF1E0',
+      color: value ? 'primary.main' : '#E65100',
       fontWeight: 700,
       fontSize: 11,
       minWidth: 36,
@@ -288,7 +300,18 @@ const StepCard = ({ step, index }) => {
 const StepperSkeleton = () => (
   <Stack direction="row" spacing={1.5} sx={{ mb: 2.5, overflowX: 'auto' }}>
     {Array.from({ length: 5 }).map((_, i) => (
-      <Paper key={i} elevation={0} sx={{ flex: 1, minWidth: 150, p: 1.25, borderRadius: '12px', border: '1px solid', borderColor: 'divider' }}>
+      <Paper
+        key={i}
+        elevation={0}
+        sx={{
+          flex: 1,
+          minWidth: 150,
+          p: 1.25,
+          borderRadius: '12px',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
           <Skeleton variant="circular" width={38} height={38} />
           <Box sx={{ flex: 1 }}>
@@ -327,7 +350,13 @@ const STD_NUM_OPTIONS = [
 // anything else) can never survive into what's shown or saved, regardless
 // of what put it there in the first place.
 const sanitizeCodeFormat = (value) => {
-  const validTokens = new Set(['[:shortname]', '[:year]', ...STD_NUM_OPTIONS.map((o) => o.key)]);
+  const validTokens = new Set([
+    '[:shortname]',
+    '[:year]',
+    '[:programme_code]',
+    '[:customtext]',
+    ...STD_NUM_OPTIONS.map((o) => o.key),
+  ]);
 
   return (value || '')
     .split('/')
@@ -336,19 +365,62 @@ const sanitizeCodeFormat = (value) => {
 };
 
 const CODE_FORMAT_STEPS = [
-  { key: 'select', title: 'Select Components', subtitle: 'Choose what to include', color: '#9333EA' },
-  { key: 'configure', title: 'Configure Settings', subtitle: 'Set format options', color: '#2563EB' },
+  {
+    key: 'select',
+    title: 'Select Components',
+    subtitle: 'Choose what to include',
+    color: '#9333EA',
+  },
+  {
+    key: 'configure',
+    title: 'Configure Settings',
+    subtitle: 'Set format options',
+    color: '#2563EB',
+  },
   { key: 'preview', title: 'Preview & Save', subtitle: 'Confirm and save', color: '#16A34A' },
 ];
 
 const CODE_FORMAT_COMPONENTS = [
-  { key: 'shortname', label: 'School Short Name', example: 'e.g. IMC', icon: IconSchool, color: '#9333EA', real: true },
-  { key: 'year', label: 'Admission Year', example: 'e.g. 2026', icon: IconCalendar, color: '#2563EB', real: true },
-  { key: 'stdnum', label: 'Sequential Number', example: 'e.g. 01, 02, 03', icon: IconHash, color: '#16A34A', real: true },
-  { key: 'programme', label: 'Programme Code', example: 'e.g. SCI, COM', icon: IconId, color: '#9CA3AF', real: false },
-  { key: 'department', label: 'Department Code', example: 'e.g. BIO, MAT, ENG', icon: IconId, color: '#9CA3AF', real: false },
-  { key: 'campus', label: 'Campus Code', example: 'e.g. MAIN, LAG', icon: IconId, color: '#9CA3AF', real: false },
-  { key: 'customtext', label: 'Custom Text', example: 'e.g. ADM, STU', icon: IconId, color: '#9CA3AF', real: false },
+  {
+    key: 'shortname',
+    label: 'School Short Name',
+    example: 'e.g. IMC',
+    icon: IconSchool,
+    color: '#9333EA',
+    real: true,
+  },
+  {
+    key: 'year',
+    label: 'Admission Year',
+    example: 'e.g. 2026',
+    icon: IconCalendar,
+    color: '#2563EB',
+    real: true,
+  },
+  {
+    key: 'stdnum',
+    label: 'Sequential Number',
+    example: 'e.g. 01, 02, 03',
+    icon: IconHash,
+    color: '#16A34A',
+    real: true,
+  },
+  {
+    key: 'programme',
+    label: 'Programme Code',
+    example: 'e.g. SCI, COM',
+    icon: IconId,
+    color: '#DB2777',
+    real: true,
+  },
+  {
+    key: 'customtext',
+    label: 'Custom Text',
+    example: 'e.g. ADM, STU',
+    icon: IconId,
+    color: '#0D9488',
+    real: true,
+  },
 ];
 
 const AdmissionSetup = () => {
@@ -397,6 +469,7 @@ const AdmissionSetup = () => {
   // ── Code Format state (school-level, not per-batch) ─────────────────────────
   const [codeFormatInput, setCodeFormatInput] = useState('');
   const [schoolShortName, setSchoolShortName] = useState('');
+  const [customText, setCustomText] = useState('');
   const [selectedStdNum, setSelectedStdNum] = useState('');
   // hasShortNameInFormat removed — everything lives in codeFormatInput directly
   const [codeFormatSaving, setCodeFormatSaving] = useState(false);
@@ -458,8 +531,7 @@ const AdmissionSetup = () => {
       if (list.length > 0) {
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
         const defaultSession =
-          (activeSessionTerm && list.find((s) => s.id === activeSessionTerm.session_id)) ||
-          list[0];
+          (activeSessionTerm && list.find((s) => s.id === activeSessionTerm.session_id)) || list[0];
         setSelectedSessionId(defaultSession.id);
         await loadSessionTerms(defaultSession.id, activeSessionTerm);
       }
@@ -523,10 +595,12 @@ const AdmissionSetup = () => {
       const res = await fetchAdmissionCodeFormat();
       const savedFormat = res?.data?.code_format ?? '';
       const savedShortName = res?.data?.school_short_name ?? '';
+      const savedCustomText = res?.data?.custom_text ?? '';
 
       // Put the full format directly into the input field
       setCodeFormatInput(sanitizeCodeFormat(savedFormat));
       setSchoolShortName(savedShortName || '');
+      setCustomText(savedCustomText || '');
 
       // Detect which student number is selected
       let foundStdNum = '';
@@ -679,6 +753,33 @@ const AdmissionSetup = () => {
     }
   };
 
+  const handleCustomTextChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    setCustomText(value);
+
+    if (value.trim()) {
+      setCodeFormatInput((prev) => {
+        if (prev.includes('[:customtext]')) return prev;
+        const trimmed = prev.trim();
+        const prefix = trimmed.length > 0 ? '/' : '';
+        return trimmed + prefix + '[:customtext]';
+      });
+    } else {
+      setCodeFormatInput((prev) =>
+        prev
+          .split('/[:customtext]')
+          .join('')
+          .split('[:customtext]/')
+          .join('')
+          .split('[:customtext]')
+          .join('')
+          .replace(/\/+$/, '')
+          .replace(/^\/+/, '')
+          .replace(/\/+/g, '/'),
+      );
+    }
+  };
+
   const handleYearClick = () => {
     appendToFormat('[:year]');
     setCopiedPlaceholder('[:year]');
@@ -721,6 +822,7 @@ const AdmissionSetup = () => {
       await updateAdmissionCodeFormat({
         code_format: fullFormat,
         school_short_name: schoolShortName.trim(),
+        custom_text: customText.trim(),
       });
       showSnackbar('Admission code format updated successfully');
     } catch (err) {
@@ -734,9 +836,12 @@ const AdmissionSetup = () => {
   // Generate example output
   const getExampleOutput = () => {
     const shortNameValue = schoolShortName.trim() || 'STPAULS';
+    const customTextValue = customText.trim() || 'ADM';
     return getFullCodeFormat()
       .replace(/\[:shortname\]/g, shortNameValue)
       .replace(/\[:year\]/g, '2026')
+      .replace(/\[:customtext\]/g, customTextValue)
+      .replace(/\[:programme_code\]/g, 'SCI')
       .replace(/\[:stdNum_2\]/g, '01')
       .replace(/\[:stdNum_3\]/g, '001')
       .replace(/\[:stdNum_4\]/g, '0001')
@@ -748,6 +853,8 @@ const AdmissionSetup = () => {
   const componentActive = {
     shortname: codeFormatInput.includes('[:shortname]'),
     year: codeFormatInput.includes('[:year]'),
+    programme: codeFormatInput.includes('[:programme_code]'),
+    customtext: codeFormatInput.includes('[:customtext]'),
     stdnum: Boolean(selectedStdNum) && codeFormatInput.includes(selectedStdNum),
   };
 
@@ -772,12 +879,48 @@ const AdmissionSetup = () => {
       return;
     }
 
+    if (key === 'programme') {
+      if (componentActive.programme) {
+        setCodeFormatInput((prev) =>
+          prev
+            .split('/[:programme_code]')
+            .join('')
+            .split('[:programme_code]/')
+            .join('')
+            .split('[:programme_code]')
+            .join('')
+            .replace(/\/+$/, '')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/'),
+        );
+      } else {
+        appendToFormat('[:programme_code]');
+      }
+      return;
+    }
+
+    if (key === 'customtext' && componentActive.customtext) {
+      handleCustomTextChange({ target: { value: '' } });
+      return;
+    }
+    if (key === 'customtext') {
+      // currently off: no-op — the text is typed in the Configure Settings
+      // column, there's nothing to toggle on here (mirrors 'shortname')
+      return;
+    }
+
     if (key === 'stdnum') {
       if (componentActive.stdnum) {
         setCodeFormatInput((prev) => {
           let cleaned = prev;
           for (const opt of STD_NUM_OPTIONS) {
-            cleaned = cleaned.split(`/${opt.key}`).join('').split(`${opt.key}/`).join('').split(opt.key).join('');
+            cleaned = cleaned
+              .split(`/${opt.key}`)
+              .join('')
+              .split(`${opt.key}/`)
+              .join('')
+              .split(opt.key)
+              .join('');
           }
           return cleaned.replace(/\/+$/, '').replace(/^\/+/, '').replace(/\/+/g, '/');
         });
@@ -799,6 +942,7 @@ const AdmissionSetup = () => {
   const codeFormatBreakdown = useMemo(() => {
     const tokens = getFullCodeFormat().split('/').filter(Boolean);
     const shortNameValue = schoolShortName.trim() || 'STPAULS';
+    const customTextValue = customText.trim() || 'ADM';
 
     return tokens.map((token) => {
       if (token === '[:shortname]') {
@@ -807,6 +951,12 @@ const AdmissionSetup = () => {
       if (token === '[:year]') {
         return { label: 'Admission Year', value: '2026', color: '#2563EB' };
       }
+      if (token === '[:programme_code]') {
+        return { label: 'Programme Code', value: 'SCI', color: '#DB2777' };
+      }
+      if (token === '[:customtext]') {
+        return { label: 'Custom Text', value: customTextValue, color: '#0D9488' };
+      }
       const stdOpt = STD_NUM_OPTIONS.find((o) => o.key === token);
       if (stdOpt) {
         return { label: 'Sequential Number', value: stdOpt.example, color: '#16A34A' };
@@ -814,7 +964,7 @@ const AdmissionSetup = () => {
       return { label: token, value: token, color: '#6B7280' };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeFormatInput, schoolShortName]);
+  }, [codeFormatInput, schoolShortName, customText]);
 
   // ── Code Format wizard: a few more incrementing sample numbers ─────────────
   const moreExamples = useMemo(() => {
@@ -822,16 +972,19 @@ const AdmissionSetup = () => {
     if (!stdOpt || !getFullCodeFormat()) return [];
     const digits = stdOpt.example.length;
     const shortNameValue = schoolShortName.trim() || 'STPAULS';
+    const customTextValue = customText.trim() || 'ADM';
 
     return [1, 2, 3].map((n) =>
       getFullCodeFormat()
         .replace(/\[:shortname\]/g, shortNameValue)
         .replace(/\[:year\]/g, '2026')
+        .replace(/\[:customtext\]/g, customTextValue)
+        .replace(/\[:programme_code\]/g, 'SCI')
         .split(stdOpt.key)
         .join(String(n).padStart(digits, '0')),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeFormatInput, schoolShortName, selectedStdNum]);
+  }, [codeFormatInput, schoolShortName, customText, selectedStdNum]);
 
   // Dynamic session name for header chip
   const currentSessionObj = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
@@ -947,7 +1100,9 @@ const AdmissionSetup = () => {
           key: 'exam',
           label: 'Entrance Exam',
           caption: 'Set subjects, date, rules and venues',
-          done: !selectedBatch.has_entrance_exam || Boolean(selectedBatch.exam_date && selectedBatch.pass_mark),
+          done:
+            !selectedBatch.has_entrance_exam ||
+            Boolean(selectedBatch.exam_date && selectedBatch.pass_mark),
         },
         {
           key: 'payment',
@@ -1024,9 +1179,29 @@ const AdmissionSetup = () => {
             >
               {loading ? (
                 <Box>
+                  <Skeleton variant="text" width="60%" sx={{ mb: 0.5 }} />
                   <Skeleton variant="rounded" height={40} sx={{ mb: 1.5 }} />
+                  <Skeleton variant="text" width="30%" sx={{ mb: 0.5 }} />
                   <Skeleton variant="rounded" height={40} sx={{ mb: 1.5 }} />
-                  <Skeleton variant="rounded" height={100} />
+                  <Box
+                    sx={{
+                      p: 1.25,
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Skeleton variant="rounded" width={90} height={20} sx={{ mb: 1 }} />
+                    <Skeleton variant="text" width="70%" sx={{ mb: 1 }} />
+                    <Stack spacing={0.75}>
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <Stack key={i} direction="row" alignItems="center" spacing={0.75}>
+                          <Skeleton variant="circular" width={15} height={15} />
+                          <Skeleton variant="text" width={`${60 - i * 8}%`} />
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Box>
                 </Box>
               ) : (
                 <>
@@ -1076,29 +1251,52 @@ const AdmissionSetup = () => {
                       sx={{
                         p: 1.25,
                         borderRadius: 2,
-                        bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(16,185,129,0.08)' : '#ECFDF5'),
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark' ? 'rgba(16,185,129,0.08)' : '#ECFDF5',
                         border: '1px solid',
                         borderColor: 'success.light',
                       }}
                     >
-                      <Chip label="Active Session" size="small" color="success" sx={{ fontWeight: 700, fontSize: 10, mb: 1 }} />
+                      <Chip
+                        label="Active Session"
+                        size="small"
+                        color="success"
+                        sx={{ fontWeight: 700, fontSize: 10, mb: 1 }}
+                      />
                       <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.75 }}>
-                        {selectedSessionTermObj.session?.session_name} – {selectedSessionTermObj.term?.term_name}
+                        {selectedSessionTermObj.session?.session_name} –{' '}
+                        {selectedSessionTermObj.term?.term_name}
                       </Typography>
-                      <Stack spacing={0.4}>
-                        <Typography variant="caption" color="text.secondary">
-                          Start Date: <strong>{termDateRange.start || '—'}</strong>
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          End Date: <strong>{termDateRange.end || '—'}</strong>
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Application Period:{' '}
-                          <strong>
-                            {termDateRange.start || '—'} - {selectedBatch?.closing_date || '—'}
-                          </strong>
-                        </Typography>
+                      <Stack spacing={0.6}>
                         <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <StartDateIcon sx={{ fontSize: 15, color: 'success.main' }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Start Date: <strong>{formatDisplayDate(termDateRange.start) || '—'}</strong>
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <EndDateIcon sx={{ fontSize: 15, color: 'error.main' }} />
+                          <Typography variant="caption" color="text.secondary">
+                            End Date: <strong>{formatDisplayDate(termDateRange.end) || '—'}</strong>
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <ApplicationPeriodIcon sx={{ fontSize: 15, color: 'info.main' }} />
+                          <Typography variant="caption" color="text.secondary">
+                            Application Period:{' '}
+                            <strong>
+                              {formatDisplayDate(termDateRange.start) || '—'} -{' '}
+                              {formatDisplayDate(selectedBatch?.closing_date) || '—'}
+                            </strong>
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <StatusDotIcon
+                            sx={{
+                              fontSize: 10,
+                              color: selectedSessionTermObj.status === 'active' ? 'success.main' : 'text.disabled',
+                            }}
+                          />
                           <Typography variant="caption" color="text.secondary">
                             Status:
                           </Typography>
@@ -1210,27 +1408,86 @@ const AdmissionSetup = () => {
                     <MenuItem value="open">Open</MenuItem>
                     <MenuItem value="close">Closed</MenuItem>
                   </TextField>
-                  <Button
-                    size="small"
-                    onClick={() => {
-                      setBatchSearch('');
-                      setBatchProgrammeFilter('all');
-                      setBatchStatusFilter('all');
-                      setBatchPage(0);
-                    }}
-                    sx={{ flexShrink: 0 }}
-                  >
-                    Clear Filters
-                  </Button>
+                  {(batchSearch.trim() || batchProgrammeFilter !== 'all' || batchStatusFilter !== 'all') && (
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setBatchSearch('');
+                        setBatchProgrammeFilter('all');
+                        setBatchStatusFilter('all');
+                        setBatchPage(0);
+                      }}
+                      sx={{ flexShrink: 0 }}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
                 </Stack>
               )}
 
               {!selectedSessionTermId ? null : batchesLoading ? (
-                <Stack spacing={1}>
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} variant="rounded" height={44} />
-                  ))}
-                </Stack>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Batch Name</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Programme</TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          Entrance Exam
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          Require Payment
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          Admission Letter
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          Status
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: 700 }}>
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <Skeleton variant="text" width={16} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width="75%" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="text" width="60%" />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Skeleton variant="rounded" width={70} height={20} sx={{ mx: 'auto' }} />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Stack direction="row" spacing={0.5} justifyContent="center">
+                              <Skeleton variant="rounded" width={30} height={18} />
+                              <Skeleton variant="rounded" width={30} height={18} />
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Stack direction="row" spacing={0.5} justifyContent="center">
+                              <Skeleton variant="circular" width={22} height={22} />
+                              <Skeleton variant="circular" width={22} height={22} />
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Skeleton variant="rounded" width={60} height={20} sx={{ mx: 'auto' }} />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Skeleton variant="circular" width={22} height={22} sx={{ mx: 'auto' }} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               ) : filteredBatches.length === 0 ? (
                 <Alert
                   severity="info"
@@ -1252,6 +1509,7 @@ const AdmissionSetup = () => {
                         <TableRow>
                           <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                           <TableCell sx={{ fontWeight: 700 }}>Batch Name</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Programme</TableCell>
                           <TableCell align="center" sx={{ fontWeight: 700 }}>
                             Entrance Exam
                           </TableCell>
@@ -1281,6 +1539,10 @@ const AdmissionSetup = () => {
                             <TableCell>{batchPage * BATCHES_PER_PAGE + i + 1}</TableCell>
 
                             <TableCell sx={{ fontWeight: 600 }}>{batch.batch_name}</TableCell>
+
+                            <TableCell>
+                              {batch.programme?.programme_name || batch.programme?.name || '—'}
+                            </TableCell>
 
                             {/* Entrance Exam */}
                             <TableCell align="center">
@@ -1358,7 +1620,9 @@ const AdmissionSetup = () => {
                     onPageChange={(_, p) => setBatchPage(p)}
                     rowsPerPage={BATCHES_PER_PAGE}
                     rowsPerPageOptions={[BATCHES_PER_PAGE]}
-                    labelDisplayedRows={({ from, to, count }) => `Showing ${from}-${to} of ${count} batches`}
+                    labelDisplayedRows={({ from, to, count }) =>
+                      `Showing ${from}-${to} of ${count} batches`
+                    }
                   />
                 </Box>
               )}
@@ -1370,7 +1634,7 @@ const AdmissionSetup = () => {
             <ParentCard
               title={
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle1" fontWeight={700}>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ fontSize: '0.8rem' }}>
                     Selected Batch Configuration
                   </Typography>
                   {selectedBatch && (
@@ -1379,7 +1643,7 @@ const AdmissionSetup = () => {
                       startIcon={<EditIcon fontSize="small" />}
                       onClick={() => handleEditBatch(selectedBatch)}
                     >
-                      Edit Batch
+                      Edit
                     </Button>
                   )}
                 </Box>
@@ -1391,13 +1655,27 @@ const AdmissionSetup = () => {
             >
               {batchesLoading ? (
                 <Stack spacing={1}>
-                  <Skeleton variant="rounded" height={44} />
+                  <Box sx={{ p: 1, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Skeleton variant="text" width="55%" />
+                      <Skeleton variant="rounded" width={50} height={18} />
+                    </Stack>
+                    <Skeleton variant="text" width="80%" height={16} />
+                  </Box>
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} variant="rounded" height={38} />
+                    <Stack key={i} direction="row" alignItems="center" spacing={1} sx={{ py: 0.6 }}>
+                      <Skeleton variant="circular" width={22} height={22} />
+                      <Box sx={{ flex: 1 }}>
+                        <Skeleton variant="text" width="50%" />
+                        <Skeleton variant="text" width="75%" height={14} />
+                      </Box>
+                    </Stack>
                   ))}
                 </Stack>
               ) : !selectedBatch ? (
-                <Alert severity="info">Select a batch from the list to view its configuration.</Alert>
+                <Alert severity="info">
+                  Select a batch from the list to view its configuration.
+                </Alert>
               ) : (
                 <Stack spacing={1}>
                   <Paper
@@ -1415,9 +1693,15 @@ const AdmissionSetup = () => {
                       </Typography>
                       <BatchStatusChip status={selectedBatch.status} />
                     </Stack>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
-                      {selectedBatch.programme?.programme_name || selectedBatch.programme?.name || '—'} |{' '}
-                      {selectedSessionTermLabel}
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: '0.68rem' }}
+                    >
+                      {selectedBatch.programme?.programme_name ||
+                        selectedBatch.programme?.name ||
+                        '—'}{' '}
+                      | {selectedSessionTermLabel}
                     </Typography>
                   </Paper>
 
@@ -1462,17 +1746,91 @@ const AdmissionSetup = () => {
       <TabPanel value={tabValue} index={1}>
         {codeFormatLoading ? (
           <Box>
-            <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={2} sx={{ mb: 2, overflowX: 'auto' }}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} variant="rounded" height={64} sx={{ flex: 1, borderRadius: 2 }} />
+                <Paper
+                  key={i}
+                  elevation={0}
+                  sx={{
+                    flex: 1,
+                    minWidth: 220,
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                  }}
+                >
+                  <Skeleton variant="circular" width={36} height={36} />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="70%" />
+                    <Skeleton variant="text" width="50%" height={16} />
+                  </Box>
+                </Paper>
               ))}
             </Stack>
-            <Grid container spacing={2}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Grid key={i} size={{ xs: 12, md: 4 }}>
-                  <Skeleton variant="rounded" height={340} sx={{ borderRadius: 2 }} />
-                </Grid>
-              ))}
+
+            <Grid container spacing={2} alignItems="stretch">
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Select Components"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Skeleton variant="text" width="80%" sx={{ mb: 1 }} />
+                  <Stack spacing={1}>
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
+                        <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 1.5 }} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" width="60%" />
+                          <Skeleton variant="text" width="40%" height={14} />
+                        </Box>
+                        <Skeleton variant="rounded" width={18} height={18} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </ParentCard>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Configure Settings"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Skeleton variant="text" width="85%" sx={{ mb: 1.5 }} />
+                  <Skeleton variant="text" width="45%" sx={{ mb: 0.5 }} />
+                  <Skeleton variant="rounded" height={40} sx={{ mb: 2 }} />
+                  <Skeleton variant="text" width="45%" sx={{ mb: 0.5 }} />
+                  <Skeleton variant="rounded" height={40} />
+                </ParentCard>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ParentCard
+                  title="Preview & Save"
+                  sx={{
+                    '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.25 },
+                    '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
+                  }}
+                >
+                  <Skeleton variant="text" width="80%" sx={{ mb: 1.5 }} />
+                  <Skeleton variant="rounded" height={70} sx={{ mb: 1.5, borderRadius: 2 }} />
+                  <Stack spacing={0.75} sx={{ mb: 2 }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} variant="text" width={`${90 - i * 10}%`} />
+                    ))}
+                  </Stack>
+                  <Skeleton variant="rounded" height={38} />
+                </ParentCard>
+              </Grid>
             </Grid>
           </Box>
         ) : (
@@ -1517,7 +1875,11 @@ const AdmissionSetup = () => {
                     <Typography variant="body2" fontWeight={700}>
                       {step.title}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: '0.68rem' }}
+                    >
                       {step.subtitle}
                     </Typography>
                   </Box>
@@ -1538,7 +1900,11 @@ const AdmissionSetup = () => {
                     '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1 }}
+                  >
                     Choose the information to include in the admission number.
                   </Typography>
                   <Stack spacing={1}>
@@ -1581,14 +1947,22 @@ const AdmissionSetup = () => {
                             <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
                               {comp.label}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.68rem' }}>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{ fontSize: '0.68rem' }}
+                            >
                               {comp.example}
                             </Typography>
                           </Box>
                           {comp.real ? (
                             <Checkbox checked={active} size="small" sx={{ p: 0.5 }} />
                           ) : (
-                            <Chip label="Coming soon" size="small" sx={{ height: 18, fontSize: 9, fontWeight: 700 }} />
+                            <Chip
+                              label="Coming soon"
+                              size="small"
+                              sx={{ height: 18, fontSize: 9, fontWeight: 700 }}
+                            />
                           )}
                         </Box>
                       );
@@ -1606,10 +1980,18 @@ const AdmissionSetup = () => {
                     '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1.5 }}
+                  >
                     Set options for each selected component.
                   </Typography>
-                  {!componentActive.shortname && !componentActive.year && !componentActive.stdnum ? (
+                  {!componentActive.shortname &&
+                  !componentActive.year &&
+                  !componentActive.programme &&
+                  !componentActive.customtext &&
+                  !componentActive.stdnum ? (
                     <Alert severity="info">Select a component on the left to configure it.</Alert>
                   ) : (
                     <Stack spacing={2} divider={<Divider sx={{ borderStyle: 'dashed' }} />}>
@@ -1621,7 +2003,11 @@ const AdmissionSetup = () => {
                               School Short Name
                             </Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 1 }}
+                          >
                             Use your school&apos;s short name (2-10 characters).
                           </Typography>
                           <TextField
@@ -1650,9 +2036,65 @@ const AdmissionSetup = () => {
                               Admission Year
                             </Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block' }}
+                          >
                             Full calendar year (e.g. 2026) — automatically inserted into the format.
                           </Typography>
+                        </Box>
+                      )}
+
+                      {componentActive.programme && (
+                        <Box>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                            <IconId size={16} color="#DB2777" />
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              Programme Code
+                            </Typography>
+                          </Stack>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block' }}
+                          >
+                            Automatically resolved from the programme the learner is admitted
+                            into — no setup needed here.
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {componentActive.customtext && (
+                        <Box>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75 }}>
+                            <IconId size={16} color="#0D9488" />
+                            <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                              Custom Text
+                            </Typography>
+                          </Stack>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 1 }}
+                          >
+                            A fixed tag inserted into every admission number (e.g. ADM, STU).
+                          </Typography>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            placeholder="e.g. ADM"
+                            value={customText}
+                            onChange={handleCustomTextChange}
+                            sx={{
+                              '& .MuiOutlinedInput-input': {
+                                fontFamily: 'monospace',
+                                fontWeight: 700,
+                                letterSpacing: 0.5,
+                                textTransform: 'uppercase',
+                              },
+                            }}
+                          />
                         </Box>
                       )}
 
@@ -1664,7 +2106,11 @@ const AdmissionSetup = () => {
                               Sequential Number
                             </Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 1 }}
+                          >
                             Number of digits
                           </Typography>
                           <TextField
@@ -1680,8 +2126,13 @@ const AdmissionSetup = () => {
                               </MenuItem>
                             ))}
                           </TextField>
-                          <Alert severity="info" sx={{ mt: 1.5, fontSize: 11.5 }} icon={<IconInfoCircle size={16} />}>
-                            The sequential number will automatically increase for each new admitted student in this session.
+                          <Alert
+                            severity="info"
+                            sx={{ mt: 1.5, fontSize: 11.5 }}
+                            icon={<IconInfoCircle size={16} />}
+                          >
+                            The sequential number will automatically increase for each new admitted
+                            student in this session.
                           </Alert>
                         </Box>
                       )}
@@ -1699,12 +2150,18 @@ const AdmissionSetup = () => {
                     '& .MuiCardContent-root': { p: 1.25, '&:last-child': { pb: 1.25 } },
                   }}
                 >
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: 'block', mb: 1.5 }}
+                  >
                     See how the admission number will look.
                   </Typography>
 
                   {!getFullCodeFormat() ? (
-                    <Alert severity="info">Select components on the left to preview your format.</Alert>
+                    <Alert severity="info">
+                      Select components on the left to preview your format.
+                    </Alert>
                   ) : (
                     <>
                       <Paper
@@ -1713,12 +2170,18 @@ const AdmissionSetup = () => {
                           p: 1.5,
                           mb: 1.5,
                           borderRadius: 2,
-                          bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(6,78,59,0.2)' : '#ECFDF5'),
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'dark' ? 'rgba(6,78,59,0.2)' : '#ECFDF5',
                           border: '1px solid',
                           borderColor: 'success.light',
                         }}
                       >
-                        <Chip label="Sample Admission Number" size="small" color="success" sx={{ fontWeight: 700, fontSize: 10, mb: 1 }} />
+                        <Chip
+                          label="Sample Admission Number"
+                          size="small"
+                          color="success"
+                          sx={{ fontWeight: 700, fontSize: 10, mb: 1 }}
+                        />
                         <Typography
                           variant="h5"
                           fontWeight={800}
@@ -1726,7 +2189,11 @@ const AdmissionSetup = () => {
                         >
                           {codeFormatBreakdown.map((seg, i) => (
                             <Fragment key={i}>
-                              {i > 0 && <Box component="span" sx={{ color: 'text.disabled', mx: 0.25 }}>/</Box>}
+                              {i > 0 && (
+                                <Box component="span" sx={{ color: 'text.disabled', mx: 0.25 }}>
+                                  /
+                                </Box>
+                              )}
                               <Box component="span" sx={{ color: seg.color }}>
                                 {seg.value}
                               </Box>
@@ -1735,19 +2202,40 @@ const AdmissionSetup = () => {
                         </Typography>
                       </Paper>
 
-                      <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                      <Typography
+                        variant="caption"
+                        fontWeight={700}
+                        color="text.secondary"
+                        sx={{ display: 'block', mb: 0.75 }}
+                      >
                         Breakdown
                       </Typography>
                       <Stack spacing={0.5} sx={{ mb: 1.5 }}>
                         {codeFormatBreakdown.map((seg, i) => (
-                          <Stack key={i} direction="row" alignItems="center" justifyContent="space-between">
+                          <Stack
+                            key={i}
+                            direction="row"
+                            alignItems="center"
+                            justifyContent="space-between"
+                          >
                             <Stack direction="row" alignItems="center" spacing={0.75}>
-                              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: seg.color }} />
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  bgcolor: seg.color,
+                                }}
+                              />
                               <Typography variant="caption" color="text.secondary">
                                 {seg.label}
                               </Typography>
                             </Stack>
-                            <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{ fontFamily: 'monospace' }}
+                            >
                               {seg.value}
                             </Typography>
                           </Stack>
@@ -1756,14 +2244,28 @@ const AdmissionSetup = () => {
 
                       {moreExamples.length > 0 && (
                         <>
-                          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>
+                          <Typography
+                            variant="caption"
+                            fontWeight={700}
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 0.75 }}
+                          >
                             More Examples
                           </Typography>
                           <Stack direction="row" flexWrap="wrap" gap={0.75} sx={{ mb: 2 }}>
                             {moreExamples.map((ex, i) => (
-                              <Chip key={i} label={ex} size="small" sx={{ fontFamily: 'monospace', fontSize: 10.5, fontWeight: 700 }} />
+                              <Chip
+                                key={i}
+                                label={ex}
+                                size="small"
+                                sx={{ fontFamily: 'monospace', fontSize: 10.5, fontWeight: 700 }}
+                              />
                             ))}
-                            <Chip label="..." size="small" sx={{ fontFamily: 'monospace', fontSize: 10.5 }} />
+                            <Chip
+                              label="..."
+                              size="small"
+                              sx={{ fontFamily: 'monospace', fontSize: 10.5 }}
+                            />
                           </Stack>
                         </>
                       )}
@@ -1773,7 +2275,13 @@ const AdmissionSetup = () => {
                   <Button
                     variant="contained"
                     fullWidth
-                    startIcon={codeFormatSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+                    startIcon={
+                      codeFormatSaving ? (
+                        <CircularProgress size={18} color="inherit" />
+                      ) : (
+                        <SaveIcon />
+                      )
+                    }
                     onClick={handleSaveCodeFormat}
                     disabled={codeFormatSaving || !getFullCodeFormat().trim()}
                     sx={{ fontWeight: 700 }}
@@ -1941,7 +2449,7 @@ const AdmissionSetup = () => {
                   Pre-Application Payments
                 </Typography>
                 {!paymentViewBatch?.pre_application_payments ||
-                  paymentViewBatch.pre_application_payments.length === 0 ? (
+                paymentViewBatch.pre_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No pre-application payments set
                   </Typography>
@@ -2002,7 +2510,7 @@ const AdmissionSetup = () => {
                   Post-Application Payments
                 </Typography>
                 {!paymentViewBatch?.post_application_payments ||
-                  paymentViewBatch.post_application_payments.length === 0 ? (
+                paymentViewBatch.post_application_payments.length === 0 ? (
                   <Typography variant="body2" color="text.secondary" fontStyle="italic">
                     No post-application payments set
                   </Typography>
@@ -2122,7 +2630,7 @@ const AdmissionSetup = () => {
           </Alert>
         </Snackbar>
       </Portal>
-    </PageContainer >
+    </PageContainer>
   );
 };
 

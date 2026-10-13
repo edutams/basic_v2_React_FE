@@ -42,6 +42,7 @@ const AdmissionApply = Loadable(lazy(() => import('@/pages/tenant/auth/admission
 const ImpersonateLogin = Loadable(lazy(() => import('../utils/auth/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../utils/auth/Error')));
 const SchoolNotFound = Loadable(lazy(() => import('../utils/auth/SchoolNotFound')));
+const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
 
@@ -197,6 +198,14 @@ const TenantRoutes = [
   {
     path: '/impersonate-login/:token',
     element: <ImpersonateLogin />,
+  },
+  // Public "Download Result" link from Result → Messaging — no session or
+  // permission guard; the backend route behind it re-applies the school's
+  // publish / result-payment gates.
+  {
+    path: '/verifyresult/:tenantId/:regId',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <VerifyResult /> }],
   },
   {
     path: '/school-not-found',

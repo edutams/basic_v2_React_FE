@@ -33,6 +33,7 @@ const AgentSubscriptionManagement = Loadable(
   lazy(() => import('@/pages/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );
 const ActivityLog = Loadable(lazy(() => import('@/pages/landlord/views/activity-log/ActivityLog')));
+const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const CommissionManagement = Loadable(
   lazy(() => import('@/pages/landlord/views/commission/CommissionManagement')),
 );
@@ -307,6 +308,9 @@ const AgentRoutes = [
       { path: '/agent/forgot_password', element: <AuthForgotPassword /> },
       { path: '/agent/verify_otp', element: <VerifyOtp /> },
       { path: '/agent/reset_password', element: <ResetPassword /> },
+      // Same public result link as TenantRoutes, so a localhost/central-domain
+      // dev server resolves it instead of falling through to the 404 catch-all.
+      { path: '/verifyresult/:tenantId/:regId', element: <VerifyResult /> },
       { path: '*', element: <Navigate to="/auth/404" /> },
     ],
   },

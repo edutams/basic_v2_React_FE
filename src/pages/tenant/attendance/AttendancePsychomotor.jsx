@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -34,6 +35,7 @@ function TabPanel({ children, value, index, ...other }) {
 
 const AttendancePsychomotor = () => {
   const { can } = usePermissions();
+  const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(0);
 
@@ -288,6 +290,19 @@ const AttendancePsychomotor = () => {
       setActiveTab(0);
     }
   }, [availableTabs.length, activeTab]);
+
+  // ── Deep-link to a specific tab (e.g. Class Register's "Mark
+  // Attendance"/"Mark Psychomotor" buttons) via ?tab=mark-attendance or
+  // navigate(..., { state: { initialTabId: 'mark-psychomotor' } }) — tab
+  // order depends on the viewer's permissions, so this matches by id, not
+  // a hardcoded index.
+  useEffect(() => {
+    const desiredId = new URLSearchParams(location.search).get('tab') || location.state?.initialTabId;
+    if (!desiredId) return;
+    const idx = availableTabs.findIndex((t) => t.id === desiredId);
+    if (idx >= 0) setActiveTab(idx);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availableTabs, location.search, location.state]);
 
   // ── Load stats for the currently active tab only ─────────────
   // Fires on mount and whenever the user switches tabs so the

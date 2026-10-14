@@ -151,7 +151,7 @@ const AdmissionProcessing = () => {
           '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
         }}
       >
-        <ProcessApplicationsTable allBatches={allBatches} onDataChange={handleDataChange} />
+        <ProcessApplicationsTable allBatches={allBatches} onDataChange={handleDataChange} stats={stats} />
       </ParentCard>
     </PageContainer>
   );

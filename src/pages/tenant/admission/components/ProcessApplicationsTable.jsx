@@ -85,11 +85,11 @@ const offerColors = {
 // admission_status), so the index-to-status mapping below is deliberately
 // not a simple enum walk.
 const STATUS_TABS = [
-  { label: 'All Applications', status: '', dotColor: 'text.disabled' },
-  { label: 'Pending Applications', status: 'pending', dotColor: 'warning.main' },
-  { label: 'Admitted', status: 'admitted', dotColor: 'success.main' },
-  { label: 'Declined', status: 'declined', dotColor: 'error.main' },
-  { label: 'Accepted Offers', status: 'accepted_offer', dotColor: 'info.main' },
+  { label: 'Pending Applications', status: 'pending', dotColor: 'warning.main', statsKey: 'pending' },
+  { label: 'Admitted', status: 'admitted', dotColor: 'success.main', statsKey: 'admitted' },
+  { label: 'Declined', status: 'declined', dotColor: 'error.main', statsKey: 'declined' },
+  { label: 'Accepted Offers', status: 'accepted_offer', dotColor: 'info.main', statsKey: 'accepted_offers' },
+  { label: 'All Applications', status: '', dotColor: 'text.disabled', statsKey: 'applications' },
 ];
 
 const TABLE_COLUMN_COUNT = 14;
@@ -150,7 +150,7 @@ const TableRowSkeleton = () => (
  * download/upload (carried over from the old Batch Processing tab so that
  * capability isn't lost), and an export of the current filtered view.
  */
-const ProcessApplicationsTable = ({ allBatches, onDataChange }) => {
+const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   const navigate = useNavigate();
   const notify = useNotification();
 
@@ -739,7 +739,7 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange }) => {
               label={
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: tab.dotColor }} />
-                  {tab.label}
+                  {tab.label} ({stats?.[tab.statsKey] ?? 0})
                 </Box>
               }
             />

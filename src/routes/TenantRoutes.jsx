@@ -142,6 +142,7 @@ const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/Summa
 const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
 const ClassDossierPage = Loadable(lazy(() => import('@/pages/tenant/result/ClassDossierPage')));
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
+const WardReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/WardReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
 const CommunicationsPage = Loadable(
@@ -613,6 +614,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.client.view_report_sheet">
             <ReportCardPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-wards-report',
+        element: (
+          <TenantProtectedRoute>
+            <WardReportCardPage />
           </TenantProtectedRoute>
         ),
       },

@@ -1609,6 +1609,14 @@ const BroadsheetTab = () => {
               const checksTotal = workflow.checks_total ?? 0;
               const remarksDone = (checks.remarks_pending ?? 0) === 0;
               const positioningDone = (checks.positions_missing ?? 0) === 0;
+              // Missing scores deliberately do NOT block Approval — a class
+              // arm can be approved/published with only the subjects that
+              // have actually been scored so far; students/subjects still
+              // missing a score just show ungraded, same as how spaApprove()
+              // itself was already documented to work server-side. Remarks
+              // and positioning still gate, since those are prerequisites
+              // the approval step itself relies on having been generated.
+              const approvalBlockingTotal = (checks.remarks_pending ?? 0) + (checks.positions_missing ?? 0);
               const spaDone = sheet.result_publish?.spa_publish === 'yes';
               const hosDone = sheet.result_publish?.head_of_school_publish === 'yes';
 
@@ -1689,15 +1697,21 @@ const BroadsheetTab = () => {
                 {
                   step: 3,
                   status:
-                    !positioningDone || checksTotal > 0 ? 'locked' : spaDone ? 'done' : 'active',
+                    !positioningDone || approvalBlockingTotal > 0
+                      ? 'locked'
+                      : spaDone
+                        ? 'done'
+                        : 'active',
                   title: 'Approval',
                   subtitle: !positioningDone
                     ? 'Complete positioning first'
-                    : checksTotal > 0
+                    : approvalBlockingTotal > 0
                       ? 'Resolve all checks to enable'
                       : spaDone
                         ? 'Approved'
-                        : 'Ready for approval',
+                        : checks.missing_scores > 0
+                          ? `Ready for approval (${checks.missing_scores} missing score${checks.missing_scores === 1 ? '' : 's'})`
+                          : 'Ready for approval',
                   buttonIcon: IconLock,
                   action: 'Approve results',
                   onAction: () => setPublishConfirm({ open: true, action: 'spa' }),
@@ -1998,7 +2012,9 @@ const BroadsheetTab = () => {
                         pending | {checks.positions_missing} positions missing
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#92400E' }}>
-                        Please review and complete the highlighted items before approval.
+                        {approvalBlockingTotal > 0
+                          ? 'Please review and complete remarks/positioning before approval.'
+                          : 'Missing scores do not block approval — those subjects will just show as ungraded until scored.'}
                       </Typography>
                     </Alert>
                   )}

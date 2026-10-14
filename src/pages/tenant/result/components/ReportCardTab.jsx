@@ -39,8 +39,21 @@ import { encodeLinkParams } from '@/utils/scoreLinks';
  * lets them pick the term, then renders their own report card through the
  * school's configured result template — the learner counterpart of the
  * admin Student Dossier (ReportSheetTab).
+ *
+ * Also reused, via injectable fetchers, by the guardian-facing "View
+ * Wards' Result" page (WardReportCardTab) — rather than duplicating this
+ * whole term-selector/publish-gate/template-render flow for wards, the data
+ * source is swapped out while every bit of the gating/rendering logic stays
+ * identical.
  */
-const ReportCardTab = () => {
+const ReportCardTab = ({
+  fetchRegistrations,
+  fetchReport,
+  title = 'My Report Card',
+  emptyRegistrationsMessage = 'No student registration found for your account. Please contact your school.',
+  skipLearnerGuard = false,
+  headerAccessory = null,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -82,7 +95,9 @@ const ReportCardTab = () => {
     setLoadingRegs(true);
     setError('');
     try {
-      const res = await resultDossierApi.getMyRegistration();
+      const res = fetchRegistrations
+        ? await fetchRegistrations()
+        : await resultDossierApi.getMyRegistration();
       const body = res?.data;
       if (body?.status) {
         const regs = body.data?.registrations || [];
@@ -93,18 +108,18 @@ const ReportCardTab = () => {
             : (body.data?.default_session_term_id ?? ''),
         );
         if (regs.length === 0) {
-          setError('No student registration found for your account. Please contact your school.');
+          setError(emptyRegistrationsMessage);
         }
       } else {
-        setError(body?.message || 'Failed to load your registration.');
+        setError(body?.message || 'Failed to load the registration.');
       }
     } catch (err) {
-      console.error('Failed to load learner registration:', err);
-      setError(err?.response?.data?.message || 'Failed to load your registration.');
+      console.error('Failed to load registration:', err);
+      setError(err?.response?.data?.message || 'Failed to load the registration.');
     } finally {
       setLoadingRegs(false);
     }
-  }, []);
+  }, [fetchRegistrations, emptyRegistrationsMessage]);
 
   useEffect(() => {
     loadRegistrations();
@@ -122,9 +137,9 @@ const ReportCardTab = () => {
       setError('');
       setPaymentRequired(false);
       try {
-        const res = await resultDossierApi.getMyReport({
-          session_term_id: Number(selectedSessionTerm),
-        });
+        const res = fetchReport
+          ? await fetchReport(Number(selectedSessionTerm))
+          : await resultDossierApi.getMyReport({ session_term_id: Number(selectedSessionTerm) });
         const body = res?.data;
         if (cancelled) return;
         if (body?.status) {
@@ -192,7 +207,8 @@ const ReportCardTab = () => {
   };
 
   // ── Staff safety net: this page is for learners ─────────────
-  if (!isLearner && !isLearnerRole) {
+  // (skipped entirely in ward mode — a guardian is never a learner)
+  if (!skipLearnerGuard && !isLearner && !isLearnerRole) {
     return (
       <Paper
         elevation={0}
@@ -295,6 +311,7 @@ const ReportCardTab = () => {
               minWidth: 260,
             }}
           >
+            {headerAccessory}
             <FormControl size="small" sx={{ minWidth: 240 }}>
               <InputLabel>Session-Term</InputLabel>
               <Select
@@ -411,9 +428,7 @@ const ReportCardTab = () => {
             </Avatar>
             <Box>
               <Typography variant="h6" fontWeight={600}>
-                {report
-                  ? `Report Card — ${report.student?.lname} ${report.student?.fname}`
-                  : 'My Report Card'}
+                {report ? `Report Card — ${report.student?.lname} ${report.student?.fname}` : title}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {[className, sessionTermLabel, schoolName].filter(Boolean).join(' • ')}

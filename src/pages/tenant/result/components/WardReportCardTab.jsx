@@ -116,6 +116,7 @@ const WardReportCardTab = () => {
       fetchReport={fetchReport}
       title={selectedWard ? `${selectedWard.name}'s Report Card` : "Ward's Report Card"}
       emptyRegistrationsMessage="This ward has no registration on record yet."
+      paymentRequiredMessage="You must clear this ward's outstanding fees before you can view their results for this term."
       skipLearnerGuard
       headerAccessory={
         <FormControl size="small" sx={{ minWidth: 220 }}>

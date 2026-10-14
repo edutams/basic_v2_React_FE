@@ -51,6 +51,7 @@ const ReportCardTab = ({
   fetchReport,
   title = 'My Report Card',
   emptyRegistrationsMessage = 'No student registration found for your account. Please contact your school.',
+  paymentRequiredMessage = 'You must clear your outstanding fees before you can view your results for this term.',
   skipLearnerGuard = false,
   headerAccessory = null,
 }) => {
@@ -483,7 +484,7 @@ const ReportCardTab = ({
                 <Typography variant="subtitle2" fontWeight={900}>
                   Payment Required
                 </Typography>
-                You must clear your outstanding fees before you can view your results for this term.
+                {paymentRequiredMessage}
               </Alert>
               <Button variant="contained" size="small" onClick={() => navigate('/pay-school-fees')}>
                 Go to Payments

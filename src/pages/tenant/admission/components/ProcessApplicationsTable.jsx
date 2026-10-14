@@ -85,11 +85,11 @@ const offerColors = {
 // admission_status), so the index-to-status mapping below is deliberately
 // not a simple enum walk.
 const STATUS_TABS = [
-  { label: 'Pending Applications', status: 'pending', dotColor: 'warning.main', statsKey: 'pending' },
-  { label: 'Admitted', status: 'admitted', dotColor: 'success.main', statsKey: 'admitted' },
-  { label: 'Declined', status: 'declined', dotColor: 'error.main', statsKey: 'declined' },
-  { label: 'Accepted Offers', status: 'accepted_offer', dotColor: 'info.main', statsKey: 'accepted_offers' },
-  { label: 'All Applications', status: '', dotColor: 'text.disabled', statsKey: 'applications' },
+  { label: 'Pending Applications', status: 'pending', statsKey: 'pending', badgeBg: '#FEF3C7', badgeColor: '#B45309' },
+  { label: 'Admitted', status: 'admitted', statsKey: 'admitted', badgeBg: '#DCFCE7', badgeColor: '#15803D' },
+  { label: 'Declined', status: 'declined', statsKey: 'declined', badgeBg: '#FEE2E2', badgeColor: '#B91C1C' },
+  { label: 'Accepted Offers', status: 'accepted_offer', statsKey: 'accepted_offers', badgeBg: '#DBEAFE', badgeColor: '#1D4ED8' },
+  { label: 'All Applications', status: '', statsKey: 'applications', badgeBg: '#E2E8F0', badgeColor: '#475569' },
 ];
 
 const TABLE_COLUMN_COUNT = 14;
@@ -737,9 +737,26 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
             <Tab
               key={tab.label}
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: tab.dotColor }} />
-                  {tab.label} ({stats?.[tab.statsKey] ?? 0})
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  {tab.label}
+                  <Box
+                    component="span"
+                    sx={{
+                      minWidth: 20,
+                      height: 20,
+                      px: 0.6,
+                      borderRadius: '10px',
+                      bgcolor: tab.badgeBg,
+                      color: tab.badgeColor,
+                      fontSize: 11,
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {stats?.[tab.statsKey] ?? 0}
+                  </Box>
                 </Box>
               }
             />

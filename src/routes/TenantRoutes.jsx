@@ -620,7 +620,7 @@ const TenantRoutes = [
       {
         path: 'result-wards-report',
         element: (
-          <TenantProtectedRoute permission="result.client.view_report_sheet">
+          <TenantProtectedRoute permission="result.client.view_wards_report">
             <WardReportCardPage />
           </TenantProtectedRoute>
         ),

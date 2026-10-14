@@ -40,6 +40,7 @@ import {
   Switch,
   FormControlLabel,
   Popover,
+  IconButton,
 } from '@mui/material';
 import {
   IconCheck,
@@ -66,6 +67,7 @@ import {
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
   fetchSessionTerms,
   fetchActiveTenantSessionTerm,
@@ -963,8 +965,40 @@ const BroadsheetTab = () => {
   // ── Promotion ───────────────────────────────────────────────
   const [recMenu, setRecMenu] = useState({ rowId: null, anchorEl: null });
   const [subjectsPopover, setSubjectsPopover] = useState({ anchorEl: null, row: null });
+  const [confirmRemoveSubjectId, setConfirmRemoveSubjectId] = useState(null);
+  const [removingSubjectId, setRemovingSubjectId] = useState(null);
   const openSubjectsPopover = (e, row) => setSubjectsPopover({ anchorEl: e.currentTarget, row });
-  const closeSubjectsPopover = () => setSubjectsPopover({ anchorEl: null, row: null });
+  const closeSubjectsPopover = () => {
+    setSubjectsPopover({ anchorEl: null, row: null });
+    setConfirmRemoveSubjectId(null);
+  };
+
+  // Removes a single subject registration for this student from the
+  // broadsheet — guarded (both here and server-side) so a subject that
+  // already has scores recorded can't be silently unregistered and lose
+  // them (course_registration -> results is a cascade-on-delete FK).
+  const handleRemoveRegisteredSubject = async (subjectId) => {
+    const row = subjectsPopover.row;
+    if (!row) return;
+
+    setRemovingSubjectId(subjectId);
+    try {
+      await subjectRegistrationApi.unregisterSubject(row.student_registration_id, subjectId, {
+        session_term_id: sessionTermId,
+      });
+      showSnackbar('Subject removed from this student’s registration');
+      setConfirmRemoveSubjectId(null);
+      closeSubjectsPopover();
+      refetch();
+    } catch (err) {
+      showSnackbar(
+        err?.response?.data?.message || 'Failed to remove subject — it may already have scores recorded',
+        'error',
+      );
+    } finally {
+      setRemovingSubjectId(null);
+    }
+  };
 
   const handleRecommendPromotions = async () => {
     setLoading(true);
@@ -1830,47 +1864,53 @@ const BroadsheetTab = () => {
                             </Typography>
 
                             <Box sx={{ mt: 'auto', pt: 0.5 }}>
-                              <Button
-                                fullWidth
-                                size="small"
-                                disabled={isLocked || stage.loading || !canAct}
-                                onClick={stage.onAction}
-                                startIcon={
-                                  stage.loading ? null : ButtonIcon ? (
-                                    <ButtonIcon size={15} />
-                                  ) : null
-                                }
-                                sx={{
-                                  textTransform: 'none',
-                                  fontWeight: 600,
-                                  borderRadius: '8px',
-                                  bgcolor: scheme.buttonBg,
-                                  color: scheme.buttonColor,
-                                  '&:hover': { bgcolor: scheme.buttonHoverBg },
-                                  '&.Mui-disabled': {
+                              {canAct ? (
+                                <Button
+                                  fullWidth
+                                  size="small"
+                                  disabled={isLocked || stage.loading}
+                                  onClick={stage.onAction}
+                                  startIcon={
+                                    stage.loading ? null : ButtonIcon ? (
+                                      <ButtonIcon size={15} />
+                                    ) : null
+                                  }
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
                                     bgcolor: scheme.buttonBg,
                                     color: scheme.buttonColor,
-                                    opacity: 0.85,
-                                  },
-                                }}
-                              >
-                                {stage.loading ? (
-                                  <CircularProgress size={14} color="inherit" />
-                                ) : (
-                                  stage.action
-                                )}
-                              </Button>
-                              {stage.secondaryAction && (
+                                    '&:hover': { bgcolor: scheme.buttonHoverBg },
+                                    '&.Mui-disabled': {
+                                      bgcolor: scheme.buttonBg,
+                                      color: scheme.buttonColor,
+                                      opacity: 0.85,
+                                    },
+                                  }}
+                                >
+                                  {stage.loading ? (
+                                    <CircularProgress size={14} color="inherit" />
+                                  ) : (
+                                    stage.action
+                                  )}
+                                </Button>
+                              ) : (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontStyle: 'italic', display: 'block', textAlign: 'center' }}
+                                >
+                                  Requires SPA / Head of School
+                                </Typography>
+                              )}
+                              {stage.secondaryAction && can('result.admin.unpublish_broadsheet') && (
                                 <Button
                                   fullWidth
                                   size="small"
                                   variant="contained"
                                   color="warning"
-                                  disabled={
-                                    publishing === 'unpublish' ||
-                                    publishing === 'unapprove' ||
-                                    !can('result.admin.unpublish_broadsheet')
-                                  }
+                                  disabled={publishing === 'unpublish' || publishing === 'unapprove'}
                                   onClick={stage.onSecondaryAction}
                                   sx={{
                                     fontSize: '0.7rem',
@@ -3008,7 +3048,7 @@ const BroadsheetTab = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         transformOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Box sx={{ p: 1.5, maxWidth: 260 }}>
+        <Box sx={{ p: 1.5, minWidth: 260, maxWidth: 320 }}>
           <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
             {subjectsPopover.row
               ? `${subjectsPopover.row.user?.lname ?? ''} ${subjectsPopover.row.user?.fname ?? ''}`.trim()
@@ -3017,13 +3057,60 @@ const BroadsheetTab = () => {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
             Registered for {subjectsPopover.row?.registered_subjects ?? 0} subject(s)
           </Typography>
-          <Stack spacing={0.4}>
-            {(subjectsPopover.row?.registered_subject_names ?? []).map((name) => (
-              <Typography key={name} variant="body2">
-                &bull; {name}
-              </Typography>
-            ))}
-            {(subjectsPopover.row?.registered_subject_names ?? []).length === 0 && (
+          <Stack spacing={0.4} divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
+            {(subjectsPopover.row?.results ?? [])
+              .filter((r) => r.course_registration_id)
+              .map((r) => {
+                const isConfirming = confirmRemoveSubjectId === r.subject_id;
+                const isRemoving = removingSubjectId === r.subject_id;
+                return (
+                  <Box
+                    key={r.subject_id}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.4, gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      &bull; {r.subject_name}
+                    </Typography>
+                    {can('manage.class_manager.subject_registrar.manage') &&
+                      (isConfirming ? (
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Button
+                            size="small"
+                            color="error"
+                            disabled={isRemoving}
+                            onClick={() => handleRemoveRegisteredSubject(r.subject_id)}
+                            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem' }}
+                          >
+                            {isRemoving ? <CircularProgress size={12} color="inherit" /> : 'Remove'}
+                          </Button>
+                          <Button
+                            size="small"
+                            disabled={isRemoving}
+                            onClick={() => setConfirmRemoveSubjectId(null)}
+                            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem' }}
+                          >
+                            Cancel
+                          </Button>
+                        </Stack>
+                      ) : r.has_result ? (
+                        <Tooltip title="Already has scores recorded — cannot be removed">
+                          <span>
+                            <IconButton size="small" disabled>
+                              <IconLock size={14} />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Remove this subject">
+                          <IconButton size="small" onClick={() => setConfirmRemoveSubjectId(r.subject_id)}>
+                            <IconX size={14} />
+                          </IconButton>
+                        </Tooltip>
+                      ))}
+                  </Box>
+                );
+              })}
+            {(subjectsPopover.row?.registered_subjects ?? 0) === 0 && (
               <Typography variant="body2" color="text.secondary">
                 No subjects registered.
               </Typography>

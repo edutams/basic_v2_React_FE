@@ -148,13 +148,29 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const res = await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const protectedWithScores = res?.data?.data?.protected_with_scores ?? 0;
+
       setPendingChanges({});
-      const orig = {};
-      learners.forEach((l) => {
-        orig[l.id] = { ...l.registered };
-      });
-      setOriginalRegistered(orig);
+
+      if (protectedWithScores > 0) {
+        // The backend silently kept any registration that already has
+        // scores recorded (unregistering would have deleted the scores
+        // too) — refetch so the checkboxes reflect what's actually
+        // registered server-side, instead of showing them as removed.
+        notify(
+          `${protectedWithScores} subject registration(s) were not removed because scores have already been recorded for them.`,
+          'warning',
+        );
+        await fetchData();
+      } else {
+        const orig = {};
+        learners.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
+        setOriginalRegistered(orig);
+      }
+
       notify(`${changes.length} change(s) saved successfully.`, 'success');
       onSaved?.();
     } catch (e) {

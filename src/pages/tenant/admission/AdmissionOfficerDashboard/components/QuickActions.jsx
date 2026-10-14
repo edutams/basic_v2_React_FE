@@ -47,10 +47,10 @@ const QuickActions = ({ loading = false }) => {
         navigate('/process-applications');
         break;
       case 'admit_applicant':
-        navigate('/process-applications', { state: { tab: 'batch' } });
-        break;
       case 'enroll_student':
-        navigate('/process-applications', { state: { tab: 'individual' } });
+        // Individual/Batch Processing were merged into one page — both
+        // actions land on the same unified Process Applications view now.
+        navigate('/process-applications');
         break;
       case 'admission_report':
         // /application-tracker needs a specific applicant id/state and is

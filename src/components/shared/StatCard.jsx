@@ -163,21 +163,32 @@ const StatCard = ({
       </Box>
 
       {progress !== undefined && (
-        <LinearProgress
-          variant="determinate"
-          value={Math.min(100, Math.max(0, progress))}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            position: 'relative',
-            zIndex: 1,
-            bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            '& .MuiLinearProgress-bar': {
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative', zIndex: 1 }}>
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(100, Math.max(0, progress))}
+            sx={{
+              flex: 1,
+              height: 6,
               borderRadius: 3,
-              bgcolor: isDark ? '#fff' : scheme.color,
-            },
-          }}
-        />
+              bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 3,
+                bgcolor: isDark ? '#fff' : scheme.color,
+              },
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: isDark ? '#ffffff' : scheme.color,
+              flexShrink: 0,
+            }}
+          >
+            {Math.round(progress)}%
+          </Typography>
+        </Box>
       )}
     </Paper>
   );

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Box, Grid, Tabs, Tab, Stack, } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import {
   People as PeopleIcon,
   HowToReg as HowToRegIcon,
@@ -12,8 +11,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
-import IndividualProcessingTab from './components/IndividualProcessingTab';
-import BatchProcessingTab from './components/BatchProcessingTab';
+import ProcessApplicationsTable from './components/ProcessApplicationsTable';
 import {
   fetchAllAdmissionBatches,
   fetchApplicationStats,
@@ -22,12 +20,11 @@ import {
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Admission Processing' }];
 
 const AdmissionProcessing = () => {
-  const location = useLocation();
-
   // ─── Data state ────────────────────────────────────────────────────────
   const [allBatches, setAllBatches] = useState([]);
   const [stats, setStats] = useState({
     applications: 0,
+    applications_change_pct: null,
     admitted: 0,
     declined: 0,
     pending: 0,
@@ -37,13 +34,6 @@ const AdmissionProcessing = () => {
 
   // ─── Loading state ─────────────────────────────────────────────────────
   const [statsLoading, setStatsLoading] = useState(false);
-
-  // ─── Tab state ─────────────────────────────────────────────────────────
-  // Quick Actions on the admission dashboard link here with { tab: 'batch' }
-  // (Admit Applicant) or { tab: 'individual' } (Enroll Student) — honor it so
-  // those two buttons actually land somewhere different from "Review
-  // Applications" instead of always opening the same default tab.
-  const [activeTab, setActiveTab] = useState(location.state?.tab === 'batch' ? 1 : 0);
 
   // ─── API calls ─────────────────────────────────────────────────────────
   const loadBatches = useCallback(async () => {
@@ -63,6 +53,7 @@ const AdmissionProcessing = () => {
       const data = res?.data ?? res ?? {};
       setStats({
         applications: data.applications ?? 0,
+        applications_change_pct: data.applications_change_pct ?? null,
         admitted: data.admitted ?? 0,
         declined: data.declined ?? 0,
         pending: data.pending ?? 0,
@@ -83,13 +74,15 @@ const AdmissionProcessing = () => {
   }, [loadBatches, loadStats]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────
-  const handleTabChange = (_, newValue) => {
-    setActiveTab(newValue);
-  };
-
   const handleDataChange = () => {
     loadStats();
   };
+
+  // Each card's share of total applications, for the progress bar + %
+  // subtitle — matches the design, computed from stats already fetched in
+  // one query (no extra round trip).
+  const pctOf = (count) =>
+    stats.applications > 0 ? Math.round((count / stats.applications) * 100) : 0;
 
   return (
     <PageContainer
@@ -105,77 +98,60 @@ const AdmissionProcessing = () => {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard
             count={stats.applications}
-            label="Applications"
+            label="Total Applications"
             icon={PeopleIcon}
-            color="primary"
+            colorIndex={2}
             loading={statsLoading}
+            subtitle={
+              stats.applications_change_pct === null
+                ? undefined
+                : `${stats.applications_change_pct >= 0 ? '▲' : '▼'} ${Math.abs(stats.applications_change_pct)}% vs last session`
+            }
           />
           <StatCard
             count={stats.admitted}
             label="Total Admitted"
             icon={HowToRegIcon}
-            color="success"
+            colorIndex={1}
             loading={statsLoading}
+            progress={pctOf(stats.admitted)}
           />
           <StatCard
             count={stats.declined}
             label="Total Declined"
             icon={PersonOffIcon}
-            color="error"
+            colorIndex={4}
             loading={statsLoading}
+            progress={pctOf(stats.declined)}
           />
           <StatCard
             count={stats.pending}
             label="Total Pending"
             icon={HourglassEmptyIcon}
-            color="warning"
+            colorIndex={3}
             loading={statsLoading}
+            progress={pctOf(stats.pending)}
           />
           <StatCard
             count={stats.accepted_offers}
             label="Accepted Offers"
             icon={CheckCircleIcon}
-            color="info"
+            colorIndex={0}
             loading={statsLoading}
+            progress={pctOf(stats.accepted_offers)}
           />
         </Stack>
       </Box>
 
-      {/* ── Main Card with Tabs ──────────────────────────────────────────────────── */}
+      {/* ── Main Card ──────────────────────────────────────────────────── */}
       <ParentCard
+        title="Process Applications"
         sx={{
           '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
           '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
         }}
-        title={
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', width: '100%' }}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="admission processing tabs"
-              sx={{
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  minHeight: 48,
-                },
-              }}
-            >
-              <Tab label="Individual Processing" />
-              <Tab label="Batch Processing" />
-            </Tabs>
-          </Box>
-        }
       >
-        <Box sx={{ mt: 0 }}>
-          {activeTab === 0 && (
-            <IndividualProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
-          )}
-          {activeTab === 1 && (
-            <BatchProcessingTab allBatches={allBatches} onDataChange={handleDataChange} />
-          )}
-        </Box>
+        <ProcessApplicationsTable allBatches={allBatches} onDataChange={handleDataChange} />
       </ParentCard>
     </PageContainer>
   );

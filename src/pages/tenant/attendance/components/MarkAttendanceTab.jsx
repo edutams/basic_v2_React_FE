@@ -1997,13 +1997,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                       />
                                     </span>
                                   </Tooltip>
-                                  <Tooltip
-                                    title={
-                                      isSelected
-                                        ? 'Late — arrival time is recorded automatically'
-                                        : 'Select this day first'
-                                    }
-                                  >
+                                  <Tooltip title={isSelected ? 'Late' : 'Select this day first'}>
                                     <span>
                                       <FormControlLabel
                                         value="late"

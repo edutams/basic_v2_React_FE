@@ -35,6 +35,18 @@ import {
   TablePagination,
   Checkbox,
   alpha,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  Select,
+  InputLabel,
+  FormControl,
+  Switch,
+  ToggleButton,
+  ToggleButtonGroup,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   MoreVert as MoreVertIcon,
@@ -56,6 +68,7 @@ import {
   EventBusy as EndDateIcon,
   DateRange as ApplicationPeriodIcon,
   FiberManualRecord as StatusDotIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import {
   IconEye,
@@ -346,24 +359,6 @@ const STD_NUM_OPTIONS = [
   { key: '[:stdNum_5]', label: '5 digits', example: '00001' },
 ];
 
-// Drops any segment that isn't a real format token — a stray "on" (or
-// anything else) can never survive into what's shown or saved, regardless
-// of what put it there in the first place.
-const sanitizeCodeFormat = (value) => {
-  const validTokens = new Set([
-    '[:shortname]',
-    '[:year]',
-    '[:programme_code]',
-    '[:customtext]',
-    ...STD_NUM_OPTIONS.map((o) => o.key),
-  ]);
-
-  return (value || '')
-    .split('/')
-    .filter((token) => validTokens.has(token))
-    .join('/');
-};
-
 const CODE_FORMAT_STEPS = [
   {
     key: 'select',
@@ -467,11 +462,20 @@ const AdmissionSetup = () => {
   const [paymentViewBatch, setPaymentViewBatch] = useState(null);
 
   // ── Code Format state (school-level, not per-batch) ─────────────────────────
-  const [codeFormatInput, setCodeFormatInput] = useState('');
+  // The format string is always DERIVED from these flags (getFullCodeFormat,
+  // below) in a fixed canonical token order — never built by appending
+  // whatever was toggled most recently — so the year token always lands
+  // before the sequential number regardless of the order components were
+  // turned on in.
   const [schoolShortName, setSchoolShortName] = useState('');
   const [customText, setCustomText] = useState('');
+  const [programmeEnabled, setProgrammeEnabled] = useState(false);
+  const [yearEnabled, setYearEnabled] = useState(false);
+  const [yearFormat, setYearFormatState] = useState('full'); // 'full' | 'short'
   const [selectedStdNum, setSelectedStdNum] = useState('');
-  // hasShortNameInFormat removed — everything lives in codeFormatInput directly
+  const [separator, setSeparator] = useState('/');
+  const [textCase, setTextCase] = useState('upper'); // 'upper' | 'lower' | 'title'
+  const [zeroPad, setZeroPad] = useState(true);
   const [codeFormatSaving, setCodeFormatSaving] = useState(false);
   const [codeFormatLoading, setCodeFormatLoading] = useState(false);
   const [copiedPlaceholder, setCopiedPlaceholder] = useState(null);
@@ -597,10 +601,16 @@ const AdmissionSetup = () => {
       const savedShortName = res?.data?.school_short_name ?? '';
       const savedCustomText = res?.data?.custom_text ?? '';
 
-      // Put the full format directly into the input field
-      setCodeFormatInput(sanitizeCodeFormat(savedFormat));
+      // Every flag below is derived from the persisted format string — it
+      // stays the single source of truth, never a separately-stored flag.
       setSchoolShortName(savedShortName || '');
       setCustomText(savedCustomText || '');
+      setSeparator(res?.data?.separator || '/');
+      setTextCase(res?.data?.text_case || 'upper');
+      setZeroPad(res?.data?.zero_pad ?? true);
+      setProgrammeEnabled(savedFormat.includes('[:programme_code]'));
+      setYearEnabled(savedFormat.includes('[:year]') || savedFormat.includes('[:yy]'));
+      setYearFormatState(savedFormat.includes('[:yy]') ? 'short' : 'full');
 
       // Detect which student number is selected
       let foundStdNum = '';
@@ -712,102 +722,29 @@ const AdmissionSetup = () => {
 
   // ── Code Format handlers (school-level, no batch) ──────────────────────────
 
-  // Helper: append a placeholder to codeFormatInput with auto-slash
-  const appendToFormat = (placeholder) => {
-    setCodeFormatInput((prev) => {
-      const trimmed = prev.trim();
-      const prefix = trimmed.length > 0 ? '/' : '';
-      return trimmed + prefix + placeholder;
-    });
+  // The format string is always rebuilt from scratch in this fixed order —
+  // never by appending whatever was toggled most recently — so the year
+  // token (full or short) always lands before the sequential number, no
+  // matter which order the components were turned on in.
+  const getFullCodeFormat = () => {
+    const tokens = [];
+    if (schoolShortName.trim()) tokens.push('[:shortname]');
+    if (customText.trim()) tokens.push('[:customtext]');
+    if (programmeEnabled) tokens.push('[:programme_code]');
+    if (yearEnabled) tokens.push(yearFormat === 'short' ? '[:yy]' : '[:year]');
+    if (selectedStdNum) tokens.push(selectedStdNum);
+    return tokens.join('/');
   };
 
-  // Get the complete format string — everything is already in the input
-  const getFullCodeFormat = () => sanitizeCodeFormat(codeFormatInput.trim());
+  const handleShortNameChange = (e) => setSchoolShortName(e.target.value.toUpperCase());
 
-  const handleShortNameChange = (e) => {
-    const value = e.target.value.toUpperCase();
-    setSchoolShortName(value);
+  const handleCustomTextChange = (e) => setCustomText(e.target.value.toUpperCase());
 
-    if (value.trim()) {
-      // Insert [:shortname] if not already present (functional updater avoids stale closure)
-      setCodeFormatInput((prev) => {
-        if (prev.includes('[:shortname]')) return prev;
-        const trimmed = prev.trim();
-        const prefix = trimmed.length > 0 ? '/' : '';
-        return trimmed + prefix + '[:shortname]';
-      });
-    } else {
-      // Remove [:shortname] when cleared (use split/join to avoid regex special chars)
-      setCodeFormatInput((prev) =>
-        prev
-          .split('/[:shortname]')
-          .join('')
-          .split('[:shortname]/')
-          .join('')
-          .split('[:shortname]')
-          .join('')
-          .replace(/\/+$/, '')
-          .replace(/^\/+/, '')
-          .replace(/\/+/g, '/'),
-      );
-    }
-  };
-
-  const handleCustomTextChange = (e) => {
-    const value = e.target.value.toUpperCase();
-    setCustomText(value);
-
-    if (value.trim()) {
-      setCodeFormatInput((prev) => {
-        if (prev.includes('[:customtext]')) return prev;
-        const trimmed = prev.trim();
-        const prefix = trimmed.length > 0 ? '/' : '';
-        return trimmed + prefix + '[:customtext]';
-      });
-    } else {
-      setCodeFormatInput((prev) =>
-        prev
-          .split('/[:customtext]')
-          .join('')
-          .split('[:customtext]/')
-          .join('')
-          .split('[:customtext]')
-          .join('')
-          .replace(/\/+$/, '')
-          .replace(/^\/+/, '')
-          .replace(/\/+/g, '/'),
-      );
-    }
-  };
-
-  const handleYearClick = () => {
-    appendToFormat('[:year]');
-    setCopiedPlaceholder('[:year]');
-    setTimeout(() => setCopiedPlaceholder(null), 1500);
-  };
+  const handleYearFormatChange = (format) => setYearFormatState(format);
 
   const handleStdNumChange = (event) => {
-    const value = event.target.value;
-    setSelectedStdNum(value);
-
-    // Remove any existing stdNum placeholder first (use split/join to avoid regex issues)
-    setCodeFormatInput((prev) => {
-      let cleaned = prev;
-      for (const opt of STD_NUM_OPTIONS) {
-        cleaned = cleaned
-          .split(`/${opt.key}`)
-          .join('')
-          .split(`${opt.key}/`)
-          .join('')
-          .split(opt.key)
-          .join('');
-      }
-      cleaned = cleaned.replace(/\/+$/, '').replace(/^\/+/, '').replace(/\/+/g, '/').trim();
-      const prefix = cleaned.length > 0 ? '/' : '';
-      return cleaned + prefix + value;
-    });
-
-    setCopiedPlaceholder(value);
+    setSelectedStdNum(event.target.value);
+    setCopiedPlaceholder(event.target.value);
     setTimeout(() => setCopiedPlaceholder(null), 1500);
   };
 
@@ -823,6 +760,9 @@ const AdmissionSetup = () => {
         code_format: fullFormat,
         school_short_name: schoolShortName.trim(),
         custom_text: customText.trim(),
+        separator,
+        text_case: textCase,
+        zero_pad: zeroPad,
       });
       showSnackbar('Admission code format updated successfully');
     } catch (err) {
@@ -833,74 +773,59 @@ const AdmissionSetup = () => {
     }
   };
 
+  // Applies the configured text-case setting — mirrors the backend's
+  // generateAdmissionNumber() exactly, so the preview never lies about
+  // what will actually be generated.
+  const applyTextCase = (value) => {
+    if (textCase === 'lower') return value.toLowerCase();
+    if (textCase === 'title') {
+      return value.replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+    }
+    return value.toUpperCase();
+  };
+
   // Generate example output
   const getExampleOutput = () => {
-    const shortNameValue = schoolShortName.trim() || 'STPAULS';
-    const customTextValue = customText.trim() || 'ADM';
-    return getFullCodeFormat()
+    const shortNameValue = applyTextCase(schoolShortName.trim() || 'STPAULS');
+    const customTextValue = applyTextCase(customText.trim() || 'ADM');
+    const programmeCodeValue = applyTextCase('SCI');
+
+    let result = getFullCodeFormat()
       .replace(/\[:shortname\]/g, shortNameValue)
       .replace(/\[:year\]/g, '2026')
+      .replace(/\[:yy\]/g, '26')
       .replace(/\[:customtext\]/g, customTextValue)
-      .replace(/\[:programme_code\]/g, 'SCI')
-      .replace(/\[:stdNum_2\]/g, '01')
-      .replace(/\[:stdNum_3\]/g, '001')
-      .replace(/\[:stdNum_4\]/g, '0001')
-      .replace(/\[:stdNum_5\]/g, '00001');
-    // .replace(/\[:stdNum_6\]/g, '000001');
+      .replace(/\[:programme_code\]/g, programmeCodeValue);
+
+    STD_NUM_OPTIONS.forEach((opt) => {
+      result = result.split(opt.key).join(zeroPad ? opt.example : '1');
+    });
+
+    return separator !== '/' ? result.split('/').join(separator) : result;
   };
 
   // ── Code Format wizard: which real components are currently included ──────
   const componentActive = {
-    shortname: codeFormatInput.includes('[:shortname]'),
-    year: codeFormatInput.includes('[:year]'),
-    programme: codeFormatInput.includes('[:programme_code]'),
-    customtext: codeFormatInput.includes('[:customtext]'),
-    stdnum: Boolean(selectedStdNum) && codeFormatInput.includes(selectedStdNum),
+    shortname: Boolean(schoolShortName.trim()),
+    year: yearEnabled,
+    programme: programmeEnabled,
+    customtext: Boolean(customText.trim()),
+    stdnum: Boolean(selectedStdNum),
   };
 
   const toggleComponent = (key) => {
     if (key === 'year') {
-      if (componentActive.year) {
-        setCodeFormatInput((prev) =>
-          prev
-            .split('/[:year]')
-            .join('')
-            .split('[:year]/')
-            .join('')
-            .split('[:year]')
-            .join('')
-            .replace(/\/+$/, '')
-            .replace(/^\/+/, '')
-            .replace(/\/+/g, '/'),
-        );
-      } else {
-        appendToFormat('[:year]');
-      }
+      setYearEnabled((prev) => !prev);
       return;
     }
 
     if (key === 'programme') {
-      if (componentActive.programme) {
-        setCodeFormatInput((prev) =>
-          prev
-            .split('/[:programme_code]')
-            .join('')
-            .split('[:programme_code]/')
-            .join('')
-            .split('[:programme_code]')
-            .join('')
-            .replace(/\/+$/, '')
-            .replace(/^\/+/, '')
-            .replace(/\/+/g, '/'),
-        );
-      } else {
-        appendToFormat('[:programme_code]');
-      }
+      setProgrammeEnabled((prev) => !prev);
       return;
     }
 
     if (key === 'customtext' && componentActive.customtext) {
-      handleCustomTextChange({ target: { value: '' } });
+      setCustomText('');
       return;
     }
     if (key === 'customtext') {
@@ -911,28 +836,15 @@ const AdmissionSetup = () => {
 
     if (key === 'stdnum') {
       if (componentActive.stdnum) {
-        setCodeFormatInput((prev) => {
-          let cleaned = prev;
-          for (const opt of STD_NUM_OPTIONS) {
-            cleaned = cleaned
-              .split(`/${opt.key}`)
-              .join('')
-              .split(`${opt.key}/`)
-              .join('')
-              .split(opt.key)
-              .join('');
-          }
-          return cleaned.replace(/\/+$/, '').replace(/^\/+/, '').replace(/\/+/g, '/');
-        });
         setSelectedStdNum('');
       } else {
-        handleStdNumChange({ target: { value: selectedStdNum || STD_NUM_OPTIONS[0].key } });
+        handleStdNumChange({ target: { value: STD_NUM_OPTIONS[0].key } });
       }
       return;
     }
 
     if (key === 'shortname' && componentActive.shortname) {
-      handleShortNameChange({ target: { value: '' } });
+      setSchoolShortName('');
     }
     // else (shortname, currently off): no-op — the name is typed in the
     // Configure Settings column, there's nothing to toggle on here
@@ -941,8 +853,9 @@ const AdmissionSetup = () => {
   // ── Code Format wizard: colored breakdown of the active format string ─────
   const codeFormatBreakdown = useMemo(() => {
     const tokens = getFullCodeFormat().split('/').filter(Boolean);
-    const shortNameValue = schoolShortName.trim() || 'STPAULS';
-    const customTextValue = customText.trim() || 'ADM';
+    const shortNameValue = applyTextCase(schoolShortName.trim() || 'STPAULS');
+    const customTextValue = applyTextCase(customText.trim() || 'ADM');
+    const programmeCodeValue = applyTextCase('SCI');
 
     return tokens.map((token) => {
       if (token === '[:shortname]') {
@@ -951,40 +864,57 @@ const AdmissionSetup = () => {
       if (token === '[:year]') {
         return { label: 'Admission Year', value: '2026', color: '#2563EB' };
       }
+      if (token === '[:yy]') {
+        return { label: 'Admission Year', value: '26', color: '#2563EB' };
+      }
       if (token === '[:programme_code]') {
-        return { label: 'Programme Code', value: 'SCI', color: '#DB2777' };
+        return { label: 'Programme Code', value: programmeCodeValue, color: '#DB2777' };
       }
       if (token === '[:customtext]') {
         return { label: 'Custom Text', value: customTextValue, color: '#0D9488' };
       }
       const stdOpt = STD_NUM_OPTIONS.find((o) => o.key === token);
       if (stdOpt) {
-        return { label: 'Sequential Number', value: stdOpt.example, color: '#16A34A' };
+        return { label: 'Sequential Number', value: zeroPad ? stdOpt.example : '1', color: '#16A34A' };
       }
       return { label: token, value: token, color: '#6B7280' };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeFormatInput, schoolShortName, customText]);
+  }, [schoolShortName, customText, programmeEnabled, yearEnabled, yearFormat, selectedStdNum, textCase, zeroPad]);
 
   // ── Code Format wizard: a few more incrementing sample numbers ─────────────
   const moreExamples = useMemo(() => {
     const stdOpt = STD_NUM_OPTIONS.find((o) => o.key === selectedStdNum);
     if (!stdOpt || !getFullCodeFormat()) return [];
     const digits = stdOpt.example.length;
-    const shortNameValue = schoolShortName.trim() || 'STPAULS';
-    const customTextValue = customText.trim() || 'ADM';
+    const shortNameValue = applyTextCase(schoolShortName.trim() || 'STPAULS');
+    const customTextValue = applyTextCase(customText.trim() || 'ADM');
+    const programmeCodeValue = applyTextCase('SCI');
 
-    return [1, 2, 3].map((n) =>
-      getFullCodeFormat()
+    return [1, 2, 3].map((n) => {
+      const result = getFullCodeFormat()
         .replace(/\[:shortname\]/g, shortNameValue)
         .replace(/\[:year\]/g, '2026')
+        .replace(/\[:yy\]/g, '26')
         .replace(/\[:customtext\]/g, customTextValue)
-        .replace(/\[:programme_code\]/g, 'SCI')
+        .replace(/\[:programme_code\]/g, programmeCodeValue)
         .split(stdOpt.key)
-        .join(String(n).padStart(digits, '0')),
-    );
+        .join(zeroPad ? String(n).padStart(digits, '0') : String(n));
+
+      return separator !== '/' ? result.split('/').join(separator) : result;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeFormatInput, schoolShortName, customText, selectedStdNum]);
+  }, [
+    schoolShortName,
+    customText,
+    programmeEnabled,
+    yearEnabled,
+    yearFormat,
+    selectedStdNum,
+    textCase,
+    zeroPad,
+    separator,
+  ]);
 
   // Dynamic session name for header chip
   const currentSessionObj = sessions.find((s) => s.id === selectedSessionId) || sessions[0];
@@ -2036,13 +1966,21 @@ const AdmissionSetup = () => {
                               Admission Year
                             </Typography>
                           </Stack>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: 'block' }}
+                          <RadioGroup
+                            value={yearFormat}
+                            onChange={(e) => handleYearFormatChange(e.target.value)}
                           >
-                            Full calendar year (e.g. 2026) — automatically inserted into the format.
-                          </Typography>
+                            <FormControlLabel
+                              value="full"
+                              control={<Radio size="small" />}
+                              label={`Full year (${new Date().getFullYear()})`}
+                            />
+                            <FormControlLabel
+                              value="short"
+                              control={<Radio size="small" />}
+                              label={`Last two digits (${String(new Date().getFullYear()).slice(-2)})`}
+                            />
+                          </RadioGroup>
                         </Box>
                       )}
 
@@ -2138,6 +2076,98 @@ const AdmissionSetup = () => {
                       )}
                     </Stack>
                   )}
+
+                  {/* ── Format Options (global, not tied to one component) ──
+                      Collapsed by default — these are changed far less often
+                      than the per-component settings above, so keeping them
+                      tucked away is what stops this column from growing
+                      taller than the other two. ── */}
+                  <Accordion
+                    disableGutters
+                    elevation={0}
+                    sx={{
+                      mt: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      '&:before': { display: 'none' },
+                      '&.Mui-expanded': { margin: 0, mt: 2 },
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      sx={{ minHeight: 40, '& .MuiAccordionSummary-content': { my: 0.75 } }}
+                    >
+                      <Box>
+                        <Typography variant="body2" fontWeight={700} sx={{ fontSize: 13 }}>
+                          Format Options
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {separator} &bull;{' '}
+                          {textCase === 'upper' ? 'UPPERCASE' : textCase === 'lower' ? 'lowercase' : 'Title Case'}{' '}
+                          &bull; {zeroPad ? 'Zero-padded' : 'Not padded'}
+                        </Typography>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ pt: 0 }}>
+                      <Stack spacing={1.5}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Separator Character</InputLabel>
+                          <Select
+                            label="Separator Character"
+                            value={separator}
+                            onChange={(e) => setSeparator(e.target.value)}
+                          >
+                            <MenuItem value="/">/ (Slash)</MenuItem>
+                            <MenuItem value="-">- (Hyphen)</MenuItem>
+                            <MenuItem value="_">_ (Underscore)</MenuItem>
+                            <MenuItem value=".">. (Dot)</MenuItem>
+                          </Select>
+                        </FormControl>
+
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: 'block', mb: 0.5 }}
+                          >
+                            Text Case
+                          </Typography>
+                          <ToggleButtonGroup
+                            exclusive
+                            fullWidth
+                            size="small"
+                            value={textCase}
+                            onChange={(e, value) => value && setTextCase(value)}
+                          >
+                            <ToggleButton value="upper">UPPERCASE</ToggleButton>
+                            <ToggleButton value="lower">lowercase</ToggleButton>
+                            <ToggleButton value="title">Title Case</ToggleButton>
+                          </ToggleButtonGroup>
+                        </Box>
+
+                        <FormControlLabel
+                          sx={{ ml: 0 }}
+                          control={
+                            <Switch
+                              checked={zeroPad}
+                              onChange={(e) => setZeroPad(e.target.checked)}
+                            />
+                          }
+                          label={
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>
+                                Zero Padding
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Pad the sequential number with leading zeros
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
                 </ParentCard>
               </Grid>
 
@@ -2191,7 +2221,7 @@ const AdmissionSetup = () => {
                             <Fragment key={i}>
                               {i > 0 && (
                                 <Box component="span" sx={{ color: 'text.disabled', mx: 0.25 }}>
-                                  /
+                                  {separator}
                                 </Box>
                               )}
                               <Box component="span" sx={{ color: seg.color }}>

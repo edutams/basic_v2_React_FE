@@ -85,11 +85,41 @@ const offerColors = {
 // admission_status), so the index-to-status mapping below is deliberately
 // not a simple enum walk.
 const STATUS_TABS = [
-  { label: 'Pending Applications', status: 'pending', statsKey: 'pending', badgeBg: '#FEF3C7', badgeColor: '#B45309' },
-  { label: 'Admitted', status: 'admitted', statsKey: 'admitted', badgeBg: '#DCFCE7', badgeColor: '#15803D' },
-  { label: 'Declined', status: 'declined', statsKey: 'declined', badgeBg: '#FEE2E2', badgeColor: '#B91C1C' },
-  { label: 'Accepted Offers', status: 'accepted_offer', statsKey: 'accepted_offers', badgeBg: '#DBEAFE', badgeColor: '#1D4ED8' },
-  { label: 'All Applications', status: '', statsKey: 'applications', badgeBg: '#E2E8F0', badgeColor: '#475569' },
+  {
+    label: 'Pending Applications',
+    status: 'pending',
+    statsKey: 'pending',
+    badgeBg: '#FEF3C7',
+    badgeColor: '#B45309',
+  },
+  {
+    label: 'Admitted',
+    status: 'admitted',
+    statsKey: 'admitted',
+    badgeBg: '#DCFCE7',
+    badgeColor: '#15803D',
+  },
+  {
+    label: 'Declined',
+    status: 'declined',
+    statsKey: 'declined',
+    badgeBg: '#FEE2E2',
+    badgeColor: '#B91C1C',
+  },
+  {
+    label: 'Accepted Offers',
+    status: 'accepted_offer',
+    statsKey: 'accepted_offers',
+    badgeBg: '#DBEAFE',
+    badgeColor: '#1D4ED8',
+  },
+  {
+    label: 'All Applications',
+    status: '',
+    statsKey: 'applications',
+    badgeBg: '#E2E8F0',
+    badgeColor: '#475569',
+  },
 ];
 
 const TABLE_COLUMN_COUNT = 14;
@@ -511,7 +541,12 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
   const handleClassChangeModal = async (e) => {
     const classId = e.target.value;
-    setBatchModal((prev) => ({ ...prev, selectedClass: classId, selectedClassArm: '', classArms: [] }));
+    setBatchModal((prev) => ({
+      ...prev,
+      selectedClass: classId,
+      selectedClassArm: '',
+      classArms: [],
+    }));
     if (classId) {
       try {
         const armsRes = await fetchClassArmsByClass(classId, {
@@ -532,10 +567,19 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   };
 
   const handleConfirmBatchProcess = async () => {
-    const { action, selectedProgramme, selectedClass, selectedClassArm, selectedPayCategory, rejectionReason } =
-      batchModal;
+    const {
+      action,
+      selectedProgramme,
+      selectedClass,
+      selectedClassArm,
+      selectedPayCategory,
+      rejectionReason,
+    } = batchModal;
 
-    if (action === 'admit' && (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)) {
+    if (
+      action === 'admit' &&
+      (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
+    ) {
       notify.warning('Please select programme, class, class arm, and pay category for admission');
       return;
     }
@@ -595,7 +639,12 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
   const handleProgrammeChangeDownload = async (e) => {
     const progId = e.target.value;
-    setDownloadModal((prev) => ({ ...prev, selectedProgramme: progId, selectedClass: '', classes: [] }));
+    setDownloadModal((prev) => ({
+      ...prev,
+      selectedProgramme: progId,
+      selectedClass: '',
+      classes: [],
+    }));
     if (progId) {
       try {
         const classesRes = await fetchClassesByProgramme(progId);
@@ -710,7 +759,8 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   };
 
   const allSelected = applications.length > 0 && selectedApplications.size === applications.length;
-  const someSelected = selectedApplications.size > 0 && selectedApplications.size < applications.length;
+  const someSelected =
+    selectedApplications.size > 0 && selectedApplications.size < applications.length;
   const canBulkProcess = filter.appBatchId && applications.length > 0;
 
   return (
@@ -748,7 +798,7 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
                       borderRadius: '10px',
                       bgcolor: tab.badgeBg,
                       color: tab.badgeColor,
-                      fontSize: 11,
+                      fontSize: 18,
                       fontWeight: 700,
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -845,7 +895,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
             >
               Bulk Actions
             </Button>
-            <Menu anchorEl={bulkMenuAnchor} open={Boolean(bulkMenuAnchor)} onClose={() => setBulkMenuAnchor(null)}>
+            <Menu
+              anchorEl={bulkMenuAnchor}
+              open={Boolean(bulkMenuAnchor)}
+              onClose={() => setBulkMenuAnchor(null)}
+            >
               <MenuItem onClick={() => openBatchModal('admit')} sx={{ color: 'success.main' }}>
                 <IconCheck size={16} style={{ marginRight: 10 }} />
                 Admit Selected ({selectedApplications.size})
@@ -873,7 +927,10 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
         <TableContainer>
           <Table size="small">
             <TableHead
-              sx={{ bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB') }}
+              sx={{
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F9FAFB',
+              }}
             >
               <TableRow>
                 <TableCell sx={{ width: '3%' }}>
@@ -916,7 +973,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
                 Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} />)
               ) : applications.length > 0 ? (
                 applications.map((app, index) => (
-                  <TableRow key={app.form_number || index} hover selected={selectedApplications.has(app.form_number)}>
+                  <TableRow
+                    key={app.form_number || index}
+                    hover
+                    selected={selectedApplications.has(app.form_number)}
+                  >
                     <TableCell>
                       <Checkbox
                         size="small"
@@ -1093,7 +1154,10 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
         <Divider />
 
         {activeRow && canAcceptOffer(activeRow) && (
-          <MenuItem onClick={() => openConfirmAcceptOffer(activeRow)} sx={{ color: 'success.main' }}>
+          <MenuItem
+            onClick={() => openConfirmAcceptOffer(activeRow)}
+            sx={{ color: 'success.main' }}
+          >
             <IconCheck size={18} style={{ marginRight: 12 }} />
             Accept Admission Offer
           </MenuItem>
@@ -1138,7 +1202,8 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              You are about to {batchModal.action} <strong>{selectedApplications.size}</strong> application(s).
+              You are about to {batchModal.action} <strong>{selectedApplications.size}</strong>{' '}
+              application(s).
             </Typography>
 
             {batchModal.action === 'admit' && (
@@ -1151,7 +1216,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
                 <FormControl fullWidth size="small">
                   <InputLabel>Programme *</InputLabel>
-                  <Select value={batchModal.selectedProgramme} label="Programme *" onChange={handleProgrammeChange}>
+                  <Select
+                    value={batchModal.selectedProgramme}
+                    label="Programme *"
+                    onChange={handleProgrammeChange}
+                  >
                     <MenuItem value="">-- Select Programme --</MenuItem>
                     {batchModal.programmes.map((prog) => (
                       <MenuItem key={prog.id} value={prog.id}>
@@ -1163,7 +1232,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
                 <FormControl fullWidth size="small" disabled={!batchModal.selectedProgramme}>
                   <InputLabel>Class *</InputLabel>
-                  <Select value={batchModal.selectedClass} label="Class *" onChange={handleClassChangeModal}>
+                  <Select
+                    value={batchModal.selectedClass}
+                    label="Class *"
+                    onChange={handleClassChangeModal}
+                  >
                     <MenuItem value="">-- Select Class --</MenuItem>
                     {batchModal.classes.map((cls) => (
                       <MenuItem key={cls.id} value={cls.id}>
@@ -1178,7 +1251,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
                   <Select
                     value={batchModal.selectedClassArm}
                     label="Class Arm *"
-                    onChange={(e) => setBatchModal((prev) => ({ ...prev, selectedClassArm: e.target.value }))}
+                    onChange={(e) =>
+                      setBatchModal((prev) => ({ ...prev, selectedClassArm: e.target.value }))
+                    }
                   >
                     <MenuItem value="">-- Select Class Arm --</MenuItem>
                     {batchModal.classArms.map((arm) => (
@@ -1194,7 +1269,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
                   <Select
                     value={batchModal.selectedPayCategory}
                     label="Pay Category *"
-                    onChange={(e) => setBatchModal((prev) => ({ ...prev, selectedPayCategory: e.target.value }))}
+                    onChange={(e) =>
+                      setBatchModal((prev) => ({ ...prev, selectedPayCategory: e.target.value }))
+                    }
                   >
                     <MenuItem value="">-- Select Pay Category --</MenuItem>
                     {(batchModal.categories || []).map((cat) => (
@@ -1215,13 +1292,21 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
                 label="Rejection Reason *"
                 placeholder="Enter reason for declining these applications"
                 value={batchModal.rejectionReason}
-                onChange={(e) => setBatchModal((prev) => ({ ...prev, rejectionReason: e.target.value }))}
+                onChange={(e) =>
+                  setBatchModal((prev) => ({ ...prev, rejectionReason: e.target.value }))
+                }
               />
             )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={handleCloseBatchModal} disabled={processing}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleCloseBatchModal}
+            disabled={processing}
+          >
             Cancel
           </Button>
           <Button
@@ -1230,7 +1315,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
             onClick={handleConfirmBatchProcess}
             disabled={processing}
           >
-            {processing ? 'Processing...' : `Confirm ${batchModal.action === 'admit' ? 'Admission' : 'Decline'}`}
+            {processing
+              ? 'Processing...'
+              : `Confirm ${batchModal.action === 'admit' ? 'Admission' : 'Decline'}`}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1243,8 +1330,8 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Select the programme and class to generate an Excel template with all admission
-              applicants. The template will include a <strong>Class Arm</strong> column — fill in the
-              arm name for each applicant before uploading.
+              applicants. The template will include a <strong>Class Arm</strong> column — fill in
+              the arm name for each applicant before uploading.
             </Typography>
 
             <FormControl fullWidth size="small">
@@ -1265,7 +1352,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
             <FormControl fullWidth size="small" disabled={!downloadModal.selectedProgramme}>
               <InputLabel>Class *</InputLabel>
-              <Select value={downloadModal.selectedClass} label="Class *" onChange={handleClassChangeDownload}>
+              <Select
+                value={downloadModal.selectedClass}
+                label="Class *"
+                onChange={handleClassChangeDownload}
+              >
                 <MenuItem value="">-- Select Class --</MenuItem>
                 {downloadModal.classes.map((cls) => (
                   <MenuItem key={cls.id} value={cls.id}>
@@ -1277,7 +1368,13 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={handleCloseDownloadModal} disabled={downloading}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleCloseDownloadModal}
+            disabled={downloading}
+          >
             Cancel
           </Button>
           <Button
@@ -1305,9 +1402,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
         <DialogContent>
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Upload the completed admission template (.xlsx) to bulk admit applicants. The programme,
-              class, and <strong>Class Arm</strong> column from the downloaded template will be used to
-              assign each applicant to their programme, class, and arm.
+              Upload the completed admission template (.xlsx) to bulk admit applicants. The
+              programme, class, and <strong>Class Arm</strong> column from the downloaded template
+              will be used to assign each applicant to their programme, class, and arm.
             </Typography>
 
             <Box
@@ -1338,7 +1435,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
               onChange={handleUploadFileChange}
             />
 
-            {uploadModal.result && <Alert severity={uploadModal.result.severity}>{uploadModal.result.message}</Alert>}
+            {uploadModal.result && (
+              <Alert severity={uploadModal.result.severity}>{uploadModal.result.message}</Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -1365,7 +1464,11 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
       </Dialog>
 
       {/* ── View Admission Modal ──────────────────────────────────────── */}
-      <ViewAdmissionModal open={viewModal.open} onClose={handleCloseViewModal} formNumber={viewModal.formNumber} />
+      <ViewAdmissionModal
+        open={viewModal.open}
+        onClose={handleCloseViewModal}
+        formNumber={viewModal.formNumber}
+      />
     </Box>
   );
 };

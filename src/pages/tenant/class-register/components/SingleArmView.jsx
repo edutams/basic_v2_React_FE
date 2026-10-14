@@ -706,7 +706,14 @@ const SingleArmView = () => {
         )}
 
         <Grid size={{ xs: 12, md: isAdmin || teacherArms.length > 1 ? 7 : 9 }}>
-          <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2, overflowX: 'auto' }}>
+          <TableContainer
+            sx={{
+              borderRadius: 2,
+              overflowX: 'auto',
+              border: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
             <Table size="small" sx={{ minWidth: 820 }} stickyHeader>
               <TableHead>
                 <TableRow>

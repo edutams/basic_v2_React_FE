@@ -34,7 +34,11 @@ import { Search as SearchIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
 import tenantApi from '@/api/tenant/tenant_api';
-import { fetchSessions, fetchTerms, fetchProgrammes } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchProgrammes,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import { useNotification } from '@/hooks/useNotification';
@@ -91,8 +95,14 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
   const notify = useNotification();
   const navigate = useNavigate();
   const { roles } = useTenantAuth();
-  const isClassTeacher = Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
-  const isAdmin = Array.isArray(roles) && roles.some((r) => ['super_admin', 'school_admin'].includes(typeof r === 'string' ? r : r?.name));
+  const isClassTeacher =
+    Array.isArray(roles) &&
+    roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
+  const isAdmin =
+    Array.isArray(roles) &&
+    roles.some((r) =>
+      ['super_admin', 'school_admin'].includes(typeof r === 'string' ? r : r?.name),
+    );
 
   // ── Teacher mode: resolve the classes they have any arm in ───
   const [teacherClasses, setTeacherClasses] = useState([]);
@@ -108,7 +118,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
           (res.data.data?.class_allocations || []).forEach((a) => {
             if (!a.class_id) return;
             if (!byClass.has(a.class_id)) {
-              byClass.set(a.class_id, { class_arm_id: a.class_arm_id, class_name: a.class_name, class_id: a.class_id, programme_id: a.programme_id, student_count: a.student_count });
+              byClass.set(a.class_id, {
+                class_arm_id: a.class_arm_id,
+                class_name: a.class_name,
+                class_id: a.class_id,
+                programme_id: a.programme_id,
+                student_count: a.student_count,
+              });
             }
           });
           setTeacherClasses(Array.from(byClass.values()));
@@ -132,12 +148,18 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     if (!isAdmin) return;
     Promise.all([fetchSessions(), fetchProgrammes(), fetchActiveTenantSessionTerm()])
       .then(([sessRes, progRes, activeRes]) => {
-        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data) ? sessRes.data?.data || sessRes.data : [];
-        const programmesData = Array.isArray(progRes.data?.data || progRes.data) ? progRes.data?.data || progRes.data : [];
+        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+          ? sessRes.data?.data || sessRes.data
+          : [];
+        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+          ? progRes.data?.data || progRes.data
+          : [];
         setSessions(sessionsData);
         setProgrammes(programmesData);
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
-        const defaultSession = (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) || sessionsData[0];
+        const defaultSession =
+          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+          sessionsData[0];
         if (defaultSession) setSaSession(defaultSession.id);
         if (activeSessionTerm?.term_id) setSaTerm(activeSessionTerm.term_id);
       })
@@ -237,7 +259,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     const requestId = ++overviewRequestRef.current;
     setLoadingOverview(true);
     classRegisterApi
-      .getClassMultiArmOverview({ class_id: saClass, programme_id: saProgramme || null, session_term_id: isAdmin ? saTerm || null : null })
+      .getClassMultiArmOverview({
+        class_id: saClass,
+        programme_id: saProgramme || null,
+        session_term_id: isAdmin ? saTerm || null : null,
+      })
       .then((res) => {
         if (requestId !== overviewRequestRef.current) return;
         if (res.data?.status) setOverview(res.data.data);
@@ -306,7 +332,17 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
         if (requestId === studentsRequestRef.current) setLoadingStudents(false);
       }
     },
-    [saClass, saProgramme, saTerm, isAdmin, maPage, maRowsPerPage, search, genderFilter, statusFilter],
+    [
+      saClass,
+      saProgramme,
+      saTerm,
+      isAdmin,
+      maPage,
+      maRowsPerPage,
+      search,
+      genderFilter,
+      statusFilter,
+    ],
   );
 
   useEffect(() => {
@@ -355,7 +391,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     if (student.class_arm_id === armId) return;
     setAssigningId(student.student_registration_id);
     const previousArm = student.class_arm_id;
-    setStudents((prev) => prev.map((s) => (s.student_registration_id === student.student_registration_id ? { ...s, class_arm_id: armId } : s)));
+    setStudents((prev) =>
+      prev.map((s) =>
+        s.student_registration_id === student.student_registration_id
+          ? { ...s, class_arm_id: armId }
+          : s,
+      ),
+    );
     try {
       await classRegisterApi.assignArm(student.student_registration_id, { class_arm_id: armId });
       notify.success(`${student.name} moved to ${arms.find((a) => a.id === armId)?.name || 'arm'}`);
@@ -363,16 +405,28 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
       if (onEnrollmentChange) onEnrollmentChange();
     } catch {
       notify.error('Failed to move student');
-      setStudents((prev) => prev.map((s) => (s.student_registration_id === student.student_registration_id ? { ...s, class_arm_id: previousArm } : s)));
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.student_registration_id === student.student_registration_id
+            ? { ...s, class_arm_id: previousArm }
+            : s,
+        ),
+      );
     } finally {
       setAssigningId(null);
     }
   };
 
-  const toggleSelectAll = (checked) => setSelectedIds(checked ? students.map((s) => s.student_registration_id) : []);
-  const toggleSelectOne = (id, checked) => setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  const toggleSelectAll = (checked) =>
+    setSelectedIds(checked ? students.map((s) => s.student_registration_id) : []);
+  const toggleSelectOne = (id, checked) =>
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
 
-  const exportParams = () => ({ class_id: saClass || null, programme_id: saProgramme || null, session_term_id: sessionTermId });
+  const exportParams = () => ({
+    class_id: saClass || null,
+    programme_id: saProgramme || null,
+    session_term_id: sessionTermId,
+  });
 
   const handleExportPdf = async () => {
     try {
@@ -410,9 +464,10 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
 
   const handlePrintNameTags = async () => {
     try {
-      const params = selectedIds.length > 0
-        ? { student_registration_ids: selectedIds, session_term_id: sessionTermId }
-        : { class_id: saClass, session_term_id: sessionTermId };
+      const params =
+        selectedIds.length > 0
+          ? { student_registration_ids: selectedIds, session_term_id: sessionTermId }
+          : { class_id: saClass, session_term_id: sessionTermId };
       const res = await classRegisterApi.exportNameTagsPdf(params);
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
@@ -431,7 +486,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
   const handleConfirmAutoAssign = async () => {
     setAutoAssigning(true);
     try {
-      await classRegisterApi.autoAssignArms({ class_id: saClass, programme_id: saProgramme || null, session_term_id: sessionTermId });
+      await classRegisterApi.autoAssignArms({
+        class_id: saClass,
+        programme_id: saProgramme || null,
+        session_term_id: sessionTermId,
+      });
       notify.success('Students auto-assigned across arms');
       setAutoAssignConfirmOpen(false);
       refetchAll();
@@ -446,7 +505,10 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
     if (!moveTargetArm || selectedIds.length === 0) return;
     setMoving(true);
     try {
-      const assignments = selectedIds.map((id) => ({ student_registration_id: id, class_arm_id: Number(moveTargetArm) }));
+      const assignments = selectedIds.map((id) => ({
+        student_registration_id: id,
+        class_arm_id: Number(moveTargetArm),
+      }));
       await classRegisterApi.bulkAssignArm({ assignments });
       notify.success(`${selectedIds.length} student(s) moved successfully`);
       setMoveModalOpen(false);
@@ -475,18 +537,33 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
           {headerTitle}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          {subtitleParts.length ? subtitleParts.join(' • ') : isClassTeacher ? 'Loading your classes…' : 'Pick a class from Class Explorer to get started'}
+          {subtitleParts.length
+            ? subtitleParts.join(' • ')
+            : isClassTeacher
+              ? 'Loading your classes…'
+              : 'Pick a class from Class Explorer to get started'}
         </Typography>
       </Box>
 
       <MultiArmStatCards stats={overview?.stats} />
 
-      <Stack direction="row" spacing={1} sx={{ mb: 1.5 }} flexWrap="wrap" useFlexGap alignItems="center">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 1.5 }}
+        flexWrap="wrap"
+        useFlexGap
+        alignItems="center"
+      >
         {isAdmin && (
           <>
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Session</InputLabel>
-              <Select value={saSession} label="Session" onChange={(e) => setSaSession(e.target.value)}>
+              <Select
+                value={saSession}
+                label="Session"
+                onChange={(e) => setSaSession(e.target.value)}
+              >
                 {sessions.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
                     {s.session_name || s.name}
@@ -506,7 +583,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 130 }}>
               <InputLabel>Programme</InputLabel>
-              <Select value={saProgramme} label="Programme" onChange={(e) => handleProgrammeChange(e.target.value)}>
+              <Select
+                value={saProgramme}
+                label="Programme"
+                onChange={(e) => handleProgrammeChange(e.target.value)}
+              >
                 <MenuItem value="">All</MenuItem>
                 {programmes.map((p) => (
                   <MenuItem key={p.id} value={p.id}>
@@ -517,7 +598,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 110 }}>
               <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+              <Select
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
                 <MenuItem value="">All Status</MenuItem>
                 {STATUS_OPTIONS.map((s) => (
                   <MenuItem key={s.value} value={s.value}>
@@ -528,7 +613,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 110 }}>
               <InputLabel>Gender</InputLabel>
-              <Select value={genderFilter} label="Gender" onChange={(e) => setGenderFilter(e.target.value)}>
+              <Select
+                value={genderFilter}
+                label="Gender"
+                onChange={(e) => setGenderFilter(e.target.value)}
+              >
                 <MenuItem value="">All Genders</MenuItem>
                 <MenuItem value="male">Male</MenuItem>
                 <MenuItem value="female">Female</MenuItem>
@@ -542,7 +631,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
           value={searchInput}
           onChange={(e) => handleSearchInputChange(e.target.value)}
           sx={{ flex: '1 1 240px', minWidth: 200 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
         />
       </Stack>
 
@@ -562,7 +657,12 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             ) : (
               <ClassExplorerSidebar
                 mode="teacher"
-                teacherArms={teacherClasses.map((c) => ({ class_arm_id: c.class_id, class_name: c.class_name, class_arm_names: '', student_count: c.student_count }))}
+                teacherArms={teacherClasses.map((c) => ({
+                  class_arm_id: c.class_id,
+                  class_name: c.class_name,
+                  class_arm_names: '',
+                  student_count: c.student_count,
+                }))}
                 selectedArmId={saClass}
                 onSelectTeacherArm={(c) => handleSelectClass(c.class_arm_id, null, c.class_name)}
               />
@@ -575,8 +675,8 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
             sx={{
               borderRadius: 2,
               overflowX: 'auto',
-              border: '1px solid',
-              borderColor: 'divider',
+              border: '2px solid',
+              borderColor: '#94A3B8',
             }}
           >
             <Table size="small" sx={{ minWidth: 700 }} stickyHeader>
@@ -607,7 +707,9 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
               </TableHead>
               <TableBody>
                 {loadingStudents ? (
-                  Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} armCount={arms.length} />)
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <RowSkeleton key={i} armCount={arms.length} />
+                  ))
                 ) : students.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={arms.length + 4} align="center" sx={{ py: 4 }}>
@@ -627,14 +729,35 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                     const isMale = student.gender?.toUpperCase() === 'MALE';
                     const currentArm = arms.find((a) => a.id === student.class_arm_id);
                     return (
-                      <TableRow key={student.student_registration_id || index} hover selected={selectedIds.includes(student.student_registration_id)}>
+                      <TableRow
+                        key={student.student_registration_id || index}
+                        hover
+                        selected={selectedIds.includes(student.student_registration_id)}
+                      >
                         <TableCell padding="checkbox">
-                          <Checkbox size="small" checked={selectedIds.includes(student.student_registration_id)} onChange={(e) => toggleSelectOne(student.student_registration_id, e.target.checked)} />
+                          <Checkbox
+                            size="small"
+                            checked={selectedIds.includes(student.student_registration_id)}
+                            onChange={(e) =>
+                              toggleSelectOne(student.student_registration_id, e.target.checked)
+                            }
+                          />
                         </TableCell>
-                        <TableCell>{(meta?.current_page - 1) * meta?.per_page + index + 1}</TableCell>
+                        <TableCell>
+                          {(meta?.current_page - 1) * meta?.per_page + index + 1}
+                        </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                            <Avatar src={student.avatar} sx={{ width: 34, height: 34, bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}>
+                            <Avatar
+                              src={student.avatar}
+                              sx={{
+                                width: 34,
+                                height: 34,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                                fontWeight: 700,
+                              }}
+                            >
                               {(student.name || '?').charAt(0)}
                             </Avatar>
                             <Box sx={{ minWidth: 0 }}>
@@ -644,8 +767,15 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                                 </Typography>
                                 <Box
                                   sx={{
-                                    width: 18, height: 18, borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontWeight: 800, fontSize: '0.6rem', flexShrink: 0,
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 800,
+                                    fontSize: '0.6rem',
+                                    flexShrink: 0,
                                     bgcolor: isMale ? 'info.light' : 'success.light',
                                     color: isMale ? 'info.main' : 'success.main',
                                   }}
@@ -660,7 +790,13 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Chip label={currentArm?.name || 'Unassigned'} size="small" color={currentArm ? 'primary' : 'warning'} variant={currentArm ? 'filled' : 'outlined'} sx={{ fontWeight: 700 }} />
+                          <Chip
+                            label={currentArm?.name || 'Unassigned'}
+                            size="small"
+                            color={currentArm ? 'primary' : 'warning'}
+                            variant={currentArm ? 'filled' : 'outlined'}
+                            sx={{ fontWeight: 700 }}
+                          />
                         </TableCell>
                         {arms.map((arm) => (
                           <TableCell key={arm.id} align="center">
@@ -689,7 +825,10 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
                 onPageChange={(_, newPage) => setMaPage(newPage)}
                 rowsPerPage={maRowsPerPage}
                 rowsPerPageOptions={[10, 25, 50]}
-                onRowsPerPageChange={(e) => { setMaRowsPerPage(parseInt(e.target.value, 10)); setMaPage(0); }}
+                onRowsPerPageChange={(e) => {
+                  setMaRowsPerPage(parseInt(e.target.value, 10));
+                  setMaPage(0);
+                }}
                 labelRowsPerPage="Per page"
               />
             </Box>
@@ -719,10 +858,18 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
       </Grid>
 
       {/* ── Needs Attention (unassigned students) ───────────── */}
-      <Dialog open={needsAttentionOpen} onClose={() => setNeedsAttentionOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={needsAttentionOpen}
+        onClose={() => setNeedsAttentionOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Students Not Assigned to Any Arm</DialogTitle>
         <DialogContent>
-          <Alert severity={overview?.needs_attention?.unassigned_count ? 'warning' : 'success'} sx={{ mt: 1 }}>
+          <Alert
+            severity={overview?.needs_attention?.unassigned_count ? 'warning' : 'success'}
+            sx={{ mt: 1 }}
+          >
             {overview?.needs_attention?.unassigned_count
               ? `${overview.needs_attention.unassigned_count} student(s) need an arm assigned.`
               : 'Every student in this class is already assigned to an arm.'}
@@ -735,18 +882,33 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
 
       {/* ── Auto-assign confirmation — a real bulk mutation, so it gets a
           clear, explicit confirm step ───────────────────────────────── */}
-      <Dialog open={autoAssignConfirmOpen} onClose={() => setAutoAssignConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={autoAssignConfirmOpen}
+        onClose={() => setAutoAssignConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Auto-assign Students?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ pt: 1 }}>
-            This will re-distribute <strong>every student currently in {headerTitle.replace(' – Multiple Arm View', '')}</strong> evenly across its {arms.length} arms. Existing arm assignments will be overwritten. This cannot be undone automatically.
+            This will re-distribute{' '}
+            <strong>
+              every student currently in {headerTitle.replace(' – Multiple Arm View', '')}
+            </strong>{' '}
+            evenly across its {arms.length} arms. Existing arm assignments will be overwritten. This
+            cannot be undone automatically.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setAutoAssignConfirmOpen(false)} disabled={autoAssigning}>
             Cancel
           </Button>
-          <Button variant="contained" color="warning" onClick={handleConfirmAutoAssign} disabled={autoAssigning}>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={handleConfirmAutoAssign}
+            disabled={autoAssigning}
+          >
             {autoAssigning ? 'Assigning…' : 'Confirm Auto-assign'}
           </Button>
         </DialogActions>
@@ -754,11 +916,17 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
 
       {/* ── Move selected students ───────────────────────────── */}
       <Dialog open={moveModalOpen} onClose={() => setMoveModalOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 700 }}>Move {selectedIds.length} Selected Student{selectedIds.length === 1 ? '' : 's'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Move {selectedIds.length} Selected Student{selectedIds.length === 1 ? '' : 's'}
+        </DialogTitle>
         <DialogContent dividers>
           <FormControl fullWidth size="small" sx={{ mt: 1 }}>
             <InputLabel>Target Arm</InputLabel>
-            <Select value={moveTargetArm} label="Target Arm" onChange={(e) => setMoveTargetArm(e.target.value)}>
+            <Select
+              value={moveTargetArm}
+              label="Target Arm"
+              onChange={(e) => setMoveTargetArm(e.target.value)}
+            >
               {arms.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.name}
@@ -771,7 +939,11 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
           <Button onClick={() => setMoveModalOpen(false)} disabled={moving}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleConfirmMoveSelected} disabled={moving || !moveTargetArm}>
+          <Button
+            variant="contained"
+            onClick={handleConfirmMoveSelected}
+            disabled={moving || !moveTargetArm}
+          >
             {moving ? 'Moving…' : 'Confirm Move'}
           </Button>
         </DialogActions>

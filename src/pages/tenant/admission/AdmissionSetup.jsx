@@ -824,13 +824,12 @@ const AdmissionSetup = () => {
       return;
     }
 
-    if (key === 'customtext' && componentActive.customtext) {
-      setCustomText('');
-      return;
-    }
     if (key === 'customtext') {
-      // currently off: no-op — the text is typed in the Configure Settings
-      // column, there's nothing to toggle on here (mirrors 'shortname')
+      // Checking it needs to actually turn the component on — a no-op here
+      // just looked like a broken checkbox. Seeds a sensible default the
+      // user can edit in Configure Settings, same pattern as Sequential
+      // Number below.
+      setCustomText(componentActive.customtext ? '' : 'ADM');
       return;
     }
 
@@ -843,11 +842,9 @@ const AdmissionSetup = () => {
       return;
     }
 
-    if (key === 'shortname' && componentActive.shortname) {
-      setSchoolShortName('');
+    if (key === 'shortname') {
+      setSchoolShortName(componentActive.shortname ? '' : 'STU');
     }
-    // else (shortname, currently off): no-op — the name is typed in the
-    // Configure Settings column, there's nothing to toggle on here
   };
 
   // ── Code Format wizard: colored breakdown of the active format string ─────

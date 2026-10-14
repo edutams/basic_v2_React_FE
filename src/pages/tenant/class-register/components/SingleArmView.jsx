@@ -151,8 +151,14 @@ const SingleArmView = () => {
   const notify = useNotification();
   const navigate = useNavigate();
   const { roles } = useTenantAuth();
-  const isClassTeacher = Array.isArray(roles) && roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
-  const isAdmin = Array.isArray(roles) && roles.some((r) => ['super_admin', 'school_admin'].includes(typeof r === 'string' ? r : r?.name));
+  const isClassTeacher =
+    Array.isArray(roles) &&
+    roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
+  const isAdmin =
+    Array.isArray(roles) &&
+    roles.some((r) =>
+      ['super_admin', 'school_admin'].includes(typeof r === 'string' ? r : r?.name),
+    );
 
   // ── Teacher mode: resolve assigned arms once ──────────────
   const [teacherArms, setTeacherArms] = useState([]);
@@ -194,13 +200,19 @@ const SingleArmView = () => {
     if (!isAdmin) return;
     Promise.all([fetchSessions(), fetchProgrammes(), fetchActiveTenantSessionTerm()])
       .then(([sessRes, progRes, activeRes]) => {
-        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data) ? sessRes.data?.data || sessRes.data : [];
-        const programmesData = Array.isArray(progRes.data?.data || progRes.data) ? progRes.data?.data || progRes.data : [];
+        const sessionsData = Array.isArray(sessRes.data?.data || sessRes.data)
+          ? sessRes.data?.data || sessRes.data
+          : [];
+        const programmesData = Array.isArray(progRes.data?.data || progRes.data)
+          ? progRes.data?.data || progRes.data
+          : [];
         setSessions(sessionsData);
         setProgrammes(programmesData);
 
         const activeSessionTerm = activeRes?.status ? activeRes.data : null;
-        const defaultSession = (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) || sessionsData[0];
+        const defaultSession =
+          (activeSessionTerm && sessionsData.find((s) => s.id === activeSessionTerm.session_id)) ||
+          sessionsData[0];
         if (defaultSession) setSaSession(defaultSession.id);
         if (activeSessionTerm?.term_id) setSaTerm(activeSessionTerm.term_id);
       })
@@ -246,7 +258,12 @@ const SingleArmView = () => {
     if (!isAdmin || autoSelected || breakdown.length === 0) return;
     const first = breakdown[0];
     setAutoSelected(true);
-    handleSelectClass(first.class_id, first.programme_id, first.class_display_name, first.programme_name);
+    handleSelectClass(
+      first.class_id,
+      first.programme_id,
+      first.class_display_name,
+      first.programme_name,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, autoSelected, breakdown]);
 
@@ -275,7 +292,12 @@ const SingleArmView = () => {
     }
     const first = breakdown.find((c) => c.programme_id === programmeId);
     if (first) {
-      handleSelectClass(first.class_id, first.programme_id, first.class_display_name, first.programme_name);
+      handleSelectClass(
+        first.class_id,
+        first.programme_id,
+        first.class_display_name,
+        first.programme_name,
+      );
     } else {
       setSaProgramme(programmeId);
     }
@@ -357,7 +379,10 @@ const SingleArmView = () => {
     const requestId = ++overviewRequestRef.current;
     setLoadingOverview(true);
     classRegisterApi
-      .getClassArmOverview({ class_arm_id: saArm, session_term_id: isAdmin ? saTerm || null : null })
+      .getClassArmOverview({
+        class_arm_id: saArm,
+        session_term_id: isAdmin ? saTerm || null : null,
+      })
       .then((res) => {
         if (requestId !== overviewRequestRef.current) return;
         if (res.data?.status) {
@@ -408,7 +433,19 @@ const SingleArmView = () => {
         if (requestId === studentsRequestRef.current) setLoadingStudents(false);
       }
     },
-    [saClass, saProgramme, saArm, saTerm, isAdmin, saPage, saRowsPerPage, tableSearch, genderFilter, statusFilter, profileStatusFilter],
+    [
+      saClass,
+      saProgramme,
+      saArm,
+      saTerm,
+      isAdmin,
+      saPage,
+      saRowsPerPage,
+      tableSearch,
+      genderFilter,
+      statusFilter,
+      profileStatusFilter,
+    ],
   );
 
   useEffect(() => {
@@ -475,11 +512,16 @@ const SingleArmView = () => {
     if (!selectedRow || !selectedStatus) return;
     setSavingStatus(true);
     try {
-      await classRegisterApi.updateStudentStatus(selectedRow.student_registration_id, selectedStatus);
+      await classRegisterApi.updateStudentStatus(
+        selectedRow.student_registration_id,
+        selectedStatus,
+      );
       notify.success('Student status updated successfully');
       setStudents((prev) =>
         prev.map((s) =>
-          s.student_registration_id === selectedRow.student_registration_id ? { ...s, status: selectedStatus } : s,
+          s.student_registration_id === selectedRow.student_registration_id
+            ? { ...s, status: selectedStatus }
+            : s,
         ),
       );
       setStatusModalOpen(false);
@@ -497,7 +539,9 @@ const SingleArmView = () => {
     try {
       await classRegisterApi.removeFromClass(selectedRow.student_registration_id);
       notify.success(`${selectedRow.name} removed from class`);
-      setStudents((prev) => prev.filter((s) => s.student_registration_id !== selectedRow.student_registration_id));
+      setStudents((prev) =>
+        prev.filter((s) => s.student_registration_id !== selectedRow.student_registration_id),
+      );
       setRemoveModalOpen(false);
       refetchAll();
     } catch {
@@ -537,7 +581,10 @@ const SingleArmView = () => {
       return;
     }
     try {
-      const res = await classRegisterApi.exportNameTagsPdf({ class_arm_id: saArm, session_term_id: sessionTermId });
+      const res = await classRegisterApi.exportNameTagsPdf({
+        class_arm_id: saArm,
+        session_term_id: sessionTermId,
+      });
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
@@ -552,8 +599,10 @@ const SingleArmView = () => {
     }
   };
 
-  const toggleSelectAll = (checked) => setSelectedIds(checked ? students.map((s) => s.student_registration_id) : []);
-  const toggleSelectOne = (id, checked) => setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  const toggleSelectAll = (checked) =>
+    setSelectedIds(checked ? students.map((s) => s.student_registration_id) : []);
+  const toggleSelectOne = (id, checked) =>
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
 
   const headerTitle =
     overview?.class_arm?.class_name && overview?.class_arm?.arm_name
@@ -570,103 +619,157 @@ const SingleArmView = () => {
   return (
     <Box>
       {/* ── Header: title + arm switcher, search bar, Add Student ── */}
-      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} spacing={1.5} sx={{ mb: 1.5 }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ md: 'center' }}
+        spacing={1.5}
+        sx={{ mb: 1.5 }}
+      >
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="h5" fontWeight={800} noWrap>
             {headerTitle}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {subtitleParts.length ? subtitleParts.join(' • ') : isClassTeacher ? 'Loading your classes…' : 'Pick a class from Class Explorer to get started'}
+            {subtitleParts.length
+              ? subtitleParts.join(' • ')
+              : isClassTeacher
+                ? 'Loading your classes…'
+                : 'Pick a class from Class Explorer to get started'}
           </Typography>
         </Box>
 
         <Stack direction="row" spacing={1} alignItems="center">
-          <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setAddToClassModalOpen(true)} sx={{ whiteSpace: 'nowrap' }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setAddToClassModalOpen(true)}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
             Add Student
           </Button>
         </Stack>
       </Stack>
 
       {/* ── Stat cards ──────────────────────────────────────── */}
-      <ClassArmStatCards stats={overview?.stats} loading={loadingOverview} onNeedAttentionClick={() => setNeedsAttentionOpen(true)} />
+      <ClassArmStatCards
+        stats={overview?.stats}
+        loading={loadingOverview}
+        onNeedAttentionClick={() => setNeedsAttentionOpen(true)}
+      />
 
       {/* ── Filter row — Session/Term/Programme/Arm/Gender/Status/Profile
           Status for admins only (class teachers have nothing to filter),
           Search always last so it reads as "narrow further within these
           filters" rather than a separate control. ── */}
-      <Stack direction="row" spacing={1} sx={{ mb: 1.5 }} flexWrap="wrap" useFlexGap alignItems="center">
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 1.5 }}
+        flexWrap="wrap"
+        useFlexGap
+        alignItems="center"
+      >
         {isAdmin && (
           <>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Session</InputLabel>
-            <Select value={saSession} label="Session" onChange={(e) => setSaSession(e.target.value)}>
-              {sessions.map((s) => (
-                <MenuItem key={s.id} value={s.id}>
-                  {s.session_name || s.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Term</InputLabel>
-            <Select value={saTerm} label="Term" onChange={(e) => setSaTerm(e.target.value)}>
-              {terms.map((t) => (
-                <MenuItem key={t.id} value={t.id}>
-                  {t.term_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Programme</InputLabel>
-            <Select value={saProgramme} label="Programme" onChange={(e) => handleProgrammeChange(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              {programmes.map((p) => (
-                <MenuItem key={p.id} value={p.id}>
-                  {p.programme_name || p.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          {arms.length > 0 && (
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>Arm</InputLabel>
-              <Select value={saArm} label="Arm" onChange={(e) => { setSaArm(e.target.value); setSaPage(0); }}>
-                {arms.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>
-                    {a.class_arm_names}
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Session</InputLabel>
+              <Select
+                value={saSession}
+                label="Session"
+                onChange={(e) => setSaSession(e.target.value)}
+              >
+                {sessions.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.session_name || s.name}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-          )}
-          <FormControl size="small" sx={{ minWidth: 90 }}>
-            <InputLabel>Gender</InputLabel>
-            <Select value={genderFilter} label="Gender" onChange={(e) => setGenderFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="male">Male</MenuItem>
-              <MenuItem value="female">Female</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Status</InputLabel>
-            <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              {STATUS_OPTIONS.map((s) => (
-                <MenuItem key={s.value} value={s.value}>
-                  {s.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Profile Status</InputLabel>
-            <Select value={profileStatusFilter} label="Profile Status" onChange={(e) => setProfileStatusFilter(e.target.value)}>
-              <MenuItem value="">All</MenuItem>
-              <MenuItem value="Complete">Complete</MenuItem>
-              <MenuItem value="Incomplete">Incomplete</MenuItem>
-            </Select>
-          </FormControl>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel>Term</InputLabel>
+              <Select value={saTerm} label="Term" onChange={(e) => setSaTerm(e.target.value)}>
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.term_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>Programme</InputLabel>
+              <Select
+                value={saProgramme}
+                label="Programme"
+                onChange={(e) => handleProgrammeChange(e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {programmes.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.programme_name || p.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {arms.length > 0 && (
+              <FormControl size="small" sx={{ minWidth: 100 }}>
+                <InputLabel>Arm</InputLabel>
+                <Select
+                  value={saArm}
+                  label="Arm"
+                  onChange={(e) => {
+                    setSaArm(e.target.value);
+                    setSaPage(0);
+                  }}
+                >
+                  {arms.map((a) => (
+                    <MenuItem key={a.id} value={a.id}>
+                      {a.class_arm_names}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            <FormControl size="small" sx={{ minWidth: 90 }}>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={genderFilter}
+                label="Gender"
+                onChange={(e) => setGenderFilter(e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                {STATUS_OPTIONS.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>Profile Status</InputLabel>
+              <Select
+                value={profileStatusFilter}
+                label="Profile Status"
+                onChange={(e) => setProfileStatusFilter(e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="Complete">Complete</MenuItem>
+                <MenuItem value="Incomplete">Incomplete</MenuItem>
+              </Select>
+            </FormControl>
           </>
         )}
         <TextField
@@ -700,7 +803,12 @@ const SingleArmView = () => {
                 onSelectClass={handleSelectClass}
               />
             ) : (
-              <ClassExplorerSidebar mode="teacher" teacherArms={teacherArms} selectedArmId={saArm} onSelectTeacherArm={handleSelectTeacherArm} />
+              <ClassExplorerSidebar
+                mode="teacher"
+                teacherArms={teacherArms}
+                selectedArmId={saArm}
+                onSelectTeacherArm={handleSelectTeacherArm}
+              />
             )}
           </Grid>
         )}
@@ -710,8 +818,8 @@ const SingleArmView = () => {
             sx={{
               borderRadius: 2,
               overflowX: 'auto',
-              border: '1px solid',
-              borderColor: 'divider',
+              border: '2px solid',
+              borderColor: '#94A3B8',
             }}
           >
             <Table size="small" sx={{ minWidth: 820 }} stickyHeader>
@@ -758,14 +866,35 @@ const SingleArmView = () => {
                     const beh = behaviourMeta(student.behaviour_label);
                     const isMale = student.gender?.toUpperCase() === 'MALE';
                     return (
-                      <TableRow key={student.student_registration_id || index} hover selected={selectedIds.includes(student.student_registration_id)}>
+                      <TableRow
+                        key={student.student_registration_id || index}
+                        hover
+                        selected={selectedIds.includes(student.student_registration_id)}
+                      >
                         <TableCell padding="checkbox">
-                          <Checkbox size="small" checked={selectedIds.includes(student.student_registration_id)} onChange={(e) => toggleSelectOne(student.student_registration_id, e.target.checked)} />
+                          <Checkbox
+                            size="small"
+                            checked={selectedIds.includes(student.student_registration_id)}
+                            onChange={(e) =>
+                              toggleSelectOne(student.student_registration_id, e.target.checked)
+                            }
+                          />
                         </TableCell>
-                        <TableCell>{(meta?.current_page - 1) * meta?.per_page + index + 1}</TableCell>
+                        <TableCell>
+                          {(meta?.current_page - 1) * meta?.per_page + index + 1}
+                        </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                            <Avatar src={student.avatar} sx={{ width: 34, height: 34, bgcolor: 'primary.light', color: 'primary.main', fontWeight: 700 }}>
+                            <Avatar
+                              src={student.avatar}
+                              sx={{
+                                width: 34,
+                                height: 34,
+                                bgcolor: 'primary.light',
+                                color: 'primary.main',
+                                fontWeight: 700,
+                              }}
+                            >
                               {(student.name || '?').charAt(0)}
                             </Avatar>
                             <Box sx={{ minWidth: 0 }}>
@@ -775,8 +904,15 @@ const SingleArmView = () => {
                                 </Typography>
                                 <Box
                                   sx={{
-                                    width: 18, height: 18, borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontWeight: 800, fontSize: '0.6rem', flexShrink: 0,
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 800,
+                                    fontSize: '0.6rem',
+                                    flexShrink: 0,
                                     bgcolor: isMale ? 'info.light' : 'success.light',
                                     color: isMale ? 'info.main' : 'success.main',
                                   }}
@@ -791,35 +927,62 @@ const SingleArmView = () => {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          {student.attendance_pct === null || student.attendance_pct === undefined ? (
-                            <Typography variant="caption" color="text.disabled">No data</Typography>
+                          {student.attendance_pct === null ||
+                          student.attendance_pct === undefined ? (
+                            <Typography variant="caption" color="text.disabled">
+                              No data
+                            </Typography>
                           ) : (
                             <Stack spacing={0.25} sx={{ minWidth: 90 }}>
-                              <Typography variant="caption" fontWeight={700}>{student.attendance_pct}%</Typography>
+                              <Typography variant="caption" fontWeight={700}>
+                                {student.attendance_pct}%
+                              </Typography>
                               <LinearProgress
                                 variant="determinate"
                                 value={student.attendance_pct}
-                                sx={{ height: 6, borderRadius: 4, bgcolor: '#F3F4F6', '& .MuiLinearProgress-bar': { bgcolor: student.attendance_pct < 70 ? '#DC2626' : '#16A34A' } }}
+                                sx={{
+                                  height: 6,
+                                  borderRadius: 4,
+                                  bgcolor: '#F3F4F6',
+                                  '& .MuiLinearProgress-bar': {
+                                    bgcolor: student.attendance_pct < 70 ? '#DC2626' : '#16A34A',
+                                  },
+                                }}
                               />
                             </Stack>
                           )}
                         </TableCell>
                         <TableCell>
-                          {student.last_test_average === null || student.last_test_average === undefined ? (
-                            <Typography variant="caption" color="text.disabled">No data</Typography>
+                          {student.last_test_average === null ||
+                          student.last_test_average === undefined ? (
+                            <Typography variant="caption" color="text.disabled">
+                              No data
+                            </Typography>
                           ) : (
                             <Stack spacing={0.25} sx={{ minWidth: 90 }}>
-                              <Typography variant="caption" fontWeight={700}>{student.last_test_average}%</Typography>
+                              <Typography variant="caption" fontWeight={700}>
+                                {student.last_test_average}%
+                              </Typography>
                               <LinearProgress
                                 variant="determinate"
                                 value={student.last_test_average}
-                                sx={{ height: 6, borderRadius: 4, bgcolor: '#F3F4F6', '& .MuiLinearProgress-bar': { bgcolor: '#2563EB' } }}
+                                sx={{
+                                  height: 6,
+                                  borderRadius: 4,
+                                  bgcolor: '#F3F4F6',
+                                  '& .MuiLinearProgress-bar': { bgcolor: '#2563EB' },
+                                }}
                               />
                             </Stack>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Chip label={student.profile_status} size="small" color={student.profile_status === 'Complete' ? 'success' : 'warning'} sx={{ fontWeight: 700 }} />
+                          <Chip
+                            label={student.profile_status}
+                            size="small"
+                            color={student.profile_status === 'Complete' ? 'success' : 'warning'}
+                            sx={{ fontWeight: 700 }}
+                          />
                         </TableCell>
                         <TableCell>
                           <Stack direction="row" alignItems="center" spacing={0.5}>
@@ -831,15 +994,27 @@ const SingleArmView = () => {
                         </TableCell>
                         <TableCell>
                           {!student.guardians || student.guardians.length === 0 ? (
-                            <Typography variant="caption" color="text.disabled">—</Typography>
+                            <Typography variant="caption" color="text.disabled">
+                              —
+                            </Typography>
                           ) : (
                             <Box sx={{ minWidth: 0 }}>
                               {student.guardians.slice(0, 1).map((g, i) => (
                                 <Box key={i}>
-                                  <Typography variant="body2" noWrap fontWeight={500} fontSize="0.8rem">
+                                  <Typography
+                                    variant="body2"
+                                    noWrap
+                                    fontWeight={500}
+                                    fontSize="0.8rem"
+                                  >
                                     {g.name || '—'}
                                     {g.relationship && (
-                                      <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 0.5, fontStyle: 'italic' }}>
+                                      <Typography
+                                        component="span"
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{ ml: 0.5, fontStyle: 'italic' }}
+                                      >
                                         ({g.relationship})
                                       </Typography>
                                     )}
@@ -879,7 +1054,10 @@ const SingleArmView = () => {
                 onPageChange={(_, newPage) => setSaPage(newPage)}
                 rowsPerPage={saRowsPerPage}
                 rowsPerPageOptions={[10, 25, 50]}
-                onRowsPerPageChange={(e) => { setSaRowsPerPage(parseInt(e.target.value, 10)); setSaPage(0); }}
+                onRowsPerPageChange={(e) => {
+                  setSaRowsPerPage(parseInt(e.target.value, 10));
+                  setSaPage(0);
+                }}
                 labelRowsPerPage="Per page"
               />
             </Box>
@@ -892,7 +1070,10 @@ const SingleArmView = () => {
             loading={loadingOverview}
             onViewAffectedStudents={() => setNeedsAttentionOpen(true)}
             onExportPdf={handleExportPdf}
-            onIdentifyIncompleteProfiles={() => { setProfileStatusFilter('Incomplete'); setSaPage(0); }}
+            onIdentifyIncompleteProfiles={() => {
+              setProfileStatusFilter('Incomplete');
+              setSaPage(0);
+            }}
             onSendMessageToGuardians={() => navigate('/communications')}
             onPrintNameTags={handlePrintNameTags}
             onViewBehaviourReports={() => navigate('/attendance-psychomotor?tab=mark-psychomotor')}
@@ -903,7 +1084,12 @@ const SingleArmView = () => {
       </Grid>
 
       {/* ── Row-action menu ─────────────────────────────────── */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}
+      >
         <MenuItem onClick={() => handleOpenDetail(selectedRow)}>
           <ViewDetailIcon fontSize="small" sx={{ color: 'text.secondary', mr: 1.5 }} />
           View Detail
@@ -922,7 +1108,12 @@ const SingleArmView = () => {
         </MenuItem>
       </Menu>
 
-      <Dialog open={statusModalOpen} onClose={() => setStatusModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
           <StatusIcon color="primary" />
           Change Student Status
@@ -937,7 +1128,11 @@ const SingleArmView = () => {
             </Typography>
             <FormControl fullWidth size="small">
               <InputLabel>Status</InputLabel>
-              <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+              <Select
+                value={selectedStatus}
+                label="Status"
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
                 {STATUS_OPTIONS.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>
                     {opt.label}
@@ -957,27 +1152,51 @@ const SingleArmView = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={removeModalOpen} onClose={() => setRemoveModalOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={removeModalOpen}
+        onClose={() => setRemoveModalOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Remove from Class</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ pt: 1 }}>
             Are you sure you want to remove <strong>{selectedRow?.name}</strong> from{' '}
-            <strong>{selectedRow?.class_arm}</strong>? This will unassign them from their current class arm.
+            <strong>{selectedRow?.class_arm}</strong>? This will unassign them from their current
+            class arm.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRemoveModalOpen(false)} disabled={removingStudent}>
             Cancel
           </Button>
-          <Button variant="contained" color="error" onClick={handleConfirmRemove} disabled={removingStudent}>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmRemove}
+            disabled={removingStudent}
+          >
             {removingStudent ? 'Removing...' : 'Confirm Remove'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <StudentDetailModal open={detailModalOpen} onClose={() => setDetailModalOpen(false)} student={selectedRow} />
-      <ChangeClassModal open={changeClassModalOpen} onClose={() => setChangeClassModalOpen(false)} student={selectedRow} onSuccess={refetchAll} />
-      <AddToClassModal open={addToClassModalOpen} onClose={() => setAddToClassModalOpen(false)} onSuccess={refetchAll} />
+      <StudentDetailModal
+        open={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        student={selectedRow}
+      />
+      <ChangeClassModal
+        open={changeClassModalOpen}
+        onClose={() => setChangeClassModalOpen(false)}
+        student={selectedRow}
+        onSuccess={refetchAll}
+      />
+      <AddToClassModal
+        open={addToClassModalOpen}
+        onClose={() => setAddToClassModalOpen(false)}
+        onSuccess={refetchAll}
+      />
 
       <NeedsAttentionModal
         open={needsAttentionOpen}

@@ -838,7 +838,7 @@ const SingleArmView = () => {
                   <TableCell>Attendance (This Term)</TableCell>
                   <TableCell>Last Test Average</TableCell>
                   <TableCell>Profile Status</TableCell>
-                  <TableCell>Behaviour</TableCell>
+                  {/* <TableCell>Behaviour</TableCell> */}
                   <TableCell>Parent/Guardian</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
@@ -984,14 +984,14 @@ const SingleArmView = () => {
                             sx={{ fontWeight: 700 }}
                           />
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <Stack direction="row" alignItems="center" spacing={0.5}>
                             <Box sx={{ color: beh.color, display: 'flex' }}>{beh.icon}</Box>
                             <Typography variant="caption" fontWeight={600}>
                               {student.behaviour_label || 'Not rated'}
                             </Typography>
                           </Stack>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>
                           {!student.guardians || student.guardians.length === 0 ? (
                             <Typography variant="caption" color="text.disabled">

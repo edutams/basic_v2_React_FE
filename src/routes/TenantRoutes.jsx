@@ -54,6 +54,9 @@ const PageUnderDevelopment = Loadable(
 const AdmissionProcessing = Loadable(
   lazy(() => import('@/pages/tenant/admission/AdmissionProcessing')),
 );
+const AdmissionDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionDashboard')),
+);
 const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
 const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
 
@@ -385,6 +388,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <AdmissionProcessing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission-dashboard',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.dashboard.index">
+            <AdmissionDashboard />
           </TenantProtectedRoute>
         ),
       },

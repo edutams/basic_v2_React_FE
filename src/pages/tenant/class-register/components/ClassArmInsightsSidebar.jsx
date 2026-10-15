@@ -23,7 +23,10 @@ const ListSkeleton = ({ rows = 3 }) => (
 );
 
 const SidebarCard = ({ icon, iconColor, title, badge, children }) => (
-  <Paper elevation={0} sx={{ p: 1.25, borderRadius: '12px', border: '1px solid #E5E7EB', bgcolor: '#fff' }}>
+  <Paper
+    elevation={0}
+    sx={{ p: 1.25, borderRadius: '12px', border: '1px solid #E5E7EB', bgcolor: '#fff' }}
+  >
     <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1 }}>
       <Box sx={{ color: iconColor, display: 'flex' }}>{icon}</Box>
       <Typography variant="subtitle2" fontWeight={700} fontSize="0.85rem" sx={{ flex: 1 }}>
@@ -72,7 +75,13 @@ const ActionButton = ({ icon, label, onClick }) => (
     }}
   >
     <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-    <Typography variant="caption" fontWeight={600} fontSize="0.63rem" textAlign="center" lineHeight={1.1}>
+    <Typography
+      variant="caption"
+      fontWeight={600}
+      fontSize="0.63rem"
+      textAlign="center"
+      lineHeight={1.1}
+    >
       {label}
     </Typography>
   </Stack>
@@ -104,13 +113,37 @@ const ClassArmInsightsSidebar = ({
         icon={<AiIcon fontSize="small" />}
         iconColor="#9333EA"
         title="AI Insights"
-        badge={<Chip label="Beta" size="small" sx={{ bgcolor: '#F3E8FF', color: '#9333EA', fontWeight: 700, height: 18, fontSize: '0.65rem' }} />}
+        badge={
+          <Chip
+            label=""
+            size="small"
+            sx={{
+              bgcolor: '#F3E8FF',
+              color: '#9333EA',
+              fontWeight: 700,
+              height: 18,
+              fontSize: '0.65rem',
+            }}
+          />
+        }
       >
         {/* Quick-launch buttons that feed this card's own data (attendance + behaviour) */}
         <Stack direction="row" spacing={0.75} sx={{ mb: 1 }}>
-          <ActionButton icon={<MarkAttendanceIcon sx={{ fontSize: 18 }} />} label="Mark Attendance" onClick={onMarkAttendance} />
-          <ActionButton icon={<ExportIcon sx={{ fontSize: 18 }} />} label="Export List" onClick={onExportPdf} />
-          <ActionButton icon={<PsychomotorIcon sx={{ fontSize: 18 }} />} label="Mark Psychomotor" onClick={onMarkPsychomotor} />
+          <ActionButton
+            icon={<MarkAttendanceIcon sx={{ fontSize: 18 }} />}
+            label="Mark Attendance"
+            onClick={onMarkAttendance}
+          />
+          <ActionButton
+            icon={<ExportIcon sx={{ fontSize: 18 }} />}
+            label="Export List"
+            onClick={onExportPdf}
+          />
+          <ActionButton
+            icon={<PsychomotorIcon sx={{ fontSize: 18 }} />}
+            label="Mark Psychomotor"
+            onClick={onMarkPsychomotor}
+          />
         </Stack>
         <Divider sx={{ mb: 1 }} />
         {loading ? (
@@ -119,7 +152,16 @@ const ClassArmInsightsSidebar = ({
           <Stack spacing={0.6} sx={{ mb: 1 }}>
             {insights.map((line, i) => (
               <Stack key={i} direction="row" spacing={1} alignItems="flex-start">
-                <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#9333EA', mt: 0.8, flexShrink: 0 }} />
+                <Box
+                  sx={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: '50%',
+                    bgcolor: '#9333EA',
+                    mt: 0.8,
+                    flexShrink: 0,
+                  }}
+                />
                 <Typography variant="body2" fontSize="0.8rem" color="text.secondary">
                   {line}
                 </Typography>
@@ -145,9 +187,20 @@ const ClassArmInsightsSidebar = ({
         badge={
           !loading && (
             <Chip
-              label={needs?.incomplete_profiles_count + needs?.low_attendance_count + needs?.missing_guardian_count || 0}
+              label={
+                needs?.incomplete_profiles_count +
+                  needs?.low_attendance_count +
+                  needs?.missing_guardian_count || 0
+              }
               size="small"
-              sx={{ bgcolor: '#FEE2E2', color: '#DC2626', fontWeight: 700, height: 18, minWidth: 22, fontSize: '0.65rem' }}
+              sx={{
+                bgcolor: '#FEE2E2',
+                color: '#DC2626',
+                fontWeight: 700,
+                height: 18,
+                minWidth: 22,
+                fontSize: '0.65rem',
+              }}
             />
           )
         }
@@ -157,13 +210,17 @@ const ClassArmInsightsSidebar = ({
         ) : (
           <Stack spacing={0.6} sx={{ mb: 1 }}>
             <Typography variant="body2" fontSize="0.8rem" color="text.secondary">
-              {needs?.incomplete_profiles_count || 0} student{needs?.incomplete_profiles_count === 1 ? '' : 's'} with incomplete profiles
+              {needs?.incomplete_profiles_count || 0} student
+              {needs?.incomplete_profiles_count === 1 ? '' : 's'} with incomplete profiles
             </Typography>
             <Typography variant="body2" fontSize="0.8rem" color="text.secondary">
-              {needs?.low_attendance_count || 0} student{needs?.low_attendance_count === 1 ? '' : 's'} with low attendance (&lt;{needs?.low_attendance_threshold ?? 70}%)
+              {needs?.low_attendance_count || 0} student
+              {needs?.low_attendance_count === 1 ? '' : 's'} with low attendance (&lt;
+              {needs?.low_attendance_threshold ?? 70}%)
             </Typography>
             <Typography variant="body2" fontSize="0.8rem" color="text.secondary">
-              {needs?.missing_guardian_count || 0} student{needs?.missing_guardian_count === 1 ? '' : 's'} missing guardian details
+              {needs?.missing_guardian_count || 0} student
+              {needs?.missing_guardian_count === 1 ? '' : 's'} missing guardian details
             </Typography>
           </Stack>
         )}
@@ -179,12 +236,36 @@ const ClassArmInsightsSidebar = ({
         </Button>
       </SidebarCard>
 
-      <SidebarCard icon={<QuickActionsIcon fontSize="small" />} iconColor="#2563EB" title="Quick Actions">
-        <QuickActionItem icon={<SendIcon sx={{ fontSize: 18 }} />} label="Send Message to Guardians" onClick={onSendMessageToGuardians} />
-        <QuickActionItem icon={<PdfIcon sx={{ fontSize: 18 }} />} label="Generate Class List (PDF)" onClick={onExportPdf} />
-        <QuickActionItem icon={<BadgeIcon sx={{ fontSize: 18 }} />} label="Print Name Tags" onClick={onPrintNameTags} />
-        <QuickActionItem icon={<ProfileSearchIcon sx={{ fontSize: 18 }} />} label="Identify Incomplete Profiles" onClick={onIdentifyIncompleteProfiles} />
-        <QuickActionItem icon={<InsightsIcon sx={{ fontSize: 18 }} />} label="View Behaviour Reports" onClick={onViewBehaviourReports} />
+      <SidebarCard
+        icon={<QuickActionsIcon fontSize="small" />}
+        iconColor="#2563EB"
+        title="Quick Actions"
+      >
+        <QuickActionItem
+          icon={<SendIcon sx={{ fontSize: 18 }} />}
+          label="Send Message to Guardians"
+          onClick={onSendMessageToGuardians}
+        />
+        <QuickActionItem
+          icon={<PdfIcon sx={{ fontSize: 18 }} />}
+          label="Generate Class List (PDF)"
+          onClick={onExportPdf}
+        />
+        <QuickActionItem
+          icon={<BadgeIcon sx={{ fontSize: 18 }} />}
+          label="Print Name Tags"
+          onClick={onPrintNameTags}
+        />
+        <QuickActionItem
+          icon={<ProfileSearchIcon sx={{ fontSize: 18 }} />}
+          label="Identify Incomplete Profiles"
+          onClick={onIdentifyIncompleteProfiles}
+        />
+        <QuickActionItem
+          icon={<InsightsIcon sx={{ fontSize: 18 }} />}
+          label="View Behaviour Reports"
+          onClick={onViewBehaviourReports}
+        />
       </SidebarCard>
     </Stack>
   );

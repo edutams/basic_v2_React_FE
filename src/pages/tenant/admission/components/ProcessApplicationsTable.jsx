@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -182,6 +182,7 @@ const TableRowSkeleton = () => (
  */
 const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const notify = useNotification();
 
   // ─── Data state ────────────────────────────────────────────────────────
@@ -193,14 +194,26 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   const [processing, setProcessing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  // Deep-link support: the Admission Dashboard's stat cards navigate here
+  // with `state: { status }` so the matching tab is pre-selected on arrival
+  // instead of always defaulting to Pending Applications.
+  const requestedStatus = location.state?.status;
+  const initialStatusTab =
+    requestedStatus !== undefined
+      ? Math.max(
+          STATUS_TABS.findIndex((tab) => tab.status === requestedStatus),
+          0,
+        )
+      : 0;
+
   // ─── Tab state ─────────────────────────────────────────────────────────
-  const [statusTab, setStatusTab] = useState(0); // index into STATUS_TABS
+  const [statusTab, setStatusTab] = useState(initialStatusTab); // index into STATUS_TABS
 
   // ─── Filter state ──────────────────────────────────────────────────────
   const [filter, setFilter] = useState({
     appBatchId: '',
     classId: '',
-    status: '',
+    status: requestedStatus !== undefined ? STATUS_TABS[initialStatusTab].status : '',
     search: '',
   });
   const [batchClasses, setBatchClasses] = useState([]);

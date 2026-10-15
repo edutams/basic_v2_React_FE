@@ -53,10 +53,38 @@ import commentBankApi from '@/api/tenant/comment-bank/commentBankApi';
 // The four attendance/affective/psychomotor average bands — physical
 // columns on comment_banks (see basic_v2_be's CommentBank::BAND_COLUMNS).
 const BANDS = [
-  { field: 'comment1', label: '0 – 1.0', title: 'Needs Improvement', Icon: IconMoodSad, color: '#b91c1c', bg: '#fca5a5' },
-  { field: 'comment2', label: '1.1 – 1.9', title: 'Fair', Icon: IconMoodNeutral, color: '#b45309', bg: '#fcd34d' },
-  { field: 'comment3', label: '2.0 – 3.9', title: 'Good', Icon: IconMoodSmile, color: '#15803d', bg: '#86efac' },
-  { field: 'comment4', label: '4.0 – 5.0', title: 'Excellent', Icon: IconStarFilled, color: '#1d4ed8', bg: '#93c5fd' },
+  {
+    field: 'comment1',
+    label: '0 – 1.0',
+    title: 'Needs Improvement',
+    Icon: IconMoodSad,
+    color: '#b91c1c',
+    bg: '#fca5a5',
+  },
+  {
+    field: 'comment2',
+    label: '1.1 – 1.9',
+    title: 'Fair',
+    Icon: IconMoodNeutral,
+    color: '#b45309',
+    bg: '#fcd34d',
+  },
+  {
+    field: 'comment3',
+    label: '2.0 – 3.9',
+    title: 'Good',
+    Icon: IconMoodSmile,
+    color: '#15803d',
+    bg: '#86efac',
+  },
+  {
+    field: 'comment4',
+    label: '4.0 – 5.0',
+    title: 'Excellent',
+    Icon: IconStarFilled,
+    color: '#1d4ed8',
+    bg: '#93c5fd',
+  },
 ];
 
 const TONES = ['Balanced', 'Encouraging', 'Formal', 'Concise'];
@@ -197,7 +225,13 @@ const CommentBankTab = () => {
   const [bulkMenuAnchor, setBulkMenuAnchor] = useState(null);
   const [exportMenuAnchor, setExportMenuAnchor] = useState(null);
   const [exampleOpen, setExampleOpen] = useState(false);
-  const [addDialog, setAddDialog] = useState({ open: false, gradeId: '', field: '', category: '', comment: '' });
+  const [addDialog, setAddDialog] = useState({
+    open: false,
+    gradeId: '',
+    field: '',
+    category: '',
+    comment: '',
+  });
 
   // Every mutating action confirms through this one dialog before it runs.
   const [confirmState, setConfirmState] = useState({ open: false, key: null, run: null });
@@ -224,7 +258,8 @@ const CommentBankTab = () => {
   const [generalComments, setGeneralComments] = useState([]);
   const [generalLoading, setGeneralLoading] = useState(false);
 
-  const showSnackbar = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const showSnackbar = (message, severity = 'success') =>
+    setSnackbar({ open: true, message, severity });
 
   const loadMatrix = useCallback(async () => {
     setLoading(true);
@@ -316,7 +351,9 @@ const CommentBankTab = () => {
     setSaving(true);
     try {
       await commentBankApi.saveCell({ comment_grade_id: gradeId, field, value });
-      setRows((prev) => prev.map((r) => (r.comment_grade_id === gradeId ? { ...r, [field]: value } : r)));
+      setRows((prev) =>
+        prev.map((r) => (r.comment_grade_id === gradeId ? { ...r, [field]: value } : r)),
+      );
       showSnackbar(value ? 'Comment saved' : 'Comment cleared');
     } catch (err) {
       console.error('Failed to save comment:', err);
@@ -360,7 +397,10 @@ const CommentBankTab = () => {
 
   /* ── AI Comment Assistant + Quick Actions ──────────────────── */
 
-  const runAction = async (fn, { loadingSetter, loadingValue, successMessage, requireSelection } = {}) => {
+  const runAction = async (
+    fn,
+    { loadingSetter, loadingValue, successMessage, requireSelection } = {},
+  ) => {
     if (requireSelection && selectedKeys.size === 0) {
       showSnackbar('Select at least one cell first', 'error');
       return;
@@ -379,18 +419,32 @@ const CommentBankTab = () => {
   };
 
   const handleAutoFill = (scopeToSelection = false) =>
-    runAction(() => commentBankApi.autoFill({ cells: scopeToSelection ? selectedCellsPayload() : undefined, tone }), {
-      loadingSetter: setAiLoading,
-      loadingValue: 'auto-fill',
-      requireSelection: scopeToSelection,
-    });
+    runAction(
+      () =>
+        commentBankApi.autoFill({
+          cells: scopeToSelection ? selectedCellsPayload() : undefined,
+          tone,
+        }),
+      {
+        loadingSetter: setAiLoading,
+        loadingValue: 'auto-fill',
+        requireSelection: scopeToSelection,
+      },
+    );
 
   const handleImprove = (scopeToSelection = false) =>
-    runAction(() => commentBankApi.improve({ cells: scopeToSelection ? selectedCellsPayload() : undefined, tone }), {
-      loadingSetter: setAiLoading,
-      loadingValue: 'improve',
-      requireSelection: scopeToSelection,
-    });
+    runAction(
+      () =>
+        commentBankApi.improve({
+          cells: scopeToSelection ? selectedCellsPayload() : undefined,
+          tone,
+        }),
+      {
+        loadingSetter: setAiLoading,
+        loadingValue: 'improve',
+        requireSelection: scopeToSelection,
+      },
+    );
 
   const handleCopyFromHigher = () =>
     runAction(() => commentBankApi.copyFromHigher({ cells: selectedCellsPayload() }), {
@@ -429,10 +483,20 @@ const CommentBankTab = () => {
   /* ── Import / Export ───────────────────────────────────────── */
 
   const handleExportCsv = () => {
-    const header = ['Score Range', 'Remark', 'Grade', ...BANDS.map((b) => `${b.label} (${b.title})`)];
+    const header = [
+      'Score Range',
+      'Remark',
+      'Grade',
+      ...BANDS.map((b) => `${b.label} (${b.title})`),
+    ];
     const lines = [header.map(toCsvField).join(',')];
     rows.forEach((row) => {
-      const line = [row.grade_score, row.remark, row.grade, ...BANDS.map((b) => row[b.field] || '')];
+      const line = [
+        row.grade_score,
+        row.remark,
+        row.grade,
+        ...BANDS.map((b) => row[b.field] || ''),
+      ];
       lines.push(line.map(toCsvField).join(','));
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -467,7 +531,11 @@ const CommentBankTab = () => {
       if (!matchedRow) return;
       BANDS.forEach((b, i) => {
         if (bandValues[i] !== undefined && bandValues[i] !== '') {
-          cells.push({ comment_grade_id: matchedRow.comment_grade_id, field: b.field, value: bandValues[i] });
+          cells.push({
+            comment_grade_id: matchedRow.comment_grade_id,
+            field: b.field,
+            value: bandValues[i],
+          });
         }
       });
     });
@@ -493,7 +561,7 @@ const CommentBankTab = () => {
   const openAddDialog = () =>
     setAddDialog({
       open: true,
-      gradeId: mainTab === 'matrix' ? rows[0]?.comment_grade_id ?? '' : '',
+      gradeId: mainTab === 'matrix' ? (rows[0]?.comment_grade_id ?? '') : '',
       field: mainTab === 'matrix' ? BANDS[0].field : '',
       category: '',
       comment: '',
@@ -541,7 +609,8 @@ const CommentBankTab = () => {
     const isEditing = editingCell.gradeId === gradeId && editingCell.field === field;
     const isHovered = hoveredCell.gradeId === gradeId && hoveredCell.field === field;
     const isSelected = selectedKeys.has(cellKey(gradeId, field));
-    const isPreviewed = previewCell?.row?.comment_grade_id === gradeId && previewCell?.band?.field === field;
+    const isPreviewed =
+      previewCell?.row?.comment_grade_id === gradeId && previewCell?.band?.field === field;
 
     if (isEditing) {
       return (
@@ -561,10 +630,31 @@ const CommentBankTab = () => {
             autoFocus
           />
           <Stack spacing={0.5} flexShrink={0}>
-            <Button variant="contained" size="small" onClick={() => handleSave(gradeId)} disabled={saving} sx={{ fontSize: 10, minWidth: 0, px: 1 }}>
-              {saving ? <Skeleton variant="text" width={28} height={14} sx={{ bgcolor: 'rgba(255,255,255,0.6)' }} /> : 'Save'}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => handleSave(gradeId)}
+              disabled={saving}
+              sx={{ fontSize: 10, minWidth: 0, px: 1 }}
+            >
+              {saving ? (
+                <Skeleton
+                  variant="text"
+                  width={28}
+                  height={14}
+                  sx={{ bgcolor: 'rgba(255,255,255,0.6)' }}
+                />
+              ) : (
+                'Save'
+              )}
             </Button>
-            <Button variant="outlined" size="small" onClick={cancelEdit} disabled={saving} sx={{ fontSize: 10, minWidth: 0, px: 1 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={cancelEdit}
+              disabled={saving}
+              sx={{ fontSize: 10, minWidth: 0, px: 1 }}
+            >
               Cancel
             </Button>
           </Stack>
@@ -585,7 +675,11 @@ const CommentBankTab = () => {
           borderRadius: '8px',
           border: '1px solid',
           borderColor: isPreviewed ? '#2563eb' : 'transparent',
-          bgcolor: isHovered ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.03)') : 'transparent',
+          bgcolor: isHovered
+            ? isDark
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(15,23,42,0.03)'
+            : 'transparent',
           p: 1,
           pl: 3.25,
           pr: 3,
@@ -598,7 +692,14 @@ const CommentBankTab = () => {
           onClick={(e) => toggleSelected(e, gradeId, field)}
           sx={{ position: 'absolute', top: 2, left: 0, p: 0.4 }}
         />
-        <Typography sx={{ fontSize: 12.5, color: value ? '#334155' : '#94a3b8', fontStyle: value ? 'normal' : 'italic', lineHeight: 1.4 }}>
+        <Typography
+          sx={{
+            fontSize: 12.5,
+            color: value ? '#334155' : '#94a3b8',
+            fontStyle: value ? 'normal' : 'italic',
+            lineHeight: 1.4,
+          }}
+        >
           {value || 'Click to add a comment'}
         </Typography>
         {isHovered && (
@@ -615,7 +716,11 @@ const CommentBankTab = () => {
         )}
         {value && isHovered && (
           <Tooltip title="Clear this comment" arrow>
-            <IconButton size="small" onClick={(e) => handleQuickClear(e, gradeId, field)} sx={{ position: 'absolute', top: 2, right: 2, p: 0.4, color: '#dc2626' }}>
+            <IconButton
+              size="small"
+              onClick={(e) => handleQuickClear(e, gradeId, field)}
+              sx={{ position: 'absolute', top: 2, right: 2, p: 0.4, color: '#dc2626' }}
+            >
               <IconX size={13} />
             </IconButton>
           </Tooltip>
@@ -627,26 +732,54 @@ const CommentBankTab = () => {
   /* ── JSX ────────────────────────────────────────────────────── */
 
   return (
-    <Box sx={{ bgcolor: isDark ? 'transparent' : '#f1f5f9', borderRadius: '18px', p: { xs: 1.5, sm: 2.5 } }}>
+    <Box
+      sx={{
+        bgcolor: isDark ? 'transparent' : '#f1f5f9',
+        borderRadius: '18px',
+        p: { xs: 1.5, sm: 2.5 },
+      }}
+    >
       {/* ── Header ──────────────────────────────────────────── */}
-      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'flex-start' }} spacing={1.5} sx={{ mb: 2 }}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ md: 'flex-start' }}
+        spacing={1.5}
+        sx={{ mb: 2 }}
+      >
         <Box>
           <Stack direction="row" alignItems="center" spacing={0.75}>
             <Typography variant="h5" fontWeight={800}>
               Comment Bank
             </Typography>
-            <Tooltip title="Each score range (row) x psychomotor/behaviour band (column) is one reusable comment template. Generate Remarks on the Broadsheet picks the right cell for each student automatically." arrow>
+            <Tooltip
+              title="Each score range (row) x psychomotor/behaviour band (column) is one reusable comment template. Generate Remarks on the Broadsheet picks the right cell for each student automatically."
+              arrow
+            >
               <IconInfoCircle size={18} color="#94a3b8" style={{ cursor: 'help' }} />
             </Tooltip>
           </Stack>
           <Typography sx={{ fontSize: 13, color: '#64748b', mt: 0.25 }}>
-            Create and manage generic comments based on academic performance and psychomotor (behaviour/affective) ratings.
+            Create and manage generic comments based on academic performance and psychomotor
+            (behaviour/affective) ratings.
           </Typography>
         </Box>
 
         <Stack direction="row" spacing={1}>
-          <input ref={importInputRef} type="file" accept=".csv" hidden onChange={handleImportFile} />
-          <Button variant="outlined" size="small" startIcon={<IconUpload size={15} />} onClick={handleImportClick} sx={{ textTransform: 'none', fontWeight: 600 }}>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv"
+            hidden
+            onChange={handleImportFile}
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconUpload size={15} />}
+            onClick={handleImportClick}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          >
             Import
           </Button>
           <Button
@@ -659,17 +792,34 @@ const CommentBankTab = () => {
           >
             Export
           </Button>
-          <Menu anchorEl={exportMenuAnchor} open={Boolean(exportMenuAnchor)} onClose={() => setExportMenuAnchor(null)}>
+          <Menu
+            anchorEl={exportMenuAnchor}
+            open={Boolean(exportMenuAnchor)}
+            onClose={() => setExportMenuAnchor(null)}
+          >
             <MenuItem onClick={handleExportCsv}>Export as CSV</MenuItem>
           </Menu>
-          <Button variant="contained" size="small" startIcon={<IconPlus size={15} />} onClick={openAddDialog} sx={{ textTransform: 'none', fontWeight: 700 }}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconPlus size={15} />}
+            onClick={openAddDialog}
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
             Add Custom Comment
           </Button>
         </Stack>
       </Stack>
 
       {/* ── Main tabs (left) + Score Range Type (right, matrix only) ── */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" rowGap={1} sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        rowGap={1}
+        sx={{ mb: 2 }}
+      >
         <Stack direction="row" spacing={1}>
           {[
             { key: 'matrix', label: 'Academic Performance + Psychomotor', Icon: IconSchool },
@@ -704,12 +854,20 @@ const CommentBankTab = () => {
         {mainTab === 'matrix' && (
           <Stack direction="row" alignItems="center" spacing={1}>
             <Stack direction="row" alignItems="center" spacing={0.4}>
-              <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>Score Range Type</Typography>
-              <Tooltip title="Switch the row header between a raw percentage range and its equivalent WAEC-style letter grade. The underlying templates don't change — this only changes how the row is labeled." arrow>
+              <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#334155' }}>
+                Score Range Type
+              </Typography>
+              <Tooltip
+                title="Switch the row header between a raw percentage range and its equivalent WAEC-style letter grade. The underlying templates don't change — this only changes how the row is labeled."
+                arrow
+              >
                 <IconInfoCircle size={14} color="#94a3b8" style={{ cursor: 'help' }} />
               </Tooltip>
             </Stack>
-            <Stack direction="row" sx={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
+            <Stack
+              direction="row"
+              sx={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}
+            >
               {[
                 { key: 'percentage', label: 'Percentage (0 – 100)' },
                 { key: 'grade', label: 'Grade (A – F)' },
@@ -739,7 +897,11 @@ const CommentBankTab = () => {
       {mainTab === 'matrix' && (
         <>
           {error && (
-            <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2, borderRadius: '10px' }}>
+            <Alert
+              severity="error"
+              onClose={() => setError('')}
+              sx={{ mb: 2, borderRadius: '10px' }}
+            >
               {error}
             </Alert>
           )}
@@ -750,18 +912,37 @@ const CommentBankTab = () => {
           )}
 
           {/* ── Main grid: Matrix (left) + sidebar (right) ──────── */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' }, gap: 2, alignItems: 'start' }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '3fr 1fr' },
+              gap: 2,
+              alignItems: 'start',
+            }}
+          >
             {/* Comment Matrix */}
             <Box sx={{ ...cardSx, borderTop: '3px solid #2563eb' }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="flex-start"
+                sx={{ mb: 1 }}
+              >
                 <Box>
                   <Typography sx={panelTitleSx}>Comment Matrix</Typography>
                   <Typography sx={{ fontSize: 11.5, color: '#64748b' }}>
-                    Enter a generic comment for each combination of academic score range and psychomotor/behaviour rating.
+                    Enter a generic comment for each combination of academic score range and
+                    psychomotor/behaviour rating.
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={1} flexShrink={0}>
-                  <Button variant="outlined" size="small" startIcon={<IconEye size={14} />} onClick={() => setExampleOpen(true)} sx={{ textTransform: 'none', fontSize: 12 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<IconEye size={14} />}
+                    onClick={() => setExampleOpen(true)}
+                    sx={{ textTransform: 'none', fontSize: 12 }}
+                  >
                     View Example
                   </Button>
                   <Button
@@ -773,7 +954,11 @@ const CommentBankTab = () => {
                   >
                     Bulk Actions
                   </Button>
-                  <Menu anchorEl={bulkMenuAnchor} open={Boolean(bulkMenuAnchor)} onClose={() => setBulkMenuAnchor(null)}>
+                  <Menu
+                    anchorEl={bulkMenuAnchor}
+                    open={Boolean(bulkMenuAnchor)}
+                    onClose={() => setBulkMenuAnchor(null)}
+                  >
                     <MenuItem onClick={selectAll}>Select all cells</MenuItem>
                     <MenuItem onClick={clearSelection} disabled={selectedKeys.size === 0}>
                       Clear selection ({selectedKeys.size})
@@ -786,7 +971,12 @@ const CommentBankTab = () => {
                 {loading ? (
                   <Stack spacing={0.75} sx={{ mt: 1 }}>
                     {Array.from({ length: 9 }).map((_, i) => (
-                      <Skeleton key={i} variant="rounded" height={64} sx={{ borderRadius: '8px' }} />
+                      <Skeleton
+                        key={i}
+                        variant="rounded"
+                        height={64}
+                        sx={{ borderRadius: '8px' }}
+                      />
                     ))}
                   </Stack>
                 ) : rows.length === 0 ? (
@@ -794,29 +984,61 @@ const CommentBankTab = () => {
                     No comment grades found.
                   </Alert>
                 ) : (
-                  <Table size="small" sx={{ minWidth: 980, '& .MuiTableCell-root': { p: 0.75, verticalAlign: 'top' } }}>
+                  <Table
+                    size="small"
+                    sx={{
+                      minWidth: 980,
+                      '& .MuiTableCell-root': { p: 0.75, verticalAlign: 'top' },
+                    }}
+                  >
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 800, fontSize: 11.5, color: '#64748b', width: 150 }}>
+                        <TableCell
+                          sx={{ fontWeight: 800, fontSize: 11.5, color: '#64748b', width: 150 }}
+                        >
                           Academic Performance
                           <br />
-                          <Typography component="span" sx={{ fontSize: 10, fontWeight: 600, color: '#94a3b8' }}>
+                          <Typography
+                            component="span"
+                            sx={{ fontSize: 10, fontWeight: 600, color: '#94a3b8' }}
+                          >
                             (Score Range %)
                           </Typography>
                         </TableCell>
                         {BANDS.map((b) => (
-                          <TableCell key={b.field} align="center" sx={{ fontWeight: 800, fontSize: 11, color: '#334155', bgcolor: `${b.bg}99` }}>
+                          <TableCell
+                            key={b.field}
+                            align="center"
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: 11,
+                              color: '#334155',
+                              bgcolor: `${b.bg}99`,
+                            }}
+                          >
                             <Stack alignItems="center" spacing={0.25}>
                               <b.Icon size={16} color={b.color} />
                               <span>{b.label}</span>
-                              <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: b.color }}>{b.title}</Typography>
+                              <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: b.color }}>
+                                {b.title}
+                              </Typography>
                             </Stack>
                           </TableCell>
                         ))}
                       </TableRow>
                       <TableRow>
-                        <TableCell colSpan={BANDS.length + 1} sx={{ py: '2px !important', borderBottom: '2px solid #e2e8f0' }}>
-                          <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#94a3b8', textAlign: 'center' }}>
+                        <TableCell
+                          colSpan={BANDS.length + 1}
+                          sx={{ py: '2px !important', borderBottom: '2px solid #e2e8f0' }}
+                        >
+                          <Typography
+                            sx={{
+                              fontSize: 9.5,
+                              fontWeight: 700,
+                              color: '#94a3b8',
+                              textAlign: 'center',
+                            }}
+                          >
                             Psychomotor / Behaviour Rating (Average)
                           </Typography>
                         </TableCell>
@@ -825,11 +1047,18 @@ const CommentBankTab = () => {
                     <TableBody>
                       {rows.map((row) => (
                         <TableRow key={row.comment_grade_id}>
-                          <TableCell sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderRadius: '8px 0 0 8px' }}>
+                          <TableCell
+                            sx={{
+                              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+                              borderRadius: '8px 0 0 8px',
+                            }}
+                          >
                             <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: '#0f172a' }}>
                               {scoreRangeType === 'grade' ? row.grade : row.grade_score}
                             </Typography>
-                            <Typography sx={{ fontSize: 10.5, color: '#64748b' }}>({row.remark})</Typography>
+                            <Typography sx={{ fontSize: 10.5, color: '#64748b' }}>
+                              ({row.remark})
+                            </Typography>
                           </TableCell>
                           {BANDS.map((b) => (
                             <TableCell key={b.field} sx={{ bgcolor: `${b.bg}66` }}>
@@ -854,7 +1083,14 @@ const CommentBankTab = () => {
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Box sx={{ position: 'relative', width: 88, height: 88, flexShrink: 0 }}>
                     <svg width="88" height="88" viewBox="0 0 88 88">
-                      <circle cx="44" cy="44" r="38" fill="none" stroke={isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9'} strokeWidth="9" />
+                      <circle
+                        cx="44"
+                        cy="44"
+                        r="38"
+                        fill="none"
+                        stroke={isDark ? 'rgba(255,255,255,0.1)' : '#f1f5f9'}
+                        strokeWidth="9"
+                      />
                       <circle
                         cx="44"
                         cy="44"
@@ -869,8 +1105,18 @@ const CommentBankTab = () => {
                         style={{ transition: 'stroke-dashoffset 300ms ease' }}
                       />
                     </svg>
-                    <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Typography sx={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>{completion.percent}%</Typography>
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 18, fontWeight: 800, color: '#16a34a' }}>
+                        {completion.percent}%
+                      </Typography>
                     </Box>
                   </Box>
                   <Stack spacing={0.75} flexGrow={1}>
@@ -879,12 +1125,23 @@ const CommentBankTab = () => {
                       { label: 'Remaining', value: completion.remaining, color: '#94a3b8' },
                       { label: 'Total', value: completion.total, color: '#334155' },
                     ].map((s) => (
-                      <Stack key={s.label} direction="row" justifyContent="space-between" alignItems="center">
+                      <Stack
+                        key={s.label}
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
                         <Stack direction="row" spacing={0.6} alignItems="center">
-                          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: s.color }} />
-                          <Typography sx={{ fontSize: 11.5, color: '#64748b' }}>{s.label}</Typography>
+                          <Box
+                            sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: s.color }}
+                          />
+                          <Typography sx={{ fontSize: 11.5, color: '#64748b' }}>
+                            {s.label}
+                          </Typography>
                         </Stack>
-                        <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a' }}>{s.value}</Typography>
+                        <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#0f172a' }}>
+                          {s.value}
+                        </Typography>
                       </Stack>
                     ))}
                   </Stack>
@@ -892,12 +1149,32 @@ const CommentBankTab = () => {
               </Box>
 
               {/* AI Comment Assistant */}
-              <Box sx={{ ...cardSx, bgcolor: isDark ? cardSx.bgcolor : '#faf5ff', borderColor: '#e9d5ff', borderTop: '3px solid #9333ea' }}>
+              <Box
+                sx={{
+                  ...cardSx,
+                  bgcolor: isDark ? cardSx.bgcolor : '#faf5ff',
+                  borderColor: '#e9d5ff',
+                  borderTop: '3px solid #9333ea',
+                }}
+              >
                 <Stack direction="row" alignItems="center" spacing={0.6} sx={{ mb: 0.25 }}>
                   <IconSparkles size={16} color="#9333ea" />
                   <Typography sx={panelTitleSx}>AI Comment Assistant</Typography>
-                  <Chip label="Beta" size="small" sx={{ height: 18, fontSize: 9.5, fontWeight: 700, bgcolor: '#f3e8ff', color: '#9333ea' }} />
-                  <Tooltip title="Rule-based template suggestions (academic level + behaviour band + tone) — not a connected external AI model." arrow>
+                  <Chip
+                    label=""
+                    size="small"
+                    sx={{
+                      height: 18,
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      bgcolor: '#f3e8ff',
+                      color: '#9333ea',
+                    }}
+                  />
+                  <Tooltip
+                    title="Rule-based template suggestions (academic level + behaviour band + tone) — not a connected external AI model."
+                    arrow
+                  >
                     <IconInfoCircle size={13} color="#94a3b8" style={{ cursor: 'help' }} />
                   </Tooltip>
                 </Stack>
@@ -905,8 +1182,16 @@ const CommentBankTab = () => {
                   Auto-generate or improve comments using score range and psychomotor rating.
                 </Typography>
 
-                <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#334155', mb: 0.4 }}>Tone</Typography>
-                <Select size="small" fullWidth value={tone} onChange={(e) => setTone(e.target.value)} sx={{ fontSize: 12.5, mb: 1.25 }}>
+                <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#334155', mb: 0.4 }}>
+                  Tone
+                </Typography>
+                <Select
+                  size="small"
+                  fullWidth
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  sx={{ fontSize: 12.5, mb: 1.25 }}
+                >
                   {TONES.map((t) => (
                     <MenuItem key={t} value={t} sx={{ fontSize: 12.5 }}>
                       {t === 'Balanced' ? 'Balanced (Default)' : t}
@@ -921,7 +1206,12 @@ const CommentBankTab = () => {
                     size="small"
                     startIcon={
                       aiLoading === 'auto-fill' ? (
-                        <Skeleton variant="circular" width={15} height={15} sx={{ bgcolor: 'rgba(255,255,255,0.6)' }} />
+                        <Skeleton
+                          variant="circular"
+                          width={15}
+                          height={15}
+                          sx={{ bgcolor: 'rgba(255,255,255,0.6)' }}
+                        />
                       ) : (
                         <IconSparkles size={15} />
                       )
@@ -941,7 +1231,13 @@ const CommentBankTab = () => {
                     fullWidth
                     variant="outlined"
                     size="small"
-                    startIcon={aiLoading === 'improve' ? <Skeleton variant="circular" width={15} height={15} /> : <IconWand size={15} />}
+                    startIcon={
+                      aiLoading === 'improve' ? (
+                        <Skeleton variant="circular" width={15} height={15} />
+                      ) : (
+                        <IconWand size={15} />
+                      )
+                    }
                     onClick={() => askConfirm('improve', () => handleImprove(false))}
                     disabled={Boolean(aiLoading)}
                     sx={{ textTransform: 'none', fontWeight: 700 }}
@@ -960,17 +1256,35 @@ const CommentBankTab = () => {
                   <>
                     <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                       <IconQuote size={18} color="#cbd5e1" />
-                      <Typography sx={{ fontSize: 12.5, color: '#334155', fontStyle: 'italic', lineHeight: 1.5 }}>
-                        {previewCell.row[previewCell.band.field] || 'This cell is empty — click the pencil icon to add a comment.'}
+                      <Typography
+                        sx={{
+                          fontSize: 12.5,
+                          color: '#334155',
+                          fontStyle: 'italic',
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {previewCell.row[previewCell.band.field] ||
+                          'This cell is empty — click the pencil icon to add a comment.'}
                       </Typography>
                     </Stack>
                     <Stack direction="row" spacing={0.75} flexWrap="wrap" gap={0.5}>
-                      <Chip label={`Score Range: ${previewCell.row.grade_score}`} size="small" sx={{ fontSize: 10, height: 20, bgcolor: '#f1f5f9' }} />
-                      <Chip label={`Psychomotor: ${previewCell.band.label}`} size="small" sx={{ fontSize: 10, height: 20, bgcolor: '#f1f5f9' }} />
+                      <Chip
+                        label={`Score Range: ${previewCell.row.grade_score}`}
+                        size="small"
+                        sx={{ fontSize: 10, height: 20, bgcolor: '#f1f5f9' }}
+                      />
+                      <Chip
+                        label={`Psychomotor: ${previewCell.band.label}`}
+                        size="small"
+                        sx={{ fontSize: 10, height: 20, bgcolor: '#f1f5f9' }}
+                      />
                     </Stack>
                   </>
                 ) : (
-                  <Typography sx={{ fontSize: 11.5, color: '#94a3b8' }}>Click any cell in the matrix to preview it here.</Typography>
+                  <Typography sx={{ fontSize: 11.5, color: '#94a3b8' }}>
+                    Click any cell in the matrix to preview it here.
+                  </Typography>
                 )}
               </Box>
 
@@ -1057,14 +1371,23 @@ const CommentBankTab = () => {
                         }}
                       >
                         {quickActionLoading === action.key ? (
-                          <Skeleton variant="circular" width={16} height={16} sx={{ bgcolor: `${action.color}55` }} />
+                          <Skeleton
+                            variant="circular"
+                            width={16}
+                            height={16}
+                            sx={{ bgcolor: `${action.color}55` }}
+                          />
                         ) : (
                           <action.Icon size={16} />
                         )}
                       </Box>
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{action.title}</Typography>
-                        <Typography sx={{ fontSize: 10, color: '#94a3b8' }}>{action.subtitle}</Typography>
+                        <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>
+                          {action.title}
+                        </Typography>
+                        <Typography sx={{ fontSize: 10, color: '#94a3b8' }}>
+                          {action.subtitle}
+                        </Typography>
                       </Box>
                     </Stack>
                   ))}
@@ -1082,8 +1405,8 @@ const CommentBankTab = () => {
             General Comments
           </Typography>
           <Typography sx={{ fontSize: 11.5, color: '#64748b', mb: 1.5 }}>
-            Freeform comment snippets you keep for yourself — not tied to a score range, picked manually rather than
-            resolved automatically by Generate Remarks.
+            Freeform comment snippets you keep for yourself — not tied to a score range, picked
+            manually rather than resolved automatically by Generate Remarks.
           </Typography>
 
           {generalLoading ? (
@@ -1099,14 +1422,34 @@ const CommentBankTab = () => {
           ) : (
             <Stack spacing={1}>
               {generalComments.map((c) => (
-                <Stack key={c.id} direction="row" alignItems="flex-start" spacing={1} sx={{ p: 1.25, border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                <Stack
+                  key={c.id}
+                  direction="row"
+                  alignItems="flex-start"
+                  spacing={1}
+                  sx={{ p: 1.25, border: '1px solid #e2e8f0', borderRadius: '8px' }}
+                >
                   <Box sx={{ flexGrow: 1 }}>
                     {c.category && (
-                      <Chip label={c.category} size="small" sx={{ mb: 0.5, fontSize: 10, height: 18, bgcolor: '#eff6ff', color: '#2563eb' }} />
+                      <Chip
+                        label={c.category}
+                        size="small"
+                        sx={{
+                          mb: 0.5,
+                          fontSize: 10,
+                          height: 18,
+                          bgcolor: '#eff6ff',
+                          color: '#2563eb',
+                        }}
+                      />
                     )}
                     <Typography sx={{ fontSize: 12.5, color: '#334155' }}>{c.comment}</Typography>
                   </Box>
-                  <IconButton size="small" onClick={() => askConfirm('delete-general', () => handleDeleteGeneral(c.id))} sx={{ color: '#dc2626' }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => askConfirm('delete-general', () => handleDeleteGeneral(c.id))}
+                    sx={{ color: '#dc2626' }}
+                  >
                     <IconTrash size={15} />
                   </IconButton>
                 </Stack>
@@ -1120,7 +1463,9 @@ const CommentBankTab = () => {
       <Dialog open={confirmState.open} onClose={closeConfirm} maxWidth="xs" fullWidth>
         <DialogTitle>{CONFIRM_COPY[confirmState.key]?.title}</DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontSize: 13, color: '#475569' }}>{CONFIRM_COPY[confirmState.key]?.body}</Typography>
+          <Typography sx={{ fontSize: 13, color: '#475569' }}>
+            {CONFIRM_COPY[confirmState.key]?.body}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={closeConfirm} disabled={confirmLoading}>
@@ -1132,7 +1477,16 @@ const CommentBankTab = () => {
             onClick={handleConfirm}
             disabled={confirmLoading}
           >
-            {confirmLoading ? <Skeleton variant="text" width={50} height={18} sx={{ bgcolor: 'rgba(255,255,255,0.6)' }} /> : CONFIRM_COPY[confirmState.key]?.confirm}
+            {confirmLoading ? (
+              <Skeleton
+                variant="text"
+                width={50}
+                height={18}
+                sx={{ bgcolor: 'rgba(255,255,255,0.6)' }}
+              />
+            ) : (
+              CONFIRM_COPY[confirmState.key]?.confirm
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1142,13 +1496,14 @@ const CommentBankTab = () => {
         <DialogTitle>Example comment</DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 12.5, color: '#64748b', mb: 1 }}>
-            One cell = one score range x one psychomotor band. For example, a student scoring in the "Good" range
-            (70.01 – 80) with a "Good" psychomotor/behaviour average (2.0 – 3.9) would get:
+            One cell = one score range x one psychomotor band. For example, a student scoring in the
+            "Good" range (70.01 – 80) with a "Good" psychomotor/behaviour average (2.0 – 3.9) would
+            get:
           </Typography>
           <Alert severity="success" icon={<IconQuote size={16} />} sx={{ borderRadius: '10px' }}>
-            He performed well this term, showing a good grasp of most topics taught. He shows good behaviour and a
-            positive attitude towards school activities. Keep up the effort and continue working towards steady
-            improvement.
+            He performed well this term, showing a good grasp of most topics taught. He shows good
+            behaviour and a positive attitude towards school activities. Keep up the effort and
+            continue working towards steady improvement.
           </Alert>
         </DialogContent>
         <DialogActions>
@@ -1210,7 +1565,11 @@ const CommentBankTab = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeAddDialog}>Cancel</Button>
-          <Button variant="contained" onClick={submitAddDialog} disabled={!addDialog.comment.trim()}>
+          <Button
+            variant="contained"
+            onClick={submitAddDialog}
+            disabled={!addDialog.comment.trim()}
+          >
             Save
           </Button>
         </DialogActions>
@@ -1224,7 +1583,11 @@ const CommentBankTab = () => {
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         sx={{ zIndex: (t) => t.zIndex.modal + 9999 }}
       >
-        <Alert onClose={() => setSnackbar((s) => ({ ...s, open: false }))} severity={snackbar.severity} variant="filled">
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

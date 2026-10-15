@@ -6,7 +6,6 @@ import {
   TextField,
   InputAdornment,
   Chip,
-  CircularProgress,
   Alert,
   Table,
   TableContainer,
@@ -16,6 +15,7 @@ import {
   TableBody,
   TableFooter,
   TablePagination,
+  Skeleton,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { IconUsersGroup } from '@tabler/icons-react';
@@ -116,11 +116,14 @@ const ViewWardsContent = ({ guardian, onClose }) => {
 
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center">
-                  <CircularProgress size={28} />
-                </TableCell>
-              </TableRow>
+              [...Array(3)].map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell><Skeleton variant="text" width={16} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={90} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={120} /></TableCell>
+                  <TableCell><Skeleton variant="text" width={80} /></TableCell>
+                </TableRow>
+              ))
             ) : paginated.length > 0 ? (
               paginated.map((ward, index) => {
                 const reg = ward.student_registrations?.[0];

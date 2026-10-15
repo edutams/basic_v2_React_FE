@@ -14,7 +14,7 @@ const LinkWardModal = ({ open, onClose, parent, onSaved }) => {
   const handleSave = async (wardIds) => {
     await guardianApi.syncWards(parent.user_id, wardIds);
     notify.success('Wards linked successfully');
-    onSaved?.();
+    onSaved?.(wardIds);
     onClose();
   };
 

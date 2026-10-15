@@ -10,7 +10,7 @@ import {
   MenuItem,
   Typography,
   IconButton,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Chip,
   Divider,
@@ -227,7 +227,7 @@ const LinkWardForm = ({ parent, onSave, onCancel }) => {
           disabled={searching}
           sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
         >
-          {searching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+          {searching ? <Skeleton width={40} height={20} animation="wave" sx={{ bgcolor: 'rgba(255,255,255,0.4)' }} /> : 'Search'}
         </Button>
       </Box>
 

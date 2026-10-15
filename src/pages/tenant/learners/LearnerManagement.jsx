@@ -69,10 +69,14 @@ import StatCard from 'src/components/shared/StatCard';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
+// countKey for 'active'/'inactive' points at the enrolment-stage figures
+// (`enrolled`/`not_enrolled`) — distinct from the account-status figures
+// (`active`/`inactive`) the overview cards above show, so this tab's count
+// always matches the rows its own filter (tabFilters) actually returns.
 const TABS = [
   { key: 'all', label: 'All Learners', countKey: 'total' },
-  { key: 'active', label: 'Active', countKey: 'active' },
-  { key: 'inactive', label: 'Inactive', countKey: 'inactive' },
+  { key: 'active', label: 'Enrolled', countKey: 'enrolled' },
+  { key: 'inactive', label: 'Not Enrolled', countKey: 'not_enrolled' },
   { key: 'new_enrolments', label: 'New Enrolments', countKey: 'new_enrolments' },
   { key: 'graduated', label: 'Graduated', countKey: 'graduated' },
   { key: 'needs_attention', label: 'Needs Attention', countKey: 'needs_attention' },
@@ -578,8 +582,8 @@ const LearnerManagement = () => {
       <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <StatCard count={stats.total} label="Total Learners" icon={GroupsIcon} colorIndex={0} loading={statsLoading} subtitle="All learners in the school" tooltip="All learners in the school." />
-          <StatCard count={stats.active} label="Active Learners" icon={PeopleIcon} colorIndex={1} loading={statsLoading} subtitle="Currently active" tooltip="Currently active." />
-          <StatCard count={stats.inactive} label="Inactive Learners" icon={AccessTimeIcon} colorIndex={3} loading={statsLoading} subtitle="Not active / withdrawn" tooltip="Not active / withdrawn." />
+          <StatCard count={stats.active} label="Active Learners" icon={PeopleIcon} colorIndex={1} loading={statsLoading} subtitle="Can currently log in" tooltip="Learners whose account is active and can log in." />
+          <StatCard count={stats.inactive} label="Inactive Learners" icon={AccessTimeIcon} colorIndex={3} loading={statsLoading} subtitle="Login access revoked" tooltip="Learners whose account has been deactivated — they can no longer log in." />
           <StatCard count={stats.new_enrolments} label="New Enrolments" icon={PersonAddAltIcon} colorIndex={2} loading={statsLoading} subtitle="This session" tooltip="Registered in the last 7 days." />
           <StatCard count={stats.graduated} label="Graduated / Completed" icon={SchoolIcon} colorIndex={4} loading={statsLoading} subtitle="Final year completed" tooltip="Final year completed." />
         </Stack>
@@ -739,12 +743,11 @@ const LearnerManagement = () => {
                     <Checkbox size="small" indeterminate={selectedIds.size > 0 && selectedIds.size < rows.length} checked={rows.length > 0 && selectedIds.size === rows.length} onChange={handleSelectAll} />
                   </TableCell>
                   <TableCell>#</TableCell>
-                  <TableCell>Admission Number</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Class / Arm</TableCell>
-                  <TableCell>Gender</TableCell>
                   <TableCell align="center">Parent</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell>Student Status</TableCell>
+                  <TableCell>Account Status</TableCell>
                   <TableCell align="center">Action</TableCell>
                 </TableRow>
               </TableHead>
@@ -755,16 +758,18 @@ const LearnerManagement = () => {
                     <TableRow key={i}>
                       <TableCell><Skeleton variant="rounded" width={18} height={18} /></TableCell>
                       <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={100} height={20} /></TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                           <Skeleton variant="circular" width={36} height={36} />
-                          <Skeleton variant="text" width={140} height={20} />
+                          <Box>
+                            <Skeleton variant="text" width={140} height={20} />
+                            <Skeleton variant="text" width={90} height={16} />
+                          </Box>
                         </Box>
                       </TableCell>
                       <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={60} /></TableCell>
                       <TableCell align="center"><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
+                      <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                       <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                       <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
                     </TableRow>
@@ -778,6 +783,7 @@ const LearnerManagement = () => {
                         : row.status === 'graduate'
                           ? { bg: 'info.light', color: 'info.dark' }
                           : { bg: 'error.light', color: 'error.dark' };
+                    const isMale = row.user?.sex?.toUpperCase() === 'MALE';
 
                     return (
                       <TableRow
@@ -800,17 +806,39 @@ const LearnerManagement = () => {
                           <Checkbox size="small" checked={selectedIds.has(row.user_id)} onClick={(e) => e.stopPropagation()} onChange={() => handleSelectRow(row)} />
                         </TableCell>
                         <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.user?.user_id || '—'}</TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                             <Avatar src={row.user?.avatar || ''} alt={row.user?.fname} sx={{ width: 36, height: 36 }} />
-                            <Typography variant="body2" fontWeight={600}>
-                              {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
-                            </Typography>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Stack direction="row" alignItems="center" spacing={0.6}>
+                                <Typography variant="body2" fontWeight={600} noWrap>
+                                  {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
+                                </Typography>
+                                <Box
+                                  sx={{
+                                    width: 18,
+                                    height: 18,
+                                    borderRadius: '5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 800,
+                                    fontSize: '0.6rem',
+                                    flexShrink: 0,
+                                    bgcolor: isMale ? 'info.light' : 'success.light',
+                                    color: isMale ? 'info.main' : 'success.main',
+                                  }}
+                                >
+                                  {isMale ? 'M' : 'F'}
+                                </Box>
+                              </Stack>
+                              <Typography variant="caption" color="text.secondary" noWrap>
+                                {row.user?.user_id || '—'}
+                              </Typography>
+                            </Box>
                           </Box>
                         </TableCell>
                         <TableCell>{classArmLabel(row.current_registration)}</TableCell>
-                        <TableCell sx={{ textTransform: 'capitalize' }}>{row.user?.sex || '—'}</TableCell>
                         <TableCell align="center" onClick={(e) => e.stopPropagation()}>
                           <Box
                             sx={{
@@ -841,6 +869,18 @@ const LearnerManagement = () => {
                             label={row.status}
                             size="small"
                             sx={{ bgcolor: statusStyle.bg, color: statusStyle.color, borderRadius: '8px', fontWeight: 600, textTransform: 'capitalize' }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={isLearnerActive(row) ? 'Active' : 'Inactive'}
+                            size="small"
+                            sx={{
+                              bgcolor: isLearnerActive(row) ? 'success.light' : 'error.light',
+                              color: isLearnerActive(row) ? 'success.dark' : 'error.dark',
+                              borderRadius: '8px',
+                              fontWeight: 600,
+                            }}
                           />
                         </TableCell>
                         <TableCell align="center" onClick={(e) => e.stopPropagation()}>
@@ -883,7 +923,7 @@ const LearnerManagement = () => {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} align="center">
+                    <TableCell colSpan={8} align="center">
                       <Alert severity="info" sx={{ mb: 3, justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}>
                         {hasFilters ? 'No learners match the current search.' : 'No learners found.'}
                       </Alert>

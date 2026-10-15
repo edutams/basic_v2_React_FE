@@ -61,6 +61,7 @@ import {
 } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import LinkIcon from '@mui/icons-material/Link';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -349,11 +350,13 @@ const ParentManagement = () => {
     setToggleStatusModalOpen(true);
   };
 
+  const isGuardianActive = (row) => (row?.user?.status ?? 'active') === 'active';
+
   const handleConfirmToggle = async () => {
     try {
       await guardianApi.toggleStatus(parentToToggle.user_id);
       notify.success(
-        `Parent ${parentToToggle.status === 'active' ? 'deactivated' : 'activated'} successfully`,
+        `Parent account ${isGuardianActive(parentToToggle) ? 'deactivated' : 'activated'} successfully`,
       );
       setToggleStatusModalOpen(false);
       setParentToToggle(null);
@@ -463,15 +466,20 @@ const ParentManagement = () => {
     setSendMessageOpen(true);
   };
 
+  const [bulkDeactivateConfirmOpen, setBulkDeactivateConfirmOpen] = useState(false);
+  const toDeactivateCount = selectedRows.filter(isGuardianActive).length;
+
   const handleBulkDeactivate = async () => {
-    const toDeactivate = selectedRows.filter((r) => r.status === 'active');
+    const toDeactivate = selectedRows.filter(isGuardianActive);
     if (toDeactivate.length === 0) {
       notify.error('All selected parents are already inactive');
+      setBulkDeactivateConfirmOpen(false);
       return;
     }
     try {
       await Promise.all(toDeactivate.map((r) => guardianApi.toggleStatus(r.user_id)));
-      notify.success(`${toDeactivate.length} parent(s) deactivated`);
+      notify.success(`${toDeactivate.length} parent account(s) deactivated`);
+      setBulkDeactivateConfirmOpen(false);
       fetchParents();
       fetchStats();
     } catch {
@@ -685,7 +693,7 @@ const ParentManagement = () => {
                 <Button variant="contained" size="small" startIcon={<IconLink size={16} />} onClick={() => setBulkLinkWardOpen(true)}>
                   Link Ward
                 </Button>
-                <Button variant="contained" size="small" startIcon={<IconSquareToggle size={16} />} onClick={handleBulkDeactivate}>
+                <Button variant="contained" size="small" startIcon={<IconSquareToggle size={16} />} onClick={() => setBulkDeactivateConfirmOpen(true)}>
                   Deactivate
                 </Button>
                 <Button variant="contained" size="small" color="error" startIcon={<IconTrash size={16} />} onClick={() => setBulkDeleteConfirmOpen(true)}>
@@ -802,7 +810,23 @@ const ParentManagement = () => {
                       </TableCell>
 
                       <TableCell align="center" sx={{ verticalAlign: 'middle' }} onClick={(e) => e.stopPropagation()}>
-                        <Box sx={{ bgcolor: '#F0F9FF', px: 1.5, py: 0.5, borderRadius: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Box
+                          sx={{
+                            bgcolor: row.wards_count > 0 ? '#F0F9FF' : '#FEF3C7',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {row.wards_count > 0 ? (
+                            <PeopleIcon sx={{ fontSize: 15, color: '#2563EB' }} />
+                          ) : (
+                            <WarningAmberIcon sx={{ fontSize: 15, color: '#B45309' }} />
+                          )}
                           <Typography variant="subtitle2">
                             <Link
                               sx={{ cursor: 'pointer' }}
@@ -811,7 +835,7 @@ const ParentManagement = () => {
                                 setViewWardsModalOpen(true);
                               }}
                             >
-                              {row.wards_count ?? 0}
+                              {row.wards_count ?? 0} linked
                             </Link>
                           </Typography>
                         </Box>
@@ -819,12 +843,12 @@ const ParentManagement = () => {
 
                       <TableCell>
                         <Chip
-                          label={row.status ?? 'active'}
-                          color={statusColor(row.status)}
+                          label={row.user?.status ?? 'active'}
+                          color={statusColor(row.user?.status)}
                           size="small"
                           sx={{
-                            bgcolor: row.status?.toLowerCase() === 'active' ? (theme) => theme.palette.success.light : (theme) => theme.palette.error.light,
-                            color: row.status?.toLowerCase() === 'active' ? (theme) => theme.palette.success.main : (theme) => theme.palette.error.main,
+                            bgcolor: isGuardianActive(row) ? (theme) => theme.palette.success.light : (theme) => theme.palette.error.light,
+                            color: isGuardianActive(row) ? (theme) => theme.palette.success.main : (theme) => theme.palette.error.main,
                             borderRadius: '8px',
                             fontWeight: 600,
                           }}
@@ -865,7 +889,7 @@ const ParentManagement = () => {
                           </MenuItem>
                           <MenuItem onClick={() => handleToggleStatus(row)}>
                             <IconSquareToggle size={18} style={{ marginRight: 8 }} />
-                            {row.status === 'active' ? 'Deactivate' : 'Activate'}
+                            {isGuardianActive(row) ? 'Deactivate' : 'Activate'}
                           </MenuItem>
                           <MenuItem onClick={() => handleOpenDelete(row)} sx={{ color: 'error.main' }}>
                             <IconTrash size={18} style={{ marginRight: 8 }} />
@@ -958,19 +982,34 @@ const ParentManagement = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={toggleStatusModalOpen} onClose={() => setToggleStatusModalOpen(false)}>
-        <DialogTitle>Confirm Status Change</DialogTitle>
+      <Dialog open={toggleStatusModalOpen} onClose={() => setToggleStatusModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{isGuardianActive(parentToToggle) ? 'Deactivate Parent Account' : 'Activate Parent Account'}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to <strong>{parentToToggle?.status === 'active' ? 'deactivate' : 'activate'}</strong>{' '}
-            <strong>{parentToToggle?.user ? `${parentToToggle.user.fname} ${parentToToggle.user.lname}` : 'this parent'}</strong>?
+            This will <strong>{isGuardianActive(parentToToggle) ? 'revoke login access from' : 'restore login access for'}</strong>{' '}
+            <strong>{parentToToggle?.user ? `${parentToToggle.user.fname} ${parentToToggle.user.lname}` : 'this parent'}</strong>
+            {isGuardianActive(parentToToggle) ? ' — they will no longer be able to log in' : ', letting them log in again'}. It does not change any other parent record details.
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button variant="contained" color="inherit" size="small" onClick={() => setToggleStatusModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmToggle} autoFocus>
-            {parentToToggle?.status === 'active' ? 'Deactivate' : 'Activate'}
+          <Button variant="contained" size="small" color={isGuardianActive(parentToToggle) ? 'error' : 'success'} onClick={handleConfirmToggle} autoFocus>
+            {isGuardianActive(parentToToggle) ? 'Deactivate' : 'Activate'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={bulkDeactivateConfirmOpen} onClose={() => setBulkDeactivateConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Deactivate Selected Parents</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This will revoke login access from <strong>{toDeactivateCount}</strong> of the <strong>{selectedRows.length}</strong> selected
+            parent(s) (already-inactive ones are skipped). It does not delete any records or unlink any wards.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setBulkDeactivateConfirmOpen(false)}>Cancel</Button>
+          <Button variant="contained" size="small" color="error" onClick={handleBulkDeactivate} autoFocus>Deactivate</Button>
         </DialogActions>
       </Dialog>
 

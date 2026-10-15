@@ -8,25 +8,25 @@ import aclApi from '@/api/tenant/acl/aclApi';
 
 dayjs.extend(relativeTime);
 
-/** This guardian's own activity feed — reuses the same
- * /activity-logs/causer/{id} endpoint already powering the staff/teacher/
- * parent dashboard "recent activity" widgets and the ACL user profile
- * drawer, scoped to this guardian's own user id. */
-const RecentActivityContent = ({ guardian, limit = 15 }) => {
+/** Any one person's own activity feed (guardian, learner, staff...) —
+ * reuses the same /activity-logs/causer/{id} endpoint already powering the
+ * staff/teacher/parent dashboard "recent activity" widgets and the ACL user
+ * profile drawer, scoped to this person's own user id. */
+const RecentActivityContent = ({ person, limit = 15 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    if (!guardian?.user_id) return;
+    if (!person?.user_id) return;
     setLoading(true);
     setError(null);
     aclApi
-      .getUserActivityLogs(guardian.user_id, { limit })
+      .getUserActivityLogs(person.user_id, { limit })
       .then((res) => setActivities(res?.data || []))
       .catch(() => setError('Failed to load recent activity'))
       .finally(() => setLoading(false));
-  }, [guardian?.user_id, limit]);
+  }, [person?.user_id, limit]);
 
   if (loading) {
     return (
@@ -45,7 +45,7 @@ const RecentActivityContent = ({ guardian, limit = 15 }) => {
   if (activities.length === 0) {
     return (
       <Typography variant="body2" color="text.secondary">
-        No recent activity for this guardian yet.
+        No recent activity yet.
       </Typography>
     );
   }
@@ -82,7 +82,7 @@ const RecentActivityContent = ({ guardian, limit = 15 }) => {
 };
 
 RecentActivityContent.propTypes = {
-  guardian: PropTypes.object,
+  person: PropTypes.object,
   limit: PropTypes.number,
 };
 

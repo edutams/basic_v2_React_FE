@@ -386,7 +386,22 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
-      { path: 'my-timetable', element: <MyTimetable /> },
+      {
+        path: 'timetable/my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
 
       {
         path: 'admission-setup',

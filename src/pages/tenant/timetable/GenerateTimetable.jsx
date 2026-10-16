@@ -6,6 +6,8 @@ import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import tenantApi from '@/api/tenant/tenant_api';
 import { getSubjectColor } from '@/utils/subjectColor';
 import { useNavigate } from 'react-router-dom';
+import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
+import { migrateTimetable } from '@/api/tenant/term-migration/termMigrationApi';
 import {
   Box,
   Stack,
@@ -43,6 +45,7 @@ import {
   Avatar,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import RestoreIcon from '@mui/icons-material/Restore';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import DomainIcon from '@mui/icons-material/Domain';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -319,6 +322,7 @@ const GenerateTimetable = () => {
   const [autoFilling, setAutoFilling] = useState(false);
   const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
   const [generatingAll, setGeneratingAll] = useState(false);
+  const [rolloverModalOpen, setRolloverModalOpen] = useState(false);
 
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
   const [copySourceArmId, setCopySourceArmId] = useState('');
@@ -822,14 +826,23 @@ const GenerateTimetable = () => {
             </Typography>
           </Box>
         </Stack>
-        <Button
-          variant="contained"
-          startIcon={<AutoFixHighIcon />}
-          onClick={() => setGenerateConfirmOpen(true)}
-          sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
-        >
-          Generate Timetable
-        </Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+          <Button
+            variant="outlined"
+            startIcon={<RestoreIcon />}
+            onClick={() => setRolloverModalOpen(true)}
+          >
+            Roll Over From Last Term
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AutoFixHighIcon />}
+            onClick={() => setGenerateConfirmOpen(true)}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+          >
+            Generate Timetable
+          </Button>
+        </Stack>
       </Stack>
 
       <Box
@@ -1864,6 +1877,18 @@ const GenerateTimetable = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <TermMigrationModal
+        open={rolloverModalOpen}
+        onClose={() => setRolloverModalOpen(false)}
+        title="Roll Over Timetable From Last Term"
+        description="Carries every assigned period forward from the previous term into the current one — same class arm, period, day, subject and room. A period that would conflict in the new term (e.g. the teacher is now busy elsewhere) is skipped, not forced."
+        migrateFn={migrateTimetable}
+        onSuccess={() => {
+          fetchStats();
+          fetchGrid();
+        }}
+      />
 
       <Dialog
         open={generateConfirmOpen}

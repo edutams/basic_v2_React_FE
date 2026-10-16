@@ -27,3 +27,4 @@ export const migrateCourseRegistrations = migrate('course-registrations');
 export const migrateClassTeacherAllocations = migrate('class-teacher-allocations');
 export const migrateSubjectTeacherAllocations = migrate('subject-teacher-allocations');
 export const migrateBursarySchedules = migrate('bursary-schedules');
+export const migrateTimetable = migrate('timetable');

@@ -38,6 +38,12 @@ import {
   IconId,
   IconMessageCircle,
   IconMail,
+  IconCalendar,
+  IconCalendarTime,
+  IconClockHour4,
+  IconDoor,
+  IconLayoutGrid,
+  IconUserSearch,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -75,6 +81,12 @@ const iconMapper = {
   Id: IconId,
   MessageCircle: IconMessageCircle,
   Mail: IconMail,
+  Calendar: IconCalendar,
+  CalendarTime: IconCalendarTime,
+  ClockHour4: IconClockHour4,
+  Door: IconDoor,
+  LayoutGrid: IconLayoutGrid,
+  UserSearch: IconUserSearch,
 };
 
 const SchoolSidebarItems = () => {

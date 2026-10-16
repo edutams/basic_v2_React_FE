@@ -48,6 +48,10 @@ const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/Acti
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
+const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
+const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
+const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
+const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
@@ -358,6 +362,31 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      {
+        path: 'timetable/generate',
+        element: (
+          <TenantProtectedRoute permission="timetable.generate.manage">
+            <GenerateTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/period-settings',
+        element: (
+          <TenantProtectedRoute permission="timetable.settings.manage">
+            <PeriodSettings />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/teacher-view',
+        element: (
+          <TenantProtectedRoute permission="timetable.teacher_view.index">
+            <TeacherTimetableView />
+          </TenantProtectedRoute>
+        ),
+      },
+      { path: 'my-timetable', element: <MyTimetable /> },
 
       {
         path: 'admission-setup',

@@ -63,11 +63,18 @@ const EResourcesApproval = Loadable(lazy(() => import('@/pages/tenant/e-resource
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
+const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
+const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
+const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
+const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
 const AdmissionProcessing = Loadable(
   lazy(() => import('@/pages/tenant/admission/AdmissionProcessing')),
+);
+const AdmissionDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionDashboard')),
 );
 const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
 const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
@@ -157,6 +164,7 @@ const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/Summa
 const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
 const ClassDossierPage = Loadable(lazy(() => import('@/pages/tenant/result/ClassDossierPage')));
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
+const WardReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/WardReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
 const CommunicationsPage = Loadable(
@@ -377,6 +385,46 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      {
+        path: 'timetable/generate',
+        element: (
+          <TenantProtectedRoute permission="timetable.generate.manage">
+            <GenerateTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/period-settings',
+        element: (
+          <TenantProtectedRoute permission="timetable.settings.manage">
+            <PeriodSettings />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/teacher-view',
+        element: (
+          <TenantProtectedRoute permission="timetable.teacher_view.index">
+            <TeacherTimetableView />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
 
       {
         path: 'admission-setup',
@@ -407,6 +455,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <AdmissionProcessing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission-dashboard',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.dashboard.index">
+            <AdmissionDashboard />
           </TenantProtectedRoute>
         ),
       },
@@ -636,6 +692,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.client.view_report_sheet">
             <ReportCardPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-wards-report',
+        element: (
+          <TenantProtectedRoute permission="result.client.view_wards_report">
+            <WardReportCardPage />
           </TenantProtectedRoute>
         ),
       },

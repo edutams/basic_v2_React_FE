@@ -29,6 +29,24 @@ const resultDossierApi = {
   // POST /result-dossier/my-report { session_term_id? }
   getMyReport: (data = {}) =>
     tenantApi.post('/result-dossier/my-report', data),
+
+  // The logged-in guardian's wards — drives the ward picker on the parent
+  // "View Wards' Result" page.
+  // GET /result-dossier/my-wards
+  getMyWards: () => tenantApi.get('/result-dossier/my-wards'),
+
+  // A single ward's registrations (one row per session-term) + the one to
+  // open by default — same shape as getMyRegistration, scoped to the ward.
+  // POST /result-dossier/ward-registration { student_user_id, session_term_id? }
+  getWardRegistration: (data) =>
+    tenantApi.post('/result-dossier/ward-registration', data),
+
+  // Report card for one of the logged-in guardian's wards. Never gated on
+  // outstanding fees — only on the ward actually belonging to this guardian
+  // and the result being approved/published.
+  // POST /result-dossier/ward-report { student_user_id, session_term_id? }
+  getWardReport: (data) =>
+    tenantApi.post('/result-dossier/ward-report', data),
 };
 
 export default resultDossierApi;

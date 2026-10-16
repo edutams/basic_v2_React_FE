@@ -4,6 +4,13 @@ import tenantApi from '@/api/tenant/tenant_api';
 // Backed by the /result-sheet routes in routes/tenant/result_sheet.php
 const resultSheetApi = {
   // ── Broadsheet ──────────────────────────────────────────────
+  // Class arms for the filter's Arm dropdown, scoped server-side to arms
+  // the caller is the ACTIVE CLASS TEACHER of (not just a subject teacher
+  // in) when they're not an admin — stricter than the generic curriculum
+  // arm dropdown, since Broadsheet writes class-teacher-only fields.
+  // GET /result-sheet/my-class-arms?class_id=X&programme_id=Y
+  getMyClassArms: (params) => tenantApi.get('/result-sheet/my-class-arms', { params }),
+
   // Termly broadsheet: students x subjects with CA/exam/total/grade,
   // positions, comments, promotion fields + stat cards.
   // POST /result-sheet/broadsheet { class_arm_id, session_term_id, search? }
@@ -48,14 +55,27 @@ const resultSheetApi = {
   // POST /result-sheet/promotion { student_registration_id, promotion_recommendation?, next_class_arm_id? }
   savePromotion: (data) => tenantApi.post('/result-sheet/promotion', data),
 
-  // "Recommend Promotion" — compute + persist recommendations from the
-  // configured cumulative/pass mark.
+  // "Recommend Promotion" — compute + persist recommendations (and the
+  // resolved next class arm, for review) from the configured
+  // cumulative/pass mark.
   // POST /result-sheet/recommend-promotions { class_arm_id, session_id }
   recommendPromotions: (data) => tenantApi.post('/result-sheet/recommend-promotions', data),
 
-  // "Post Recommendation" — resolve each student's next class arm.
+  // "Post Recommendation" — the execution step: creates each student's
+  // registration in the destination session's first term using the
+  // next_class_arm_id Recommend Promotion already assigned, and rolls the
+  // school's subscription forward into that term if nothing covers it yet.
+  // The destination session is resolved server-side (see getNextSession
+  // below) — never chosen by the caller.
   // POST /result-sheet/post-recommendations { class_arm_id, session_id }
   postRecommendations: (data) => tenantApi.post('/result-sheet/post-recommendations', data),
+
+  // Preview for the Post Recommendation dialog: the session that
+  // chronologically follows the given one (leading year + 1, e.g.
+  // "2025/2026" → "2026/2027"), and whether it's actually been created yet.
+  // GET /result-sheet/next-session?session_id=X
+  getNextSession: (sessionId) =>
+    tenantApi.get('/result-sheet/next-session', { params: { session_id: sessionId } }),
 
   // ── Summary sheet ───────────────────────────────────────────
   // Grade-distribution matrix: grades x subjects with outlier/total rows.
@@ -66,15 +86,8 @@ const resultSheetApi = {
   // POST /result-sheet/summary-breakdown { class_arm_id, session_term_id, subject_id, grade }
   getSummaryBreakdown: (data) => tenantApi.post('/result-sheet/summary-breakdown', data),
 
-  // ── Comment bank ────────────────────────────────────────────
-  // GET /result-sheet/comment-bank — comment grades + the current user's
-  // saved cells (comment1..comment4 = domain-average bands), plus `meta`
-  // describing which role/report-card field this user's bank feeds and
-  // how many of its cells are filled.
-  getCommentBank: () => tenantApi.get('/result-sheet/comment-bank'),
-
-  // POST /result-sheet/comment-bank { comment_grade_id, field: 'comment1'..'comment4', value }
-  saveCommentBank: (data) => tenantApi.post('/result-sheet/comment-bank', data),
+  // Comment Bank now lives under its own API module — see
+  // @/api/tenant/comment-bank/commentBankApi.
 };
 
 export default resultSheetApi;

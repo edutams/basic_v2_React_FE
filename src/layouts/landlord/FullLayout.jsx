@@ -82,16 +82,17 @@ const FullLayout = () => {
             sx={{
               maxWidth: isLayout === 'boxed' ? '1300px !important' : '100%!important',
               overflowX: 'auto',
+              overflowY: 'auto',
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              px: { xs: 2, sm: 3 },
+              px: { xs: 2, sm: 1.5 },
             }}
           >
             {/* ------------------------------------------- */}
             {/* PageContent */}
             {/* ------------------------------------------- */}
-            <Box sx={{ flex: 1, overflowX: 'auto', py: 3 }}>
+            <Box sx={{ flex: 1, overflowX: 'auto', overflowY: 'auto', py: 1 }}>
               <ScrollToTop>
                 <Outlet />
               </ScrollToTop>

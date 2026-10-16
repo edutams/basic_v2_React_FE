@@ -1255,14 +1255,16 @@ const ScoreSheetTab = () => {
                 </Tabs>
                 {activeTab === 0 && (
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', pb: 1 }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<IconUpload size={16} />}
-                      onClick={() => setImportChooser(true)}
-                    >
-                      Import Scores
-                    </Button>
+                    {isEditable && scoreSheetData?.overall_submission_status === 'pending' && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<IconUpload size={16} />}
+                        onClick={() => setImportChooser(true)}
+                      >
+                        Import Scores
+                      </Button>
+                    )}
                     {isEditable && (
                       <Button
                         variant="outlined"
@@ -2092,7 +2094,8 @@ const ScoreSheetTab = () => {
                       }
                       onClick={handleDownloadScoreSheet}
                       disabled={downloadingExcel}
-                     sx={{ fontSize: '0.75rem', px: 0.5 }}>
+                      sx={{ fontSize: '0.75rem', px: 0.5 }}
+                    >
                       Download
                     </Button>
                   </Grid>
@@ -2106,7 +2109,8 @@ const ScoreSheetTab = () => {
                       }
                       onClick={handlePrintScoreSheet}
                       disabled={printing}
-                     sx={{ fontSize: '0.75rem', px: 0.5 }}>
+                      sx={{ fontSize: '0.75rem', px: 0.5 }}
+                    >
                       Print
                     </Button>
                   </Grid>
@@ -2119,7 +2123,8 @@ const ScoreSheetTab = () => {
                           size="small"
                           startIcon={<IconShare2 size={16} />}
                           disabled
-                         sx={{ fontSize: '0.75rem', px: 0.5 }}>
+                          sx={{ fontSize: '0.75rem', px: 0.5 }}
+                        >
                           Share
                         </Button>
                       </span>
@@ -2132,7 +2137,8 @@ const ScoreSheetTab = () => {
                       size="small"
                       startIcon={<IconFileAnalytics size={16} />}
                       onClick={viewResult}
-                     sx={{ fontSize: '0.75rem', px: 0.5 }}>
+                      sx={{ fontSize: '0.75rem', px: 0.5 }}
+                    >
                       Reports
                     </Button>
                   </Grid>

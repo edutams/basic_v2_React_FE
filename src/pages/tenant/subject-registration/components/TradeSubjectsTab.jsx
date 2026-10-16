@@ -26,7 +26,7 @@ import SubjectMatrixTable from './SubjectMatrixTable';
 import SubjectMatrixTableSkeleton from './SubjectMatrixTableSkeleton';
 
 const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
-  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved },
+  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved, search = '' },
   ref,
 ) {
   const navigate = useNavigate();
@@ -53,6 +53,8 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
       const [subjRes, learnerRes] = await Promise.all([
         subjectRegistrationApi.getTradeSubjects(classLevel, {
           programme_id: programme || undefined,
+          term_id: termId || undefined,
+          session_id: session || undefined,
         }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
           programme_id: programme || undefined,
@@ -146,13 +148,29 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const res = await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const protectedWithScores = res?.data?.data?.protected_with_scores ?? 0;
+
       setPendingChanges({});
-      const orig = {};
-      learners.forEach((l) => {
-        orig[l.id] = { ...l.registered };
-      });
-      setOriginalRegistered(orig);
+
+      if (protectedWithScores > 0) {
+        // The backend silently kept any registration that already has
+        // scores recorded (unregistering would have deleted the scores
+        // too) — refetch so the checkboxes reflect what's actually
+        // registered server-side, instead of showing them as removed.
+        notify(
+          `${protectedWithScores} subject registration(s) were not removed because scores have already been recorded for them.`,
+          'warning',
+        );
+        await fetchData();
+      } else {
+        const orig = {};
+        learners.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
+        setOriginalRegistered(orig);
+      }
+
       notify(`${changes.length} change(s) saved successfully.`, 'success');
       onSaved?.();
     } catch (e) {
@@ -172,7 +190,25 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
     await runSave();
   };
 
-  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData }));
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData, learners }));
+
+  const filteredLearners = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return learners;
+    return learners.filter(
+      (l) => (l.name || '').toLowerCase().includes(q) || (l.admissionNo || '').toLowerCase().includes(q),
+    );
+  }, [learners, search]);
+
+  // Per-subject registered-learner counts, over the FULL roster — must not
+  // shrink when a search filter narrows which rows are visible.
+  const registeredCount = useMemo(() => {
+    const counts = {};
+    subjects.forEach((subj) => {
+      counts[subj.id] = learners.filter((l) => l.registered[subj.id]).length;
+    });
+    return counts;
+  }, [subjects, learners]);
 
   useEffect(() => {
     onStatusChange?.({ pendingCount, saving });
@@ -230,10 +266,9 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
         l.id === learnerId
           ? {
               ...l,
-              registered: subjects.reduce(
-                (acc, subj) => ({ ...acc, [subj.id]: true }),
-                { ...l.registered },
-              ),
+              registered: subjects.reduce((acc, subj) => ({ ...acc, [subj.id]: true }), {
+                ...l.registered,
+              }),
             }
           : l,
       ),
@@ -253,10 +288,7 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
       return next;
     });
 
-    notify(
-      `Learner marked for every subject — click Save Selected to save to the server.`,
-      'info',
-    );
+    notify(`Learner marked for every subject — click Save Selected to save to the server.`, 'info');
   };
 
   return (
@@ -287,10 +319,14 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
           No trade subjects have been created for this class. Please go to the Curriculum step to
           create subjects before registering learners.
         </Alert>
+      ) : filteredLearners.length === 0 ? (
+        <Alert severity="info">No learners match your search.</Alert>
       ) : (
         <SubjectMatrixTable
           subjects={subjects}
-          learners={learners}
+          learners={filteredLearners}
+          registeredCount={registeredCount}
+          requiredSubjectIds={subjects.map((s) => s.id)}
           onToggle={toggleRegistration}
           onRegisterAll={registerAll}
           onUnregisterAll={unregisterAll}
@@ -312,7 +348,12 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
         </Stack>
       )}
 
-      <Dialog open={confirmSaveOpen} onClose={() => setConfirmSaveOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={confirmSaveOpen}
+        onClose={() => setConfirmSaveOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Save Subject Registrations?</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">

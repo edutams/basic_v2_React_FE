@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -12,14 +12,15 @@ import {
   TableRow,
   TableFooter,
   TablePagination,
-  Paper,
+  IconButton,
+  Menu,
+  MenuItem,
   TextField,
   InputAdornment,
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  CircularProgress,
+  Skeleton,
   Chip,
   Stack,
   Button,
@@ -29,28 +30,29 @@ import {
   DialogActions,
   Checkbox,
   Divider,
-  IconButton,
-  Menu,
-  Alert,
   Tab,
   Tabs,
+  Alert,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Download as DownloadIcon,
   Upload as UploadIcon,
+  FileDownload as ExportIcon,
+  ArrowDropDown as ArrowDropDownIcon,
 } from '@mui/icons-material';
 import { IconNote, IconEdit, IconEye, IconHistory, IconCheck, IconX } from '@tabler/icons-react';
 import { useNotification } from '@/hooks/useNotification';
 import {
+  fetchApplications,
   fetchBatchClasses,
-  fetchApplicationsByClass,
-  batchProcessAdmissions,
   acceptAdmissionOffer,
   resetAdmissionOffer,
+  batchProcessAdmissions,
   downloadAdmissionTemplate,
   uploadAdmissionTemplate,
+  exportApplications,
 } from '@/api/tenant/admission/admissionProcessingApi';
 import {
   fetchProgrammes,
@@ -72,67 +74,187 @@ const formSubmitColors = {
   no: 'warning',
 };
 
-const BatchProcessingTab = ({ allBatches, onDataChange }) => {
+const offerColors = {
+  yes: 'info',
+  no: 'default',
+};
+
+// Status tabs shown in the unified table — "All" and "Accepted Offers" are
+// each a different filter dimension than the other three (All = no status
+// filter at all; Accepted Offers = accept_admission_offer, not
+// admission_status), so the index-to-status mapping below is deliberately
+// not a simple enum walk.
+const STATUS_TABS = [
+  {
+    label: 'Pending Applications',
+    status: 'pending',
+    statsKey: 'pending',
+    badgeBg: '#FEF3C7',
+    badgeColor: '#B45309',
+  },
+  {
+    label: 'Admitted',
+    status: 'admitted',
+    statsKey: 'admitted',
+    badgeBg: '#DCFCE7',
+    badgeColor: '#15803D',
+  },
+  {
+    label: 'Declined',
+    status: 'declined',
+    statsKey: 'declined',
+    badgeBg: '#FEE2E2',
+    badgeColor: '#B91C1C',
+  },
+  {
+    label: 'Accepted Offers',
+    status: 'accepted_offer',
+    statsKey: 'accepted_offers',
+    badgeBg: '#DBEAFE',
+    badgeColor: '#1D4ED8',
+  },
+  {
+    label: 'All Applications',
+    status: '',
+    statsKey: 'applications',
+    badgeBg: '#E2E8F0',
+    badgeColor: '#475569',
+  },
+];
+
+const TABLE_COLUMN_COUNT = 14;
+
+const TableRowSkeleton = () => (
+  <TableRow>
+    <TableCell>
+      <Skeleton variant="rounded" width={18} height={18} />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width={16} />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="70%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="60%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="80%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="75%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="85%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="60%" />
+    </TableCell>
+    <TableCell>
+      <Skeleton variant="text" width="70%" />
+    </TableCell>
+    <TableCell align="center">
+      <Skeleton variant="rounded" width={70} height={20} sx={{ mx: 'auto' }} />
+    </TableCell>
+    <TableCell align="center">
+      <Skeleton variant="rounded" width={70} height={20} sx={{ mx: 'auto' }} />
+    </TableCell>
+    <TableCell align="center">
+      <Skeleton variant="rounded" width={50} height={20} sx={{ mx: 'auto' }} />
+    </TableCell>
+    <TableCell align="center">
+      <Skeleton variant="text" width="60%" sx={{ mx: 'auto' }} />
+    </TableCell>
+    <TableCell align="center">
+      <Skeleton variant="circular" width={22} height={22} sx={{ mx: 'auto' }} />
+    </TableCell>
+  </TableRow>
+);
+
+/**
+ * Unified "Process Applications" table — merges what used to be two
+ * separate tabs (Individual Processing / Batch Processing) into one page,
+ * per the CEO-approved design: stat cards (rendered by the parent) + a
+ * single table with All/Pending/Admitted/Declined/Accepted Offers filter
+ * tabs, checkbox selection, bulk admit/decline, Excel template
+ * download/upload (carried over from the old Batch Processing tab so that
+ * capability isn't lost), and an export of the current filtered view.
+ */
+const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const notify = useNotification();
 
   // ─── Data state ────────────────────────────────────────────────────────
   const [applications, setApplications] = useState([]);
-  const [batchClasses, setBatchClasses] = useState([]);
   const [selectedApplications, setSelectedApplications] = useState(new Set());
 
   // ─── Loading state ─────────────────────────────────────────────────────
   const [tableLoading, setTableLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Deep-link support: the Admission Dashboard's stat cards navigate here
+  // with `state: { status }` so the matching tab is pre-selected on arrival
+  // instead of always defaulting to Pending Applications.
+  const requestedStatus = location.state?.status;
+  const initialStatusTab =
+    requestedStatus !== undefined
+      ? Math.max(
+          STATUS_TABS.findIndex((tab) => tab.status === requestedStatus),
+          0,
+        )
+      : 0;
 
   // ─── Tab state ─────────────────────────────────────────────────────────
-  const [statusTab, setStatusTab] = useState(0); // 0 = Pending, 1 = Processed
+  const [statusTab, setStatusTab] = useState(initialStatusTab); // index into STATUS_TABS
 
   // ─── Filter state ──────────────────────────────────────────────────────
   const [filter, setFilter] = useState({
     appBatchId: '',
     classId: '',
-    status: 'pending',
+    status: requestedStatus !== undefined ? STATUS_TABS[initialStatusTab].status : '',
     search: '',
   });
+  const [batchClasses, setBatchClasses] = useState([]);
 
   // ─── Pagination state ──────────────────────────────────────────────────
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [meta, setMeta] = useState(null);
 
-  // ─── Batch processing modal state ──────────────────────────────────────
-  const [batchModal, setBatchModal] = useState({
-    open: false,
-    action: '',
-    programmes: [],
-    classes: [],
-    classArms: [],
-    selectedProgramme: '',
-    selectedClass: '',
-    selectedClassArm: '',
-    rejectionReason: '',
-    revokedReason: '',
-  });
+  // ─── Row menu state ────────────────────────────────────────────────────
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [activeRow, setActiveRow] = useState(null);
 
-  // ─── Menu state ────────────────────────────────────────────────────────
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
-  const [selectedApp, setSelectedApp] = useState(null);
+  // ─── Bulk Actions dropdown state ──────────────────────────────────────
+  const [bulkMenuAnchor, setBulkMenuAnchor] = useState(null);
 
-  // ─── View admission modal state ────────────────────────────────────────
-  const [viewModal, setViewModal] = useState({
-    open: false,
-    formNumber: '',
-  });
+  // ─── View admission modal state ───────────────────────────────────────
+  const [viewModal, setViewModal] = useState({ open: false, formNumber: '' });
 
-  // ─── Confirm dialog state ──────────────────────────────────────────────
+  // ─── Confirm dialog state (accept/reset offer) ────────────────────────
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
     type: '', // 'accept-offer' | 'reset-offer'
     app: null,
     title: '',
     message: '',
+  });
+
+  // ─── Admit/Decline bulk modal state ────────────────────────────────────
+  const [batchModal, setBatchModal] = useState({
+    open: false,
+    action: '', // 'admit' | 'decline'
+    programmes: [],
+    classes: [],
+    classArms: [],
+    categories: [],
+    selectedProgramme: '',
+    selectedClass: '',
+    selectedClassArm: '',
+    selectedPayCategory: '',
+    rejectionReason: '',
   });
 
   // ─── Download Template modal state ─────────────────────────────────────
@@ -156,7 +278,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Data helpers ──────────────────────────────────────────────────────
   const getFullName = (app) => {
     const parts = [app.lname, app.fname, app.mname].filter(Boolean);
-    return parts.join('  ') || '—';
+    return parts.join(' ') || '—';
   };
 
   const getGuardianName = (app) => {
@@ -188,19 +310,13 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   const loadApplications = useCallback(
     async (filters = null) => {
-      if (!filters?.appBatchId || !filters?.classId) {
-        setApplications([]);
-        return;
-      }
-
       setTableLoading(true);
       try {
-        const res = await fetchApplicationsByClass(filters);
+        const res = await fetchApplications(filters);
         const data = res?.data ?? res ?? [];
         setApplications(Array.isArray(data) ? data : []);
         setMeta(res?.meta ?? res?.pagination ?? null);
         setSelectedApplications(new Set());
-        setHasFetched(true);
       } catch (err) {
         console.error('Failed to load applications:', err);
         notify.error('Failed to load applications');
@@ -214,67 +330,63 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   // ─── Handlers ──────────────────────────────────────────────────────────
   const handleStatusTabChange = (_, newValue) => {
     setStatusTab(newValue);
-    const newStatus = newValue === 0 ? 'pending' : 'processed';
-    setFilter((prev) => ({ ...prev, status: newStatus }));
+    setPage(0);
+    const newStatus = STATUS_TABS[newValue].status;
+    const nextFilter = { ...filter, status: newStatus };
+    setFilter(nextFilter);
     setSelectedApplications(new Set());
-    setApplications([]);
-    setHasFetched(false);
+    if (nextFilter.appBatchId) {
+      loadApplications(nextFilter);
+    }
   };
 
-  const handleBatchChange = async (e) => {
+  const handleBatchChange = (e) => {
     const id = e.target.value;
     setPage(0);
-    const currentStatus = statusTab === 0 ? 'pending' : 'processed';
-    setFilter({ appBatchId: id, classId: '', status: currentStatus, search: '' });
+    setFilter((prev) => ({ ...prev, appBatchId: id, classId: '' }));
     setBatchClasses([]);
     setApplications([]);
     setSelectedApplications(new Set());
-    setHasFetched(false);
-
     if (id) {
-      await loadBatchClasses(id);
+      loadBatchClasses(id);
     }
   };
 
   const handleClassChange = (e) => {
-    const classId = e.target.value;
-    setFilter((prev) => ({ ...prev, classId }));
-    setApplications([]);
-    setSelectedApplications(new Set());
-    setHasFetched(false);
+    setFilter((prev) => ({ ...prev, classId: e.target.value }));
   };
 
   const handleSearchChange = (e) => {
     setFilter((prev) => ({ ...prev, search: e.target.value }));
   };
 
-  const handleFetch = () => {
-    if (!filter.appBatchId || !filter.classId) {
-      notify.warning('Please select both batch and class');
-      return;
+  const handleSearchKeyUp = (e) => {
+    if (e.key === 'Enter') {
+      setPage(0);
+      loadApplications({ ...filter, search: e.target.value, page: 1, per_page: rowsPerPage });
     }
+  };
+
+  const handleFetch = () => {
     setPage(0);
     loadApplications(filter);
   };
 
   const handlePageChange = (_, newPage) => {
     setPage(newPage);
-    const payload = { ...filter, page: newPage + 1, per_page: rowsPerPage };
-    loadApplications(payload);
+    loadApplications({ ...filter, page: newPage + 1, per_page: rowsPerPage });
   };
 
   const handleRowsPerPageChange = (e) => {
     const newRowsPerPage = parseInt(e.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
-    const payload = { ...filter, page: 1, per_page: newRowsPerPage };
-    loadApplications(payload);
+    loadApplications({ ...filter, page: 1, per_page: newRowsPerPage });
   };
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const allFormNumbers = new Set(applications.map((app) => app.form_number));
-      setSelectedApplications(allFormNumbers);
+      setSelectedApplications(new Set(applications.map((app) => app.form_number)));
     } else {
       setSelectedApplications(new Set());
     }
@@ -292,33 +404,37 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     });
   };
 
-  const handleMenuOpen = (event, app) => {
-    setMenuAnchorEl(event.currentTarget);
-    setSelectedApp(app);
+  const handleMenuOpen = (e, row) => {
+    setAnchorEl(e.currentTarget);
+    setActiveRow(row);
   };
 
   const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setSelectedApp(null);
+    setAnchorEl(null);
+    setActiveRow(null);
   };
 
-  const handleViewAdmission = (formNumber) => {
-    setViewModal({ open: true, formNumber });
-    handleMenuClose();
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await exportApplications(filter);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'applications.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Applications exported successfully');
+    } catch (err) {
+      notify.error('Failed to export applications');
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const handleCloseViewModal = () => {
-    setViewModal({ open: false, formNumber: '' });
-  };
-
-  // ─── Conditional checks for menu items ────────────────────────────────
-  const canAcceptOffer = (app) =>
-    app?.admission_status === 'admitted' &&
-    (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
-
-  const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
-
-  // ─── Confirm dialog handlers ──────────────────────────────────────────
+  // ─── Confirm dialog handlers (accept/reset offer) ─────────────────────
   const openConfirmAcceptOffer = (app) => {
     handleMenuClose();
     setConfirmDialog({
@@ -350,7 +466,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         await acceptAdmissionOffer(app);
         notify.success('Admission offer accepted successfully');
       } else if (type === 'reset-offer') {
-        const payload = {
+        await resetAdmissionOffer({
           form_number: app.form_number,
           status: 'no',
           fname: app.fname,
@@ -359,8 +475,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           batchname: app.batchname,
           prog_name: app.prog_name,
           session_name: app.session_name,
-        };
-        await resetAdmissionOffer(payload);
+        });
         notify.success('Admission offer reset successfully');
       }
       loadApplications(filter);
@@ -377,19 +492,155 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     setConfirmDialog((prev) => ({ ...prev, open: false }));
   };
 
-  // ─── Download Template handlers ────────────────────────────────────────
-  const handleOpenDownloadModal = async () => {
-    if (!filter.appBatchId || !filter.classId) {
-      notify.warning('Please select both batch and class first');
+  const canAcceptOffer = (app) =>
+    app?.admission_status === 'admitted' &&
+    (app?.accept_admission_offer === 'no' || app?.accept_admission_offer == null);
+
+  const canResetOffer = (app) => app?.accept_admission_offer === 'yes';
+
+  // ─── Bulk Actions: Admit / Decline ─────────────────────────────────────
+  const openBatchModal = async (action) => {
+    setBulkMenuAnchor(null);
+    if (selectedApplications.size === 0) {
+      notify.warning('Please select at least one application');
       return;
     }
 
     try {
+      const [programmesRes, categoriesRes] = await Promise.all([
+        fetchProgrammes(),
+        fetchActiveCategories(),
+      ]);
+      setBatchModal({
+        open: true,
+        action,
+        programmes: Array.isArray(programmesRes?.data) ? programmesRes.data : [],
+        classes: [],
+        classArms: [],
+        categories: Array.isArray(categoriesRes?.data) ? categoriesRes.data : [],
+        selectedProgramme: '',
+        selectedClass: '',
+        selectedClassArm: '',
+        selectedPayCategory: '',
+        rejectionReason: '',
+      });
+    } catch (err) {
+      notify.error('Failed to load programmes');
+    }
+  };
+
+  const handleProgrammeChange = async (e) => {
+    const progId = e.target.value;
+    setBatchModal((prev) => ({
+      ...prev,
+      selectedProgramme: progId,
+      selectedClass: '',
+      selectedClassArm: '',
+      classes: [],
+      classArms: [],
+    }));
+    if (progId) {
+      try {
+        const classesRes = await fetchClassesByProgramme(progId);
+        setBatchModal((prev) => ({
+          ...prev,
+          classes: Array.isArray(classesRes?.data) ? classesRes.data : [],
+        }));
+      } catch (err) {
+        notify.error('Failed to load classes');
+      }
+    }
+  };
+
+  const handleClassChangeModal = async (e) => {
+    const classId = e.target.value;
+    setBatchModal((prev) => ({
+      ...prev,
+      selectedClass: classId,
+      selectedClassArm: '',
+      classArms: [],
+    }));
+    if (classId) {
+      try {
+        const armsRes = await fetchClassArmsByClass(classId, {
+          programme_id: batchModal.selectedProgramme,
+        });
+        setBatchModal((prev) => ({
+          ...prev,
+          classArms: Array.isArray(armsRes?.data) ? armsRes.data : [],
+        }));
+      } catch (err) {
+        notify.error('Failed to load class arms');
+      }
+    }
+  };
+
+  const handleCloseBatchModal = () => {
+    setBatchModal((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleConfirmBatchProcess = async () => {
+    const {
+      action,
+      selectedProgramme,
+      selectedClass,
+      selectedClassArm,
+      selectedPayCategory,
+      rejectionReason,
+    } = batchModal;
+
+    if (
+      action === 'admit' &&
+      (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
+    ) {
+      notify.warning('Please select programme, class, class arm, and pay category for admission');
+      return;
+    }
+    if (action === 'decline' && !rejectionReason) {
+      notify.warning('Please provide a rejection reason');
+      return;
+    }
+
+    setProcessing(true);
+    try {
+      await batchProcessAdmissions({
+        action,
+        form_numbers: Array.from(selectedApplications),
+        programme_id: selectedProgramme || null,
+        class_id: selectedClass || null,
+        class_arm_id: selectedClassArm || null,
+        bursary_payment_category_id: selectedPayCategory || null,
+        rejection_reason: rejectionReason || null,
+      });
+      notify.success(
+        `Successfully ${action === 'admit' ? 'admitted' : 'declined'} ${selectedApplications.size} application(s)`,
+      );
+      handleCloseBatchModal();
+      loadApplications(filter);
+      if (onDataChange) onDataChange();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Batch processing failed');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // ─── Download Template handlers ────────────────────────────────────────
+  const handleOpenDownloadModal = async () => {
+    setBulkMenuAnchor(null);
+    if (!filter.appBatchId || !filter.classId) {
+      notify.warning('Please select both batch and class first');
+      return;
+    }
+    if (selectedApplications.size === 0) {
+      notify.warning('Please select at least one applicant to include in the download');
+      return;
+    }
+    try {
       const programmesRes = await fetchProgrammes();
-      const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
       setDownloadModal({
         open: true,
-        programmes,
+        programmes: Array.isArray(programmesRes?.data) ? programmesRes.data : [],
         classes: [],
         selectedProgramme: '',
         selectedClass: '',
@@ -405,16 +656,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       ...prev,
       selectedProgramme: progId,
       selectedClass: '',
-      selectedClassArm: '',
       classes: [],
-      classArms: [],
     }));
-
     if (progId) {
       try {
         const classesRes = await fetchClassesByProgramme(progId);
-        const classes = Array.isArray(classesRes?.data) ? classesRes.data : [];
-        setDownloadModal((prev) => ({ ...prev, classes }));
+        setDownloadModal((prev) => ({
+          ...prev,
+          classes: Array.isArray(classesRes?.data) ? classesRes.data : [],
+        }));
       } catch (err) {
         notify.error('Failed to load classes');
       }
@@ -422,11 +672,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   };
 
   const handleClassChangeDownload = (e) => {
-    const classId = e.target.value;
-    setDownloadModal((prev) => ({
-      ...prev,
-      selectedClass: classId,
-    }));
+    setDownloadModal((prev) => ({ ...prev, selectedClass: e.target.value }));
   };
 
   const handleDownloadTemplate = async () => {
@@ -435,12 +681,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       notify.warning('Please select a class');
       return;
     }
-
-    if (selectedApplications.size === 0) {
-      notify.warning('Please select at least one applicant to include in the download');
-      return;
-    }
-
     setDownloading(true);
     try {
       const res = await downloadAdmissionTemplate({
@@ -450,8 +690,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         class_id: selectedClass,
         form_numbers: Array.from(selectedApplications),
       });
-
-      // Trigger blob download
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -460,7 +698,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-
       notify.success('Template downloaded successfully');
       setDownloadModal((prev) => ({ ...prev, open: false }));
     } catch (err) {
@@ -476,12 +713,12 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   // ─── Upload Template handlers ──────────────────────────────────────────
   const handleOpenUploadModal = () => {
-    setUploadModal({
-      open: true,
-      file: null,
-      uploading: false,
-      result: null,
-    });
+    setBulkMenuAnchor(null);
+    if (!filter.appBatchId || !filter.classId) {
+      notify.warning('Please select both batch and class first');
+      return;
+    }
+    setUploadModal({ open: true, file: null, uploading: false, result: null });
   };
 
   const handleUploadFileChange = (e) => {
@@ -494,18 +731,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
 
   const handleUploadTemplate = async () => {
     const { file } = uploadModal;
-
     if (!file) {
       notify.warning('Please select a file to upload');
       return;
     }
-
     setUploadModal((prev) => ({ ...prev, uploading: true, result: null }));
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('batch_id', filter.appBatchId);
-
       const res = await uploadAdmissionTemplate(formData);
       setUploadModal((prev) => ({
         ...prev,
@@ -528,155 +762,19 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
     }
   };
 
-  // ─── Batch processing modal handlers ───────────────────────────────────
-  const openBatchModal = async (action) => {
-    // If filter is set to 'pending', auto-select all visible applications
-    if (selectedApplications.size === 0) {
-      if (filter.status === 'pending' && applications.length > 0) {
-        const allFormNumbers = new Set(applications.map((app) => app.form_number));
-        setSelectedApplications(allFormNumbers);
-      } else {
-        notify.warning('Please select at least one application');
-        return;
-      }
-    }
-
-    try {
-      const [programmesRes, categoriesRes] = await Promise.all([
-        fetchProgrammes(),
-        fetchActiveCategories(),
-      ]);
-      const programmes = Array.isArray(programmesRes?.data) ? programmesRes.data : [];
-      const categories = Array.isArray(categoriesRes?.data) ? categoriesRes.data : [];
-
-      setBatchModal({
-        open: true,
-        action,
-        programmes,
-        classes: [],
-        classArms: [],
-        categories,
-        selectedProgramme: '',
-        selectedClass: '',
-        selectedClassArm: '',
-        selectedPayCategory: '',
-        rejectionReason: '',
-        revokedReason: '',
-      });
-    } catch (err) {
-      notify.error('Failed to load programmes');
-    }
+  const handleViewDetails = () => {
+    setViewModal({ open: true, formNumber: activeRow?.form_number });
+    handleMenuClose();
   };
 
-  const handleProgrammeChange = async (e) => {
-    const progId = e.target.value;
-    setBatchModal((prev) => ({
-      ...prev,
-      selectedProgramme: progId,
-      selectedClass: '',
-      selectedClassArm: '',
-      classes: [],
-      classArms: [],
-    }));
-
-    if (progId) {
-      try {
-        const classesRes = await fetchClassesByProgramme(progId);
-        const classes = Array.isArray(classesRes?.data) ? classesRes.data : [];
-        setBatchModal((prev) => ({ ...prev, classes }));
-      } catch (err) {
-        notify.error('Failed to load classes');
-      }
-    }
-  };
-
-  const handleClassChangeModal = async (e) => {
-    const classId = e.target.value;
-    setBatchModal((prev) => ({
-      ...prev,
-      selectedClass: classId,
-      selectedClassArm: '',
-      classArms: [],
-    }));
-
-    if (classId) {
-      try {
-        const armsRes = await fetchClassArmsByClass(classId, {
-          programme_id: batchModal.selectedProgramme,
-        });
-        const arms = Array.isArray(armsRes?.data) ? armsRes.data : [];
-        setBatchModal((prev) => ({ ...prev, classArms: arms }));
-      } catch (err) {
-        notify.error('Failed to load class arms');
-      }
-    }
-  };
-
-  const handleCloseBatchModal = () => {
-    setBatchModal((prev) => ({ ...prev, open: false }));
-  };
-
-  const handleConfirmBatchProcess = async () => {
-    const {
-      action,
-      selectedProgramme,
-      selectedClass,
-      selectedClassArm,
-      selectedPayCategory,
-      rejectionReason,
-      revokedReason,
-    } = batchModal;
-
-    // Validation
-    if (
-      action === 'admit' &&
-      (!selectedProgramme || !selectedClass || !selectedClassArm || !selectedPayCategory)
-    ) {
-      notify.warning('Please select programme, class, class arm, and pay category for admission');
-      return;
-    }
-
-    if (action === 'decline' && !rejectionReason) {
-      notify.warning('Please provide a rejection reason');
-      return;
-    }
-
-    if (action === 'revoke' && !revokedReason) {
-      notify.warning('Please provide a revocation reason');
-      return;
-    }
-
-    setProcessing(true);
-    try {
-      const payload = {
-        action,
-        form_numbers: Array.from(selectedApplications),
-        programme_id: selectedProgramme || null,
-        class_id: selectedClass || null,
-        class_arm_id: selectedClassArm || null,
-        bursary_payment_category_id: selectedPayCategory || null,
-        rejection_reason: rejectionReason || null,
-        revoked_reason: revokedReason || null,
-      };
-
-      await batchProcessAdmissions(payload);
-      notify.success(
-        `Successfully ${action === 'admit' ? 'admitted' : action === 'decline' ? 'declined' : 'revoked'} ${selectedApplications.size} application(s)`,
-      );
-
-      handleCloseBatchModal();
-      loadApplications(filter);
-      if (onDataChange) onDataChange();
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Batch processing failed');
-    } finally {
-      setProcessing(false);
-    }
+  const handleCloseViewModal = () => {
+    setViewModal({ open: false, formNumber: '' });
   };
 
   const allSelected = applications.length > 0 && selectedApplications.size === applications.length;
   const someSelected =
     selectedApplications.size > 0 && selectedApplications.size < applications.length;
+  const canBulkProcess = filter.appBatchId && applications.length > 0;
 
   return (
     <Box>
@@ -686,6 +784,8 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           value={statusTab}
           onChange={handleStatusTabChange}
           aria-label="application status tabs"
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             '& .MuiTab-root': {
               textTransform: 'none',
@@ -696,46 +796,44 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             },
           }}
         >
-          <Tab
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: 'warning.main',
-                  }}
-                />
-                Pending Applications
-              </Box>
-            }
-          />
-          <Tab
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: 'success.main',
-                  }}
-                />
-                Processed Applications
-              </Box>
-            }
-          />
+          {STATUS_TABS.map((tab) => (
+            <Tab
+              key={tab.label}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                  {tab.label}
+                  <Box
+                    component="span"
+                    sx={{
+                      minWidth: 20,
+                      height: 20,
+                      px: 0.6,
+                      borderRadius: '10px',
+                      bgcolor: tab.badgeBg,
+                      color: tab.badgeColor,
+                      fontSize: 18,
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {stats?.[tab.statsKey] ?? 0}
+                  </Box>
+                </Box>
+              }
+            />
+          ))}
         </Tabs>
       </Box>
 
       {/* ── Filters ──────────────────────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
         <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth size="small">
             <InputLabel>Admission Batch</InputLabel>
             <Select value={filter.appBatchId} label="Admission Batch" onChange={handleBatchChange}>
-              <MenuItem value="">-- Select Batch --</MenuItem>
+              <MenuItem value="">-- Select Admission --</MenuItem>
               {allBatches.map((batch) => (
                 <MenuItem key={batch.batch_id} value={String(batch.batch_id)}>
                   {batch.session_name} - {batch.prog_name} ({batch.batchname})
@@ -749,7 +847,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           <FormControl fullWidth size="small" disabled={!filter.appBatchId}>
             <InputLabel>Class</InputLabel>
             <Select value={filter.classId} label="Class" onChange={handleClassChange}>
-              <MenuItem value="">-- Select Class --</MenuItem>
+              <MenuItem value="">-- All Classes --</MenuItem>
               {batchClasses.map((cls) => (
                 <MenuItem key={cls.id} value={String(cls.id)}>
                   {cls.class_name}
@@ -762,10 +860,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
-            placeholder="Search by name"
+            placeholder="Search by name, form number, guardian..."
             size="small"
             value={filter.search}
             onChange={handleSearchChange}
+            onKeyUp={handleSearchKeyUp}
             slotProps={{
               input: {
                 startAdornment: (
@@ -779,111 +878,65 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 3.5 }}>
-          <Button
-            variant="contained"
-            size="small"
-            fullWidth
-            onClick={handleFetch}
-            disabled={tableLoading || !filter.appBatchId || !filter.classId}
-          >
-            {tableLoading ? 'Fetching...' : 'Filter'}
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleFetch}
+              disabled={tableLoading || !filter.appBatchId}
+              sx={{ fontWeight: 600, flex: 1 }}
+            >
+              {tableLoading ? 'Fetching...' : 'Fetch'}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<ExportIcon fontSize="small" />}
+              onClick={handleExport}
+              disabled={exporting || applications.length === 0}
+              sx={{ flexShrink: 0 }}
+            >
+              {exporting ? 'Exporting...' : 'Export'}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              endIcon={<ArrowDropDownIcon />}
+              onClick={(e) => setBulkMenuAnchor(e.currentTarget)}
+              disabled={!canBulkProcess}
+              sx={{ flexShrink: 0 }}
+            >
+              Bulk Actions
+            </Button>
+            <Menu
+              anchorEl={bulkMenuAnchor}
+              open={Boolean(bulkMenuAnchor)}
+              onClose={() => setBulkMenuAnchor(null)}
+            >
+              <MenuItem onClick={() => openBatchModal('admit')} sx={{ color: 'success.main' }}>
+                <IconCheck size={16} style={{ marginRight: 10 }} />
+                Admit Selected ({selectedApplications.size})
+              </MenuItem>
+              <MenuItem onClick={() => openBatchModal('decline')} sx={{ color: 'error.main' }}>
+                <IconX size={16} style={{ marginRight: 10 }} />
+                Decline Selected ({selectedApplications.size})
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={handleOpenDownloadModal}>
+                <DownloadIcon fontSize="small" style={{ marginRight: 10 }} />
+                Download Template
+              </MenuItem>
+              <MenuItem onClick={handleOpenUploadModal}>
+                <UploadIcon fontSize="small" style={{ marginRight: 10 }} />
+                Upload Template
+              </MenuItem>
+            </Menu>
+          </Stack>
         </Grid>
       </Grid>
 
-      {/* ── Info Banner ────────────────────────────────────────────────── */}
-      {statusTab === 0 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <Stack spacing={0.5}>
-            <Typography variant="body2">
-              <strong>Note:</strong> Only <strong>Pending</strong> applications can be batch
-              processed. Switch to the <strong>Processed</strong> tab to view admitted, declined, or
-              revoked applications.
-            </Typography>
-            <Typography variant="body2">
-              Select (<strong>check</strong>) the applicant(s) you want to include before using the{' '}
-              <strong>Download Template</strong> or <strong>Upload Template</strong> buttons below.
-              Only the checked applicants will be included in the downloaded template.
-            </Typography>
-          </Stack>
-        </Alert>
-      )}
-
-      {/* ── Download/Upload Template Buttons + Process All ──────────── */}
-
-      {hasFetched && statusTab === 0 && (
-        <Box sx={{ mb: 2 }}>
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<DownloadIcon />}
-              onClick={handleOpenDownloadModal}
-              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
-            >
-              Download Template
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<UploadIcon />}
-              onClick={handleOpenUploadModal}
-              disabled={!filter.appBatchId || !filter.classId || selectedApplications.size === 0}
-            >
-              Upload Template
-            </Button>
-            {applications.length > 0 && (
-              <Button
-                variant="contained"
-                color="success"
-                size="small"
-                startIcon={<IconCheck size={18} />}
-                onClick={() => openBatchModal('admit')}
-                disabled={!hasFetched || selectedApplications.size === 0}
-                sx={{ fontWeight: 600 }}
-              >
-                Process All ({selectedApplications.size || applications.length})
-              </Button>
-            )}
-          </Stack>
-        </Box>
-      )}
-
-      {/* ── Action Buttons ────────────────────────────────────────────── */}
-      {/* {applications.length > 0 && (
-        <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => openBatchModal('admit')}
-            disabled={selectedApplications.size === 0 || filter.status =='admitted'}
-          >
-            Admit Selected ({selectedApplications.size})
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            size="small"
-            onClick={() => openBatchModal('decline')}
-            disabled={selectedApplications.size === 0 || filter.status =='declined'}
-          >
-            Decline Selected ({selectedApplications.size})
-          </Button>
-          <Button
-            variant="contained"
-            color="warning"
-            size="small"
-            onClick={() => openBatchModal('revoke')}
-            disabled={selectedApplications.size === 0 || filter.status =='revoked'}
-          >
-            Revoke Selected ({selectedApplications.size})
-          </Button>
-        </Stack>
-      )} */}
-
       {/* ── Table ────────────────────────────────────────────────────── */}
-      <Box variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Box sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table size="small">
             <TableHead
@@ -893,7 +946,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               }}
             >
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: '3%' }}>
+                <TableCell sx={{ width: '3%' }}>
                   <Checkbox
                     size="small"
                     checked={allSelected}
@@ -906,35 +959,38 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 <TableCell sx={{ fontWeight: 700, width: '8%' }}>Form Number</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '8%' }}>Admission No</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '11%' }}>Applicant's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Guardian's Name</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '7%' }}>Intending Class</TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '11%' }}>Admitted Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Guardian's Name</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '11%' }}>Application Batch</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '7%' }}>Intending Class</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '10%' }}>Admitted Class</TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Form Status
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, width: '7%' }} align="center">
                   Admission Status
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '9%' }} align="center">
+                <TableCell sx={{ fontWeight: 700, width: '6%' }} align="center">
+                  Accept Offer
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, width: '8%' }} align="center">
                   Form Submit Date
                 </TableCell>
-                <TableCell sx={{ fontWeight: 700, width: '6%' }} align="center">
-                  Actions
+                <TableCell sx={{ fontWeight: 700, width: '4%' }} align="center">
+                  Action
                 </TableCell>
               </TableRow>
             </TableHead>
 
             <TableBody>
               {tableLoading ? (
-                <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 8 }}>
-                    <CircularProgress size={30} />
-                  </TableCell>
-                </TableRow>
+                Array.from({ length: 6 }).map((_, i) => <TableRowSkeleton key={i} />)
               ) : applications.length > 0 ? (
                 applications.map((app, index) => (
-                  <TableRow key={app.form_number || index} hover>
+                  <TableRow
+                    key={app.form_number || index}
+                    hover
+                    selected={selectedApplications.has(app.form_number)}
+                  >
                     <TableCell>
                       <Checkbox
                         size="small"
@@ -942,7 +998,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                         onChange={() => handleSelectOne(app.form_number)}
                       />
                     </TableCell>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {app.form_number}
@@ -962,18 +1018,17 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       </Typography>
                     </TableCell>
                     <TableCell>
+                      <Typography variant="body2">{getBatchLabel(app)}</Typography>
+                    </TableCell>
+                    <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {app.intending_class_code || '—'}
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
-                        {app.admitted_class_code || '—'} {app.admitted_class_arm_name || '—'}
+                        {app.admitted_class_code || '—'} {app.admitted_class_arm_name || ''}
                       </Typography>
-                    </TableCell>
-
-                    <TableCell>
-                      <Typography variant="body2">{getBatchLabel(app)}</Typography>
                     </TableCell>
                     <TableCell align="center">
                       <Chip
@@ -992,6 +1047,15 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       />
                     </TableCell>
                     <TableCell align="center">
+                      <Chip
+                        label={app.accept_admission_offer === 'yes' ? 'Yes' : 'No'}
+                        size="small"
+                        color={offerColors[app.accept_admission_offer] || 'default'}
+                        variant={app.accept_admission_offer === 'yes' ? 'filled' : 'outlined'}
+                        sx={{ fontWeight: 600, fontSize: 11, minWidth: 60 }}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
                       <Typography variant="body2" color="text.secondary">
                         {app.form_submit_completion
                           ? new Date(app.form_submit_completion).toLocaleDateString('en-GB', {
@@ -1006,105 +1070,18 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, app)}>
                         <MoreVertIcon fontSize="small" />
                       </IconButton>
-                      <Menu
-                        anchorEl={menuAnchorEl}
-                        open={Boolean(menuAnchorEl) && selectedApp?.form_number === app.form_number}
-                        onClose={handleMenuClose}
-                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                        PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
-                      >
-                        {/* Process Application Form */}
-                        <MenuItem
-                          onClick={() => {
-                            const form_number = selectedApp?.form_number;
-                            handleMenuClose();
-                            if (form_number) navigate(`/admission/process-form/${form_number}`);
-                          }}
-                        >
-                          <IconNote size={18} style={{ marginRight: 12 }} />
-                          Process Application Form
-                        </MenuItem>
-
-                        {/* Edit Application Form */}
-                        <MenuItem
-                          onClick={() => {
-                            const form_number = selectedApp?.form_number;
-                            handleMenuClose();
-                            if (form_number) navigate(`/admission/edit-form/${form_number}`);
-                          }}
-                        >
-                          <IconEdit size={18} style={{ marginRight: 12 }} />
-                          Edit Application Form
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* View Application Form */}
-                        <MenuItem
-                          onClick={() => {
-                            const form_number = selectedApp?.form_number;
-                            handleMenuClose();
-                            if (form_number)
-                              navigate(`/admission/print-application/${form_number}`);
-                          }}
-                        >
-                          <IconEye size={18} style={{ marginRight: 12 }} />
-                          View Application Form
-                        </MenuItem>
-
-                        {/* View Payment History */}
-                        <MenuItem
-                          onClick={() => {
-                            const form_number = selectedApp?.form_number;
-                            handleMenuClose();
-                            if (form_number) navigate(`/admission/payment-history/${form_number}`);
-                          }}
-                        >
-                          <IconHistory size={18} style={{ marginRight: 12 }} />
-                          View Payment History
-                        </MenuItem>
-
-                        {/* View Details (Modal) */}
-                        <MenuItem onClick={() => handleViewAdmission(selectedApp?.form_number)}>
-                          <IconEye size={18} style={{ marginRight: 12 }} />
-                          View Details
-                        </MenuItem>
-
-                        <Divider />
-
-                        {/* Accept Admission Offer */}
-                        {selectedApp && canAcceptOffer(selectedApp) && (
-                          <MenuItem
-                            onClick={() => openConfirmAcceptOffer(selectedApp)}
-                            sx={{ color: 'success.main' }}
-                          >
-                            <IconCheck size={18} style={{ marginRight: 12 }} />
-                            Accept Admission Offer
-                          </MenuItem>
-                        )}
-
-                        {/* Reverse Admission Offer */}
-                        {selectedApp && canResetOffer(selectedApp) && (
-                          <MenuItem
-                            onClick={() => openConfirmResetOffer(selectedApp)}
-                            sx={{ color: 'error.main' }}
-                          >
-                            <IconX size={18} style={{ marginRight: 12 }} />
-                            Reverse Admission Offer
-                          </MenuItem>
-                        )}
-                      </Menu>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={13} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={TABLE_COLUMN_COUNT} align="center" sx={{ py: 6 }}>
                     <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                      {filter.appBatchId && filter.classId
-                        ? 'No applications found for the selected batch and class.'
-                        : 'Select an admission batch to view applications.'}
+                      {filter.search
+                        ? 'No record found. Try adjusting your search terms.'
+                        : filter.appBatchId
+                          ? 'No applications found for the selected filters.'
+                          : 'Select an admission batch to view applications.'}
                     </Alert>
                   </TableCell>
                 </TableRow>
@@ -1127,15 +1104,112 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
         </TableContainer>
       </Box>
 
-      {/* ── Batch Processing Modal ────────────────────────────────────── */}
+      {/* ── Row Action Menu ──────────────────────────────────────────────── */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{ sx: { borderRadius: 2, minWidth: 220 } }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            const form_number = activeRow?.form_number;
+            handleMenuClose();
+            if (form_number) navigate(`/admission/process-form/${form_number}`);
+          }}
+        >
+          <IconNote size={18} style={{ marginRight: 12 }} />
+          Process Application Form
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            const form_number = activeRow?.form_number;
+            handleMenuClose();
+            if (form_number) navigate(`/admission/edit-form/${form_number}`);
+          }}
+        >
+          <IconEdit size={18} style={{ marginRight: 12 }} />
+          Edit Application Form
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem
+          onClick={() => {
+            const form_number = activeRow?.form_number;
+            handleMenuClose();
+            if (form_number) navigate(`/admission/print-application/${form_number}`);
+          }}
+        >
+          <IconEye size={18} style={{ marginRight: 12 }} />
+          View Application Form
+        </MenuItem>
+
+        <MenuItem onClick={handleViewDetails}>
+          <IconEye size={18} style={{ marginRight: 12 }} />
+          View Details
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            const form_number = activeRow?.form_number;
+            handleMenuClose();
+            if (form_number) navigate(`/admission/payment-history/${form_number}`);
+          }}
+        >
+          <IconHistory size={18} style={{ marginRight: 12 }} />
+          View Payment History
+        </MenuItem>
+
+        <Divider />
+
+        {activeRow && canAcceptOffer(activeRow) && (
+          <MenuItem
+            onClick={() => openConfirmAcceptOffer(activeRow)}
+            sx={{ color: 'success.main' }}
+          >
+            <IconCheck size={18} style={{ marginRight: 12 }} />
+            Accept Admission Offer
+          </MenuItem>
+        )}
+
+        {activeRow && canResetOffer(activeRow) && (
+          <MenuItem onClick={() => openConfirmResetOffer(activeRow)} sx={{ color: 'error.main' }}>
+            <IconX size={18} style={{ marginRight: 12 }} />
+            Reverse Admission Offer
+          </MenuItem>
+        )}
+      </Menu>
+
+      {/* ── Accept/Reverse Offer Confirmation ────────────────────────────── */}
+      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {confirmDialog.message}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="contained" size="small" color="inherit" onClick={handleCancelConfirm}>
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            color={confirmDialog.type === 'reset-offer' ? 'error' : 'primary'}
+            onClick={handleConfirmAction}
+          >
+            {confirmDialog.type === 'reset-offer' ? 'Yes, Reverse' : 'Yes, Accept'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Admit / Decline Bulk Modal ────────────────────────────────── */}
       <Dialog open={batchModal.open} onClose={handleCloseBatchModal} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>
-          Batch{' '}
-          {batchModal.action === 'admit'
-            ? 'Admission'
-            : batchModal.action === 'decline'
-              ? 'Decline'
-              : 'Revocation'}
+          Bulk {batchModal.action === 'admit' ? 'Admission' : 'Decline'}
         </DialogTitle>
         <Divider />
         <DialogContent>
@@ -1148,9 +1222,9 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             {batchModal.action === 'admit' && (
               <>
                 <Alert severity="info" sx={{ mb: 0.5 }}>
-                  This records the admission decision only — each guardian still needs to accept
-                  the offer (paying any acceptance fee first) before their ward's account and
-                  admission number are created.
+                  This records the admission decision only — each guardian still needs to accept the
+                  offer (paying any acceptance fee first) before their ward's account and admission
+                  number are created.
                 </Alert>
 
                 <FormControl fullWidth size="small">
@@ -1198,16 +1272,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                     {batchModal.classArms.map((arm) => (
                       <MenuItem key={arm.id} value={arm.id}>
                         {arm.class_arm_names}
-                        {arm.student_count !== undefined && (
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ ml: 1 }}
-                          >
-                            ({arm.student_count})
-                          </Typography>
-                        )}
                       </MenuItem>
                     ))}
                   </Select>
@@ -1246,20 +1310,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
                 }
               />
             )}
-
-            {batchModal.action === 'revoke' && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Revocation Reason *"
-                placeholder="Enter reason for revoking these admissions"
-                value={batchModal.revokedReason}
-                onChange={(e) =>
-                  setBatchModal((prev) => ({ ...prev, revokedReason: e.target.value }))
-                }
-              />
-            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -1274,17 +1324,13 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           </Button>
           <Button
             size="small"
-            color={
-              batchModal.action === 'decline' || batchModal.action === 'revoke'
-                ? 'error'
-                : 'success'
-            }
+            color={batchModal.action === 'decline' ? 'error' : 'success'}
             onClick={handleConfirmBatchProcess}
             disabled={processing}
           >
             {processing
               ? 'Processing...'
-              : `Confirm ${batchModal.action === 'admit' ? 'Admission' : batchModal.action === 'decline' ? 'Decline' : 'Revocation'}`}
+              : `Confirm ${batchModal.action === 'admit' ? 'Admission' : 'Decline'}`}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1348,9 +1394,7 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             variant="contained"
             size="small"
             color="primary"
-            startIcon={
-              downloading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon />
-            }
+            startIcon={downloading ? undefined : <DownloadIcon />}
             onClick={handleDownloadTemplate}
             disabled={!downloadModal.selectedClass || downloading}
           >
@@ -1372,11 +1416,10 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
           <Stack spacing={2.5} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Upload the completed admission template (.xlsx) to bulk admit applicants. The
-              programme, class, and <strong>Class Arm</strong> column (P) from the downloaded
-              template will be used to assign each applicant to their programme, class, and arm.
+              programme, class, and <strong>Class Arm</strong> column from the downloaded template
+              will be used to assign each applicant to their programme, class, and arm.
             </Typography>
 
-            {/* ── File Upload Area ── */}
             <Box
               onClick={() => document.getElementById('upload-admission-file-input')?.click()}
               sx={{
@@ -1405,8 +1448,6 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
               onChange={handleUploadFileChange}
             />
 
-            {uploadModal.uploading && <CircularProgress size={20} sx={{ alignSelf: 'center' }} />}
-
             {uploadModal.result && (
               <Alert severity={uploadModal.result.severity}>{uploadModal.result.message}</Alert>
             )}
@@ -1426,39 +1467,11 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
             variant="contained"
             size="small"
             color="primary"
-            startIcon={
-              uploadModal.uploading ? (
-                <CircularProgress size={14} color="inherit" />
-              ) : (
-                <UploadIcon />
-              )
-            }
+            startIcon={uploadModal.uploading ? undefined : <UploadIcon />}
             onClick={handleUploadTemplate}
             disabled={!uploadModal.file || uploadModal.uploading}
           >
             {uploadModal.uploading ? 'Uploading...' : 'Upload Template'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── Confirmation Dialog ──────────────────────────────────────────── */}
-      <Dialog open={confirmDialog.open} onClose={handleCancelConfirm} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>{confirmDialog.title}</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            {confirmDialog.message}
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={handleCancelConfirm}>
-            Cancel
-          </Button>
-          <Button
-            size="small"
-            color={confirmDialog.type === 'reset-offer' ? 'error' : 'primary'}
-            onClick={handleConfirmAction}
-          >
-            {confirmDialog.type === 'reset-offer' ? 'Yes, Reverse' : 'Yes, Accept'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1473,4 +1486,4 @@ const BatchProcessingTab = ({ allBatches, onDataChange }) => {
   );
 };
 
-export default BatchProcessingTab;
+export default ProcessApplicationsTable;

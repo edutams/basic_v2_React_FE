@@ -2,7 +2,7 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
-import { promotionLine, caTotal, pctLabel } from '../reportCardUtils';
+import { promotionLine, caTotal, pctLabel, physicalValue } from '../reportCardUtils';
 
 const cellBorder = { border: '2px solid #1a1a1a' };
 const innerCellBorder = { border: '1px solid #1a1a1a' };
@@ -36,7 +36,7 @@ const responsiveCSS = `
 
 const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) => {
   const hosSignature = report?.signatures?.head_of_school;
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -73,17 +73,17 @@ const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) =>
         <Table size="small"><TableBody>
           <TableRow>
             <TableCell style={innerCellBorder}>Beginning Of Term Weight:</TableCell>
-            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>32 kg</TableCell>
+            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'beginning_weight_kg', 'kg')}</TableCell>
             <TableCell style={innerCellBorder}>End Of Term Weight:</TableCell>
-            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>34 kg</TableCell>
+            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'end_weight_kg', 'kg')}</TableCell>
             <TableCell style={innerCellBorder}>Cleanliness Rating:</TableCell>
-            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Good</TableCell>
+            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{report.physical_record?.cleanliness_rating || '-'}</TableCell>
           </TableRow>
           <TableRow>
             <TableCell style={innerCellBorder}>Beginning Of Term Height:</TableCell>
-            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>140 cm</TableCell>
+            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'beginning_height_cm', 'cm')}</TableCell>
             <TableCell style={innerCellBorder}>End Of Term Height:</TableCell>
-            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>142 cm</TableCell>
+            <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'end_height_cm', 'cm')}</TableCell>
             <TableCell style={innerCellBorder}></TableCell>
             <TableCell style={innerCellBorder}></TableCell>
           </TableRow>
@@ -265,7 +265,7 @@ const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) =>
           {/* ── Summary Box ─────────────────────────────── */}
           <Box style={{ border: '2px solid #000', borderRadius: 4, marginBottom: 8 }}>
             <Table size="small"><TableBody>
-              <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '2px solid #000' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</TableCell></TableRow>
+              <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '2px solid #000' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</TableCell></TableRow>
               <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '2px solid #000' }}><strong>Class Position</strong><br />{report.position}</TableCell></TableRow>
               <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '2px solid #000' }}><strong>Percentage</strong><br />{avg}%</TableCell></TableRow>
               <TableRow><TableCell style={{ textAlign: 'center' }}>

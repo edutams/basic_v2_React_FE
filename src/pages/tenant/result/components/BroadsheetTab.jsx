@@ -39,6 +39,8 @@ import {
   InputAdornment,
   Switch,
   FormControlLabel,
+  Popover,
+  IconButton,
 } from '@mui/material';
 import {
   IconCheck,
@@ -65,6 +67,7 @@ import {
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
+import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
   fetchSessionTerms,
   fetchActiveTenantSessionTerm,
@@ -74,7 +77,6 @@ import {
   fetchTerms,
   fetchProgrammes,
   fetchClassesByProgramme,
-  fetchClassArmsByClass,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchClassStructures } from '@/api/tenant/class-structure/classStructureApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
@@ -111,6 +113,22 @@ const PUBLISH_CONFIRM = {
     body: 'Both the SPA approval and the Head of School publish are cleared, and the broadsheet goes back to awaiting approval.',
     confirm: 'Unpublish',
     color: 'error',
+  },
+  // Same underlying action as `unpublish` (it's safe/idempotent to clear a
+  // publish flag that was never set) — shown instead of `unpublish` when
+  // nothing has actually been published yet, so the copy doesn't talk
+  // about undoing a publish that hasn't happened.
+  unapprove: {
+    title: 'Reverse this approval?',
+    body: 'The SPA approval is cleared and the broadsheet goes back to awaiting approval. Nothing has been published yet, so there is nothing else to undo.',
+    confirm: 'Reverse approval',
+    color: 'error',
+  },
+  recommend_promotions: {
+    title: 'Recommend promotions for this class?',
+    body: 'Computes each student\'s promotion recommendation and next class arm based on their results, for review — this does not move anyone yet. Any existing recommendation will be recalculated.',
+    confirm: 'Recommend',
+    color: 'primary',
   },
 };
 
@@ -230,7 +248,6 @@ const BroadsheetTab = () => {
   const [classes, setClasses] = useState([]);
   const [classArms, setClassArms] = useState([]);
   const [allArms, setAllArms] = useState([]);
-  const [schoolInfo, setSchoolInfo] = useState(null);
   const activeSessionTermRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState(0);
@@ -242,6 +259,14 @@ const BroadsheetTab = () => {
     class_arm_id: '',
     perf_range: '',
   });
+
+  // Term Cumulative only makes sense once the session has reached Third
+  // Term (cumulating 3 terms before the 3rd exists is meaningless) — same
+  // term_id === 3 check the backend uses for is_third_term. Declared this
+  // early since an effect further down (gating the Term Cumulative tab)
+  // reads it before render reaches where the rest of the derived values
+  // are computed.
+  const isThirdTermSelected = Number(filters.term_id) === 3;
 
   const [loading, setLoading] = useState(false);
   const [sheet, setSheet] = useState(null);
@@ -353,17 +378,6 @@ const BroadsheetTab = () => {
       });
 
     loadDropdowns();
-    getTenantInfo()
-      .then((data) => {
-        if (!cancelled) setSchoolInfo(data?.data || null);
-      })
-      .catch(() => {
-        if (!cancelled) setSchoolInfo(null);
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // ── Terms for the selected session (defaults to the active term) ──
@@ -410,16 +424,20 @@ const BroadsheetTab = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.programme_id]);
 
-  // ── Class arms for the selected class ──────────────────────
+  // ── Class arms for the selected class — scoped to the class arms the
+  //    caller is the ACTIVE CLASS TEACHER of (stricter than the generic
+  //    curriculum arm dropdown, which also includes arms they merely
+  //    subject-teach in) ────────────────────────────────────────
   useEffect(() => {
     if (!filters.class_id) {
       setClassArms([]);
       return;
     }
-    fetchClassArmsByClass(
-      filters.class_id,
-      filters.programme_id ? { programme_id: filters.programme_id } : {},
-    )
+    resultSheetApi
+      .getMyClassArms({
+        class_id: filters.class_id,
+        ...(filters.programme_id ? { programme_id: filters.programme_id } : {}),
+      })
       .then((res) => {
         const data = Array.isArray(res.data?.data || res.data) ? res.data?.data || res.data : [];
         setClassArms(data);
@@ -500,6 +518,11 @@ const BroadsheetTab = () => {
       closePublishConfirm();
       return;
     }
+    if (action === 'recommend_promotions') {
+      await handleRecommendPromotions();
+      closePublishConfirm();
+      return;
+    }
     handlePublishAction(action);
   };
 
@@ -530,6 +553,16 @@ const BroadsheetTab = () => {
       closePublishConfirm();
     }
   };
+
+  // The Term Cumulative tab is only ever rendered while Third Term is
+  // selected (see the Tabs block below) — if the term filter changes out
+  // from under it while it's active, fall back to Termly rather than
+  // leaving an invisible tab "selected".
+  useEffect(() => {
+    if (activeTab === 1 && !isThirdTermSelected) {
+      setActiveTab(0);
+    }
+  }, [activeTab, isThirdTermSelected]);
 
   // Auto-fetch once every required filter has resolved — they're all
   // preselected now (active session/term, first programme/class/arm), so
@@ -633,11 +666,14 @@ const BroadsheetTab = () => {
         return name.includes(q) || admNo.includes(q);
       });
     }
-    if (statusFilter === 'incomplete') {
-      rows = rows.filter((s) => s.subjects_scored < s.total_subjects);
-    } else if (statusFilter === 'remarks_pending') {
+    // Status/Subject filters are Termly-only concepts (per-term scores,
+    // remarks, positions) — a stale value from tab 0 must not silently
+    // empty out the Term Cumulative summary after switching tabs.
+    if (activeTab === 0 && statusFilter === 'incomplete') {
+      rows = rows.filter((s) => s.subjects_scored < s.registered_subjects);
+    } else if (activeTab === 0 && statusFilter === 'remarks_pending') {
       rows = rows.filter((s) => !s.class_teachers_comment);
-    } else if (statusFilter === 'position_missing') {
+    } else if (activeTab === 0 && statusFilter === 'position_missing') {
       rows = rows.filter((s) => s.persisted_class_position === null);
     }
     if (atRiskOnly) {
@@ -649,7 +685,19 @@ const BroadsheetTab = () => {
     return rows;
   })();
 
-  const showPromotionButtons = activeTab === 0 && showData && Boolean(sheet?.is_third_term);
+  // Promotion only makes sense once every Results Workflow stage is
+  // actually done — Remarks, Positioning, SPA Approval, and HOS Publish —
+  // not just "we've reached Third Term". Mirrors the same completion
+  // checks the workflow-stage cards below compute for themselves.
+  const allWorkflowStagesComplete = Boolean(
+    sheet?.workflow &&
+      (sheet.workflow.checks?.remarks_pending ?? 1) === 0 &&
+      (sheet.workflow.checks?.positions_missing ?? 1) === 0 &&
+      sheet.result_publish?.spa_publish === 'yes' &&
+      sheet.result_publish?.head_of_school_publish === 'yes',
+  );
+  const showPromotionButtons =
+    activeTab === 0 && showData && Boolean(sheet?.is_third_term) && allWorkflowStagesComplete;
   const stats = sheet?.stats ?? {};
   const gradeSettings = sheet?.grade_settings ?? [];
   const markConfig = sheet?.mark_config;
@@ -666,7 +714,15 @@ const BroadsheetTab = () => {
     ? subjects.filter((s) => String(s.subject_id) === String(subjectFilter))
     : subjects;
 
-  const summaryColSpan = activeTab === 1 ? 11 : showPromotionButtons ? 10 : 7;
+  // Tab 1 (Term Cumulative): CWA + Position + No. Subj + Remark only.
+  // Tab 0 (Termly): same 4 + Total Score, + promotion cols when shown, +
+  // the 2 comment columns + Action.
+  const summaryColSpan = activeTab === 1 ? 4 : showPromotionButtons ? 11 : 8;
+  // Termly: CA/EXAM/TOTAL/GRADE per subject (4). Term Cumulative: one TOTAL
+  // column per term in the session + CUM AVG + GRADE.
+  const cumulativeTermCount = sheet?.terms?.length || 3;
+  const subjectColSpan = activeTab === 0 ? 4 : cumulativeTermCount + 2;
+  const termOrdinalLabels = ['1ST', '2ND', '3RD', '4TH'].slice(0, cumulativeTermCount);
 
   const borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB';
 
@@ -872,11 +928,23 @@ const BroadsheetTab = () => {
       0,
     );
     const examScore = Number(subj.exam_score) || 0;
+    // Send the per-test breakdown, not just its sum — otherwise the score
+    // sheet and report card's individual CA columns show blank even though
+    // ca_total/exam are correct (they read the `ca` JSON, not ca_total).
+    const ca = subj.ca_breakdown.map((g) => ({
+      display_name: g.display_name,
+      entities: g.entities.map((e) => ({
+        display_name: e.display_name,
+        max_score: e.max_score,
+        score: Number(e.score) || 0,
+      })),
+    }));
 
     try {
       await scoreManagerApi.editResult({
         user_id: student.user_id,
         course_registration_id: subj.course_registration_id,
+        ca,
         ca_total: caTotal,
         exam_score: examScore,
         session_term_id: loadedQuery?.payload?.session_term_id,
@@ -896,6 +964,41 @@ const BroadsheetTab = () => {
 
   // ── Promotion ───────────────────────────────────────────────
   const [recMenu, setRecMenu] = useState({ rowId: null, anchorEl: null });
+  const [subjectsPopover, setSubjectsPopover] = useState({ anchorEl: null, row: null });
+  const [confirmRemoveSubjectId, setConfirmRemoveSubjectId] = useState(null);
+  const [removingSubjectId, setRemovingSubjectId] = useState(null);
+  const openSubjectsPopover = (e, row) => setSubjectsPopover({ anchorEl: e.currentTarget, row });
+  const closeSubjectsPopover = () => {
+    setSubjectsPopover({ anchorEl: null, row: null });
+    setConfirmRemoveSubjectId(null);
+  };
+
+  // Removes a single subject registration for this student from the
+  // broadsheet — guarded (both here and server-side) so a subject that
+  // already has scores recorded can't be silently unregistered and lose
+  // them (course_registration -> results is a cascade-on-delete FK).
+  const handleRemoveRegisteredSubject = async (subjectId) => {
+    const row = subjectsPopover.row;
+    if (!row) return;
+
+    setRemovingSubjectId(subjectId);
+    try {
+      await subjectRegistrationApi.unregisterSubject(row.student_registration_id, subjectId, {
+        session_term_id: sessionTermId,
+      });
+      showSnackbar('Subject removed from this student’s registration');
+      setConfirmRemoveSubjectId(null);
+      closeSubjectsPopover();
+      refetch();
+    } catch (err) {
+      showSnackbar(
+        err?.response?.data?.message || 'Failed to remove subject — it may already have scores recorded',
+        'error',
+      );
+    } finally {
+      setRemovingSubjectId(null);
+    }
+  };
 
   const handleRecommendPromotions = async () => {
     setLoading(true);
@@ -913,36 +1016,81 @@ const BroadsheetTab = () => {
     }
   };
 
+  // ── Post Recommendation: the execution step. Recommend Promotion
+  // already computed promotion_recommendation + next_class_arm_id for
+  // review (shown in the table); this opens a dialog that shows which
+  // session it's about to promote into — resolved automatically
+  // (current session's leading year + 1, e.g. "2025/2026" → "2026/2027"),
+  // never a picker — then actually creates each student's registration
+  // there and rolls the subscription forward.
+  const [promoteDialog, setPromoteDialog] = useState({
+    open: false,
+    loading: false,
+    exists: false,
+    sessionName: '',
+  });
+  const [postingRecommendations, setPostingRecommendations] = useState(false);
+
+  const openPromoteDialog = async () => {
+    setPromoteDialog({ open: true, loading: true, exists: false, sessionName: '' });
+    try {
+      const res = await resultSheetApi.getNextSession(filters.session_id);
+      const info = res?.data?.data || {};
+      setPromoteDialog({
+        open: true,
+        loading: false,
+        exists: Boolean(info.exists),
+        sessionName: info.session_name || '',
+      });
+    } catch (err) {
+      console.error('Failed to resolve next session:', err);
+      setPromoteDialog({ open: true, loading: false, exists: false, sessionName: '' });
+      showSnackbar(err?.response?.data?.message || 'Failed to resolve the next session', 'error');
+    }
+  };
+
   const handlePostRecommendations = async () => {
-    setLoading(true);
+    setPostingRecommendations(true);
     try {
       const res = await resultSheetApi.postRecommendations({
         class_arm_id: filters.class_arm_id,
         session_id: filters.session_id,
       });
       showSnackbar(res?.data?.message || 'Recommendations posted');
-      await refetch();
+      setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' });
     } catch (err) {
       console.error('Failed to post recommendations:', err);
       showSnackbar(err?.response?.data?.message || 'Failed to post recommendations', 'error');
-      setLoading(false);
+    } finally {
+      setPostingRecommendations(false);
     }
   };
 
   const handleSetRecommendation = async (row, recommendation) => {
     setRecMenu({ rowId: null, anchorEl: null });
     try {
-      await resultSheetApi.savePromotion({
+      const res = await resultSheetApi.savePromotion({
         student_registration_id: row.student_registration_id,
         promotion_recommendation: recommendation,
       });
+      // The backend re-resolves next_class_arm_id to match the new
+      // recommendation (repeat the current arm if held back, the next
+      // class's matching arm if promoted/on trial, null if graduated) —
+      // read that back rather than just patching promotion_recommendation,
+      // so the Next Class dropdown doesn't keep showing whatever arm was
+      // resolved under the student's PREVIOUS status.
+      const nextClassArmId = res?.data?.data?.next_class_arm_id ?? null;
       setSheet(
         (prev) =>
           prev && {
             ...prev,
             students: prev.students.map((r) =>
               r.student_registration_id === row.student_registration_id
-                ? { ...r, promotion_recommendation: recommendation }
+                ? {
+                    ...r,
+                    promotion_recommendation: recommendation,
+                    next_class_arm_id: nextClassArmId,
+                  }
                 : r,
             ),
           },
@@ -992,20 +1140,27 @@ const BroadsheetTab = () => {
       'Student ID',
       'Name',
       'Sex',
-      ...subjects.flatMap((s) => [
-        `${s.subject_name} CA (${caMax})`,
-        `${s.subject_name} EXAM (${examMax})`,
-        `${s.subject_name} TOTAL (${totalMax})`,
-        `${s.subject_name} GRADE`,
-      ]),
-      ...(isCumulative ? ['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'] : []),
+      ...subjects.flatMap((s) =>
+        isCumulative
+          ? [
+              ...termOrdinalLabels.map((label) => `${s.subject_name} ${label} TERM`),
+              `${s.subject_name} CUM AVG`,
+              `${s.subject_name} GRADE`,
+            ]
+          : [
+              `${s.subject_name} CA (${caMax})`,
+              `${s.subject_name} EXAM (${examMax})`,
+              `${s.subject_name} TOTAL (${totalMax})`,
+              `${s.subject_name} GRADE`,
+            ],
+      ),
+      ...(isCumulative ? [] : ['TOTAL SCORE']),
       'CWA',
       'POSITION',
       'NO. SUBJ',
       'REMARK',
       ...(showPromotionButtons ? ['RECOMMENDATION', 'NEXT CLASS'] : []),
-      'CLASS TEACHER COMMENT',
-      'HEAD OF SCHOOL COMMENT',
+      ...(isCumulative ? [] : ['CLASS TEACHER COMMENT', 'HEAD OF SCHOOL COMMENT']),
     ];
 
     const rows = visibleStudents.map((row, index) => {
@@ -1023,6 +1178,14 @@ const BroadsheetTab = () => {
         row.user?.sex === 'female' ? 'F' : 'M',
         ...subjects.flatMap((s) => {
           const result = resultMap[s.subject_id];
+          if (isCumulative) {
+            const termTotals = result?.term_totals ?? [];
+            return [
+              ...termOrdinalLabels.map((_, i) => termTotals[i] ?? ''),
+              result?.cum_avg ?? '',
+              result?.grade ?? '',
+            ];
+          }
           return [
             result?.ca_total ?? '',
             result?.exam_score ?? '',
@@ -1030,21 +1193,13 @@ const BroadsheetTab = () => {
             result?.grade ?? '',
           ];
         }),
-        ...(isCumulative
-          ? [
-              row.first_term_average ?? '',
-              row.second_term_average ?? '',
-              row.third_term_average ?? '',
-              row.all_term_average ?? '',
-            ]
-          : []),
+        ...(isCumulative ? [] : [row.total_score ?? '']),
         cwa ?? '',
-        isCumulative ? (row.all_term_overall_class_position ?? '') : (row.position ?? ''),
-        row.total_subjects ?? '',
+        isCumulative ? (row.all_term_overall_class_position ?? '') : (row.persisted_class_position ?? ''),
+        row.registered_subjects ?? '',
         row.remark ?? remarkFor(cwa, gradeSettings),
         ...(showPromotionButtons ? [row.promotion_recommendation || '', armName] : []),
-        row.class_teachers_comment || '',
-        row.hos_comment || '',
+        ...(isCumulative ? [] : [row.class_teachers_comment || '', row.hos_comment || '']),
       ];
     });
 
@@ -1068,14 +1223,24 @@ const BroadsheetTab = () => {
     showSnackbar('Broadsheet exported');
   };
 
+  // A checkmark (promoted / promoted on trial / graduated) is a decided,
+  // locked-in outcome — not editable from here. Only the X (not promoted /
+  // advised to repeat / no recommendation yet) stays clickable, and only
+  // ever offers the two real alternatives: Promote on Trial or Advise to
+  // Repeat.
+  const isPromotionLocked = (recommendation) =>
+    ['promoted', 'promoted on trial', 'graduated'].includes(recommendation);
+
   const promotionIcon = (recommendation) => {
+    const locked = isPromotionLocked(recommendation);
+    const cursor = locked ? 'default' : 'pointer';
     if (recommendation === 'promoted')
-      return <IconCheck size={18} color="#16A34A" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#16A34A" style={{ cursor }} />;
     if (recommendation === 'promoted on trial')
-      return <IconCheck size={18} color="#D97706" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#D97706" style={{ cursor }} />;
     if (recommendation === 'graduated')
-      return <IconCheck size={18} color="#2563EB" style={{ cursor: 'pointer' }} />;
-    return <IconX size={18} color="#DC2626" style={{ cursor: 'pointer' }} />;
+      return <IconCheck size={18} color="#2563EB" style={{ cursor }} />;
+    return <IconX size={18} color="#DC2626" style={{ cursor }} />;
   };
 
   const avatarInitials = (user) => `${user?.lname?.[0] ?? ''}${user?.fname?.[0] ?? ''}`;
@@ -1105,8 +1270,8 @@ const BroadsheetTab = () => {
             }}
             sx={{ borderBottom: 0, minHeight: 0 }}
           >
-            <Tab label="Termly" sx={{ py: 1.25 }} />
-            <Tab label="Term Cummulative" sx={{ py: 1.25 }} />
+            <Tab label="Termly" value={0} sx={{ py: 1.25 }} />
+            {isThirdTermSelected && <Tab label="Term Cummulative" value={1} sx={{ py: 1.25 }} />}
           </Tabs>
 
           {activeTab === 0 && showData && (sheet || loading) && (
@@ -1365,7 +1530,9 @@ const BroadsheetTab = () => {
                     : '—'
                 }
                 label="Pass Rate"
-                subtitle={stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'}
+                subtitle={
+                  stats.pass_mark ? `Students at/above ${stats.pass_mark}%` : 'Pass mark not set'
+                }
                 icon={IconAward}
                 colorIndex={3}
                 loading={loading}
@@ -1442,6 +1609,14 @@ const BroadsheetTab = () => {
               const checksTotal = workflow.checks_total ?? 0;
               const remarksDone = (checks.remarks_pending ?? 0) === 0;
               const positioningDone = (checks.positions_missing ?? 0) === 0;
+              // Missing scores deliberately do NOT block Approval — a class
+              // arm can be approved/published with only the subjects that
+              // have actually been scored so far; students/subjects still
+              // missing a score just show ungraded, same as how spaApprove()
+              // itself was already documented to work server-side. Remarks
+              // and positioning still gate, since those are prerequisites
+              // the approval step itself relies on having been generated.
+              const approvalBlockingTotal = (checks.remarks_pending ?? 0) + (checks.positions_missing ?? 0);
               const spaDone = sheet.result_publish?.spa_publish === 'yes';
               const hosDone = sheet.result_publish?.head_of_school_publish === 'yes';
 
@@ -1484,7 +1659,11 @@ const BroadsheetTab = () => {
                 };
               };
 
-              const stageStatusLabel = { done: 'Complete', active: 'In progress', locked: 'Locked' };
+              const stageStatusLabel = {
+                done: 'Complete',
+                active: 'In progress',
+                locked: 'Locked',
+              };
 
               const stages = [
                 {
@@ -1496,6 +1675,10 @@ const BroadsheetTab = () => {
                   action: 'Generate remarks',
                   onAction: () => setPublishConfirm({ open: true, action: 'remarks' }),
                   loading: generatingComments,
+                  // Unlike the other 3 stages, a class teacher may also run
+                  // this one — the backend scopes it to only fill their own
+                  // class_teachers_comment column when they're not SPA.
+                  allowClassTeacher: true,
                 },
                 {
                   step: 2,
@@ -1514,15 +1697,21 @@ const BroadsheetTab = () => {
                 {
                   step: 3,
                   status:
-                    !positioningDone || checksTotal > 0 ? 'locked' : spaDone ? 'done' : 'active',
+                    !positioningDone || approvalBlockingTotal > 0
+                      ? 'locked'
+                      : spaDone
+                        ? 'done'
+                        : 'active',
                   title: 'Approval',
                   subtitle: !positioningDone
                     ? 'Complete positioning first'
-                    : checksTotal > 0
+                    : approvalBlockingTotal > 0
                       ? 'Resolve all checks to enable'
                       : spaDone
                         ? 'Approved'
-                        : 'Ready for approval',
+                        : checks.missing_scores > 0
+                          ? `Ready for approval (${checks.missing_scores} missing score${checks.missing_scores === 1 ? '' : 's'})`
+                          : 'Ready for approval',
                   buttonIcon: IconLock,
                   action: 'Approve results',
                   onAction: () => setPublishConfirm({ open: true, action: 'spa' }),
@@ -1541,8 +1730,17 @@ const BroadsheetTab = () => {
                   action: 'Publish results',
                   onAction: () => setPublishConfirm({ open: true, action: 'hos' }),
                   loading: publishing === 'hos',
-                  secondaryAction: spaDone || hosDone ? 'Reverse publication' : null,
-                  onSecondaryAction: () => setPublishConfirm({ open: true, action: 'unpublish' }),
+                  // `unpublish` always resets BOTH the SPA approval and the
+                  // HOS publish flags together — but the label must match
+                  // what's actually true yet, or it reads as "revert a
+                  // publish" when nothing has been published at all.
+                  secondaryAction: hosDone
+                    ? 'Reverse Publication'
+                    : spaDone
+                      ? 'Reverse Approval'
+                      : null,
+                  onSecondaryAction: () =>
+                    setPublishConfirm({ open: true, action: hosDone ? 'unpublish' : 'unapprove' }),
                 },
               ];
 
@@ -1600,13 +1798,13 @@ const BroadsheetTab = () => {
                       const isLocked = stage.status === 'locked';
                       const isDone = stage.status === 'done';
                       const scheme = stageScheme(stage.status);
-                      // Generate Remarks (step 1) is SPA/super_admin-only — it
-                      // pulls both the class teacher's AND the SPA's comment
-                      // bank in one go, so a class teacher viewing the
-                      // broadsheet can watch progress but not trigger it.
-                      // Positioning (step 2) stays open to anyone who can view
-                      // the broadsheet, same as before.
-                      const canAct = can('result.admin.spa_approve_broadsheet') || stage.step === 2;
+                      // Every workflow action is SPA/super_admin-only,
+                      // EXCEPT Remarks — a class teacher with their own
+                      // comment bank access may also generate remarks (the
+                      // backend scopes what that actually fills in).
+                      const canAct =
+                        can('result.admin.spa_approve_broadsheet') ||
+                        (stage.allowClassTeacher && can('result.admin.manage_comment_bank'));
                       const ButtonIcon = stage.buttonIcon;
                       return (
                         <Box
@@ -1680,46 +1878,62 @@ const BroadsheetTab = () => {
                             </Typography>
 
                             <Box sx={{ mt: 'auto', pt: 0.5 }}>
-                              <Button
-                                fullWidth
-                                size="small"
-                                disabled={isLocked || stage.loading || !canAct}
-                                onClick={stage.onAction}
-                                startIcon={
-                                  stage.loading ? null : ButtonIcon ? <ButtonIcon size={15} /> : null
-                                }
-                                sx={{
-                                  textTransform: 'none',
-                                  fontWeight: 600,
-                                  borderRadius: '8px',
-                                  bgcolor: scheme.buttonBg,
-                                  color: scheme.buttonColor,
-                                  '&:hover': { bgcolor: scheme.buttonHoverBg },
-                                  '&.Mui-disabled': {
-                                    bgcolor: scheme.buttonBg,
-                                    color: scheme.buttonColor,
-                                    opacity: 0.85,
-                                  },
-                                }}
-                              >
-                                {stage.loading ? (
-                                  <CircularProgress size={14} color="inherit" />
-                                ) : (
-                                  stage.action
-                                )}
-                              </Button>
-                              {stage.secondaryAction && (
+                              {canAct ? (
                                 <Button
                                   fullWidth
                                   size="small"
-                                  variant="text"
-                                  color="warning"
-                                  disabled={
-                                    publishing === 'unpublish' ||
-                                    !can('result.admin.unpublish_broadsheet')
+                                  disabled={isLocked || stage.loading}
+                                  onClick={stage.onAction}
+                                  startIcon={
+                                    stage.loading ? null : ButtonIcon ? (
+                                      <ButtonIcon size={15} />
+                                    ) : null
                                   }
+                                  sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    borderRadius: '8px',
+                                    bgcolor: scheme.buttonBg,
+                                    color: scheme.buttonColor,
+                                    '&:hover': { bgcolor: scheme.buttonHoverBg },
+                                    '&.Mui-disabled': {
+                                      bgcolor: scheme.buttonBg,
+                                      color: scheme.buttonColor,
+                                      opacity: 0.85,
+                                    },
+                                  }}
+                                >
+                                  {stage.loading ? (
+                                    <CircularProgress size={14} color="inherit" />
+                                  ) : (
+                                    stage.action
+                                  )}
+                                </Button>
+                              ) : (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ fontStyle: 'italic', display: 'block', textAlign: 'center' }}
+                                >
+                                  Requires SPA / Head of School
+                                </Typography>
+                              )}
+                              {stage.secondaryAction && can('result.admin.unpublish_broadsheet') && (
+                                <Button
+                                  fullWidth
+                                  size="small"
+                                  variant="contained"
+                                  color="warning"
+                                  disabled={publishing === 'unpublish' || publishing === 'unapprove'}
                                   onClick={stage.onSecondaryAction}
-                                  sx={{ fontSize: '0.7rem', mt: 0.5, textTransform: 'none' }}
+                                  sx={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    mt: 0.5,
+                                    textTransform: 'none',
+                                    boxShadow: 'none',
+                                    '&:hover': { boxShadow: 'none' },
+                                  }}
                                 >
                                   {stage.secondaryAction}
                                 </Button>
@@ -1798,7 +2012,9 @@ const BroadsheetTab = () => {
                         pending | {checks.positions_missing} positions missing
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#92400E' }}>
-                        Please review and complete the highlighted items before approval.
+                        {approvalBlockingTotal > 0
+                          ? 'Please review and complete remarks/positioning before approval.'
+                          : 'Missing scores do not block approval — those subjects will just show as ungraded until scored.'}
                       </Typography>
                     </Alert>
                   )}
@@ -1806,22 +2022,22 @@ const BroadsheetTab = () => {
               );
             })()}
 
-          {showData && showPromotionButtons && (
+          {showData && showPromotionButtons && can('result.admin.spa_approve_broadsheet') && (
             <Box sx={{ mb: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
               <Button
                 variant="outlined"
                 color="primary"
                 size="small"
-                onClick={handleRecommendPromotions}
+                onClick={() => setPublishConfirm({ open: true, action: 'recommend_promotions' })}
                 disabled={loading}
               >
                 Recommend Promotion
               </Button>
               <Button
-                variant="outlined"
+                variant="contained"
                 color="secondary"
                 size="small"
-                onClick={handlePostRecommendations}
+                onClick={openPromoteDialog}
                 disabled={loading}
               >
                 Post Recommendation
@@ -1859,20 +2075,22 @@ const BroadsheetTab = () => {
                       ),
                     }}
                   />
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
-                    <InputLabel id="broadsheet-status-filter-label">Status</InputLabel>
-                    <Select
-                      labelId="broadsheet-status-filter-label"
-                      label="Status"
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                      <MenuItem value="">All students</MenuItem>
-                      <MenuItem value="incomplete">Missing scores</MenuItem>
-                      <MenuItem value="remarks_pending">Remarks pending</MenuItem>
-                      <MenuItem value="position_missing">Positions missing</MenuItem>
-                    </Select>
-                  </FormControl>
+                  {activeTab === 0 && (
+                    <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
+                      <InputLabel id="broadsheet-status-filter-label">Status</InputLabel>
+                      <Select
+                        labelId="broadsheet-status-filter-label"
+                        label="Status"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                      >
+                        <MenuItem value="">All students</MenuItem>
+                        <MenuItem value="incomplete">Missing scores</MenuItem>
+                        <MenuItem value="remarks_pending">Remarks pending</MenuItem>
+                        <MenuItem value="position_missing">Positions missing</MenuItem>
+                      </Select>
+                    </FormControl>
+                  )}
                   <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 170 } }}>
                     <InputLabel id="broadsheet-subject-filter-label">Subject</InputLabel>
                     <Select
@@ -2010,7 +2228,7 @@ const BroadsheetTab = () => {
                       {visibleSubjects.map((subj, subjIdx) => (
                         <TableCell
                           key={subj.subject_id}
-                          colSpan={4}
+                          colSpan={subjectColSpan}
                           align="center"
                           sx={{
                             bgcolor: subjectBandColor(subjIdx).dark,
@@ -2035,76 +2253,110 @@ const BroadsheetTab = () => {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      {visibleSubjects.map((subj, subjIdx) => (
-                        <Fragment key={`sub-${subj.subject_id}`}>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 40, sm: 48 },
-                              borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            CA ({caMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 40, sm: 48 },
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            EXAM ({examMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 44, sm: 56 },
-                              borderRight: `1px solid ${borderColor}`,
-                            }}
-                          >
-                            TOTAL ({totalMax})
-                          </TableCell>
-                          <TableCell
-                            align="center"
-                            sx={{
-                              fontWeight: 700,
-                              minWidth: { xs: 44, sm: 56 },
-                              borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                            }}
-                          >
-                            GRADE
-                          </TableCell>
-                        </Fragment>
-                      ))}
-                      {activeTab === 1 && (
-                        <>
-                          {['1ST TERM', '2ND TERM', '3RD TERM', 'CUM AVG'].map((label) => (
+                      {visibleSubjects.map((subj, subjIdx) =>
+                        activeTab === 0 ? (
+                          <Fragment key={`sub-${subj.subject_id}`}>
                             <TableCell
-                              key={label}
                               align="center"
                               sx={{
-                                bgcolor: '#ffcb15',
                                 fontWeight: 700,
-                                minWidth: { xs: 44, sm: 60 },
+                                minWidth: { xs: 40, sm: 48 },
+                                borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                borderRight: `1px solid ${borderColor}`,
                               }}
                             >
-                              <Typography
-                                variant="caption"
+                              CA ({caMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 40, sm: 48 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              EXAM ({examMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              TOTAL ({totalMax})
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                              }}
+                            >
+                              GRADE
+                            </TableCell>
+                          </Fragment>
+                        ) : (
+                          <Fragment key={`sub-${subj.subject_id}`}>
+                            {termOrdinalLabels.map((label, i) => (
+                              <TableCell
+                                key={label}
+                                align="center"
                                 sx={{
-                                  writingMode: 'vertical-rl',
-                                  transform: 'rotate(180deg)',
-                                  display: 'inline-block',
+                                  fontWeight: 700,
+                                  minWidth: { xs: 40, sm: 48 },
+                                  borderLeft:
+                                    i === 0
+                                      ? `2px solid ${subjectBandColor(subjIdx).dark}`
+                                      : undefined,
+                                  borderRight: `1px solid ${borderColor}`,
                                 }}
                               >
                                 {label}
-                              </Typography>
+                              </TableCell>
+                            ))}
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `1px solid ${borderColor}`,
+                              }}
+                            >
+                              CUM AVG
                             </TableCell>
-                          ))}
-                        </>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 700,
+                                minWidth: { xs: 44, sm: 56 },
+                                borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                              }}
+                            >
+                              GRADE
+                            </TableCell>
+                          </Fragment>
+                        ),
+                      )}
+                      {activeTab === 0 && (
+                        <TableCell
+                          align="center"
+                          sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 44, sm: 60 } }}
+                        >
+                          <Typography
+                            variant="caption"
+                            fontWeight={700}
+                            sx={{
+                              writingMode: 'vertical-rl',
+                              transform: 'rotate(180deg)',
+                              display: 'inline-block',
+                            }}
+                          >
+                            TOTAL SCORE
+                          </Typography>
+                        </TableCell>
                       )}
                       <TableCell
                         align="center"
@@ -2112,6 +2364,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2127,6 +2380,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2142,6 +2396,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2157,6 +2412,7 @@ const BroadsheetTab = () => {
                       >
                         <Typography
                           variant="caption"
+                          fontWeight={700}
                           sx={{
                             writingMode: 'vertical-rl',
                             transform: 'rotate(180deg)',
@@ -2219,51 +2475,70 @@ const BroadsheetTab = () => {
                           </TableCell>
                         </>
                       )}
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          CLASS TEACHER COMMENT
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 80, sm: 96 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          HEAD OF SCHOOL COMMENT
-                        </Typography>
-                      </TableCell>
-                      <TableCell
-                        align="center"
-                        sx={{ bgcolor: '#ffcb15', fontWeight: 700, minWidth: { xs: 96, sm: 100 } }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            writingMode: 'vertical-rl',
-                            transform: 'rotate(180deg)',
-                            display: 'inline-block',
-                          }}
-                        >
-                          ACTION
-                        </Typography>
-                      </TableCell>
+                      {activeTab === 0 && (
+                        <>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 80, sm: 96 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              CLASS TEACHER COMMENT
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 80, sm: 96 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              HEAD OF SCHOOL COMMENT
+                            </Typography>
+                          </TableCell>
+                          <TableCell
+                            align="center"
+                            sx={{
+                              bgcolor: '#ffcb15',
+                              fontWeight: 700,
+                              minWidth: { xs: 96, sm: 100 },
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              fontWeight={700}
+                              sx={{
+                                writingMode: 'vertical-rl',
+                                transform: 'rotate(180deg)',
+                                display: 'inline-block',
+                              }}
+                            >
+                              ACTION
+                            </Typography>
+                          </TableCell>
+                        </>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2402,31 +2677,79 @@ const BroadsheetTab = () => {
                               {visibleSubjects.map((subj, subjIdx) => {
                                 const result = resultMap[subj.subject_id];
                                 const gradeColors = getGradeColors(result?.grade);
+                                if (activeTab === 0) {
+                                  return (
+                                    <Fragment key={`sub-${subj.subject_id}`}>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.ca_total ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.exam_score ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          fontWeight: 700,
+                                          minWidth: { xs: 44, sm: 56 },
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(result?.overall_total ?? null)}
+                                      </TableCell>
+                                      <TableCell
+                                        align="center"
+                                        sx={{
+                                          bgcolor: result?.grade ? gradeColors.bg : undefined,
+                                          color: result?.grade ? gradeColors.color : undefined,
+                                          fontWeight: 700,
+                                          minWidth: { xs: 44, sm: 56 },
+                                          borderRight: `2px solid ${subjectBandColor(subjIdx).dark}`,
+                                        }}
+                                      >
+                                        {result?.grade ?? '-'}
+                                      </TableCell>
+                                    </Fragment>
+                                  );
+                                }
+
+                                const termTotals = result?.term_totals ?? [];
                                 return (
                                   <Fragment key={`sub-${subj.subject_id}`}>
-                                    <TableCell
-                                      align="center"
-                                      sx={{
-                                        bgcolor: subjectBandColor(subjIdx).bg,
-                                        fontWeight: 600,
-                                        minWidth: { xs: 40, sm: 48 },
-                                        borderLeft: `2px solid ${subjectBandColor(subjIdx).dark}`,
-                                        borderRight: `1px solid ${borderColor}`,
-                                      }}
-                                    >
-                                      {displayScore(result?.ca_total ?? null)}
-                                    </TableCell>
-                                    <TableCell
-                                      align="center"
-                                      sx={{
-                                        bgcolor: subjectBandColor(subjIdx).bg,
-                                        fontWeight: 600,
-                                        minWidth: { xs: 40, sm: 48 },
-                                        borderRight: `1px solid ${borderColor}`,
-                                      }}
-                                    >
-                                      {displayScore(result?.exam_score ?? null)}
-                                    </TableCell>
+                                    {termOrdinalLabels.map((label, i) => (
+                                      <TableCell
+                                        key={label}
+                                        align="center"
+                                        sx={{
+                                          bgcolor: subjectBandColor(subjIdx).bg,
+                                          fontWeight: 600,
+                                          minWidth: { xs: 40, sm: 48 },
+                                          borderLeft:
+                                            i === 0
+                                              ? `2px solid ${subjectBandColor(subjIdx).dark}`
+                                              : undefined,
+                                          borderRight: `1px solid ${borderColor}`,
+                                        }}
+                                      >
+                                        {displayScore(termTotals[i] ?? null)}
+                                      </TableCell>
+                                    ))}
                                     <TableCell
                                       align="center"
                                       sx={{
@@ -2435,7 +2758,7 @@ const BroadsheetTab = () => {
                                         borderRight: `1px solid ${borderColor}`,
                                       }}
                                     >
-                                      {displayScore(result?.overall_total ?? null)}
+                                      {displayScore(result?.cum_avg ?? null)}
                                     </TableCell>
                                     <TableCell
                                       align="center"
@@ -2452,55 +2775,23 @@ const BroadsheetTab = () => {
                                   </Fragment>
                                 );
                               })}
-                              {activeTab === 1 && (
-                                <>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.first_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.second_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.third_term_average ?? null)}
-                                  </TableCell>
-                                  <TableCell
-                                    align="center"
-                                    sx={{
-                                      bgcolor: '#ffcb15',
-                                      fontWeight: 600,
-                                      minWidth: { xs: 44, sm: 60 },
-                                    }}
-                                  >
-                                    {displayScore(row.all_term_average ?? null)}
-                                  </TableCell>
-                                </>
+                              {activeTab === 0 && (
+                                <TableCell
+                                  align="center"
+                                  sx={{
+                                    bgcolor: '#ffcb15',
+                                    fontWeight: 700,
+                                    minWidth: { xs: 44, sm: 60 },
+                                  }}
+                                >
+                                  {displayScore(row.total_score ?? null)}
+                                </TableCell>
                               )}
                               <TableCell
                                 align="center"
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 44, sm: 60 },
                                 }}
                               >
@@ -2512,27 +2803,37 @@ const BroadsheetTab = () => {
                                 align="center"
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 40, sm: 50 },
                                 }}
                               >
                                 {activeTab === 0
-                                  ? (row.position ?? '-')
+                                  ? // The PERSISTED position (written by Generate
+                                    // Positioning / SPA Approve) — not the live-
+                                    // ranked `row.position`, which would otherwise
+                                    // show a position before that stage has
+                                    // actually run, making the Positioning
+                                    // workflow stage look pointless.
+                                    (row.persisted_class_position ?? '-')
                                   : (row.all_term_overall_class_position ?? '-')}
                               </TableCell>
                               <TableCell
                                 align="center"
+                                onClick={(e) => openSubjectsPopover(e, row)}
                                 sx={{
                                   bgcolor: '#ffcb15',
-                                  fontWeight: 600,
+                                  fontWeight: 700,
                                   minWidth: { xs: 40, sm: 50 },
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  textDecorationStyle: 'dotted',
                                 }}
                               >
-                                {row.total_subjects ?? '-'}
+                                {row.registered_subjects ?? '-'}
                               </TableCell>
                               <TableCell
                                 align="center"
-                                sx={{ fontWeight: 600, minWidth: { xs: 40, sm: 50 } }}
+                                sx={{ fontWeight: 700, minWidth: { xs: 40, sm: 50 } }}
                               >
                                 {row.remark ??
                                   remarkFor(
@@ -2553,44 +2854,52 @@ const BroadsheetTab = () => {
                                     {row.promotion_recommendation || '-'}
                                   </TableCell>
                                   <TableCell align="center" sx={{ minWidth: { xs: 40, sm: 50 } }}>
-                                    <Tooltip title="Click to change recommendation">
-                                      <Box
-                                        component="span"
-                                        onClick={(e) =>
-                                          setRecMenu({
-                                            rowId: row.student_registration_id,
-                                            anchorEl: e.currentTarget,
-                                          })
-                                        }
-                                        sx={{ display: 'inline-flex', cursor: 'pointer' }}
-                                      >
-                                        {promotionIcon(row.promotion_recommendation)}
-                                      </Box>
-                                    </Tooltip>
-                                    <Menu
-                                      anchorEl={recMenu.anchorEl}
-                                      open={
-                                        Boolean(recMenu.anchorEl) &&
-                                        recMenu.rowId === row.student_registration_id
-                                      }
-                                      onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
-                                    >
-                                      {[
-                                        'promoted',
-                                        'promoted on trial',
-                                        'not promoted',
-                                        'advised to repeat',
-                                      ].map((opt) => (
-                                        <MenuItem
-                                          key={opt}
-                                          dense
-                                          selected={row.promotion_recommendation === opt}
-                                          onClick={() => handleSetRecommendation(row, opt)}
+                                    {isPromotionLocked(row.promotion_recommendation) ? (
+                                      <Tooltip title="Already decided — not editable">
+                                        <Box component="span" sx={{ display: 'inline-flex' }}>
+                                          {promotionIcon(row.promotion_recommendation)}
+                                        </Box>
+                                      </Tooltip>
+                                    ) : (
+                                      <>
+                                        <Tooltip title="Promote on trial or advise to repeat">
+                                          <Box
+                                            component="span"
+                                            onClick={(e) =>
+                                              setRecMenu({
+                                                rowId: row.student_registration_id,
+                                                anchorEl: e.currentTarget,
+                                              })
+                                            }
+                                            sx={{ display: 'inline-flex', cursor: 'pointer' }}
+                                          >
+                                            {promotionIcon(row.promotion_recommendation)}
+                                          </Box>
+                                        </Tooltip>
+                                        <Menu
+                                          anchorEl={recMenu.anchorEl}
+                                          open={
+                                            Boolean(recMenu.anchorEl) &&
+                                            recMenu.rowId === row.student_registration_id
+                                          }
+                                          onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
                                         >
-                                          {opt}
-                                        </MenuItem>
-                                      ))}
-                                    </Menu>
+                                          {[
+                                            { value: 'promoted on trial', label: 'Promote on Trial' },
+                                            { value: 'advised to repeat', label: 'Advise to Repeat' },
+                                          ].map((opt) => (
+                                            <MenuItem
+                                              key={opt.value}
+                                              dense
+                                              selected={row.promotion_recommendation === opt.value}
+                                              onClick={() => handleSetRecommendation(row, opt.value)}
+                                            >
+                                              {opt.label}
+                                            </MenuItem>
+                                          ))}
+                                        </Menu>
+                                      </>
+                                    )}
                                   </TableCell>
                                   <TableCell align="center" sx={{ minWidth: { xs: 72, sm: 80 } }}>
                                     {row.promotion_recommendation === 'promoted' ||
@@ -2620,76 +2929,88 @@ const BroadsheetTab = () => {
                                   </TableCell>
                                 </>
                               )}
-                              <CommentCell value={row.class_teachers_comment} />
-                              <CommentCell value={row.hos_comment} />
-                              <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
-                                <Tooltip
-                                  title={
-                                    hasNoResults
-                                      ? 'No scores uploaded for this student yet — upload scores before adding comments'
-                                      : 'Add or edit comments and scores'
-                                  }
-                                >
-                                  <span>
-                                    <Button
-                                      size="small"
-                                      variant="contained"
-                                      color="primary"
-                                      sx={{
-                                        fontSize: 12,
-                                        px: 1,
-                                        minWidth: 0,
-                                        textTransform: 'none',
-                                      }}
-                                      onClick={(e) => handleAddEditClick(e, row)}
-                                      disabled={hasNoResults}
-                                    >
-                                      Add/Edit
-                                    </Button>
-                                  </span>
-                                </Tooltip>
-                                <Menu
-                                  anchorEl={addEditMenu.anchorEl}
-                                  open={
-                                    Boolean(addEditMenu.anchorEl) &&
-                                    addEditMenu.rowId === row.student_registration_id
-                                  }
-                                  onClose={closeAddEditMenu}
-                                >
-                                  <MenuItem
-                                    dense
-                                    onClick={() => {
-                                      closeAddEditMenu();
-                                      handleOpenComment(row, 'teacher');
-                                    }}
-                                  >
-                                    <IconMessage size={16} style={{ marginRight: 8 }} /> Class
-                                    Teacher
-                                  </MenuItem>
-                                  <MenuItem
-                                    dense
-                                    onClick={() => {
-                                      closeAddEditMenu();
-                                      handleOpenComment(row, 'hos');
-                                    }}
-                                  >
-                                    <IconMessage size={16} style={{ marginRight: 8 }} /> HoS Comment
-                                  </MenuItem>
-                                  {activeTab === 0 &&
-                                    sheet?.result_publish?.head_of_school_publish !== 'yes' && (
-                                      <MenuItem
-                                        dense
-                                        onClick={() => {
-                                          closeAddEditMenu();
-                                          handleOpenEditScores(row);
-                                        }}
-                                      >
-                                        <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
-                                        Scores
-                                      </MenuItem>
+                              {activeTab === 0 && (
+                                <>
+                                  <CommentCell value={row.class_teachers_comment} />
+                                  <CommentCell value={row.hos_comment} />
+                                  <TableCell sx={{ minWidth: { xs: 96, sm: 100 } }}>
+                                    {can('result.admin.spa_approve_broadsheet') ? (
+                                      <>
+                                        <Tooltip
+                                          title={
+                                            hasNoResults
+                                              ? 'No scores uploaded for this student yet — upload scores before adding comments'
+                                              : 'Add or edit comments and scores'
+                                          }
+                                        >
+                                          <span>
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="primary"
+                                              sx={{
+                                                fontSize: 12,
+                                                px: 1,
+                                                minWidth: 0,
+                                                textTransform: 'none',
+                                              }}
+                                              onClick={(e) => handleAddEditClick(e, row)}
+                                              disabled={hasNoResults}
+                                            >
+                                              Add/Edit
+                                            </Button>
+                                          </span>
+                                        </Tooltip>
+                                        <Menu
+                                          anchorEl={addEditMenu.anchorEl}
+                                          open={
+                                            Boolean(addEditMenu.anchorEl) &&
+                                            addEditMenu.rowId === row.student_registration_id
+                                          }
+                                          onClose={closeAddEditMenu}
+                                        >
+                                          <MenuItem
+                                            dense
+                                            onClick={() => {
+                                              closeAddEditMenu();
+                                              handleOpenComment(row, 'teacher');
+                                            }}
+                                          >
+                                            <IconMessage size={16} style={{ marginRight: 8 }} />{' '}
+                                            Class Teacher
+                                          </MenuItem>
+                                          <MenuItem
+                                            dense
+                                            onClick={() => {
+                                              closeAddEditMenu();
+                                              handleOpenComment(row, 'hos');
+                                            }}
+                                          >
+                                            <IconMessage size={16} style={{ marginRight: 8 }} /> HoS
+                                            Comment
+                                          </MenuItem>
+                                          {(sheet?.result_publish?.head_of_school_publish !==
+                                            'yes' ||
+                                            can('result.admin.spa_approve_broadsheet')) && (
+                                            <MenuItem
+                                              dense
+                                              onClick={() => {
+                                                closeAddEditMenu();
+                                                handleOpenEditScores(row);
+                                              }}
+                                            >
+                                              <IconEdit size={16} style={{ marginRight: 8 }} /> Edit
+                                              Scores
+                                            </MenuItem>
+                                          )}
+                                        </Menu>
+                                      </>
+                                    ) : (
+                                      '-'
                                     )}
-                                </Menu>
-                              </TableCell>
+                                  </TableCell>
+                                </>
+                              )}
                             </TableRow>
                           );
                         })
@@ -2735,6 +3056,85 @@ const BroadsheetTab = () => {
         </Box>
       </Card>
 
+      {/* ── Registered subjects popover (click NO. SUBJ) ───────── */}
+      <Popover
+        open={Boolean(subjectsPopover.anchorEl)}
+        anchorEl={subjectsPopover.anchorEl}
+        onClose={closeSubjectsPopover}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Box sx={{ p: 1.5, minWidth: 260, maxWidth: 320 }}>
+          <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
+            {subjectsPopover.row
+              ? `${subjectsPopover.row.user?.lname ?? ''} ${subjectsPopover.row.user?.fname ?? ''}`.trim()
+              : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            Registered for {subjectsPopover.row?.registered_subjects ?? 0} subject(s)
+          </Typography>
+          <Stack spacing={0.4} divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
+            {(subjectsPopover.row?.results ?? [])
+              .filter((r) => r.course_registration_id)
+              .map((r) => {
+                const isConfirming = confirmRemoveSubjectId === r.subject_id;
+                const isRemoving = removingSubjectId === r.subject_id;
+                return (
+                  <Box
+                    key={r.subject_id}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.4, gap: 1 }}
+                  >
+                    <Typography variant="body2" sx={{ flex: 1 }}>
+                      &bull; {r.subject_name}
+                    </Typography>
+                    {can('manage.class_manager.subject_registrar.manage') &&
+                      (isConfirming ? (
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <Button
+                            size="small"
+                            color="error"
+                            disabled={isRemoving}
+                            onClick={() => handleRemoveRegisteredSubject(r.subject_id)}
+                            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem' }}
+                          >
+                            {isRemoving ? <CircularProgress size={12} color="inherit" /> : 'Remove'}
+                          </Button>
+                          <Button
+                            size="small"
+                            disabled={isRemoving}
+                            onClick={() => setConfirmRemoveSubjectId(null)}
+                            sx={{ minWidth: 0, px: 1, fontSize: '0.7rem' }}
+                          >
+                            Cancel
+                          </Button>
+                        </Stack>
+                      ) : r.has_result ? (
+                        <Tooltip title="Already has scores recorded — cannot be removed">
+                          <span>
+                            <IconButton size="small" disabled>
+                              <IconLock size={14} />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Remove this subject">
+                          <IconButton size="small" onClick={() => setConfirmRemoveSubjectId(r.subject_id)}>
+                            <IconX size={14} />
+                          </IconButton>
+                        </Tooltip>
+                      ))}
+                  </Box>
+                );
+              })}
+            {(subjectsPopover.row?.registered_subjects ?? 0) === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No subjects registered.
+              </Typography>
+            )}
+          </Stack>
+        </Box>
+      </Popover>
+
       {/* ── Review checks ───────────────────────────────────── */}
       <Dialog
         open={checksModalOpen}
@@ -2746,10 +3146,18 @@ const BroadsheetTab = () => {
         <DialogContent dividers>
           {(() => {
             const students = sheet?.students || [];
-            const missingScores = students.filter((s) => s.subjects_scored < s.total_subjects);
+            const missingScores = students.filter((s) => s.subjects_scored < s.registered_subjects);
             const remarksPending = students.filter((s) => !s.class_teachers_comment);
             const positionsMissing = students.filter((s) => s.persisted_class_position === null);
-            const Section = ({ title, list, hint }) => (
+            // Registered-but-unscored subject names for a student — reads
+            // course_registration_id (only set for subjects this student is
+            // actually registered for, see KI-037) so an elective the
+            // student never picked never shows up here as "missing".
+            const missingSubjectNames = (s) =>
+              (s.results || [])
+                .filter((r) => r.course_registration_id && r.overall_total === null)
+                .map((r) => r.subject_name);
+            const Section = ({ title, list, hint, subtitleFor }) => (
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>
                   {title} ({list.length})
@@ -2767,16 +3175,33 @@ const BroadsheetTab = () => {
                     >
                       {hint}
                     </Typography>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                      {list.map((s) => (
-                        <Chip
-                          key={s.id}
-                          size="small"
-                          label={`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
-                          variant="outlined"
-                        />
-                      ))}
-                    </Stack>
+                    {subtitleFor ? (
+                      <Stack spacing={0.75}>
+                        {list.map((s) => (
+                          <Box key={s.id}>
+                            <Typography variant="body2" fontWeight={600}>
+                              {`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
+                            </Typography>
+                            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.25 }}>
+                              {subtitleFor(s).map((name) => (
+                                <Chip key={name} size="small" label={name} variant="outlined" color="warning" />
+                              ))}
+                            </Stack>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                        {list.map((s) => (
+                          <Chip
+                            key={s.id}
+                            size="small"
+                            label={`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
+                            variant="outlined"
+                          />
+                        ))}
+                      </Stack>
+                    )}
                   </>
                 )}
               </Box>
@@ -2786,7 +3211,8 @@ const BroadsheetTab = () => {
                 <Section
                   title="Missing scores"
                   list={missingScores}
-                  hint="Hasn't been scored in every subject yet."
+                  hint="Hasn't been scored in every subject yet — subjects shown below."
+                  subtitleFor={missingSubjectNames}
                 />
                 <Section
                   title="Remarks pending"
@@ -2832,6 +3258,64 @@ const BroadsheetTab = () => {
               <CircularProgress size={16} color="inherit" />
             ) : (
               PUBLISH_CONFIRM[publishConfirm.action]?.confirm
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Post Recommendation ──────────────────────────────── */}
+      <Dialog
+        open={promoteDialog.open}
+        onClose={() =>
+          setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })
+        }
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Post recommendations into the new session?</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Creates each student&apos;s registration in the destination session&apos;s first term,
+            using the next class arm Recommend Promotion already assigned (promoted students move up
+            a class, keeping the same arm letter; retained students repeat). Also rolls the
+            school&apos;s subscription forward into that term if nothing covers it yet. Run
+            Recommend Promotion first if you haven&apos;t already.
+          </Typography>
+
+          {promoteDialog.loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+              <CircularProgress size={22} />
+            </Box>
+          ) : promoteDialog.exists ? (
+            <Alert severity="info">
+              Promoting into <strong>{promoteDialog.sessionName}</strong>.
+            </Alert>
+          ) : (
+            <Alert severity="warning">
+              The next session (<strong>{promoteDialog.sessionName}</strong>) hasn&apos;t been
+              created yet. Create it first (Session Management) before posting recommendations.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() =>
+              setPromoteDialog({ open: false, loading: false, exists: false, sessionName: '' })
+            }
+            disabled={postingRecommendations}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={handlePostRecommendations}
+            disabled={postingRecommendations || promoteDialog.loading || !promoteDialog.exists}
+          >
+            {postingRecommendations ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              'Post Recommendation'
             )}
           </Button>
         </DialogActions>

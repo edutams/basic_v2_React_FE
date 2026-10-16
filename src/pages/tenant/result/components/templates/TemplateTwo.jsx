@@ -57,13 +57,17 @@ const AccordionSection = ({ title, children }) => (
 
 const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) => {
   const hosSignature = report?.signatures?.head_of_school;
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
   const affectiveAvg = Object.values(report.affective).length
     ? Math.round(Object.values(report.affective).reduce((a, b) => a + b, 0) / Object.values(report.affective).length)
     : 0;
   const psychomotorAvg = Object.values(report.psychomotor).length
     ? Math.round(Object.values(report.psychomotor).reduce((a, b) => a + b, 0) / Object.values(report.psychomotor).length)
     : 0;
+  const gradeAvg = Math.round(avg / 20);
+  // Composite of the other three ratings — distinct from BEHAVIOUR
+  // PERFORMANCE below, which used to duplicate this exact affective value.
+  const generalAvg = Math.round((affectiveAvg + gradeAvg + psychomotorAvg) / 3);
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -212,11 +216,11 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="PERFORMANCES">
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GENERAL PERFORMANCE</Typography>
-              <StarRating value={affectiveAvg} />
+              <StarRating value={generalAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GRADE PERFORMANCE</Typography>
-              <StarRating value={Math.round(avg / 20)} />
+              <StarRating value={gradeAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>SKILL PERFORMANCE</Typography>
@@ -231,7 +235,7 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="SCORE">
             <Table size="small">
               <TableBody>
-                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</TableCell></TableRow>
+                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Class Position</strong><br />{report.position}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center' }}><strong>Percentage</strong><br />{avg}%</TableCell></TableRow>
               </TableBody>

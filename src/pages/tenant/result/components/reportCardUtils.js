@@ -7,6 +7,14 @@ export const displayScore = (value) => {
   return value;
 };
 
+// A physical-development field (beginning/end weight or height), formatted
+// with its unit — '-' until a staff member has actually entered a value for
+// this student/term via the Physical Development tab.
+export const physicalValue = (report, field, unit) => {
+  const value = report.physical_record?.[field];
+  return value !== null && value !== undefined && value !== '' ? `${value} ${unit}` : '-';
+};
+
 // Stored `ca` JSON may be an array (manual entry) or a keyed object
 // (combined Excel upload) — normalise both to an entity array per CA type.
 export const normalizeCa = (ca) => {
@@ -154,9 +162,13 @@ export const buildReportProp = (report) => {
     subject.exam = s.exam_score;
     subject.exam_max = Number(report.mark_config?.exam_max_score || 100);
     subject.total = s.overall_total;
-    subject.highest = s.highest;
-    subject.lowest = s.lowest;
-    subject.class_average = s.class_average;
+    // Class-wide context, shown only once this student actually has a score
+    // for the subject — otherwise a blank row (no CA/exam/total/grade) would
+    // still show a real-looking class high/low/average, which reads as if
+    // the system computed something for a student it didn't.
+    subject.highest = s.overall_total !== null ? s.highest : null;
+    subject.lowest = s.overall_total !== null ? s.lowest : null;
+    subject.class_average = s.overall_total !== null ? s.class_average : null;
     subject.position = s.position ? `${s.position}${ordinalSuffix(s.position)}` : '-';
     subject.grade = s.grade || '-';
     subject.remark = s.remark || '-';
@@ -174,6 +186,12 @@ export const buildReportProp = (report) => {
     exam_max: Number(report.mark_config?.exam_max_score || 0),
     no_of_ca: report.mark_config?.no_of_ca ?? caColumns.length,
     class_population: report.summary?.class_population ?? 0,
+    // How many subjects actually HAVE a score — not subjects.length (every
+    // registered subject, scored or not). Templates must use this (times
+    // ca_max + exam_max) for "Total Score X/Y", not a hardcoded per-subject
+    // max times the full subject count, which only matches by coincidence
+    // when every subject happens to be scored.
+    subjects_scored: report.summary?.subjects_scored ?? 0,
     position: report.summary?.overall_position || '-',
     total_score: report.summary?.total_score ?? 0,
     average_score: report.summary?.average_score ?? 0,
@@ -182,6 +200,7 @@ export const buildReportProp = (report) => {
     failed_count: report.summary?.failed_count ?? 0,
     affective: report.affective || {},
     psychomotor: report.psychomotor || {},
+    physical_record: report.physical_record || null,
     // Saved on the registration by the broadsheet
     // (student_registrations.class_teachers_comment / hos_comment).
     teacherComment: report.class_teachers_comment || report.teacher_comment || '',

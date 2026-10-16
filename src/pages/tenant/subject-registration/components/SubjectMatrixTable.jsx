@@ -12,6 +12,8 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Chip,
+  Checkbox,
   useTheme,
   useMediaQuery,
   alpha,
@@ -28,6 +30,18 @@ const isMaleGender = (gender) => String(gender || '').toLowerCase() === 'male';
 const SubjectMatrixTable = ({
   subjects,
   learners,
+  // Per-subject registered-learner counts, keyed by subject id. Passed down
+  // from the parent tab and computed over the FULL roster — `learners` here
+  // is whatever the search/status filter narrowed down to for the visible
+  // rows, so computing counts from it would make each subject's "N
+  // learner(s)" caption silently shrink while a filter is active instead of
+  // always showing the real total.
+  registeredCount,
+  // Which subject ids count toward a learner's "Complete"/"Incomplete"
+  // Status — the required set (compulsory subjects for the merged Core tab,
+  // every listed subject for the Trade tab, since there's no optional
+  // concept there).
+  requiredSubjectIds = [],
   onToggle,
   onRegisterAll,
   onUnregisterAll,
@@ -36,14 +50,6 @@ const SubjectMatrixTable = ({
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const registeredCount = React.useMemo(() => {
-    const counts = {};
-    subjects.forEach((subj) => {
-      counts[subj.id] = learners.filter((l) => l.registered[subj.id]).length;
-    });
-    return counts;
-  }, [subjects, learners]);
 
   return (
     <TableContainer
@@ -102,7 +108,22 @@ const SubjectMatrixTable = ({
                   theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
               }}
             >
-              Registered
+              Subjects Registered
+            </TableCell>
+            <TableCell
+              align="center"
+              sx={{
+                minWidth: 110,
+                fontWeight: 700,
+                py: 0.5,
+                bgcolor: isDark ? '#1e293b' : '#f8fafc',
+                borderBottom: '2px solid',
+                borderRight: '2px solid',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
+              }}
+            >
+              Status
             </TableCell>
             {subjects.map((subj) => (
               <TableCell
@@ -134,7 +155,7 @@ const SubjectMatrixTable = ({
                   color="text.secondary"
                   sx={{ display: 'block', mb: 0.5 }}
                 >
-                  {registeredCount[subj.id]} learner{registeredCount[subj.id] !== 1 ? 's' : ''}
+                  {registeredCount?.[subj.id] ?? 0} learner{(registeredCount?.[subj.id] ?? 0) !== 1 ? 's' : ''}
                 </Typography>
                 <Stack direction="row" spacing={1} justifyContent="center">
                   <Tooltip title={`Register all learners for ${subj.subject_name}`}>
@@ -282,7 +303,8 @@ const SubjectMatrixTable = ({
                 }}
               >
                 <Typography variant="body2" fontWeight={600}>
-                  {Object.keys(learner.registered).filter((k) => learner.registered[k]).length}
+                  {Object.keys(learner.registered).filter((k) => learner.registered[k]).length}/
+                  {subjects.length}
                 </Typography>
                 <Tooltip title={`Register ${learner.name} for every eligible subject`}>
                   <IconButton
@@ -294,15 +316,38 @@ const SubjectMatrixTable = ({
                   </IconButton>
                 </Tooltip>
               </TableCell>
+              <TableCell
+                align="center"
+                sx={{
+                  py: 0.5,
+                  borderRight: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '2px solid rgba(255, 255, 255, 0.2)'
+                      : '2px solid #e2e8f0',
+                }}
+              >
+                {(() => {
+                  const isComplete =
+                    requiredSubjectIds.length > 0 &&
+                    requiredSubjectIds.every((id) => learner.registered[id]);
+                  return (
+                    <Chip
+                      label={isComplete ? 'Complete' : 'Incomplete'}
+                      size="small"
+                      color={isComplete ? 'success' : 'warning'}
+                      sx={{ height: 20, fontSize: 10, fontWeight: 700 }}
+                    />
+                  );
+                })()}
+              </TableCell>
               {subjects.map((subj) => (
                 <TableCell key={subj.id} align="center" sx={{ py: 0.25 }}>
-                  <IconButton size="small" onClick={() => onToggle(learner.id, subj.id)}>
-                    {learner.registered[subj.id] ? (
-                      <CheckCircleIcon color="success" fontSize="medium" />
-                    ) : (
-                      <CancelOutlinedIcon color="error" fontSize="medium" />
-                    )}
-                  </IconButton>
+                  <Checkbox
+                    size="small"
+                    checked={!!learner.registered[subj.id]}
+                    onChange={() => onToggle(learner.id, subj.id)}
+                    color="success"
+                  />
                 </TableCell>
               ))}
             </TableRow>

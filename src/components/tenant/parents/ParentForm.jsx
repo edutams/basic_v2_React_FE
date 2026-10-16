@@ -11,7 +11,7 @@ import {
   Typography,
   Divider,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Chip,
   IconButton,
@@ -509,7 +509,7 @@ const ParentForm = ({
                 disabled={wardSearching}
                 sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
               >
-                {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+                {wardSearching ? <Skeleton width={40} height={20} animation="wave" sx={{ bgcolor: 'rgba(255,255,255,0.4)' }} /> : 'Search'}
               </Button>
             </Box>
           </Box>

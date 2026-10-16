@@ -19,6 +19,8 @@ const guardianApi = {
     formData.append('file', file);
     return tenantApi.post('/guardians/upload-guardian-template', formData);
   },
+  sendMessage: (id, data) => tenantApi.post(`/guardians/${id}/send-message`, data),
+  getCommunicationLog: (id) => tenantApi.get(`/guardians/${id}/communication`),
 };
 
 export default guardianApi;

@@ -4,6 +4,7 @@ import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import { getSubjectColor } from '@/utils/subjectColor';
+import { StatCardShell, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
 import {
   Box,
   Stack,
@@ -22,7 +23,6 @@ import {
   Skeleton,
   Alert,
   Button,
-  LinearProgress,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -35,6 +35,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CancelIcon from '@mui/icons-material/Cancel';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 
@@ -132,7 +133,7 @@ const TeacherTimetableView = () => {
       setOptionsLoading(true);
       try {
         const res = await staffApi.getAll({ search: debouncedSearch, staff_type: 'teaching', per_page: 20 });
-        setOptions(res.data?.data || []);
+        setOptions(res.data || []);
       } catch {
         notify.error('Failed to search teachers');
       } finally {
@@ -169,21 +170,20 @@ const TeacherTimetableView = () => {
   const schedule = overview.schedule || {};
   const stats = overview.stats || emptyStats;
 
+  // Every day carries the same full period list (periods + breaks), so
+  // the first day with any loaded rows gives the whole set.
   const allPeriods = useMemo(() => {
-    const map = new Map();
-    Object.values(schedule).forEach((rows) => {
-      (rows || []).forEach((row) => {
-        if (row.period && !map.has(row.period.id)) map.set(row.period.id, row.period);
-      });
-    });
-    return Array.from(map.values()).sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+    const dayWithRows = WEEKDAYS.map((d) => schedule[d.key]).find((rows) => rows?.length);
+    return (dayWithRows || []).map((row) => row.period);
   }, [schedule]);
 
-  const cellFor = (dayKey, periodId) => (schedule[dayKey] || []).find((r) => r.period.id === periodId) || null;
+  const cellFor = (dayKey, periodId) => {
+    const row = (schedule[dayKey] || []).find((r) => r.period.id === periodId);
+    return row ? row.slot : null;
+  };
 
   const teacherName = selectedTeacher?.user ? `${selectedTeacher.user.fname || ''} ${selectedTeacher.user.lname || ''}`.trim() : '';
   const sparkline = stats.attendance_rate.sparkline?.length ? stats.attendance_rate.sparkline : [0, 0, 0, 0, 0];
-  const maxSparkline = Math.max(...sparkline, 1);
 
   return (
     <PageContainer title="Teacher Timetable View" description="View any subject teacher's full weekly teaching schedule.">
@@ -260,118 +260,78 @@ const TeacherTimetableView = () => {
             </Typography>
           </Stack>
 
-          <Stack direction="row" spacing={1.25} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
-            <Paper elevation={0} sx={{ flex: '1 1 160px', bgcolor: '#DCFCE7', borderRadius: 2, p: 1.25 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <TodayIcon sx={{ color: '#166534', fontSize: 22 }} />
-                {loading ? (
-                  <Skeleton variant="text" width={30} height={30} />
-                ) : (
-                  <Typography variant="h5" fontWeight={900} color="#166534" lineHeight={1}>
-                    {stats.today.total}
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" fontWeight={700} color="#14532D" sx={{ display: 'block', mt: 0.5 }}>
-                Today&apos;s Classes
-              </Typography>
-              {!loading && (
-                <Typography variant="caption" color="#166534" sx={{ display: 'block' }}>
-                  {stats.today.completed} completed · {stats.today.upcoming} upcoming
-                </Typography>
-              )}
-            </Paper>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.25, mb: 2 }}>
+            <StatCardShell icon={TodayIcon} iconColor="#16A34A" title="Today's Classes" loading={loading}>
+              <BarWithPct
+                value={stats.today.total ? Math.round((stats.today.completed / stats.today.total) * 100) : 0}
+                mainLabel={stats.today.total}
+                subLabel={`${stats.today.completed} completed · ${stats.today.upcoming} upcoming`}
+                barColor="#16A34A"
+              />
+            </StatCardShell>
 
-            <Paper elevation={0} sx={{ flex: '1 1 180px', bgcolor: '#EFF6FF', borderRadius: 2, p: 1.25 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <FactCheckIcon sx={{ color: '#1D4ED8', fontSize: 22 }} />
-                {loading ? (
-                  <Skeleton variant="text" width={40} height={30} />
-                ) : (
-                  <Typography variant="h5" fontWeight={900} color="#1D4ED8" lineHeight={1}>
-                    {stats.attendance_rate.percent}%
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" fontWeight={700} color="#1E3A8A" sx={{ display: 'block', mt: 0.5 }}>
-                Attendance Rate
-              </Typography>
-              {!loading && (
-                <>
-                  <Typography variant="caption" color="#1D4ED8" sx={{ display: 'block', mb: 0.5 }}>
-                    {stats.attendance_rate.attended} of {stats.attendance_rate.total} classes attended
-                  </Typography>
-                  <Stack direction="row" spacing={0.5} alignItems="flex-end" sx={{ height: 18 }}>
+            <StatCardShell icon={FactCheckIcon} iconColor="#2563EB" title="Attendance Rate" loading={loading}>
+              <BarWithPct
+                value={stats.attendance_rate.percent}
+                mainLabel={`${stats.attendance_rate.percent}%`}
+                subLabel={`${stats.attendance_rate.attended} of ${stats.attendance_rate.total} classes attended`}
+                barColor="#2563EB"
+                legend={
+                  <Stack direction="row" spacing={0.5} alignItems="flex-end" sx={{ height: 16 }}>
                     {sparkline.map((v, i) => (
-                      <Box
-                        key={i}
-                        sx={{
-                          width: 6,
-                          height: `${Math.max((v / maxSparkline) * 100, 8)}%`,
-                          bgcolor: v >= 70 ? '#16A34A' : v > 0 ? '#DC2626' : '#E5E7EB',
-                          borderRadius: 0.5,
-                        }}
-                      />
+                      <Box key={i} sx={{ width: 6, height: `${Math.max(v, 8)}%`, bgcolor: v >= 70 ? '#16A34A' : v > 0 ? '#DC2626' : '#E5E7EB', borderRadius: 0.5 }} />
                     ))}
                   </Stack>
-                </>
-              )}
-            </Paper>
+                }
+              />
+            </StatCardShell>
 
-            <Paper elevation={0} sx={{ flex: '1 1 180px', bgcolor: '#F3E8FF', borderRadius: 2, p: 1.25 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <EventRepeatIcon sx={{ color: '#7E22CE', fontSize: 22 }} />
-                {loading ? (
-                  <Skeleton variant="text" width={30} height={30} />
-                ) : (
-                  <Typography variant="h5" fontWeight={900} color="#7E22CE" lineHeight={1}>
-                    {stats.this_week.total}
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" fontWeight={700} color="#6B21A8" sx={{ display: 'block', mt: 0.5 }}>
-                Classes This Week
-              </Typography>
-              {!loading && (
+            <StatCardShell icon={EventRepeatIcon} iconColor="#7E22CE" title="Classes This Week" loading={loading}>
+              <BarWithPct
+                value={stats.this_week.percent}
+                mainLabel={stats.this_week.total}
+                subLabel="Total classes this week"
+                barColor="#7E22CE"
+                legend={
+                  <>
+                    <LegendDot color="#16A34A" label={`Attended ${stats.this_week.attended}`} />
+                    <LegendDot color="#DC2626" label={`Cancelled ${stats.this_week.cancelled}`} />
+                  </>
+                }
+              />
+            </StatCardShell>
+
+            <StatCardShell icon={ScheduleIcon} iconColor="#DC2626" title="Upcoming Next" loading={loading}>
+              {stats.upcoming_next ? (
                 <>
-                  <LinearProgress
-                    variant="determinate"
-                    value={stats.this_week.percent}
-                    sx={{ height: 6, borderRadius: 3, my: 0.5, bgcolor: '#E9D5FF', '& .MuiLinearProgress-bar': { bgcolor: '#7E22CE' } }}
-                  />
-                  <Typography variant="caption" color="#6B21A8">
-                    {stats.this_week.attended} attended · {stats.this_week.cancelled} cancelled · {stats.this_week.percent}%
+                  <Typography variant="body2" fontWeight={800}>
+                    {stats.upcoming_next.subject_name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {stats.upcoming_next.class_name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {new Date(stats.upcoming_next.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} ·{' '}
+                    {stats.upcoming_next.period.start_time?.slice(0, 5)}-{stats.upcoming_next.period.end_time?.slice(0, 5)}
                   </Typography>
                 </>
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  Nothing scheduled in the next 2 weeks.
+                </Typography>
               )}
-            </Paper>
+            </StatCardShell>
 
-            <Paper elevation={0} sx={{ flex: '1 1 160px', bgcolor: '#FFFBEB', borderRadius: 2, p: 1.25 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <EventBusyIcon sx={{ color: '#D97706', fontSize: 22 }} />
-                {loading ? (
-                  <Skeleton variant="text" width={30} height={30} />
-                ) : (
-                  <Typography variant="h5" fontWeight={900} color="#B45309" lineHeight={1}>
-                    {stats.cancelled_this_week}
-                  </Typography>
-                )}
-              </Stack>
-              <Typography variant="caption" fontWeight={700} color="#92400E" sx={{ display: 'block', mt: 0.5 }}>
-                Cancelled Classes
+            <StatCardShell icon={EventBusyIcon} iconColor="#D97706" title="Cancelled Classes" loading={loading}>
+              <Typography variant="h5" fontWeight={900} lineHeight={1}>
+                {stats.cancelled_this_week}
               </Typography>
-              <Typography variant="caption" color="#B45309">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                 This week
               </Typography>
-            </Paper>
+            </StatCardShell>
 
-            <Paper elevation={0} sx={{ flex: '1 1 220px', bgcolor: '#F0FDFA', borderRadius: 2, p: 1.25 }}>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                <MenuBookIcon sx={{ color: '#0F766E', fontSize: 20 }} />
-                <Typography variant="subtitle2" fontWeight={800} color="#115E59">
-                  Subjects Taught ({stats.subjects.length})
-                </Typography>
-              </Stack>
+            <StatCardShell icon={MenuBookIcon} iconColor="#0F766E" title={`Subjects Taught (${stats.subjects.length})`} loading={loading}>
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                 {stats.subjects.map((s) => (
                   <Stack key={s.id} direction="row" spacing={0.5} alignItems="center">
@@ -382,8 +342,8 @@ const TeacherTimetableView = () => {
                   </Stack>
                 ))}
               </Stack>
-            </Paper>
-          </Stack>
+            </StatCardShell>
+          </Box>
 
           <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>

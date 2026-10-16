@@ -4,6 +4,7 @@ import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { getSubjectColor } from '@/utils/subjectColor';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
+import { StatCardShell, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
@@ -29,7 +30,6 @@ import {
   DialogActions,
   TextField,
   Tooltip,
-  LinearProgress,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import TodayIcon from '@mui/icons-material/Today';
@@ -45,6 +45,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
+import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
 
 const WEEKDAYS = [
   { key: 'monday', label: 'Monday', jsDay: 1 },
@@ -95,6 +96,32 @@ const StatusIcon = ({ status, fontSize = 'small' }) => {
   if (!meta) return null;
   const Icon = meta.icon;
   return <Icon fontSize={fontSize} sx={{ color: meta.color }} />;
+};
+
+const StatusBadge = ({ status }) => {
+  const meta = STATUS_META[status];
+  if (!meta) return null;
+  const Icon = meta.icon;
+  return (
+    <Stack
+      direction="row"
+      spacing={0.5}
+      alignItems="center"
+      sx={{
+        bgcolor: `${meta.color}1A`,
+        color: meta.color,
+        px: 1,
+        py: 0.4,
+        borderRadius: 999,
+        flexShrink: 0,
+      }}
+    >
+      <Icon sx={{ fontSize: 14 }} />
+      <Typography variant="caption" fontWeight={800}>
+        {meta.label}
+      </Typography>
+    </Stack>
+  );
 };
 
 const isActionable = (status) => status === 'upcoming' || status === 'not_scheduled';
@@ -160,31 +187,26 @@ const MyTimetable = () => {
   const schedule = overview.schedule || {};
   const stats = overview.stats || emptyStats;
 
+  // Every day carries the same full period list (periods + breaks), so
+  // the first day with any loaded rows gives the whole set.
   const allPeriods = useMemo(() => {
-    const map = new Map();
-    Object.values(schedule).forEach((rows) => {
-      (rows || []).forEach((row) => {
-        if (row.period && !map.has(row.period.id)) map.set(row.period.id, row.period);
-      });
-    });
-    return Array.from(map.values()).sort((a, b) =>
-      (a.start_time || '').localeCompare(b.start_time || ''),
-    );
+    const dayWithRows = WEEKDAYS.map((d) => schedule[d.key]).find((rows) => rows?.length);
+    return (dayWithRows || []).map((row) => row.period);
   }, [schedule]);
 
-  const cellFor = (dayKey, periodId) =>
-    (schedule[dayKey] || []).find((r) => r.period.id === periodId) || null;
+  const cellFor = (dayKey, periodId) => {
+    const row = (schedule[dayKey] || []).find((r) => r.period.id === periodId);
+    return row ? row.slot : null;
+  };
 
   const selectedDayKey = dayKeyOf(selectedDate);
-  const selectedDayRows = useMemo(
-    () =>
-      selectedDayKey
-        ? (schedule[selectedDayKey] || [])
-            .slice()
-            .sort((a, b) => (a.period.start_time || '').localeCompare(b.period.start_time || ''))
-        : [],
-    [schedule, selectedDayKey],
-  );
+  const selectedDayRows = useMemo(() => {
+    if (!selectedDayKey) return [];
+    return (schedule[selectedDayKey] || [])
+      .filter((row) => !row.period.is_break && row.slot)
+      .map((row) => ({ ...row.slot, period: row.period }))
+      .sort((a, b) => (a.period.start_time || '').localeCompare(b.period.start_time || ''));
+  }, [schedule, selectedDayKey]);
 
   // ── Mark Attendance / Cancel Class ──────────────────────────────────
   const [actionTarget, setActionTarget] = useState(null); // { slot_id, date, subject_name, class_name, period, status }
@@ -240,10 +262,22 @@ const MyTimetable = () => {
     }
   };
 
+  const openUpcomingNextAction = (cancel) => {
+    if (!stats.upcoming_next) return;
+    openAction({
+      slot_id: stats.upcoming_next.slot_id,
+      date: stats.upcoming_next.date,
+      subject_name: stats.upcoming_next.subject_name,
+      class_name: stats.upcoming_next.class_name,
+      period: stats.upcoming_next.period,
+      status: 'upcoming',
+    });
+    if (cancel) setActionMode('cancel');
+  };
+
   const sparkline = stats.attendance_rate.sparkline?.length
     ? stats.attendance_rate.sparkline
     : [0, 0, 0, 0, 0];
-  const maxSparkline = Math.max(...sparkline, 1);
 
   return (
     <PageContainer
@@ -284,150 +318,98 @@ const MyTimetable = () => {
         </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={1.25} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 160px', bgcolor: '#DCFCE7', borderRadius: 2, p: 1.25 }}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+          gap: 1.25,
+          mb: 2,
+        }}
+      >
+        <StatCardShell
+          icon={TodayIcon}
+          iconColor="#16A34A"
+          title="Today's Classes"
+          loading={loading}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TodayIcon sx={{ color: '#166534', fontSize: 22 }} />
-            {loading ? (
-              <Skeleton variant="text" width={30} height={30} />
-            ) : (
-              <Typography variant="h5" fontWeight={900} color="#166534" lineHeight={1}>
-                {stats.today.total}
-              </Typography>
-            )}
-          </Stack>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color="#14532D"
-            sx={{ display: 'block', mt: 0.5 }}
-          >
-            Today&apos;s Classes
-          </Typography>
-          {!loading && (
-            <Typography variant="caption" color="#166534" sx={{ display: 'block' }}>
-              {stats.today.completed} completed · {stats.today.upcoming} upcoming
-            </Typography>
-          )}
-        </Paper>
+          <BarWithPct
+            value={
+              stats.today.total ? Math.round((stats.today.completed / stats.today.total) * 100) : 0
+            }
+            mainLabel={stats.today.total}
+            subLabel={`${stats.today.completed} completed · ${stats.today.upcoming} upcoming`}
+            barColor="#16A34A"
+          />
+        </StatCardShell>
 
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 180px', bgcolor: '#EFF6FF', borderRadius: 2, p: 1.25 }}
+        <StatCardShell
+          icon={FactCheckIcon}
+          iconColor="#2563EB"
+          title="Attendance Rate"
+          loading={loading}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <FactCheckIcon sx={{ color: '#1D4ED8', fontSize: 22 }} />
-            {loading ? (
-              <Skeleton variant="text" width={40} height={30} />
-            ) : (
-              <Typography variant="h5" fontWeight={900} color="#1D4ED8" lineHeight={1}>
-                {stats.attendance_rate.percent}%
-              </Typography>
-            )}
-          </Stack>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color="#1E3A8A"
-            sx={{ display: 'block', mt: 0.5 }}
-          >
-            Attendance Rate
-          </Typography>
-          {!loading && (
-            <>
-              <Typography variant="caption" color="#1D4ED8" sx={{ display: 'block', mb: 0.5 }}>
-                {stats.attendance_rate.attended} of {stats.attendance_rate.total} classes attended
-              </Typography>
-              <Stack direction="row" spacing={0.5} alignItems="flex-end" sx={{ height: 18 }}>
+          <BarWithPct
+            value={stats.attendance_rate.percent}
+            mainLabel={`${stats.attendance_rate.percent}%`}
+            subLabel={`${stats.attendance_rate.attended} of ${stats.attendance_rate.total} classes attended`}
+            barColor="#2563EB"
+            legend={
+              <Stack direction="row" spacing={0.5} alignItems="flex-end" sx={{ height: 16 }}>
                 {sparkline.map((v, i) => (
                   <Box
                     key={i}
                     sx={{
                       width: 6,
-                      height: `${Math.max((v / maxSparkline) * 100, 8)}%`,
+                      height: `${Math.max(v, 8)}%`,
                       bgcolor: v >= 70 ? '#16A34A' : v > 0 ? '#DC2626' : '#E5E7EB',
                       borderRadius: 0.5,
                     }}
                   />
                 ))}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ ml: 0.5, whiteSpace: 'nowrap' }}
+                >
+                  5wk trend
+                </Typography>
               </Stack>
-              <Typography variant="caption" color="text.secondary">
-                Last 5 school weeks
-              </Typography>
-            </>
-          )}
-        </Paper>
+            }
+          />
+        </StatCardShell>
 
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 180px', bgcolor: '#F3E8FF', borderRadius: 2, p: 1.25 }}
+        <StatCardShell
+          icon={EventRepeatIcon}
+          iconColor="#7E22CE"
+          title="Classes This Week"
+          loading={loading}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <EventRepeatIcon sx={{ color: '#7E22CE', fontSize: 22 }} />
-            {loading ? (
-              <Skeleton variant="text" width={30} height={30} />
-            ) : (
-              <Typography variant="h5" fontWeight={900} color="#7E22CE" lineHeight={1}>
-                {stats.this_week.total}
-              </Typography>
-            )}
-          </Stack>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color="#6B21A8"
-            sx={{ display: 'block', mt: 0.5 }}
-          >
-            Classes This Week
-          </Typography>
-          {!loading && (
-            <>
-              <LinearProgress
-                variant="determinate"
-                value={stats.this_week.percent}
-                sx={{
-                  height: 6,
-                  borderRadius: 3,
-                  my: 0.5,
-                  bgcolor: '#E9D5FF',
-                  '& .MuiLinearProgress-bar': { bgcolor: '#7E22CE' },
-                }}
-              />
-              <Typography variant="caption" color="#6B21A8">
-                {stats.this_week.attended} attended · {stats.this_week.cancelled} cancelled ·{' '}
-                {stats.this_week.percent}%
-              </Typography>
-            </>
-          )}
-        </Paper>
+          <BarWithPct
+            value={stats.this_week.percent}
+            mainLabel={stats.this_week.total}
+            subLabel="Total classes this week"
+            barColor="#7E22CE"
+            legend={
+              <>
+                <LegendDot color="#16A34A" label={`Attended ${stats.this_week.attended}`} />
+                <LegendDot color="#DC2626" label={`Cancelled ${stats.this_week.cancelled}`} />
+              </>
+            }
+          />
+        </StatCardShell>
 
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 220px', bgcolor: '#FEF2F2', borderRadius: 2, p: 1.25 }}
+        <StatCardShell
+          icon={ScheduleIcon}
+          iconColor="#DC2626"
+          title="Upcoming Next"
+          loading={loading}
         >
-          <Typography
-            variant="caption"
-            fontWeight={800}
-            color="#B91C1C"
-            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-          >
-            <ScheduleIcon fontSize="small" /> Upcoming Next
-          </Typography>
-          {loading ? (
-            <Skeleton variant="text" height={30} />
-          ) : stats.upcoming_next ? (
+          {stats.upcoming_next ? (
             <>
-              <Typography variant="body2" fontWeight={800} sx={{ mt: 0.5 }}>
+              <Typography variant="body2" fontWeight={800}>
                 {stats.upcoming_next.subject_name}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mb: 0.5 }}
-              >
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                 {stats.upcoming_next.class_name}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
@@ -444,65 +426,43 @@ const MyTimetable = () => {
                 fullWidth
                 variant="contained"
                 disabled={!stats.upcoming_next.actionable}
-                onClick={() =>
-                  openAction({
-                    slot_id: stats.upcoming_next.slot_id,
-                    date: stats.upcoming_next.date,
-                    subject_name: stats.upcoming_next.subject_name,
-                    class_name: stats.upcoming_next.class_name,
-                    period: stats.upcoming_next.period,
-                    status: 'upcoming',
-                  })
-                }
+                onClick={() => openUpcomingNextAction(false)}
                 sx={{ bgcolor: '#2563EB', '&:hover': { bgcolor: '#1D4ED8' } }}
               >
                 Confirm Attendance
               </Button>
             </>
           ) : (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            <Typography variant="caption" color="text.secondary">
               Nothing scheduled in the next 2 weeks.
             </Typography>
           )}
-        </Paper>
+        </StatCardShell>
 
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 160px', bgcolor: '#FFFBEB', borderRadius: 2, p: 1.25 }}
+        <StatCardShell
+          icon={EventBusyIcon}
+          iconColor="#D97706"
+          title="Cancelled Classes"
+          loading={loading}
+          linkText="View Details"
+          onLinkClick={() =>
+            document.getElementById('my-timetable-grid')?.scrollIntoView({ behavior: 'smooth' })
+          }
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <EventBusyIcon sx={{ color: '#D97706', fontSize: 22 }} />
-            {loading ? (
-              <Skeleton variant="text" width={30} height={30} />
-            ) : (
-              <Typography variant="h5" fontWeight={900} color="#B45309" lineHeight={1}>
-                {stats.cancelled_this_week}
-              </Typography>
-            )}
-          </Stack>
-          <Typography
-            variant="caption"
-            fontWeight={700}
-            color="#92400E"
-            sx={{ display: 'block', mt: 0.5 }}
-          >
-            Cancelled Classes
+          <Typography variant="h5" fontWeight={900} lineHeight={1}>
+            {stats.cancelled_this_week}
           </Typography>
-          <Typography variant="caption" color="#B45309">
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
             This week
           </Typography>
-        </Paper>
+        </StatCardShell>
 
-        <Paper
-          elevation={0}
-          sx={{ flex: '1 1 220px', bgcolor: '#F0FDFA', borderRadius: 2, p: 1.25 }}
+        <StatCardShell
+          icon={MenuBookIcon}
+          iconColor="#0F766E"
+          title={`My Subjects (${stats.subjects.length})`}
+          loading={loading}
         >
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-            <MenuBookIcon sx={{ color: '#0F766E', fontSize: 20 }} />
-            <Typography variant="subtitle2" fontWeight={800} color="#115E59">
-              My Subjects ({stats.subjects.length})
-            </Typography>
-          </Stack>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             {stats.subjects.map((s) => (
               <Stack key={s.id} direction="row" spacing={0.5} alignItems="center">
@@ -515,11 +475,12 @@ const MyTimetable = () => {
               </Stack>
             ))}
           </Stack>
-        </Paper>
-      </Stack>
+        </StatCardShell>
+      </Box>
 
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
         <Paper
+          id="my-timetable-grid"
           elevation={0}
           sx={{
             flex: 1,
@@ -720,90 +681,134 @@ const MyTimetable = () => {
           </Stack>
         </Paper>
 
-        <Stack spacing={2} sx={{ width: { xs: '100%', lg: 300 }, flexShrink: 0 }}>
+        <Stack
+          spacing={2}
+          sx={{
+            width: { xs: '100%', lg: 300 },
+            flexShrink: 0,
+            height: '100%',
+            minHeight: 0,
+          }}
+        >
           <Paper
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              p: 1.5,
+              pb: 1,
+              flexShrink: 0,
+            }}
           >
-            <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
-              Select Date
-            </Typography>
+            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.5 }}>
+              <CalendarViewMonthIcon fontSize="small" sx={{ color: '#2563EB' }} />
+              <Typography variant="subtitle2" fontWeight={800}>
+                Select Date
+              </Typography>
+            </Stack>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DateCalendar
                 value={dayjs(selectedDate)}
                 onChange={(value) => value && setSelectedDate(value.toDate())}
-                sx={{ width: '100%', '& .MuiPickersCalendarHeader-root': { pl: 0.5, pr: 0.5 } }}
+                sx={{
+                  width: '100%',
+                  height: 'auto',
+                  '& .MuiPickersCalendarHeader-root': { pl: 0.5, pr: 0.5 },
+                  '& .MuiDayCalendar-slideTransition': { minHeight: 190 },
+                }}
               />
             </LocalizationProvider>
           </Paper>
 
           <Paper
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              p: 1.5,
+              flex: 1,
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
           >
-            <Typography variant="subtitle2" fontWeight={800}>
+            <Typography variant="subtitle2" fontWeight={800} sx={{ flexShrink: 0 }}>
               {isSameDay(selectedDate, today) ? "Today's Schedule" : 'Schedule'}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mb: 1, flexShrink: 0 }}
+            >
               {formatLongDate(selectedDate)}
             </Typography>
-            <Stack spacing={1}>
-              {!selectedDayKey ? (
-                <Alert severity="info" sx={{ py: 0.25 }}>
-                  No school day selected.
-                </Alert>
-              ) : loading ? (
-                <Skeleton variant="rounded" height={60} />
-              ) : selectedDayRows.length === 0 ? (
-                <Alert severity="info" sx={{ py: 0.25 }}>
-                  No classes scheduled.
-                </Alert>
-              ) : (
-                selectedDayRows.map((row) => (
-                  <Stack
-                    key={row.slot_id}
-                    direction="row"
-                    alignItems="center"
-                    justifyContent="space-between"
-                    spacing={1}
-                    sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
-                  >
-                    <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="caption" fontWeight={700} color="text.secondary">
-                        {row.period.start_time?.slice(0, 5)}-{row.period.end_time?.slice(0, 5)}
-                      </Typography>
-                      <Typography variant="body2" fontWeight={700} noWrap>
-                        {row.subject_name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        {row.class_name}
-                      </Typography>
-                    </Box>
-                    {isActionable(row.status) ? (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => openAction(row)}
-                        sx={{
-                          bgcolor: '#2563EB',
-                          '&:hover': { bgcolor: '#1D4ED8' },
-                          flexShrink: 0,
-                        }}
-                      >
-                        Confirm
-                      </Button>
-                    ) : (
-                      <StatusIcon status={row.status} />
-                    )}
-                  </Stack>
-                ))
-              )}
-            </Stack>
+            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+              <Stack spacing={1}>
+                {!selectedDayKey ? (
+                  <Alert severity="info" sx={{ py: 0.25 }}>
+                    No school day selected.
+                  </Alert>
+                ) : loading ? (
+                  <Skeleton variant="rounded" height={60} />
+                ) : selectedDayRows.length === 0 ? (
+                  <Alert severity="info" sx={{ py: 0.25 }}>
+                    No classes scheduled.
+                  </Alert>
+                ) : (
+                  selectedDayRows.map((row) => (
+                    <Stack
+                      key={row.slot_id}
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      spacing={1}
+                      sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                    >
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary">
+                          {row.period.start_time?.slice(0, 5)}-{row.period.end_time?.slice(0, 5)}
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700} noWrap>
+                          {row.subject_name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {row.class_name}
+                        </Typography>
+                      </Box>
+                      {isActionable(row.status) ? (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => openAction(row)}
+                          sx={{
+                            bgcolor: '#2563EB',
+                            '&:hover': { bgcolor: '#1D4ED8' },
+                            flexShrink: 0,
+                          }}
+                        >
+                          Confirm
+                        </Button>
+                      ) : (
+                        <StatusBadge status={row.status} />
+                      )}
+                    </Stack>
+                  ))
+                )}
+              </Stack>
+            </Box>
           </Paper>
 
           <Paper
             elevation={0}
-            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 2,
+              p: 1.5,
+              flexShrink: 0,
+            }}
           >
             <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
               Quick Actions
@@ -824,16 +829,7 @@ const MyTimetable = () => {
                     variant="outlined"
                     startIcon={<CheckCircleIcon fontSize="small" />}
                     disabled={!stats.upcoming_next || !stats.upcoming_next.actionable}
-                    onClick={() =>
-                      openAction({
-                        slot_id: stats.upcoming_next.slot_id,
-                        date: stats.upcoming_next.date,
-                        subject_name: stats.upcoming_next.subject_name,
-                        class_name: stats.upcoming_next.class_name,
-                        period: stats.upcoming_next.period,
-                        status: 'upcoming',
-                      })
-                    }
+                    onClick={() => openUpcomingNextAction(false)}
                   >
                     Mark Attendance
                   </Button>
@@ -846,17 +842,7 @@ const MyTimetable = () => {
                 variant="outlined"
                 startIcon={<CancelIcon fontSize="small" />}
                 disabled={!stats.upcoming_next}
-                onClick={() => {
-                  openAction({
-                    slot_id: stats.upcoming_next.slot_id,
-                    date: stats.upcoming_next.date,
-                    subject_name: stats.upcoming_next.subject_name,
-                    class_name: stats.upcoming_next.class_name,
-                    period: stats.upcoming_next.period,
-                    status: 'upcoming',
-                  });
-                  setActionMode('cancel');
-                }}
+                onClick={() => openUpcomingNextAction(true)}
               >
                 Cancel Class
               </Button>

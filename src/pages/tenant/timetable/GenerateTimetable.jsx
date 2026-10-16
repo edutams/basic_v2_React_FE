@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import ParentCard from '@/components/shared/ParentCard';
-import StatCard from 'src/components/shared/StatCard';
 import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
+import tenantApi from '@/api/tenant/tenant_api';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Stack,
   Typography,
+  Paper,
   FormControl,
   InputLabel,
   Select,
@@ -33,15 +33,24 @@ import {
   DialogActions,
   Popover,
   Tooltip,
-  Divider,
   Alert,
+  CircularProgress,
+  LinearProgress,
+  Divider,
+  Tabs,
+  Tab,
+  Menu,
+  Avatar,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import DomainIcon from '@mui/icons-material/Domain';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import PersonIcon from '@mui/icons-material/Person';
+import GroupsIcon from '@mui/icons-material/Groups';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import SettingsIcon from '@mui/icons-material/Settings';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -49,11 +58,45 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
-
-const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Generate Timetable' }];
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CalculateIcon from '@mui/icons-material/Calculate';
+import ScienceIcon from '@mui/icons-material/Science';
+import PublicIcon from '@mui/icons-material/Public';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import TranslateIcon from '@mui/icons-material/Translate';
+import ComputerIcon from '@mui/icons-material/Computer';
+import PaletteIcon from '@mui/icons-material/Palette';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
+import GrassIcon from '@mui/icons-material/Grass';
+import LocalCafeIcon from '@mui/icons-material/LocalCafe';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 
 const SUBJECT_FALLBACK_COLOR = '#64748B';
 const ARM_DOT_COLORS = ['#2563EB', '#16A34A', '#9333EA', '#D97706', '#DC2626', '#0891B2'];
+
+const SUBJECT_ICON_RULES = [
+  [/math/i, CalculateIcon],
+  [/english|literature/i, MenuBookIcon],
+  [/science|biology|chemistry|physics/i, ScienceIcon],
+  [/geography/i, PublicIcon],
+  [/government|civic/i, AccountBalanceIcon],
+  [/physical|health|sport/i, FitnessCenterIcon],
+  [/french|yoruba|igbo|hausa|language/i, TranslateIcon],
+  [/computer|ict/i, ComputerIcon],
+  [/creative|art|music/i, PaletteIcon],
+  [/religio|bible|quran|islamic|christian/i, AutoStoriesIcon],
+  [/business|commerce|account/i, BusinessCenterIcon],
+  [/history/i, HistoryEduIcon],
+  [/agric/i, GrassIcon],
+];
+
+const getSubjectIcon = (name = '') => (SUBJECT_ICON_RULES.find(([re]) => re.test(name)) || [])[1] || MenuBookIcon;
+const getBreakIcon = (label = '') => (/lunch/i.test(label) ? RestaurantIcon : LocalCafeIcon);
 
 const armLabel = (arm) => {
   const names = arm?.class_arm_names;
@@ -62,28 +105,151 @@ const armLabel = (arm) => {
 
 const pct = (num, den) => (den ? Math.round((num / den) * 100) : 0);
 
+const LegendDot = ({ color, label }) => (
+  <Stack direction="row" spacing={0.5} alignItems="center">
+    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+  </Stack>
+);
+
+const DividedStat = ({ value1, label1, color1, value2, label2, color2 }) => (
+  <Stack direction="row" alignItems="center" spacing={1.5} divider={<Divider orientation="vertical" flexItem />}>
+    <Box>
+      <Typography variant="h6" fontWeight={800} lineHeight={1.2} color={color1}>
+        {value1}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {label1}
+      </Typography>
+    </Box>
+    <Box>
+      <Typography variant="h6" fontWeight={800} lineHeight={1.2} color={color2}>
+        {value2}
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        {label2}
+      </Typography>
+    </Box>
+  </Stack>
+);
+
+const BarWithPct = ({ value, mainLabel, subLabel, barColor, legend }) => (
+  <>
+    <Typography variant="h6" fontWeight={800} lineHeight={1.2}>
+      {mainLabel}
+    </Typography>
+    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+      {subLabel}
+    </Typography>
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+      <LinearProgress
+        variant="determinate"
+        value={value}
+        sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: 'grey.200', '& .MuiLinearProgress-bar': { bgcolor: barColor, borderRadius: 3 } }}
+      />
+      <Typography variant="caption" fontWeight={800} sx={{ flexShrink: 0 }}>
+        {value}%
+      </Typography>
+    </Stack>
+    <Stack direction="row" spacing={1.5}>{legend}</Stack>
+  </>
+);
+
+const StatCardShell = ({ icon: Icon, iconColor, title, tooltip, loading, children, linkText, linkIcon: LinkIcon, onLinkClick, accent }) => (
+  <Paper
+    elevation={0}
+    sx={{
+      borderRadius: 2,
+      p: 1.25,
+      border: '1px solid',
+      borderColor: accent ? `${accent}40` : 'divider',
+      bgcolor: accent ? `${accent}0D` : 'background.paper',
+      minWidth: 0,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }}
+  >
+    <Stack direction="row" alignItems="flex-start" spacing={1} sx={{ mb: 0.75, flexShrink: 0 }}>
+      <Box
+        sx={{
+          width: 30,
+          height: 30,
+          borderRadius: 1.25,
+          bgcolor: `${iconColor}1A`,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {loading ? <Skeleton variant="circular" width={16} height={16} /> : <Icon sx={{ fontSize: 17 }} />}
+      </Box>
+      <Typography variant="body2" fontWeight={700} sx={{ flex: 1, fontSize: '0.8rem', lineHeight: 1.25 }}>
+        {title}
+      </Typography>
+      {tooltip && (
+        <Tooltip title={tooltip}>
+          <InfoOutlinedIcon sx={{ fontSize: 14, color: 'text.disabled', flexShrink: 0, mt: 0.25 }} />
+        </Tooltip>
+      )}
+    </Stack>
+    {loading ? (
+      <Skeleton variant="text" width="70%" height={30} />
+    ) : (
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>{children}</Box>
+    )}
+    {linkText && (
+      <Button
+        size="small"
+        onClick={onLinkClick}
+        startIcon={LinkIcon ? <LinkIcon sx={{ fontSize: 13 }} /> : null}
+        endIcon={<ChevronRightIcon sx={{ fontSize: 13 }} />}
+        sx={{ mt: 0.75, fontSize: '0.68rem', p: 0, minWidth: 0, color: accent || 'primary.main', justifyContent: 'flex-start', flexShrink: 0 }}
+      >
+        {linkText}
+      </Button>
+    )}
+  </Paper>
+);
+
 const GenerateTimetable = () => {
   const notify = useNotification();
+  const navigate = useNavigate();
+  const gridRef = useRef(null);
 
   const [stats, setStats] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const [classes, setClasses] = useState([]);
+  const [academicInfo, setAcademicInfo] = useState({ academic_session: '', academic_term: '' });
+
+  const [divisionsData, setDivisionsData] = useState([]);
+  const [programmeId, setProgrammeId] = useState('');
   const [programmeClassId, setProgrammeClassId] = useState('');
 
   const [arms, setArms] = useState([]);
   const [visibleArmIds, setVisibleArmIds] = useState(new Set());
   const [armsLoading, setArmsLoading] = useState(false);
+  const [armMenuAnchor, setArmMenuAnchor] = useState(null);
 
   const [subjects, setSubjects] = useState([]);
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [showAllSubjects, setShowAllSubjects] = useState(false);
+  const [quickPickSubjectId, setQuickPickSubjectId] = useState('');
   const [rooms, setRooms] = useState([]);
+
+  const [teachers, setTeachers] = useState([]);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [rightTab, setRightTab] = useState(0);
 
   const [periods, setPeriods] = useState([]);
   const [gridByArm, setGridByArm] = useState({});
   const [gridLoading, setGridLoading] = useState(false);
 
-  const [assignTarget, setAssignTarget] = useState(null); // {anchorEl, armId, periodId}
+  const [assignTarget, setAssignTarget] = useState(null);
   const [assignSubjectId, setAssignSubjectId] = useState('');
   const [assignRoomId, setAssignRoomId] = useState('');
   const [assignSaving, setAssignSaving] = useState(false);
@@ -91,6 +257,7 @@ const GenerateTimetable = () => {
 
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [clearArmTarget, setClearArmTarget] = useState(null);
 
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
@@ -104,40 +271,84 @@ const GenerateTimetable = () => {
     }
   }, [notify]);
 
+  const fetchAcademicInfo = useCallback(async () => {
+    try {
+      const res = await tenantApi.get('/school_setup/get_academic_info');
+      setAcademicInfo(res.data || {});
+    } catch {
+      // Non-critical — the filter chips just stay blank.
+    }
+  }, []);
+
   const fetchClasses = useCallback(async () => {
     try {
       const data = await getClassesWithDivisions();
-      const flat = [];
-      (data || []).forEach((division) => {
-        (division.programmes || []).forEach((programme) => {
-          (programme.classes || []).forEach((cls) => {
-            flat.push({ id: cls.pivot?.id, label: `${programme.programme_code} - ${cls.class_code}` });
-          });
-        });
-      });
-      setClasses(flat);
-      setProgrammeClassId((prev) => prev || flat[0]?.id || '');
+      setDivisionsData(data || []);
     } catch {
       notify.error('Failed to load classes');
     }
   }, [notify]);
 
-  const fetchSubjectsAndRooms = useCallback(async () => {
+  const fetchSubjectsRoomsTeachers = useCallback(async () => {
     try {
-      const [subRes, roomRes] = await Promise.all([timetableApi.getSubjects(), timetableApi.getRooms()]);
+      const [subRes, roomRes, teacherRes] = await Promise.all([
+        timetableApi.getSubjects(),
+        timetableApi.getRooms(),
+        tenantApi.get('/school_setup/staff/all', { params: { staff_type: 'teaching', per_page: 50 } }),
+      ]);
       setSubjects(subRes.data.data || []);
       setRooms(roomRes.data.data || []);
+      setTeachers(teacherRes.data?.data || []);
     } catch {
-      notify.error('Failed to load subjects/rooms');
+      notify.error('Failed to load subjects/rooms/teachers');
     }
   }, [notify]);
 
   useEffect(() => {
     fetchStats();
+    fetchAcademicInfo();
     fetchClasses();
-    fetchSubjectsAndRooms();
-  }, [fetchStats, fetchClasses, fetchSubjectsAndRooms]);
+    fetchSubjectsRoomsTeachers();
+  }, [fetchStats, fetchAcademicInfo, fetchClasses, fetchSubjectsRoomsTeachers]);
 
+  // ── Programme → Class cascade ───────────────────────────────────────
+  const programmes = useMemo(() => {
+    const map = new Map();
+    divisionsData.forEach((division) =>
+      (division.programmes || []).forEach((p) => {
+        if (!map.has(p.id)) map.set(p.id, { id: p.id, label: p.programme_name || p.programme_code });
+      }),
+    );
+    return Array.from(map.values());
+  }, [divisionsData]);
+
+  const classesForProgramme = useMemo(() => {
+    if (!programmeId) return [];
+    const list = [];
+    divisionsData.forEach((division) =>
+      (division.programmes || []).forEach((p) => {
+        if (p.id !== programmeId) return;
+        (p.classes || []).forEach((cls) => {
+          list.push({ id: cls.pivot?.id, label: cls.class_name || cls.class_code });
+        });
+      }),
+    );
+    return list;
+  }, [divisionsData, programmeId]);
+
+  useEffect(() => {
+    if (!programmeId && programmes.length) setProgrammeId(programmes[0].id);
+  }, [programmes, programmeId]);
+
+  useEffect(() => {
+    if (classesForProgramme.length) {
+      setProgrammeClassId((prev) => (classesForProgramme.some((c) => c.id === prev) ? prev : classesForProgramme[0].id));
+    } else {
+      setProgrammeClassId('');
+    }
+  }, [classesForProgramme]);
+
+  // ── Class arms + grid ────────────────────────────────────────────────
   const fetchArms = useCallback(async () => {
     if (!programmeClassId) {
       setArms([]);
@@ -210,14 +421,43 @@ const GenerateTimetable = () => {
 
   const visibleArms = useMemo(() => arms.filter((a) => visibleArmIds.has(a.id)), [arms, visibleArmIds]);
   const nonBreakPeriods = useMemo(() => periods.filter((p) => !p.is_break), [periods]);
+  // Sequential teaching-period numbers (1, 2, 3...) skipping breaks entirely,
+  // matching the mockup's Period column rather than the raw, break-inclusive
+  // `order` field.
+  const periodNumbers = useMemo(() => {
+    const map = {};
+    nonBreakPeriods.forEach((p, idx) => {
+      map[p.id] = idx + 1;
+    });
+    return map;
+  }, [nonBreakPeriods]);
 
   const armCompletion = (armId) => {
     const assigned = nonBreakPeriods.filter((p) => gridByArm[armId]?.[p.id]).length;
     return { assigned, total: nonBreakPeriods.length, percent: pct(assigned, nonBreakPeriods.length) };
   };
 
+  const classAssignedTotal = useMemo(
+    () => visibleArms.reduce((sum, arm) => sum + armCompletion(arm.id).assigned, 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [visibleArms, gridByArm, nonBreakPeriods],
+  );
+  const classTargetTotal = visibleArms.length * nonBreakPeriods.length;
+  const classUnassignedTotal = Math.max(classTargetTotal - classAssignedTotal, 0);
+
+  const usedSubjectIds = useMemo(() => {
+    const ids = new Set();
+    Object.values(gridByArm).forEach((periodMap) => Object.values(periodMap).forEach((slot) => slot && ids.add(slot.subject_id)));
+    return ids;
+  }, [gridByArm]);
+
+  // ── Assign / clear a cell ───────────────────────────────────────────
   const openAssign = (e, armId, periodId) => {
     const slot = gridByArm[armId]?.[periodId];
+    if (!slot && quickPickSubjectId) {
+      quickAssign(armId, periodId, quickPickSubjectId);
+      return;
+    }
     setAssignTarget({ anchorEl: e.currentTarget, armId, periodId });
     setAssignSubjectId(slot?.subject_id || '');
     setAssignRoomId(slot?.room_id || '');
@@ -226,18 +466,23 @@ const GenerateTimetable = () => {
 
   const closeAssign = () => setAssignTarget(null);
 
+  const quickAssign = async (armId, periodId, subjectId) => {
+    try {
+      await timetableApi.assignSlot({ class_arm_id: armId, period_id: periodId, subject_id: subjectId });
+      notify.success('Period assigned successfully');
+      refreshAll();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to assign period');
+    }
+  };
+
   const handleSaveAssign = async () => {
     if (!assignSubjectId || !assignTarget) return;
     setAssignSaving(true);
     setAssignError('');
     const slot = gridByArm[assignTarget.armId]?.[assignTarget.periodId];
     try {
-      const payload = {
-        class_arm_id: assignTarget.armId,
-        period_id: assignTarget.periodId,
-        subject_id: assignSubjectId,
-        room_id: assignRoomId || null,
-      };
+      const payload = { class_arm_id: assignTarget.armId, period_id: assignTarget.periodId, subject_id: assignSubjectId, room_id: assignRoomId || null };
       if (slot?.id) {
         await timetableApi.updateSlot(slot.id, payload);
       } else {
@@ -272,117 +517,243 @@ const GenerateTimetable = () => {
   const handleClearClass = async () => {
     setClearing(true);
     try {
-      await Promise.all(Array.from(visibleArmIds).map((armId) => timetableApi.clearClassArm(armId)));
-      notify.success('Class timetable cleared');
+      const targetArmIds = clearArmTarget ? [clearArmTarget] : Array.from(visibleArmIds);
+      await Promise.all(targetArmIds.map((armId) => timetableApi.clearClassArm(armId)));
+      notify.success(clearArmTarget ? 'Class arm timetable cleared' : 'Class timetable cleared');
       setClearConfirmOpen(false);
+      setClearArmTarget(null);
       refreshAll();
     } catch {
-      notify.error('Failed to clear class timetable');
+      notify.error('Failed to clear timetable');
     } finally {
       setClearing(false);
     }
   };
 
+  const handleSaveTimetable = () => {
+    notify.success('Timetable saved — every change here is already saved as you make it.');
+  };
+
+  const scrollToGrid = () => gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   const filteredSubjects = subjects.filter((s) => (s.subject_name || '').toLowerCase().includes(subjectSearch.toLowerCase()));
-  const selectedClassLabel = classes.find((c) => c.id === programmeClassId)?.label;
+  const visibleSubjectList = showAllSubjects ? filteredSubjects : filteredSubjects.slice(0, 8);
+  const filteredTeachers = teachers.filter((t) => `${t.user?.fname || ''} ${t.user?.lname || ''}`.toLowerCase().includes(teacherSearch.toLowerCase()));
+
+  const selectedClassLabel = classesForProgramme.find((c) => c.id === programmeClassId)?.label;
 
   return (
     <PageContainer title="Generate Timetable" description="Assign subjects to each period and class arm. The system validates and helps build a conflict-free timetable.">
-      <Breadcrumb title="Generate Timetable" items={BCrumb} />
-
-      <Box sx={{ mb: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} useFlexGap flexWrap="wrap">
-          <StatCard
-            count={`${stats.periods_assigned ?? 0} / ${stats.periods_target ?? 0}`}
-            label="Timetable Completion"
-            icon={CalendarMonthIcon}
-            colorIndex={0}
-            loading={statsLoading}
-            subtitle={`${stats.unassigned_periods ?? 0} periods unassigned`}
-            tooltip="Periods assigned vs. total possible periods (non-break periods × active class arms) this term."
-            progress={pct(stats.periods_assigned, stats.periods_target)}
-          />
-          <StatCard
-            count={stats.total_class_arms ?? 0}
-            label="Classes & Arms"
-            icon={DomainIcon}
-            colorIndex={1}
-            loading={statsLoading}
-            subtitle={`${stats.total_classes ?? 0} classes`}
-            tooltip="Total active classes and class arms in the school."
-          />
-          <StatCard
-            count={`${stats.subjects_used ?? 0} of ${stats.subjects_total ?? 0}`}
-            label="Subject Allocation"
-            icon={MenuBookIcon}
-            colorIndex={2}
-            loading={statsLoading}
-            subtitle="Subjects used in the timetable"
-            tooltip="Subjects scheduled at least once vs. total active subjects."
-            progress={pct(stats.subjects_used, stats.subjects_total)}
-          />
-          <StatCard
-            count={stats.teachers_assigned ?? 0}
-            label="Teacher Utilisation"
-            icon={PersonIcon}
-            colorIndex={3}
-            loading={statsLoading}
-            subtitle={`of ${stats.teachers_total ?? 0} teaching staff`}
-            tooltip="Teachers with at least one class/subject allocation this term."
-            progress={pct(stats.teachers_assigned, stats.teachers_total)}
-          />
-          <StatCard
-            count={stats.conflicts ?? 0}
-            label="Conflicts & Issues"
-            icon={WarningAmberIcon}
-            colorIndex={4}
-            loading={statsLoading}
-            subtitle={`${stats.unassigned_periods ?? 0} unassigned periods`}
-            tooltip="Scheduling conflicts detected — assigning a period that would double-book a teacher or room is blocked before it happens."
-          />
-          <StatCard
-            count={stats.rooms_in_use ?? 0}
-            label="Room/Facility Usage"
-            icon={MeetingRoomIcon}
-            colorIndex={0}
-            loading={statsLoading}
-            subtitle={`of ${stats.rooms_total ?? 0} rooms`}
-            tooltip="Rooms currently assigned to at least one period this term."
-            progress={pct(stats.rooms_in_use, stats.rooms_total)}
-          />
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 2.5 }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CalendarMonthIcon />
+          </Box>
+          <Box>
+            <Typography variant="h5" fontWeight={800}>
+              Generate Timetable
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Assign subjects to each period and class arm. The system will validate and help you create a conflict-free timetable.
+            </Typography>
+          </Box>
         </Stack>
+        <Tooltip title="Full-school auto-generation is coming soon — use Auto Fill This Class or assign periods manually below for now.">
+          <span>
+            <Button variant="contained" startIcon={<AutoFixHighIcon />} disabled sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}>
+              Generate Timetable
+            </Button>
+          </span>
+        </Tooltip>
+      </Stack>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.25, mb: 2 }}>
+        <StatCardShell
+          icon={CalendarMonthIcon}
+          iconColor="#16A34A"
+          title="Timetable Completion"
+          tooltip="Periods assigned vs. total possible periods (non-break periods × active class arms) this term."
+          loading={statsLoading}
+          linkText="View unassigned periods"
+          onLinkClick={scrollToGrid}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box sx={{ position: 'relative', width: 64, height: 64, flexShrink: 0 }}>
+              <CircularProgress variant="determinate" value={100} size={64} thickness={4} sx={{ color: 'grey.200', position: 'absolute' }} />
+              <CircularProgress variant="determinate" value={pct(stats.periods_assigned, stats.periods_target)} size={64} thickness={4} sx={{ color: '#16A34A' }} />
+              <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography sx={{ fontSize: 14 }} fontWeight={800}>
+                  {pct(stats.periods_assigned, stats.periods_target)}%
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={800} lineHeight={1.2} noWrap>
+                {stats.periods_assigned ?? 0} / {stats.periods_target ?? 0}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                periods assigned
+              </Typography>
+            </Box>
+          </Stack>
+        </StatCardShell>
+
+        <StatCardShell icon={DomainIcon} iconColor="#2563EB" title="Classes & Arms" tooltip="Total active classes and class arms in the school." loading={statsLoading} linkText="View class overview" linkIcon={GroupsIcon} onLinkClick={scrollToGrid}>
+          <DividedStat value1={stats.total_classes ?? 0} label1="Classes" value2={stats.total_class_arms ?? 0} label2="Class Arms" />
+        </StatCardShell>
+
+        <StatCardShell
+          icon={MenuBookIcon}
+          iconColor="#9333EA"
+          title="Subject Allocation"
+          tooltip="Subjects scheduled at least once vs. total active subjects."
+          loading={statsLoading}
+          linkText="View subject usage"
+          onLinkClick={() => setRightTab(0)}
+        >
+          <BarWithPct
+            value={pct(stats.subjects_used, stats.subjects_total)}
+            mainLabel={`${stats.subjects_used ?? 0} of ${stats.subjects_total ?? 0}`}
+            subLabel="Subjects used"
+            barColor="#16A34A"
+            legend={
+              <>
+                <LegendDot color="#16A34A" label={`Used ${stats.subjects_used ?? 0}`} />
+                <LegendDot color="#D97706" label={`Unused ${Math.max((stats.subjects_total ?? 0) - (stats.subjects_used ?? 0), 0)}`} />
+              </>
+            }
+          />
+        </StatCardShell>
+
+        <StatCardShell
+          icon={GroupsIcon}
+          iconColor="#16A34A"
+          title="Teacher Utilisation"
+          tooltip="Teachers with at least one class/subject allocation this term."
+          loading={statsLoading}
+          linkText="View teacher workload"
+          linkIcon={GroupsIcon}
+          onLinkClick={() => setRightTab(1)}
+        >
+          <BarWithPct
+            value={pct(stats.teachers_assigned, stats.teachers_total)}
+            mainLabel={stats.teachers_assigned ?? 0}
+            subLabel="Active Teachers"
+            barColor="#0891B2"
+            legend={
+              <>
+                <LegendDot color="#2563EB" label={`Assigned ${stats.teachers_assigned ?? 0}`} />
+                <LegendDot color="#CBD5E1" label={`Unassigned ${Math.max((stats.teachers_total ?? 0) - (stats.teachers_assigned ?? 0), 0)}`} />
+              </>
+            }
+          />
+        </StatCardShell>
+
+        <StatCardShell
+          icon={WarningAmberIcon}
+          iconColor="#DC2626"
+          title="Conflicts & Issues"
+          tooltip="Assigning a period that would double-book a teacher or room is blocked before it happens, so this stays at 0 — unassigned periods are still listed here as something to resolve."
+          loading={statsLoading}
+          linkText="View and resolve issues"
+          accent="#DC2626"
+          onLinkClick={scrollToGrid}
+        >
+          <DividedStat value1={stats.conflicts ?? 0} label1="Conflicts" color1="error.main" value2={stats.unassigned_periods ?? 0} label2="Unassigned Periods" />
+        </StatCardShell>
+
+        <StatCardShell
+          icon={MeetingRoomIcon}
+          iconColor="#16A34A"
+          title="Room/Facility Usage"
+          tooltip="Rooms currently assigned to at least one period this term."
+          loading={statsLoading}
+          linkText="View room usage"
+          onLinkClick={() => navigate('/timetable/period-settings')}
+        >
+          <BarWithPct
+            value={pct(stats.rooms_in_use, stats.rooms_total)}
+            mainLabel={stats.rooms_total ?? 0}
+            subLabel="Rooms"
+            barColor="#2563EB"
+            legend={
+              <>
+                <LegendDot color="#16A34A" label={`In Use ${stats.rooms_in_use ?? 0}`} />
+                <LegendDot color="#CBD5E1" label={`Available ${Math.max((stats.rooms_total ?? 0) - (stats.rooms_in_use ?? 0), 0)}`} />
+              </>
+            }
+          />
+        </StatCardShell>
       </Box>
 
+      <Paper elevation={0} sx={{ p: 1.5, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+        <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="flex-end">
+            <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+              <InputLabel>Session</InputLabel>
+              <Select label="Session" value="current">
+                <MenuItem value="current">{academicInfo.academic_session || '—'}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+              <InputLabel>Term</InputLabel>
+              <Select label="Term" value="current">
+                <MenuItem value="current">{academicInfo.academic_term || '—'}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 170 }}>
+              <InputLabel>Programme</InputLabel>
+              <Select label="Programme" value={programmeId} onChange={(e) => setProgrammeId(e.target.value)}>
+                {programmes.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 190 }} disabled={!classesForProgramme.length}>
+              <InputLabel>Class</InputLabel>
+              <Select label="Class" value={programmeClassId} onChange={(e) => setProgrammeClassId(e.target.value)}>
+                {classesForProgramme.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+          <Button variant="outlined" size="small" startIcon={<SettingsIcon fontSize="small" />} onClick={() => navigate('/timetable/period-settings')}>
+            View Settings
+          </Button>
+        </Stack>
+      </Paper>
+
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
-        <ParentCard
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            width: '100%',
-            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
-            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
-          }}
-          title={
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexWrap: 'wrap' }}>
-              <Typography variant="h5">{selectedClassLabel ? `Timetable for ${selectedClassLabel}` : 'Timetable'}</Typography>
-              <FormControl size="small" sx={{ minWidth: 240 }}>
-                <InputLabel>Class</InputLabel>
-                <Select value={programmeClassId} label="Class" onChange={(e) => setProgrammeClassId(e.target.value)}>
-                  {classes.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-          }
+        <Paper
+          ref={gridRef}
+          elevation={0}
+          sx={{ flex: 1, minWidth: 0, width: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider', borderLeft: '4px solid #2563EB', p: 1.5 }}
         >
+          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={1} sx={{ mb: 1.5 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography variant="h6" fontWeight={800}>
+                {selectedClassLabel ? `Timetable for ${selectedClassLabel}` : 'Timetable'}
+              </Typography>
+              <Chip size="small" label="Draft" sx={{ bgcolor: '#FEF3C7', color: '#B45309', fontWeight: 700, height: 20 }} />
+            </Stack>
+            <Stack direction="row" spacing={1.5}>
+              <LegendDot color="#2563EB" label={`Assigned ${classAssignedTotal}`} />
+              <LegendDot color="#9333EA" label={`Unassigned ${classUnassignedTotal}`} />
+              <LegendDot color="#DC2626" label={`Conflicts ${stats.conflicts ?? 0}`} />
+            </Stack>
+          </Stack>
+
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ minWidth: 640 }}>
+            <Table size="small" sx={{ minWidth: 680 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ width: 130 }}>Period / Time</TableCell>
+                  <TableCell sx={{ width: 70 }}>Period</TableCell>
+                  <TableCell sx={{ width: 100 }}>Time</TableCell>
                   {visibleArms.map((arm, idx) => {
                     const c = armCompletion(arm.id);
                     return (
@@ -392,10 +763,26 @@ const GenerateTimetable = () => {
                           <Typography variant="subtitle2" fontWeight={700}>
                             {armLabel(arm)}
                           </Typography>
+                          <IconButton
+                            size="small"
+                            sx={{ p: 0.25 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setArmMenuAnchor({ el: e.currentTarget, armId: arm.id });
+                            }}
+                          >
+                            <MoreVertIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
                         </Stack>
-                        <Typography variant="caption" color="text.secondary">
-                          {c.assigned}/{c.total} ({c.percent}%)
-                        </Typography>
+                        <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                          <Box sx={{ position: 'relative', width: 20, height: 20 }}>
+                            <CircularProgress variant="determinate" value={100} size={20} thickness={5} sx={{ color: 'grey.200', position: 'absolute' }} />
+                            <CircularProgress variant="determinate" value={c.percent} size={20} thickness={5} sx={{ color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] }} />
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            {c.assigned}/{c.total}
+                          </Typography>
+                        </Stack>
                       </TableCell>
                     );
                   })}
@@ -405,8 +792,8 @@ const GenerateTimetable = () => {
                 {gridLoading || armsLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell>
-                        <Skeleton variant="text" width={80} />
+                      <TableCell colSpan={2}>
+                        <Skeleton variant="text" width={60} />
                       </TableCell>
                       {visibleArms.map((arm) => (
                         <TableCell key={arm.id}>
@@ -417,88 +804,110 @@ const GenerateTimetable = () => {
                   ))
                 ) : periods.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={visibleArms.length + 1} align="center">
+                    <TableCell colSpan={visibleArms.length + 2} align="center">
                       <Alert severity="info" sx={{ justifyContent: 'center' }}>
                         No periods configured yet — set them up in School Day &amp; Period Settings first.
                       </Alert>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  periods.map((period) =>
-                    period.is_break ? (
-                      <TableRow key={period.id}>
-                        <TableCell
-                          colSpan={visibleArms.length + 1}
-                          align="center"
-                          sx={{ bgcolor: 'warning.light', color: 'warning.dark', fontWeight: 700, py: 0.75 }}
-                        >
-                          {period.label} — {period.start_time?.slice(0, 5)} - {period.end_time?.slice(0, 5)}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
+                  periods.map((period) => {
+                    if (period.is_break) {
+                      const BreakIcon = getBreakIcon(period.label);
+                      const startH = period.start_time?.slice(0, 5);
+                      const endH = period.end_time?.slice(0, 5);
+                      const minutes =
+                        period.start_time && period.end_time
+                          ? Math.round((new Date(`1970-01-01T${period.end_time}`) - new Date(`1970-01-01T${period.start_time}`)) / 60000)
+                          : null;
+                      const duration = minutes ? (minutes >= 60 ? `${Math.round(minutes / 60)} hour${minutes > 60 ? 's' : ''}` : `${minutes} minutes`) : '';
+                      return (
+                        <TableRow key={period.id}>
+                          <TableCell sx={{ bgcolor: '#FEF3C7' }}>
+                            <BreakIcon sx={{ fontSize: 18, color: '#B45309' }} />
+                          </TableCell>
+                          <TableCell colSpan={visibleArms.length + 1} sx={{ bgcolor: '#FEF3C7', color: '#92400E', fontWeight: 700 }}>
+                            {period.label} — {startH} - {endH} {duration && `(${duration})`}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return (
                       <TableRow key={period.id}>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600}>
-                            {period.label}
+                          <Typography variant="body2" fontWeight={700}>
+                            {periodNumbers[period.id]}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
                           <Typography variant="caption" color="text.secondary">
                             {period.start_time?.slice(0, 5)} - {period.end_time?.slice(0, 5)}
                           </Typography>
                         </TableCell>
                         {visibleArms.map((arm) => {
                           const slot = gridByArm[arm.id]?.[period.id];
+                          const SubjectIcon = slot ? getSubjectIcon(slot.subject_name) : null;
                           return (
-                            <TableCell key={arm.id} align="center" onClick={(e) => openAssign(e, arm.id, period.id)} sx={{ cursor: 'pointer' }}>
-                              {slot ? (
-                                <Box
-                                  sx={{
-                                    display: 'inline-flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    gap: 0.25,
-                                    px: 1,
-                                    py: 0.5,
-                                    borderRadius: 1.5,
-                                    bgcolor: `${slot.subject_color || SUBJECT_FALLBACK_COLOR}1A`,
-                                    minWidth: 100,
-                                  }}
-                                >
-                                  <Chip
-                                    size="small"
-                                    label={slot.subject_name}
-                                    sx={{
-                                      bgcolor: slot.subject_color || SUBJECT_FALLBACK_COLOR,
-                                      color: '#fff',
-                                      fontWeight: 700,
-                                      height: 20,
-                                      '& .MuiChip-label': { px: 1 },
-                                    }}
-                                  />
-                                  <Typography variant="caption" color="text.secondary" noWrap>
-                                    {slot.teacher_name || 'No teacher assigned'}
+                            <TableCell key={arm.id} sx={{ cursor: 'pointer' }} onClick={(e) => openAssign(e, arm.id, period.id)}>
+                              <Stack direction="row" alignItems="center" spacing={0.75} justifyContent="space-between">
+                                {slot ? (
+                                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                    <Box
+                                      sx={{
+                                        width: 26,
+                                        height: 26,
+                                        borderRadius: 1,
+                                        bgcolor: `${slot.subject_color || SUBJECT_FALLBACK_COLOR}1F`,
+                                        color: slot.subject_color || SUBJECT_FALLBACK_COLOR,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <SubjectIcon sx={{ fontSize: 15 }} />
+                                    </Box>
+                                    <Box sx={{ minWidth: 0 }}>
+                                      <Typography variant="caption" fontWeight={700} noWrap sx={{ display: 'block' }}>
+                                        {slot.subject_name}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                        {slot.teacher_name || 'No teacher'}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                ) : (
+                                  <Typography variant="caption" color="text.disabled">
+                                    Free period
                                   </Typography>
-                                </Box>
-                              ) : (
-                                <Button size="small" startIcon={<AddIcon fontSize="small" />} sx={{ fontSize: '0.7rem' }}>
+                                )}
+                                <Button size="small" startIcon={<AddIcon sx={{ fontSize: 13 }} />} sx={{ fontSize: '0.65rem', p: 0, minWidth: 0, flexShrink: 0 }}>
                                   Add
                                 </Button>
-                              )}
+                              </Stack>
                             </TableCell>
                           );
                         })}
                       </TableRow>
-                    ),
-                  )
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
           </Box>
-        </ParentCard>
+        </Paper>
 
         <Box sx={{ width: { xs: '100%', lg: 300 }, flexShrink: 0 }}>
           <Stack spacing={1.5}>
-            <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                <GroupsIcon sx={{ fontSize: 18, color: '#2563EB' }} />
+                <Typography variant="subtitle2" fontWeight={700}>
+                  Selected Class: {selectedClassLabel || '—'}
+                </Typography>
+              </Stack>
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                 Class Arms
               </Typography>
               <Stack spacing={0.25}>
@@ -517,44 +926,109 @@ const GenerateTimetable = () => {
                   />
                 ))}
               </Stack>
-            </Box>
+            </Paper>
 
-            <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
-              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
-                Subjects
-              </Typography>
-              <TextField
-                size="small"
-                fullWidth
-                placeholder="Search subjects..."
-                value={subjectSearch}
-                onChange={(e) => setSubjectSearch(e.target.value)}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
-                sx={{ mb: 1 }}
-              />
-              <Stack spacing={0.5} sx={{ maxHeight: 240, overflowY: 'auto' }}>
-                {filteredSubjects.map((s) => (
-                  <Stack key={s.id} direction="row" alignItems="center" spacing={1}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s.color || SUBJECT_FALLBACK_COLOR, flexShrink: 0 }} />
-                    <Typography variant="body2" noWrap>
-                      {s.subject_name}
-                    </Typography>
-                    {s.subject_code && (
+            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+              <Tabs value={rightTab} onChange={(_, v) => setRightTab(v)} sx={{ minHeight: 32, mb: 1, '& .MuiTab-root': { minHeight: 32, py: 0, fontSize: '0.78rem' } }}>
+                <Tab label="Subjects" />
+                <Tab label="Teachers" />
+              </Tabs>
+
+              {rightTab === 0 ? (
+                <>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder="Search subjects..."
+                    value={subjectSearch}
+                    onChange={(e) => setSubjectSearch(e.target.value)}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> } }}
+                    sx={{ mb: 1 }}
+                  />
+                  <Stack spacing={0.5}>
+                    {visibleSubjectList.map((s) => {
+                      const SubjectIcon = getSubjectIcon(s.subject_name);
+                      const isQuickPick = quickPickSubjectId === s.id;
+                      return (
+                        <Stack
+                          key={s.id}
+                          direction="row"
+                          alignItems="center"
+                          spacing={1}
+                          onClick={() => setQuickPickSubjectId(isQuickPick ? '' : s.id)}
+                          sx={{
+                            cursor: 'pointer',
+                            borderRadius: 1,
+                            px: 0.5,
+                            py: 0.25,
+                            bgcolor: isQuickPick ? `${s.color || SUBJECT_FALLBACK_COLOR}1A` : 'transparent',
+                            border: '1px solid',
+                            borderColor: isQuickPick ? s.color || SUBJECT_FALLBACK_COLOR : 'transparent',
+                          }}
+                        >
+                          <SubjectIcon sx={{ fontSize: 15, color: s.color || SUBJECT_FALLBACK_COLOR }} />
+                          <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                            {s.subject_name}
+                          </Typography>
+                          {s.subject_code && (
+                            <Typography variant="caption" color="text.secondary">
+                              {s.subject_code}
+                            </Typography>
+                          )}
+                          <Checkbox size="small" checked={usedSubjectIds.has(s.id)} readOnly sx={{ p: 0.25 }} />
+                        </Stack>
+                      );
+                    })}
+                    {filteredSubjects.length === 0 && (
                       <Typography variant="caption" color="text.secondary">
-                        {s.subject_code}
+                        No subjects match.
                       </Typography>
                     )}
                   </Stack>
-                ))}
-                {filteredSubjects.length === 0 && (
-                  <Typography variant="caption" color="text.secondary">
-                    No subjects match.
-                  </Typography>
-                )}
-              </Stack>
-            </Box>
+                  {filteredSubjects.length > 8 && (
+                    <Button size="small" onClick={() => setShowAllSubjects((v) => !v)} sx={{ mt: 0.5, fontSize: '0.7rem' }}>
+                      {showAllSubjects ? 'Show fewer subjects' : 'Show more subjects'}
+                    </Button>
+                  )}
+                  {quickPickSubjectId && (
+                    <Alert severity="info" sx={{ mt: 1, py: 0, fontSize: '0.7rem' }}>
+                      Click an empty period to assign it instantly.
+                    </Alert>
+                  )}
+                </>
+              ) : (
+                <>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    placeholder="Search teachers..."
+                    value={teacherSearch}
+                    onChange={(e) => setTeacherSearch(e.target.value)}
+                    slotProps={{ input: { startAdornment: <InputAdornment position="start"><PersonSearchIcon fontSize="small" /></InputAdornment> } }}
+                    sx={{ mb: 1 }}
+                  />
+                  <Stack spacing={0.5} sx={{ maxHeight: 260, overflowY: 'auto' }}>
+                    {filteredTeachers.map((t) => (
+                      <Stack key={t.user_id} direction="row" alignItems="center" spacing={1}>
+                        <Avatar src={t.user?.avatar} sx={{ width: 22, height: 22, fontSize: 11 }}>
+                          {t.user?.fname?.[0]}
+                        </Avatar>
+                        <Typography variant="body2" noWrap>
+                          {t.user?.fname} {t.user?.lname}
+                        </Typography>
+                      </Stack>
+                    ))}
+                    {filteredTeachers.length === 0 && (
+                      <Typography variant="caption" color="text.secondary">
+                        No teachers match.
+                      </Typography>
+                    )}
+                  </Stack>
+                </>
+              )}
+            </Paper>
 
-            <Box sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
+            <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
               <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
                 Quick Actions
               </Typography>
@@ -586,13 +1060,20 @@ const GenerateTimetable = () => {
                   color="error"
                   variant="outlined"
                   startIcon={<DeleteSweepIcon fontSize="small" />}
-                  onClick={() => setClearConfirmOpen(true)}
+                  onClick={() => {
+                    setClearArmTarget(null);
+                    setClearConfirmOpen(true);
+                  }}
                   disabled={visibleArmIds.size === 0}
                 >
                   Clear This Class
                 </Button>
               </Stack>
-            </Box>
+            </Paper>
+
+            <Button fullWidth variant="contained" size="large" onClick={handleSaveTimetable} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}>
+              Save Timetable
+            </Button>
           </Stack>
         </Box>
       </Stack>
@@ -657,12 +1138,27 @@ const GenerateTimetable = () => {
         </Box>
       </Popover>
 
+      <Menu anchorEl={armMenuAnchor?.el} open={Boolean(armMenuAnchor)} onClose={() => setArmMenuAnchor(null)}>
+        <MenuItem
+          onClick={() => {
+            setClearArmTarget(armMenuAnchor.armId);
+            setClearConfirmOpen(true);
+            setArmMenuAnchor(null);
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <DeleteSweepIcon fontSize="small" sx={{ mr: 1 }} />
+          Clear this arm
+        </MenuItem>
+      </Menu>
+
       <Dialog open={clearConfirmOpen} onClose={() => setClearConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Clear This Class</DialogTitle>
+        <DialogTitle>{clearArmTarget ? 'Clear This Arm' : 'Clear This Class'}</DialogTitle>
         <DialogContent>
           <Typography>
-            This will remove every assigned period from <strong>{visibleArmIds.size}</strong> visible class arm(s) of{' '}
-            <strong>{selectedClassLabel}</strong> for the current term. This cannot be undone.
+            {clearArmTarget
+              ? 'This will remove every assigned period from this class arm for the current term. This cannot be undone.'
+              : `This will remove every assigned period from ${visibleArmIds.size} visible class arm(s) of ${selectedClassLabel} for the current term. This cannot be undone.`}
           </Typography>
         </DialogContent>
         <DialogActions>

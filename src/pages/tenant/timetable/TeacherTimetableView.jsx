@@ -26,6 +26,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Teacher Timetable View' }];
+const WEEKDAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
 const TeacherTimetableView = () => {
   const notify = useNotification();
@@ -36,7 +37,7 @@ const TeacherTimetableView = () => {
   const [optionsLoading, setOptionsLoading] = useState(false);
 
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [schedule, setSchedule] = useState([]);
+  const [weekSchedule, setWeekSchedule] = useState({});
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
   useEffect(() => {
@@ -64,7 +65,7 @@ const TeacherTimetableView = () => {
       setScheduleLoading(true);
       try {
         const res = await timetableApi.getTeacherSchedule(userId);
-        setSchedule(res.data.data || []);
+        setWeekSchedule(res.data.data || {});
       } catch {
         notify.error('Failed to load teacher schedule');
       } finally {
@@ -78,9 +79,11 @@ const TeacherTimetableView = () => {
     if (selectedTeacher) {
       fetchSchedule(selectedTeacher.user_id);
     } else {
-      setSchedule([]);
+      setWeekSchedule({});
     }
   }, [selectedTeacher, fetchSchedule]);
+
+  const flatSchedule = WEEKDAYS.flatMap((day) => (weekSchedule[day] || []).map((row) => ({ ...row, day })));
 
   return (
     <PageContainer title="Teacher Timetable View" description="View any teacher's full weekly teaching schedule.">
@@ -135,6 +138,7 @@ const TeacherTimetableView = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>Day</TableCell>
                 <TableCell>Period</TableCell>
                 <TableCell>Subject</TableCell>
                 <TableCell>Class</TableCell>
@@ -145,20 +149,21 @@ const TeacherTimetableView = () => {
               {scheduleLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={4}>
+                    <TableCell colSpan={5}>
                       <Skeleton variant="text" height={28} />
                     </TableCell>
                   </TableRow>
                 ))
-              ) : schedule.length === 0 ? (
+              ) : flatSchedule.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} align="center">
+                  <TableCell colSpan={5} align="center">
                     No periods assigned to this teacher yet.
                   </TableCell>
                 </TableRow>
               ) : (
-                schedule.map((row) => (
+                flatSchedule.map((row) => (
                   <TableRow key={row.slot_id}>
+                    <TableCell sx={{ textTransform: 'capitalize', fontWeight: 700 }}>{row.day}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {row.period.label}
@@ -171,7 +176,7 @@ const TeacherTimetableView = () => {
                       <Chip
                         size="small"
                         label={row.subject_name}
-                        sx={{ bgcolor: getSubjectColor({ id: row.subject_name, color: row.subject_color }), color: '#fff', fontWeight: 700 }}
+                        sx={{ bgcolor: getSubjectColor({ id: row.subject_id, color: row.subject_color }), color: '#fff', fontWeight: 700 }}
                       />
                     </TableCell>
                     <TableCell>{row.class_name}</TableCell>

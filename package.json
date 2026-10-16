@@ -41,6 +41,7 @@
     "chance": "1.1.12",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "docx-preview": "^0.4.1",
     "dompurify": "^3.4.14",
     "emoji-picker-react": "4.12.2",
     "formik": "2.4.6",

@@ -32,12 +32,15 @@ import {
   IconArrowsShuffle,
   IconEdit,
   IconFileText,
+  IconDeviceDesktop,
+  IconCircleCheck,
   IconTable,
   IconChartBar,
   IconFileAnalytics,
   IconId,
   IconMessageCircle,
   IconMail,
+  IconPlayerPlay,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -70,6 +73,10 @@ const iconMapper = {
   Shuffle: IconArrowsShuffle,
   Edit: IconEdit,
   FileText: IconFileText,
+  Monitor: IconDeviceDesktop,
+  PlayerPlay: IconPlayerPlay,
+  BookOpen: IconBook,
+  BadgeCheck: IconCircleCheck,
   Table: IconTable,
   FileAnalytics: IconFileAnalytics,
   Id: IconId,

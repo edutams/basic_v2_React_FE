@@ -2,6 +2,7 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const timetableApi = {
   getStats: (params = {}) => tenantApi.get('/timetable/stats', { params }),
+  saveSnapshot: (sessionTermId) => tenantApi.post('/timetable/save', { session_term_id: sessionTermId }),
   getClassArmGrid: (classArmId, params = {}) => tenantApi.get(`/timetable/class-arm/${classArmId}`, { params }),
   assignSlot: (data) => tenantApi.post('/timetable/slots', data),
   updateSlot: (id, data) => tenantApi.put(`/timetable/slots/${id}`, data),
@@ -9,7 +10,7 @@ const timetableApi = {
   clearClassArm: (classArmId, sessionTermId) =>
     tenantApi.delete(`/timetable/class-arm/${classArmId}`, { data: { session_term_id: sessionTermId } }),
   getClassArms: (params = {}) => tenantApi.get('/timetable/class-arms', { params }),
-  getSubjects: () => tenantApi.get('/timetable/subjects'),
+  getSubjects: (params = {}) => tenantApi.get('/timetable/subjects', { params }),
 
   getTeacherSchedule: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}`, { params }),
   getMySchedule: (params = {}) => tenantApi.get('/timetable/my-schedule', { params }),
@@ -26,6 +27,10 @@ const timetableApi = {
 
   getSettings: () => tenantApi.get('/timetable/settings'),
   updateSettings: (data) => tenantApi.put('/timetable/settings', data),
+
+  getBasicSettings: () => tenantApi.get('/timetable/basic-settings'),
+  previewSchedule: (data) => tenantApi.post('/timetable/preview-schedule', data),
+  saveSchedule: (data) => tenantApi.post('/timetable/save-schedule', data),
 };
 
 export default timetableApi;

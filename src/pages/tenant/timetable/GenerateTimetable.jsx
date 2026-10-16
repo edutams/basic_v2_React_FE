@@ -4,6 +4,7 @@ import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
 import tenantApi from '@/api/tenant/tenant_api';
+import { getSubjectColor } from '@/utils/subjectColor';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -15,7 +16,6 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  FormControlLabel,
   Table,
   TableHead,
   TableRow,
@@ -75,8 +75,9 @@ import GrassIcon from '@mui/icons-material/Grass';
 import LocalCafeIcon from '@mui/icons-material/LocalCafe';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-const SUBJECT_FALLBACK_COLOR = '#64748B';
 const ARM_DOT_COLORS = ['#2563EB', '#16A34A', '#9333EA', '#D97706', '#DC2626', '#0891B2'];
 
 const SUBJECT_ICON_RULES = [
@@ -289,18 +290,16 @@ const GenerateTimetable = () => {
     }
   }, [notify]);
 
-  const fetchSubjectsRoomsTeachers = useCallback(async () => {
+  const fetchRoomsTeachers = useCallback(async () => {
     try {
-      const [subRes, roomRes, teacherRes] = await Promise.all([
-        timetableApi.getSubjects(),
+      const [roomRes, teacherRes] = await Promise.all([
         timetableApi.getRooms(),
         tenantApi.get('/school_setup/staff/all', { params: { staff_type: 'teaching', per_page: 50 } }),
       ]);
-      setSubjects(subRes.data.data || []);
       setRooms(roomRes.data.data || []);
       setTeachers(teacherRes.data?.data || []);
     } catch {
-      notify.error('Failed to load subjects/rooms/teachers');
+      notify.error('Failed to load rooms/teachers');
     }
   }, [notify]);
 
@@ -308,8 +307,8 @@ const GenerateTimetable = () => {
     fetchStats();
     fetchAcademicInfo();
     fetchClasses();
-    fetchSubjectsRoomsTeachers();
-  }, [fetchStats, fetchAcademicInfo, fetchClasses, fetchSubjectsRoomsTeachers]);
+    fetchRoomsTeachers();
+  }, [fetchStats, fetchAcademicInfo, fetchClasses, fetchRoomsTeachers]);
 
   // ── Programme → Class cascade ───────────────────────────────────────
   const programmes = useMemo(() => {
@@ -347,6 +346,20 @@ const GenerateTimetable = () => {
       setProgrammeClassId('');
     }
   }, [classesForProgramme]);
+
+  // Scoped to the selected programme — otherwise this list was every active
+  // subject in the school (e.g. Senior Secondary subjects showing up while
+  // building a Junior Secondary 1 timetable).
+  useEffect(() => {
+    if (!programmeId) {
+      setSubjects([]);
+      return;
+    }
+    timetableApi
+      .getSubjects({ programme_id: programmeId })
+      .then((res) => setSubjects(res.data.data || []))
+      .catch(() => notify.error('Failed to load subjects'));
+  }, [programmeId, notify]);
 
   // ── Class arms + grid ────────────────────────────────────────────────
   const fetchArms = useCallback(async () => {
@@ -530,8 +543,19 @@ const GenerateTimetable = () => {
     }
   };
 
-  const handleSaveTimetable = () => {
-    notify.success('Timetable saved — every change here is already saved as you make it.');
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
+
+  const handleSaveTimetable = async () => {
+    setSavingSnapshot(true);
+    try {
+      await timetableApi.saveSnapshot();
+      notify.success('Timetable saved — every change here already saves as you make it; this just checkpoints completion % for the trend line.');
+      fetchStats();
+    } catch {
+      notify.error('Failed to save timetable checkpoint');
+    } finally {
+      setSavingSnapshot(false);
+    }
   };
 
   const scrollToGrid = () => gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -594,6 +618,26 @@ const GenerateTimetable = () => {
               <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
                 periods assigned
               </Typography>
+              {stats.completion_trend !== null && stats.completion_trend !== undefined && (
+                <Stack direction="row" spacing={0.25} alignItems="center" sx={{ mt: 0.25 }}>
+                  {stats.completion_trend === 0 ? (
+                    <Typography variant="caption" fontWeight={700} color="text.secondary">
+                      No change from last save
+                    </Typography>
+                  ) : (
+                    <>
+                      {stats.completion_trend > 0 ? (
+                        <ArrowUpwardIcon sx={{ fontSize: 12, color: 'success.main' }} />
+                      ) : (
+                        <ArrowDownwardIcon sx={{ fontSize: 12, color: 'error.main' }} />
+                      )}
+                      <Typography variant="caption" fontWeight={700} sx={{ color: stats.completion_trend > 0 ? 'success.main' : 'error.main' }}>
+                        {Math.abs(stats.completion_trend)}% from last save
+                      </Typography>
+                    </>
+                  )}
+                </Stack>
+              )}
             </Box>
           </Stack>
         </StatCardShell>
@@ -686,49 +730,51 @@ const GenerateTimetable = () => {
         </StatCardShell>
       </Box>
 
-      <Paper elevation={0} sx={{ p: 1.5, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-        <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="center" justifyContent="space-between">
-          <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="flex-end">
-            <FormControl size="small" sx={{ minWidth: 130 }} disabled>
-              <InputLabel>Session</InputLabel>
-              <Select label="Session" value="current">
-                <MenuItem value="current">{academicInfo.academic_session || '—'}</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 130 }} disabled>
-              <InputLabel>Term</InputLabel>
-              <Select label="Term" value="current">
-                <MenuItem value="current">{academicInfo.academic_term || '—'}</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 170 }}>
-              <InputLabel>Programme</InputLabel>
-              <Select label="Programme" value={programmeId} onChange={(e) => setProgrammeId(e.target.value)}>
-                {programmes.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 190 }} disabled={!classesForProgramme.length}>
-              <InputLabel>Class</InputLabel>
-              <Select label="Class" value={programmeClassId} onChange={(e) => setProgrammeClassId(e.target.value)}>
-                {classesForProgramme.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
-                    {c.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Stack>
-          <Button variant="outlined" size="small" startIcon={<SettingsIcon fontSize="small" />} onClick={() => navigate('/timetable/period-settings')}>
-            View Settings
-          </Button>
-        </Stack>
-      </Paper>
-
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
+        {/* Left column: filter bar + grid, flow back-to-back regardless of how tall the right column gets. */}
+        <Stack spacing={1.5} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+        <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="flex-end">
+              <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+                <InputLabel>Session</InputLabel>
+                <Select label="Session" value="current">
+                  <MenuItem value="current">{academicInfo.academic_session || '—'}</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+                <InputLabel>Term</InputLabel>
+                <Select label="Term" value="current">
+                  <MenuItem value="current">{academicInfo.academic_term || '—'}</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 170 }}>
+                <InputLabel>Programme</InputLabel>
+                <Select label="Programme" value={programmeId} onChange={(e) => setProgrammeId(e.target.value)}>
+                  {programmes.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 190 }} disabled={!classesForProgramme.length}>
+                <InputLabel>Class</InputLabel>
+                <Select label="Class" value={programmeClassId} onChange={(e) => setProgrammeClassId(e.target.value)}>
+                  {classesForProgramme.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+            <Button variant="outlined" size="small" startIcon={<SettingsIcon fontSize="small" />} onClick={() => navigate('/timetable/period-settings')}>
+              View Settings
+            </Button>
+          </Stack>
+        </Paper>
+
         <Paper
           ref={gridRef}
           elevation={0}
@@ -848,28 +894,34 @@ const GenerateTimetable = () => {
                         {visibleArms.map((arm) => {
                           const slot = gridByArm[arm.id]?.[period.id];
                           const SubjectIcon = slot ? getSubjectIcon(slot.subject_name) : null;
+                          const subjectColor = slot ? getSubjectColor({ id: slot.subject_id, color: slot.subject_color }) : null;
                           return (
-                            <TableCell key={arm.id} sx={{ cursor: 'pointer' }} onClick={(e) => openAssign(e, arm.id, period.id)}>
+                            <TableCell
+                              key={arm.id}
+                              sx={{ cursor: 'pointer', bgcolor: slot ? `${subjectColor}14` : 'transparent' }}
+                              onClick={(e) => openAssign(e, arm.id, period.id)}
+                            >
                               <Stack direction="row" alignItems="center" spacing={0.75} justifyContent="space-between">
                                 {slot ? (
                                   <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
                                     <Box
                                       sx={{
-                                        width: 26,
-                                        height: 26,
-                                        borderRadius: 1,
-                                        bgcolor: `${slot.subject_color || SUBJECT_FALLBACK_COLOR}1F`,
-                                        color: slot.subject_color || SUBJECT_FALLBACK_COLOR,
+                                        width: 28,
+                                        height: 28,
+                                        borderRadius: 1.25,
+                                        bgcolor: subjectColor,
+                                        color: '#fff',
+                                        boxShadow: `0 2px 6px ${subjectColor}66`,
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         flexShrink: 0,
                                       }}
                                     >
-                                      <SubjectIcon sx={{ fontSize: 15 }} />
+                                      <SubjectIcon sx={{ fontSize: 16 }} />
                                     </Box>
                                     <Box sx={{ minWidth: 0 }}>
-                                      <Typography variant="caption" fontWeight={700} noWrap sx={{ display: 'block' }}>
+                                      <Typography variant="caption" fontWeight={800} noWrap sx={{ display: 'block', color: subjectColor }}>
                                         {slot.subject_name}
                                       </Typography>
                                       <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
@@ -897,34 +949,70 @@ const GenerateTimetable = () => {
             </Table>
           </Box>
         </Paper>
+        </Stack>
 
+        {/* Right column: flows independently of the left column's height. */}
         <Box sx={{ width: { xs: '100%', lg: 300 }, flexShrink: 0 }}>
           <Stack spacing={1.5}>
+
             <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                <GroupsIcon sx={{ fontSize: 18, color: '#2563EB' }} />
-                <Typography variant="subtitle2" fontWeight={700}>
-                  Selected Class: {selectedClassLabel || '—'}
-                </Typography>
+                <Box
+                  sx={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 1.25,
+                    bgcolor: '#2563EB',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <GroupsIcon sx={{ fontSize: 15 }} />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="subtitle2" fontWeight={800} noWrap>
+                    Class & Arms
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                    {selectedClassLabel || '—'}
+                  </Typography>
+                </Box>
               </Stack>
-              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                Class Arms
-              </Typography>
-              <Stack spacing={0.25}>
-                {arms.map((arm, idx) => (
-                  <FormControlLabel
-                    key={arm.id}
-                    control={
+              <Stack spacing={0.5}>
+                {arms.map((arm, idx) => {
+                  const armColor = ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length];
+                  const checked = visibleArmIds.has(arm.id);
+                  return (
+                    <Stack
+                      key={arm.id}
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      onClick={() => toggleArmVisible(arm.id)}
+                      sx={{
+                        cursor: 'pointer',
+                        borderRadius: 1.25,
+                        px: 0.75,
+                        py: 0.25,
+                        bgcolor: checked ? `${armColor}1F` : 'transparent',
+                      }}
+                    >
                       <Checkbox
                         size="small"
-                        checked={visibleArmIds.has(arm.id)}
+                        checked={checked}
                         onChange={() => toggleArmVisible(arm.id)}
-                        sx={{ color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length], '&.Mui-checked': { color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] } }}
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{ p: 0.25, color: armColor, '&.Mui-checked': { color: armColor } }}
                       />
-                    }
-                    label={<Typography variant="body2">{armLabel(arm)}</Typography>}
-                  />
-                ))}
+                      <Typography variant="body2" fontWeight={700} sx={{ color: checked ? armColor : 'text.primary' }}>
+                        {armLabel(arm)}
+                      </Typography>
+                    </Stack>
+                  );
+                })}
               </Stack>
             </Paper>
 
@@ -948,6 +1036,7 @@ const GenerateTimetable = () => {
                   <Stack spacing={0.5}>
                     {visibleSubjectList.map((s) => {
                       const SubjectIcon = getSubjectIcon(s.subject_name);
+                      const subjectColor = getSubjectColor(s);
                       const isQuickPick = quickPickSubjectId === s.id;
                       return (
                         <Stack
@@ -958,24 +1047,40 @@ const GenerateTimetable = () => {
                           onClick={() => setQuickPickSubjectId(isQuickPick ? '' : s.id)}
                           sx={{
                             cursor: 'pointer',
-                            borderRadius: 1,
+                            borderRadius: 1.25,
                             px: 0.5,
-                            py: 0.25,
-                            bgcolor: isQuickPick ? `${s.color || SUBJECT_FALLBACK_COLOR}1A` : 'transparent',
+                            py: 0.4,
+                            bgcolor: isQuickPick ? `${subjectColor}1F` : 'transparent',
                             border: '1px solid',
-                            borderColor: isQuickPick ? s.color || SUBJECT_FALLBACK_COLOR : 'transparent',
+                            borderColor: isQuickPick ? subjectColor : 'transparent',
                           }}
                         >
-                          <SubjectIcon sx={{ fontSize: 15, color: s.color || SUBJECT_FALLBACK_COLOR }} />
-                          <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              width: 22,
+                              height: 22,
+                              borderRadius: 1,
+                              bgcolor: subjectColor,
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <SubjectIcon sx={{ fontSize: 13 }} />
+                          </Box>
+                          <Typography variant="body2" fontWeight={600} noWrap sx={{ flex: 1 }}>
                             {s.subject_name}
                           </Typography>
                           {s.subject_code && (
-                            <Typography variant="caption" color="text.secondary">
-                              {s.subject_code}
-                            </Typography>
+                            <Chip
+                              size="small"
+                              label={s.subject_code}
+                              sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700, bgcolor: `${subjectColor}1F`, color: subjectColor }}
+                            />
                           )}
-                          <Checkbox size="small" checked={usedSubjectIds.has(s.id)} readOnly sx={{ p: 0.25 }} />
+                          <Checkbox size="small" checked={usedSubjectIds.has(s.id)} readOnly sx={{ p: 0.25, color: subjectColor, '&.Mui-checked': { color: subjectColor } }} />
                         </Stack>
                       );
                     })}
@@ -1071,7 +1176,7 @@ const GenerateTimetable = () => {
               </Stack>
             </Paper>
 
-            <Button fullWidth variant="contained" size="large" onClick={handleSaveTimetable} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}>
+            <Button fullWidth variant="contained" size="large" onClick={handleSaveTimetable} disabled={savingSnapshot} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}>
               Save Timetable
             </Button>
           </Stack>

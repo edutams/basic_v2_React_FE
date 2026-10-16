@@ -5,6 +5,7 @@ import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import staffApi from '@/api/tenant/staffs/staffApi';
+import { getSubjectColor } from '@/utils/subjectColor';
 import {
   Box,
   Stack,
@@ -25,7 +26,6 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Teacher Timetable View' }];
-const SUBJECT_FALLBACK_COLOR = '#64748B';
 
 const TeacherTimetableView = () => {
   const notify = useNotification();
@@ -168,7 +168,11 @@ const TeacherTimetableView = () => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip size="small" label={row.subject_name} sx={{ bgcolor: row.subject_color || SUBJECT_FALLBACK_COLOR, color: '#fff', fontWeight: 700 }} />
+                      <Chip
+                        size="small"
+                        label={row.subject_name}
+                        sx={{ bgcolor: getSubjectColor({ id: row.subject_name, color: row.subject_color }), color: '#fff', fontWeight: 700 }}
+                      />
                     </TableCell>
                     <TableCell>{row.class_name}</TableCell>
                     <TableCell>{row.room_name || '—'}</TableCell>

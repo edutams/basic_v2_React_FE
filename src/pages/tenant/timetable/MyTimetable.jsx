@@ -4,10 +4,10 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
+import { getSubjectColor } from '@/utils/subjectColor';
 import { Typography, Table, TableHead, TableRow, TableCell, TableBody, Chip, Skeleton, Alert } from '@mui/material';
 
 const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'My Timetable' }];
-const SUBJECT_FALLBACK_COLOR = '#64748B';
 
 /**
  * Shared teacher/learner "my timetable" page — the backend's
@@ -83,7 +83,11 @@ const MyTimetable = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" label={row.subject_name} sx={{ bgcolor: row.subject_color || SUBJECT_FALLBACK_COLOR, color: '#fff', fontWeight: 700 }} />
+                    <Chip
+                      size="small"
+                      label={row.subject_name}
+                      sx={{ bgcolor: getSubjectColor({ id: row.subject_name, color: row.subject_color }), color: '#fff', fontWeight: 700 }}
+                    />
                   </TableCell>
                   <TableCell>{row.class_name}</TableCell>
                   <TableCell>{row.room_name || '—'}</TableCell>
@@ -112,7 +116,7 @@ const MyTimetable = () => {
                         <Chip
                           size="small"
                           label={row.slot.subject_name}
-                          sx={{ bgcolor: row.slot.subject_color || SUBJECT_FALLBACK_COLOR, color: '#fff', fontWeight: 700 }}
+                          sx={{ bgcolor: getSubjectColor({ id: row.slot.subject_id, color: row.slot.subject_color }), color: '#fff', fontWeight: 700 }}
                         />
                       ) : (
                         <Typography variant="caption" color="text.secondary">

@@ -108,8 +108,8 @@ const pct = (num, den) => (den ? Math.round((num / den) * 100) : 0);
 
 const LegendDot = ({ color, label }) => (
   <Stack direction="row" spacing={0.5} alignItems="center">
-    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
-    <Typography variant="caption" color="text.secondary">
+    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
+    <Typography variant="caption" fontWeight={800} color="text.primary">
       {label}
     </Typography>
   </Stack>
@@ -260,6 +260,22 @@ const GenerateTimetable = () => {
   const [clearing, setClearing] = useState(false);
   const [clearArmTarget, setClearArmTarget] = useState(null);
 
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [generateConfirmOpen, setGenerateConfirmOpen] = useState(false);
+  const [generatingAll, setGeneratingAll] = useState(false);
+
+  const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [copySourceArmId, setCopySourceArmId] = useState('');
+  const [copyPeriodId, setCopyPeriodId] = useState('');
+  const [copyTargetArmIds, setCopyTargetArmIds] = useState(new Set());
+  const [copySaving, setCopySaving] = useState(false);
+
+  const [swapDialogOpen, setSwapDialogOpen] = useState(false);
+  const [swapArmId, setSwapArmId] = useState('');
+  const [swapPeriodA, setSwapPeriodA] = useState('');
+  const [swapPeriodB, setSwapPeriodB] = useState('');
+  const [swapSaving, setSwapSaving] = useState(false);
+
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -347,19 +363,19 @@ const GenerateTimetable = () => {
     }
   }, [classesForProgramme]);
 
-  // Scoped to the selected programme — otherwise this list was every active
-  // subject in the school (e.g. Senior Secondary subjects showing up while
-  // building a Junior Secondary 1 timetable).
+  // Scoped to this specific class's curriculum (class_subjects) — not just
+  // "any subject under this programme", since one programme can cover
+  // several classes (e.g. Junior Secondary 1/2/3), each with its own roster.
   useEffect(() => {
-    if (!programmeId) {
+    if (!programmeClassId) {
       setSubjects([]);
       return;
     }
     timetableApi
-      .getSubjects({ programme_id: programmeId })
+      .getSubjects({ programme_class_id: programmeClassId })
       .then((res) => setSubjects(res.data.data || []))
       .catch(() => notify.error('Failed to load subjects'));
-  }, [programmeId, notify]);
+  }, [programmeClassId, notify]);
 
   // ── Class arms + grid ────────────────────────────────────────────────
   const fetchArms = useCallback(async () => {
@@ -560,6 +576,110 @@ const GenerateTimetable = () => {
 
   const scrollToGrid = () => gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  // ── Quick Actions: Auto Fill / Generate / Copy / Swap ───────────────
+  const handleAutoFillClass = async () => {
+    if (visibleArmIds.size === 0) return;
+    setAutoFilling(true);
+    try {
+      let totalAssigned = 0;
+      let totalSkipped = 0;
+      // Sequential, not parallel — each arm's fill is conflict-checked
+      // against the others live, so two requests racing for the same
+      // teacher/period at once could both "succeed" before either commits.
+      for (const armId of visibleArmIds) {
+        const res = await timetableApi.autoFillClassArm(armId);
+        totalAssigned += res.data.data.assigned;
+        totalSkipped += res.data.data.skipped;
+      }
+      notify.success(`${totalAssigned} period(s) filled across ${visibleArmIds.size} arm(s)${totalSkipped ? `, ${totalSkipped} left empty (no safe subject/teacher available)` : ''}`);
+      refreshAll();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to auto-fill class');
+    } finally {
+      setAutoFilling(false);
+    }
+  };
+
+  const handleGenerateAll = async () => {
+    setGeneratingAll(true);
+    try {
+      const res = await timetableApi.autoFillAllClasses();
+      notify.success(res.data.message);
+      setGenerateConfirmOpen(false);
+      refreshAll();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to generate timetable');
+    } finally {
+      setGeneratingAll(false);
+    }
+  };
+
+  const openCopyDialog = () => {
+    const firstArmId = visibleArms[0]?.id || '';
+    setCopySourceArmId(firstArmId);
+    setCopyPeriodId('');
+    setCopyTargetArmIds(new Set(visibleArms.filter((a) => a.id !== firstArmId).map((a) => a.id)));
+    setCopyDialogOpen(true);
+  };
+
+  const copySourceAssignedPeriods = useMemo(
+    () => nonBreakPeriods.filter((p) => gridByArm[copySourceArmId]?.[p.id]),
+    [copySourceArmId, nonBreakPeriods, gridByArm],
+  );
+
+  const toggleCopyTargetArm = (armId) => {
+    setCopyTargetArmIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(armId)) {
+        next.delete(armId);
+      } else {
+        next.add(armId);
+      }
+      return next;
+    });
+  };
+
+  const handleCopyPeriod = async () => {
+    if (!copySourceArmId || !copyPeriodId || copyTargetArmIds.size === 0) return;
+    setCopySaving(true);
+    try {
+      const res = await timetableApi.copyPeriod({
+        source_class_arm_id: copySourceArmId,
+        period_id: copyPeriodId,
+        target_class_arm_ids: Array.from(copyTargetArmIds),
+      });
+      notify.success(res.data.message);
+      setCopyDialogOpen(false);
+      refreshAll();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to copy period');
+    } finally {
+      setCopySaving(false);
+    }
+  };
+
+  const openSwapDialog = () => {
+    setSwapArmId(visibleArms[0]?.id || '');
+    setSwapPeriodA('');
+    setSwapPeriodB('');
+    setSwapDialogOpen(true);
+  };
+
+  const handleSwapPeriods = async () => {
+    if (!swapArmId || !swapPeriodA || !swapPeriodB) return;
+    setSwapSaving(true);
+    try {
+      await timetableApi.swapPeriods({ class_arm_id: swapArmId, period_id_a: swapPeriodA, period_id_b: swapPeriodB });
+      notify.success('Periods swapped successfully');
+      setSwapDialogOpen(false);
+      refreshAll();
+    } catch (err) {
+      notify.error(err.response?.data?.message || 'Failed to swap periods');
+    } finally {
+      setSwapSaving(false);
+    }
+  };
+
   const filteredSubjects = subjects.filter((s) => (s.subject_name || '').toLowerCase().includes(subjectSearch.toLowerCase()));
   const visibleSubjectList = showAllSubjects ? filteredSubjects : filteredSubjects.slice(0, 8);
   const filteredTeachers = teachers.filter((t) => `${t.user?.fname || ''} ${t.user?.lname || ''}`.toLowerCase().includes(teacherSearch.toLowerCase()));
@@ -582,13 +702,14 @@ const GenerateTimetable = () => {
             </Typography>
           </Box>
         </Stack>
-        <Tooltip title="Full-school auto-generation is coming soon — use Auto Fill This Class or assign periods manually below for now.">
-          <span>
-            <Button variant="contained" startIcon={<AutoFixHighIcon />} disabled sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}>
-              Generate Timetable
-            </Button>
-          </span>
-        </Tooltip>
+        <Button
+          variant="contained"
+          startIcon={<AutoFixHighIcon />}
+          onClick={() => setGenerateConfirmOpen(true)}
+          sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' } }}
+        >
+          Generate Timetable
+        </Button>
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.25, mb: 2 }}>
@@ -806,7 +927,7 @@ const GenerateTimetable = () => {
                       <TableCell key={arm.id} align="center">
                         <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
                           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] }} />
-                          <Typography variant="subtitle2" fontWeight={700}>
+                          <Typography variant="subtitle2" fontWeight={800} sx={{ color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] }}>
                             {armLabel(arm)}
                           </Typography>
                           <IconButton
@@ -821,13 +942,18 @@ const GenerateTimetable = () => {
                           </IconButton>
                         </Stack>
                         <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
-                          <Box sx={{ position: 'relative', width: 20, height: 20 }}>
-                            <CircularProgress variant="determinate" value={100} size={20} thickness={5} sx={{ color: 'grey.200', position: 'absolute' }} />
-                            <CircularProgress variant="determinate" value={c.percent} size={20} thickness={5} sx={{ color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] }} />
-                          </Box>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" fontWeight={800} color="text.primary">
                             {c.assigned}/{c.total}
                           </Typography>
+                          <Box sx={{ position: 'relative', width: 22, height: 22 }}>
+                            <CircularProgress variant="determinate" value={100} size={22} thickness={5} sx={{ color: 'grey.200', position: 'absolute' }} />
+                            <CircularProgress variant="determinate" value={c.percent} size={22} thickness={5} sx={{ color: ARM_DOT_COLORS[idx % ARM_DOT_COLORS.length] }} />
+                            <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Typography sx={{ fontSize: 7 }} fontWeight={800}>
+                                {c.percent}%
+                              </Typography>
+                            </Box>
+                          </Box>
                         </Stack>
                       </TableCell>
                     );
@@ -1138,27 +1264,36 @@ const GenerateTimetable = () => {
                 Quick Actions
               </Typography>
               <Stack spacing={1}>
-                <Tooltip title="Coming soon">
-                  <span>
-                    <Button fullWidth disabled size="small" startIcon={<AutoAwesomeIcon fontSize="small" />} variant="outlined">
-                      Auto Fill This Class
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Coming soon">
-                  <span>
-                    <Button fullWidth disabled size="small" startIcon={<ContentCopyIcon fontSize="small" />} variant="outlined">
-                      Copy Period to Other Arms
-                    </Button>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Coming soon">
-                  <span>
-                    <Button fullWidth disabled size="small" startIcon={<SwapHorizIcon fontSize="small" />} variant="outlined">
-                      Swap Periods
-                    </Button>
-                  </span>
-                </Tooltip>
+                <Button
+                  fullWidth
+                  size="small"
+                  startIcon={<AutoAwesomeIcon fontSize="small" />}
+                  variant="outlined"
+                  onClick={handleAutoFillClass}
+                  disabled={autoFilling || visibleArmIds.size === 0}
+                >
+                  Auto Fill This Class
+                </Button>
+                <Button
+                  fullWidth
+                  size="small"
+                  startIcon={<ContentCopyIcon fontSize="small" />}
+                  variant="outlined"
+                  onClick={openCopyDialog}
+                  disabled={visibleArms.length < 2}
+                >
+                  Copy Period to Other Arms
+                </Button>
+                <Button
+                  fullWidth
+                  size="small"
+                  startIcon={<SwapHorizIcon fontSize="small" />}
+                  variant="outlined"
+                  onClick={openSwapDialog}
+                  disabled={nonBreakPeriods.length < 2 || visibleArms.length === 0}
+                >
+                  Swap Periods
+                </Button>
                 <Button
                   fullWidth
                   size="small"
@@ -1272,6 +1407,137 @@ const GenerateTimetable = () => {
           </Button>
           <Button variant="contained" size="small" color="error" onClick={handleClearClass} disabled={clearing} autoFocus>
             Clear
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={generateConfirmOpen} onClose={() => setGenerateConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Generate Timetable</DialogTitle>
+        <DialogContent>
+          <Typography>
+            This auto-fills every empty, non-break period across <strong>every active class arm in the school</strong>, using only
+            subject/teacher pairings that are already allocated — it never invents a teacher. Periods you've already assigned are left as-is;
+            a period with no safe subject available is left empty.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setGenerateConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleGenerateAll} disabled={generatingAll} autoFocus>
+            Generate
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={copyDialogOpen} onClose={() => setCopyDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Copy Period to Other Arms</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>From arm</InputLabel>
+              <Select label="From arm" value={copySourceArmId} onChange={(e) => setCopySourceArmId(e.target.value)}>
+                {visibleArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {armLabel(arm)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" fullWidth disabled={copySourceAssignedPeriods.length === 0}>
+              <InputLabel>Period</InputLabel>
+              <Select label="Period" value={copyPeriodId} onChange={(e) => setCopyPeriodId(e.target.value)}>
+                {copySourceAssignedPeriods.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {periodNumbers[p.id]} · {p.start_time?.slice(0, 5)}-{p.end_time?.slice(0, 5)} ·{' '}
+                    {gridByArm[copySourceArmId]?.[p.id]?.subject_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {copySourceAssignedPeriods.length === 0 && (
+              <Alert severity="info">This arm has no assigned periods to copy yet — pick a different arm.</Alert>
+            )}
+            <Box>
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                To these arms
+              </Typography>
+              <Stack spacing={0.25}>
+                {visibleArms
+                  .filter((a) => a.id !== copySourceArmId)
+                  .map((arm) => (
+                    <Stack key={arm.id} direction="row" alignItems="center" spacing={1}>
+                      <Checkbox size="small" checked={copyTargetArmIds.has(arm.id)} onChange={() => toggleCopyTargetArm(arm.id)} />
+                      <Typography variant="body2">{armLabel(arm)}</Typography>
+                    </Stack>
+                  ))}
+              </Stack>
+            </Box>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setCopyDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCopyPeriod}
+            disabled={!copyPeriodId || copyTargetArmIds.size === 0 || copySaving}
+            autoFocus
+          >
+            Copy
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={swapDialogOpen} onClose={() => setSwapDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Swap Periods</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Class arm</InputLabel>
+              <Select label="Class arm" value={swapArmId} onChange={(e) => setSwapArmId(e.target.value)}>
+                {visibleArms.map((arm) => (
+                  <MenuItem key={arm.id} value={arm.id}>
+                    {armLabel(arm)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" fullWidth>
+              <InputLabel>First period</InputLabel>
+              <Select label="First period" value={swapPeriodA} onChange={(e) => setSwapPeriodA(e.target.value)}>
+                {nonBreakPeriods.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {periodNumbers[p.id]} · {p.start_time?.slice(0, 5)}-{p.end_time?.slice(0, 5)} ·{' '}
+                    {gridByArm[swapArmId]?.[p.id]?.subject_name || 'Free'}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Second period</InputLabel>
+              <Select label="Second period" value={swapPeriodB} onChange={(e) => setSwapPeriodB(e.target.value)}>
+                {nonBreakPeriods
+                  .filter((p) => p.id !== swapPeriodA)
+                  .map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {periodNumbers[p.id]} · {p.start_time?.slice(0, 5)}-{p.end_time?.slice(0, 5)} ·{' '}
+                      {gridByArm[swapArmId]?.[p.id]?.subject_name || 'Free'}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <Alert severity="info">A swap that would double-book a teacher is rejected, not forced.</Alert>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setSwapDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleSwapPeriods} disabled={!swapPeriodA || !swapPeriodB || swapSaving} autoFocus>
+            Swap
           </Button>
         </DialogActions>
       </Dialog>

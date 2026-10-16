@@ -12,6 +12,11 @@ const timetableApi = {
   getClassArms: (params = {}) => tenantApi.get('/timetable/class-arms', { params }),
   getSubjects: (params = {}) => tenantApi.get('/timetable/subjects', { params }),
 
+  autoFillClassArm: (classArmId) => tenantApi.post(`/timetable/auto-fill/${classArmId}`),
+  autoFillAllClasses: () => tenantApi.post('/timetable/auto-fill-all'),
+  copyPeriod: (data) => tenantApi.post('/timetable/copy-period', data),
+  swapPeriods: (data) => tenantApi.post('/timetable/swap-periods', data),
+
   getTeacherSchedule: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}`, { params }),
   getMySchedule: (params = {}) => tenantApi.get('/timetable/my-schedule', { params }),
 

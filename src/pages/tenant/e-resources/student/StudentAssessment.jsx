@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -13,19 +13,22 @@ import {
   DialogTitle,
   Divider,
   LinearProgress,
-  List,
-  ListItemButton,
-  ListItemText,
+  Paper,
   Skeleton,
   Stack,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
+  IconAlertTriangle,
   IconArrowLeft,
   IconArrowRight,
   IconCheck,
-  IconPlayerPlay,
+  IconClock,
+  IconClipboardCheck,
+  IconMoodHappy,
   IconRotateClockwise,
+  IconTrophy,
 } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
@@ -41,7 +44,7 @@ const BCrumb = [
 
 const HUB_ROUTE = '/e-resources/student';
 
-const OPTION_LABELS = ['(A)', '(B)', '(C)', '(D)', '(E)', '(F)', '(G)', '(H)'];
+const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 const isServiceUnavailable = (error) =>
   error?.response?.status === 503 ||
@@ -65,9 +68,18 @@ const shuffle = (array) => {
   return copy;
 };
 
+const cardSx = (isDark) => ({
+  borderRadius: '14px',
+  border: '1px solid',
+  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+});
+
 const StudentAssessment = () => {
   const navigate = useNavigate();
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [searchParams] = useSearchParams();
 
   const mode = searchParams.get('mode') || 'weekly';
@@ -81,6 +93,7 @@ const StudentAssessment = () => {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [missingReference, setMissingReference] = useState(false);
   const [serviceDown, setServiceDown] = useState(false);
   const [quizMeta, setQuizMeta] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -131,13 +144,20 @@ const StudentAssessment = () => {
   }, [buildOptionOrders]);
 
   const loadQuiz = useCallback(async () => {
+    setMissingReference(false);
     if (mode === 'lesson' && !schemeOfWorkId) {
-      setError('Missing assessment reference.');
+      setMissingReference(true);
+      setError('This lesson assessment link is missing required information.');
       setLoading(false);
       return;
     }
     if (mode === 'weekly' && (!weekId || !classProgId)) {
-      setError('Missing weekly assessment reference.');
+      setMissingReference(true);
+      setError(
+        !weekId
+          ? 'This weekly assessment link is missing the week reference.'
+          : 'This weekly assessment link is missing your class/programme reference.',
+      );
       setLoading(false);
       return;
     }
@@ -250,7 +270,17 @@ const StudentAssessment = () => {
     return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
   };
 
+  const timerScheme =
+    remainingSeconds === null
+      ? null
+      : remainingSeconds <= 60
+        ? { bg: '#FEE2E2', color: '#991B1B' }
+        : remainingSeconds <= 120
+          ? { bg: '#FFEDD5', color: '#9A3412' }
+          : { bg: '#DCFCE7', color: '#166534' };
+
   const title = subjectName || weekName || 'Assessment';
+  const progressPercent = questions.length > 0 ? ((currentIdx + 1) / questions.length) * 100 : 0;
 
   return (
     <PageContainer title="Take Assessment" description="Weekly and lesson formative assessments">
@@ -258,66 +288,124 @@ const StudentAssessment = () => {
 
       {loading && (
         <Stack spacing={1.5}>
-          <Skeleton variant="rounded" height={70} />
-          <Skeleton variant="rounded" height={320} />
+          <Skeleton variant="rounded" height={80} sx={{ borderRadius: '14px' }} />
+          <Skeleton variant="rounded" height={340} sx={{ borderRadius: '14px' }} />
         </Stack>
       )}
 
       {!loading && serviceDown && (
-        <Alert
-          severity="warning"
-          action={<Button color="inherit" onClick={loadQuiz}>Retry</Button>}
-        >
-          Assessment service is temporarily unavailable. Please try again in a moment.
-        </Alert>
+        <Paper elevation={0} sx={{ ...cardSx(isDark), p: 3, textAlign: 'center' }}>
+          <Avatar sx={{ width: 52, height: 52, bgcolor: '#FFEDD5', color: '#EA580C', mx: 'auto', mb: 1.5 }}>
+            <IconAlertTriangle size={26} />
+          </Avatar>
+          <Typography sx={{ fontWeight: 800, fontSize: 15, mb: 0.5 }}>
+            Assessment service is temporarily unavailable
+          </Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mb: 2 }}>
+            Please try again in a moment.
+          </Typography>
+          <Button variant="contained" onClick={loadQuiz} sx={{ borderRadius: '8px', fontWeight: 700 }}>
+            Retry
+          </Button>
+        </Paper>
       )}
 
       {!loading && error && (
-        <Alert severity="error" action={<Button color="inherit" onClick={loadQuiz}>Retry</Button>}>
-          {error}
-        </Alert>
+        <Paper
+          elevation={0}
+          sx={{
+            ...cardSx(isDark),
+            p: 3,
+            textAlign: 'center',
+            borderColor: missingReference ? '#FECACA' : undefined,
+            bgcolor: missingReference ? (isDark ? 'rgba(220,38,38,0.08)' : '#FEF2F2') : undefined,
+          }}
+        >
+          <Avatar sx={{ width: 52, height: 52, bgcolor: '#FEE2E2', color: '#DC2626', mx: 'auto', mb: 1.5 }}>
+            <IconAlertTriangle size={26} />
+          </Avatar>
+          <Typography sx={{ fontWeight: 800, fontSize: 15, mb: 0.5 }}>
+            {missingReference ? 'This assessment link looks incomplete' : 'Could not load this assessment'}
+          </Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mb: 2, maxWidth: 420, mx: 'auto' }}>
+            {error}
+            {missingReference &&
+              ' Go back and open the assessment again from the weekly or lesson list — the link it uses should carry everything this page needs.'}
+          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="center">
+            <Button variant="outlined" startIcon={<IconArrowLeft size={15} />} onClick={() => navigate(HUB_ROUTE)} sx={{ borderRadius: '8px', fontWeight: 600 }}>
+              Back to E-Resources
+            </Button>
+            {!missingReference && (
+              <Button variant="contained" onClick={loadQuiz} sx={{ borderRadius: '8px', fontWeight: 700 }}>
+                Retry
+              </Button>
+            )}
+          </Stack>
+        </Paper>
       )}
 
       {!loading && !error && !serviceDown && questions.length === 0 && !submitted && (
-        <Alert severity="info">No formative available for this week yet. Enjoy your break!</Alert>
+        <Paper elevation={0} sx={{ ...cardSx(isDark), p: 4, textAlign: 'center' }}>
+          <Avatar sx={{ width: 56, height: 56, bgcolor: '#DCFCE7', color: '#16A34A', mx: 'auto', mb: 1.5 }}>
+            <IconMoodHappy size={28} />
+          </Avatar>
+          <Typography sx={{ fontWeight: 800, fontSize: 15, mb: 0.5 }}>Nothing to do here yet</Typography>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mb: 2 }}>
+            No formative assessment has been set for this {mode === 'weekly' ? 'week' : 'lesson'} yet. Enjoy your break!
+          </Typography>
+          <Button variant="outlined" startIcon={<IconArrowLeft size={15} />} onClick={() => navigate(HUB_ROUTE)} sx={{ borderRadius: '8px', fontWeight: 600 }}>
+            Back to E-Resources
+          </Button>
+        </Paper>
       )}
 
       {!loading && !error && !serviceDown && (questions.length > 0 || submitted) && (
-        <Card sx={{ mb: 2 }}>
-          <CardContent>
+        <Paper
+          elevation={0}
+          sx={{
+            ...cardSx(isDark),
+            mb: 2,
+            overflow: 'hidden',
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(37,99,235,0.1) 100%)'
+              : 'linear-gradient(135deg, #ffffff 0%, #EFF6FF 100%)',
+          }}
+        >
+          <Box sx={{ height: 3, background: 'linear-gradient(90deg, #2563EB, #2563EB88)' }} />
+          <Box sx={{ p: 2 }}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
               spacing={1.5}
               justifyContent="space-between"
               alignItems={{ xs: 'flex-start', sm: 'center' }}
             >
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Button
-                  size="small"
-                  startIcon={<IconArrowLeft size={15} />}
-                  onClick={() => navigate(HUB_ROUTE)}
-                >
-                  Back
-                </Button>
-                <Typography variant="subtitle1" fontWeight={700}>
-                  {mode === 'weekly'
-                    ? `Take ${weekName ? `${weekName} ` : ''}Weekly Assessment`
-                    : 'Take Formative'}
-                </Typography>
+              <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap" useFlexGap>
+                <Avatar sx={{ width: 36, height: 36, bgcolor: 'rgba(37,99,235,0.12)', color: '#2563EB' }}>
+                  <IconClipboardCheck size={19} />
+                </Avatar>
+                <Box>
+                  <Typography sx={{ fontWeight: 800, fontSize: 14.5, lineHeight: 1.2 }}>
+                    {mode === 'weekly' ? `${weekName ? `${weekName} ` : ''}Weekly Assessment` : 'Formative Assessment'}
+                  </Typography>
+                  {subjectName && (
+                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>{subjectName}</Typography>
+                  )}
+                </Box>
                 {questions.length > 0 && (
                   <Chip
                     size="small"
                     label={`Question ${Math.min(currentIdx + 1, questions.length)} / ${questions.length}`}
+                    sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1E40AF' }}
                   />
                 )}
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
-                {remainingSeconds !== null && !submitted && (
+                {timerScheme && !submitted && (
                   <Chip
-                    color={remainingSeconds <= 60 ? 'error' : 'success'}
-                    variant="outlined"
-                    label={`Time ${formatTime(remainingSeconds)}`}
-                    icon={<IconPlayerPlay size={14} />}
+                    icon={<IconClock size={14} color={timerScheme.color} />}
+                    label={formatTime(remainingSeconds)}
+                    sx={{ fontWeight: 800, fontSize: 12, bgcolor: timerScheme.bg, color: timerScheme.color }}
                   />
                 )}
                 {!submitted && questions.length > 0 && (
@@ -326,73 +414,82 @@ const StudentAssessment = () => {
                     color="error"
                     disabled={submitting}
                     onClick={() => setConfirmOpen(true)}
+                    sx={{ borderRadius: '8px', fontWeight: 700 }}
                   >
                     {submitting ? <CircularProgress size={16} color="inherit" /> : 'Submit'}
                   </Button>
                 )}
+                <Button
+                  size="small"
+                  startIcon={<IconArrowLeft size={14} />}
+                  onClick={() => navigate(HUB_ROUTE)}
+                  sx={{ fontWeight: 600 }}
+                >
+                  Exit
+                </Button>
               </Stack>
             </Stack>
             {questions.length > 0 && (
               <LinearProgress
                 variant="determinate"
-                value={((currentIdx + 1) / questions.length) * 100}
-                sx={{ mt: 1.5, height: 8, borderRadius: 4 }}
+                value={progressPercent}
+                sx={{
+                  mt: 1.5,
+                  height: 7,
+                  borderRadius: 4,
+                  bgcolor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
+                  '& .MuiLinearProgress-bar': { bgcolor: '#2563EB', borderRadius: 4 },
+                }}
               />
             )}
-          </CardContent>
-        </Card>
+          </Box>
+        </Paper>
       )}
 
       {!loading && !error && !serviceDown && submitted && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6" fontWeight={700} gutterBottom>
-              Assessment Completed
-            </Typography>
-            <Stack direction="row" spacing={4} divider={<Divider orientation="vertical" flexItem />}>
+        <Card sx={cardSx(isDark)}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" mb={2}>
+              <Avatar sx={{ width: 48, height: 48, bgcolor: '#DCFCE7', color: '#16A34A' }}>
+                <IconTrophy size={24} />
+              </Avatar>
               <Box>
-                <Typography variant="h5" fontWeight={700}>
-                  {questions.length > 0
-                    ? Math.round((answeredCount / questions.length) * 100)
-                    : 0}
-                  %
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Answered
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" fontWeight={700}>
-                  {questions.length}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Questions
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" fontWeight={700}>
-                  {answeredCount}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Responded
+                <Typography sx={{ fontWeight: 800, fontSize: 16 }}>Assessment Completed</Typography>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                  Your responses have been recorded
+                  {reportData?.weekId ? ` for week reference ${reportData.weekId}` : ''}.
                 </Typography>
               </Box>
             </Stack>
-            <Divider sx={{ my: 2 }} />
-            <Alert severity="success">
-              Your responses have been recorded
-              {reportData?.weekId ? ` for week reference ${reportData.weekId}` : ''}.
-            </Alert>
-            <Stack direction="row" spacing={1} mt={2}>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5, mb: 2.5 }}>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, textAlign: 'center' }}>
+                <Typography sx={{ fontSize: 26, fontWeight: 800, color: '#2563EB' }}>
+                  {questions.length > 0 ? Math.round((answeredCount / questions.length) * 100) : 0}%
+                </Typography>
+                <Typography sx={{ fontSize: 11.5, color: 'text.secondary', fontWeight: 600 }}>Answered</Typography>
+              </Box>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, textAlign: 'center' }}>
+                <Typography sx={{ fontSize: 26, fontWeight: 800, color: '#9333EA' }}>{questions.length}</Typography>
+                <Typography sx={{ fontSize: 11.5, color: 'text.secondary', fontWeight: 600 }}>Questions</Typography>
+              </Box>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, textAlign: 'center' }}>
+                <Typography sx={{ fontSize: 26, fontWeight: 800, color: '#16A34A' }}>{answeredCount}</Typography>
+                <Typography sx={{ fontSize: 11.5, color: 'text.secondary', fontWeight: 600 }}>Responded</Typography>
+              </Box>
+            </Box>
+
+            <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
                 startIcon={<IconRotateClockwise size={16} />}
                 disabled={retaking}
                 onClick={handleRetake}
+                sx={{ borderRadius: '8px', fontWeight: 600 }}
               >
                 {retaking ? <CircularProgress size={16} color="inherit" /> : 'Retake Assessment'}
               </Button>
-              <Button variant="contained" onClick={() => navigate(HUB_ROUTE)}>
+              <Button variant="contained" onClick={() => navigate(HUB_ROUTE)} sx={{ borderRadius: '8px', fontWeight: 700 }}>
                 Back to E-Resources
               </Button>
             </Stack>
@@ -401,65 +498,77 @@ const StudentAssessment = () => {
       )}
 
       {!loading && !error && !serviceDown && !submitted && currentQuestion && (
-        <Card>
-          <CardContent>
+        <Card sx={cardSx(isDark)}>
+          <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
             <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-              <Chip size="small" label={`${currentQuestion.mark ?? 1} Mark(s)`} color="primary" variant="outlined" />
-              <Typography variant="caption" color="text.secondary">
+              <Chip
+                size="small"
+                label={`${currentQuestion.mark ?? 1} Mark${(currentQuestion.mark ?? 1) === 1 ? '' : 's'}`}
+                sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#F3E8FF', color: '#7C3AED' }}
+              />
+              <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
                 Question {currentIdx + 1} of {questions.length}
               </Typography>
             </Stack>
-            <Box mb={2}>
-              <Typography
-                variant="subtitle1"
-                component="div"
-                dangerouslySetInnerHTML={{ __html: currentQuestion.question ?? '' }}
-              />
-            </Box>
-            <List>
+            <Box
+              sx={{ fontSize: 15, fontWeight: 700, color: '#0f172a', lineHeight: 1.5, mb: 2 }}
+              dangerouslySetInnerHTML={{ __html: currentQuestion.question ?? '' }}
+            />
+            <Stack spacing={1}>
               {currentOrder.map((originalIndex, displayIdx) => {
                 const option = currentOptions[originalIndex];
                 if (!option) return null;
                 const selected = answers[currentQuestion.id]?.chosen === originalIndex;
                 return (
-                  <ListItemButton
+                  <Box
                     key={originalIndex}
-                    selected={selected}
                     onClick={() => selectAnswer(currentQuestion, originalIndex, option.text)}
                     sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.25,
+                      p: 1.25,
+                      borderRadius: '10px',
+                      cursor: 'pointer',
                       border: '1px solid',
-                      borderColor: selected ? 'primary.main' : 'divider',
-                      borderRadius: 1,
-                      mb: 1,
+                      borderColor: selected ? '#2563EB' : isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
+                      bgcolor: selected ? (isDark ? 'rgba(37,99,235,0.1)' : '#EFF6FF') : 'transparent',
+                      transition: 'all 150ms ease',
+                      '&:hover': {
+                        borderColor: '#2563EB',
+                        bgcolor: isDark ? 'rgba(37,99,235,0.06)' : '#F8FAFF',
+                      },
                     }}
                   >
-                    <ListItemText
-                      primary={
-                        <Stack direction="row" spacing={1}>
-                          <Typography fontWeight={700}>
-                            {OPTION_LABELS[displayIdx] ?? `${displayIdx + 1}.`}
-                          </Typography>
-                          <Typography
-                            component="span"
-                            dangerouslySetInnerHTML={{ __html: option.text ?? '' }}
-                          />
-                        </Stack>
-                      }
+                    <Avatar
+                      sx={{
+                        width: 26,
+                        height: 26,
+                        fontSize: 11.5,
+                        fontWeight: 800,
+                        bgcolor: selected ? '#2563EB' : isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9',
+                        color: selected ? '#fff' : '#64748B',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {OPTION_LABELS[displayIdx] ?? displayIdx + 1}
+                    </Avatar>
+                    <Typography
+                      component="span"
+                      sx={{ fontSize: 13, color: '#1e293b', flex: 1 }}
+                      dangerouslySetInnerHTML={{ __html: option.text ?? '' }}
                     />
-                    {selected && <IconCheck size={18} color="currentColor" />}
-                  </ListItemButton>
+                    {selected && <IconCheck size={18} color="#2563EB" style={{ flexShrink: 0 }} />}
+                  </Box>
                 );
               })}
-            </List>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              mt={2}
-            >
+            </Stack>
+            <Stack direction="row" justifyContent="space-between" mt={2.5}>
               <Button
                 startIcon={<IconArrowLeft size={16} />}
                 disabled={currentIdx === 0}
                 onClick={() => setCurrentIdx((idx) => Math.max(0, idx - 1))}
+                sx={{ borderRadius: '8px', fontWeight: 600 }}
               >
                 Previous
               </Button>
@@ -467,9 +576,8 @@ const StudentAssessment = () => {
                 variant="contained"
                 endIcon={<IconArrowRight size={16} />}
                 disabled={currentIdx >= questions.length - 1}
-                onClick={() =>
-                  setCurrentIdx((idx) => Math.min(questions.length - 1, idx + 1))
-                }
+                onClick={() => setCurrentIdx((idx) => Math.min(questions.length - 1, idx + 1))}
+                sx={{ borderRadius: '8px', fontWeight: 700 }}
               >
                 Next
               </Button>
@@ -478,40 +586,90 @@ const StudentAssessment = () => {
         </Card>
       )}
 
-      {!loading && !submitted && (
-        <Card sx={{ mt: 2 }}>
+      {!loading && !submitted && questions.length > 0 && (
+        <Card sx={{ ...cardSx(isDark), mt: 2 }}>
           <CardContent>
-            <Typography variant="subtitle2" gutterBottom>
-              Question navigator
-            </Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.5}>
+              <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: '#0f172a' }}>Question Navigator</Typography>
+              <Stack direction="row" spacing={1.5}>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#16A34A' }} />
+                  <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>Answered</Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#2563EB' }} />
+                  <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>Current</Typography>
+                </Stack>
+                <Stack direction="row" spacing={0.5} alignItems="center">
+                  <Box sx={{ width: 9, height: 9, borderRadius: '50%', border: '1px solid #CBD5E1' }} />
+                  <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>Unanswered</Typography>
+                </Stack>
+              </Stack>
+            </Stack>
             <Stack direction="row" flexWrap="wrap" gap={1}>
-              {questions.map((q, idx) => (
-                <Button
-                  key={q.id}
-                  size="small"
-                  variant={idx === currentIdx ? 'contained' : 'outlined'}
-                  color={answers[q.id] ? 'success' : 'primary'}
-                  onClick={() => setCurrentIdx(idx)}
-                >
-                  {idx + 1}
-                </Button>
-              ))}
+              {questions.map((q, idx) => {
+                const isCurrent = idx === currentIdx;
+                const isAnswered = Boolean(answers[q.id]);
+                return (
+                  <Box
+                    key={q.id}
+                    component="button"
+                    onClick={() => setCurrentIdx(idx)}
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: '9px',
+                      border: '1px solid',
+                      cursor: 'pointer',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      borderColor: isCurrent ? '#2563EB' : isAnswered ? '#16A34A' : isDark ? 'rgba(255,255,255,0.15)' : '#E5E7EB',
+                      bgcolor: isCurrent ? '#2563EB' : isAnswered ? '#DCFCE7' : 'transparent',
+                      color: isCurrent ? '#fff' : isAnswered ? '#166534' : '#64748B',
+                    }}
+                  >
+                    {idx + 1}
+                  </Box>
+                );
+              })}
             </Stack>
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight={700}>End Assessment?</DialogTitle>
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        slotProps={{ paper: { sx: { borderRadius: '16px' } } }}
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar sx={{ width: 38, height: 38, bgcolor: '#FFEDD5', color: '#EA580C' }}>
+              <IconAlertTriangle size={20} />
+            </Avatar>
+            <Typography sx={{ fontWeight: 800, fontSize: 15 }}>End Assessment?</Typography>
+          </Stack>
+        </DialogTitle>
+        <Divider />
         <DialogContent>
-          <Typography variant="body2">
-            Are you sure you want to submit your answers? You have responded to {answeredCount} of{' '}
-            {questions.length} questions.
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 1 }}>
+            Are you sure you want to submit your answers? You have responded to{' '}
+            <strong>{answeredCount}</strong> of <strong>{questions.length}</strong> questions.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>No, Continue</Button>
-          <Button variant="contained" color="error" onClick={handleSubmit} disabled={submitting}>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setConfirmOpen(false)} sx={{ fontWeight: 600 }}>
+            No, Continue
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleSubmit}
+            disabled={submitting}
+            sx={{ borderRadius: '8px', fontWeight: 700 }}
+          >
             {submitting ? <CircularProgress size={16} color="inherit" /> : 'Yes, Submit'}
           </Button>
         </DialogActions>

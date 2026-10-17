@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -102,7 +102,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, accent = '#2563EB', accent
 // header + accent left border + progress block + status banner + footer
 // action) so the student and teacher lesson-note experiences read as one
 // product instead of two different styles.
-const StudentSubjectCard = ({ sub, isSelected, onOpen }) => {
+const StudentSubjectCard = ({ sub, isSelected, isLoadingOutline, onOpen }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -273,21 +273,30 @@ const StudentSubjectCard = ({ sub, isSelected, onOpen }) => {
         </Box>
       </Box>
 
-      {/* ── Footer action ── */}
+      {/* ── Footer action — shows its own spinner the instant this card is
+          the one being opened, so a click always gives visible feedback
+          even before the page scrolls down to the loaded outline ── */}
       <Box sx={{ p: 1.25, pt: 1, borderTop: '1px solid', borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6' }}>
         <Button
           fullWidth
           variant="contained"
           color="primary"
           size="small"
-          startIcon={<IconBooks size={14} />}
+          disabled={isSelected && isLoadingOutline}
+          startIcon={
+            isSelected && isLoadingOutline ? (
+              <CircularProgress size={13} color="inherit" />
+            ) : (
+              <IconBooks size={14} />
+            )
+          }
           onClick={(e) => {
             e.stopPropagation();
             onOpen(sub.subject_id);
           }}
           sx={{ fontWeight: 600, fontSize: '11px', textTransform: 'none', py: 0.5, borderRadius: '5px' }}
         >
-          View Lesson Outline
+          {isSelected && isLoadingOutline ? 'Loading outline…' : 'View Lesson Outline'}
         </Button>
       </Box>
     </Paper>
@@ -311,6 +320,7 @@ const StudentEResource = () => {
   const [quizVisitCount, setQuizVisitCount] = useState(null);
   const [outlineLoading, setOutlineLoading] = useState(false);
   const [openWeekIndex, setOpenWeekIndex] = useState(0);
+  const outlineSectionRef = useRef(null);
 
   const subjects = useMemo(
     () => subjectsData?.subjects_with_lessons ?? [],
@@ -397,6 +407,12 @@ const StudentEResource = () => {
       setOutline(null);
       setQuizVisitCount(null);
       setOpenWeekIndex(0);
+      // The outline panel sits below the whole subject grid, so a click on
+      // an earlier card can land off-screen with no visible change — scroll
+      // it into view right away instead of leaving the user guessing.
+      requestAnimationFrame(() => {
+        outlineSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
       try {
         const res = await tenantAssessmentApi.getSubjectAssessment({
           subId: subjectId,
@@ -449,10 +465,17 @@ const StudentEResource = () => {
   };
 
   const openWeeklyAssessment = (week) => {
+    // classProgId drives the random-question lookup on the assessment page
+    // — navigating without it used to land on a page that silently said
+    // "Missing weekly assessment reference" instead of anything useful.
+    if (!hub?.classProgId) {
+      notify.error('Your class/programme context is not available yet. Please refresh and try again.');
+      return;
+    }
     const params = new URLSearchParams({
       mode: 'weekly',
       weekId: String(week.id),
-      classProgId: String(hub?.classProgId ?? ''),
+      classProgId: String(hub.classProgId),
       weekName: week.week_name ?? '',
     });
     navigate(`${ASSESSMENT_ROUTE}?${params.toString()}`);
@@ -640,6 +663,7 @@ const StudentEResource = () => {
                           <StudentSubjectCard
                             sub={sub}
                             isSelected={sub.subject_id === selectedSubjectId}
+                            isLoadingOutline={outlineLoading}
                             onOpen={loadOutline}
                           />
                         </Grid>
@@ -650,7 +674,7 @@ const StudentEResource = () => {
               </Card>
 
               {selectedSubject && (
-                <Card sx={{ ...cardSx(isDark), overflow: 'hidden' }}>
+                <Card ref={outlineSectionRef} sx={{ ...cardSx(isDark), overflow: 'hidden', scrollMarginTop: 16 }}>
                   <SectionHeader
                     icon={IconClipboardList}
                     title={`${selectedSubject.subject_name} Outline`}

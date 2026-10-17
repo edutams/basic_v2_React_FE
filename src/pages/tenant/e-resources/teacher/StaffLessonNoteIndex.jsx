@@ -20,12 +20,16 @@ import {
   useTheme,
 } from '@mui/material';
 import {
+  IconAlertTriangle,
   IconArrowLeft,
   IconBook,
   IconCheck,
   IconExternalLink,
+  IconGauge,
+  IconInfoCircle,
   IconNotes,
   IconProgressCheck,
+  IconUsers,
   IconVideo,
 } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -35,6 +39,7 @@ import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
 import { fetchActiveTenantSessionTerm, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { tenantLessonNoteApi } from '@/api/tenant/e-resources/lessonNoteApi';
+import StatCard from '@/components/shared/StatCard';
 import LessonContentTab from './LessonContentTab';
 
 const BCrumb = [
@@ -106,20 +111,21 @@ const SubjectCard = ({ item, onSelect }) => {
     <Paper
       elevation={0}
       sx={{
-        borderRadius: '10px',
+        borderRadius: '14px',
         border: '1px solid',
         borderLeft: '4px solid',
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#D8DEE6',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
         borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 2px 8px rgba(15,23,42,0.08)',
-        transition: 'all 0.2s ease-in-out',
+        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
+        transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         '&:hover': {
-          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 6px 18px rgba(15,23,42,0.12)',
-          borderColor: theme.palette.primary.main,
+          transform: 'translateY(-2px)',
+          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 8px 20px rgba(15,23,42,0.1)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#94a3b8',
           borderLeftColor: accentColor,
         },
       }}
@@ -762,9 +768,81 @@ const StaffLessonNoteIndex = () => {
 
   const filtersReady = selectedSesTerm && selectedProgId && selectedClassDesc;
 const filterMd = isAdmin ? 2 : 2;
+
+  // ── Workspace intelligence — a quick read on coverage across every
+  // subject the current filters return, before picking one to work on.
+  const workspaceStats = useMemo(() => {
+    const totalSubjects = teachingSubjects.length;
+    const totalLearners = teachingSubjects.reduce((sum, s) => sum + (s.registered_students || 0), 0);
+    const completed = teachingSubjects.filter((s) => (s.lesson_plan_percentage ?? 0) >= 100).length;
+    const notStarted = teachingSubjects.filter((s) => (s.lesson_plan_percentage ?? 0) === 0).length;
+    const avgCoverage = totalSubjects
+      ? Math.round(
+          teachingSubjects.reduce((sum, s) => sum + (s.lesson_plan_percentage ?? 0), 0) / totalSubjects,
+        )
+      : 0;
+    return { totalSubjects, totalLearners, completed, notStarted, avgCoverage };
+  }, [teachingSubjects]);
   return (
     <PageContainer title="Lesson Notes" description="Create and manage lesson notes, plans and videos">
       <Breadcrumb title="Teaching Resources" items={BCrumb} />
+
+      {/* ── Workspace intelligence — coverage across the filtered subjects ── */}
+      {!isDeepLink && !selectedSubject && (
+        <Grid container spacing={2} sx={{ mb: 2.5 }}>
+          <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+            <StatCard
+              count={workspaceStats.totalSubjects}
+              label="Teaching Subjects"
+              subtitle="In this filter"
+              icon={IconNotes}
+              colorIndex={0}
+              loading={loadingSubjects}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+            <StatCard
+              count={workspaceStats.totalLearners}
+              label="Registered Learners"
+              subtitle="Across these subjects"
+              icon={IconUsers}
+              colorIndex={1}
+              loading={loadingSubjects}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+            <StatCard
+              count={`${workspaceStats.avgCoverage}%`}
+              label="Average Coverage"
+              subtitle="Lesson notes generated"
+              icon={IconGauge}
+              colorIndex={2}
+              progress={workspaceStats.avgCoverage}
+              loading={loadingSubjects}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+            <StatCard
+              count={workspaceStats.completed}
+              label="Fully Covered"
+              subtitle="100% of topics logged"
+              icon={IconCheck}
+              colorIndex={3}
+              loading={loadingSubjects}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+            <StatCard
+              count={workspaceStats.notStarted}
+              label="Needs Attention"
+              subtitle="No content started yet"
+              icon={IconAlertTriangle}
+              colorIndex={4}
+              loading={loadingSubjects}
+            />
+          </Grid>
+        </Grid>
+      )}
 
       {/* ── Filters + Content Card ───────────────────────────────────── */}
       <Card
@@ -1026,11 +1104,32 @@ const filterMd = isAdmin ? 2 : 2;
 
       {!isDeepLink && !selectedSubject && (
         <>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              p: 1.5,
+              mb: 2,
+              borderRadius: '12px',
+              bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.08)' : '#EFF6FF'),
+              border: '1px solid',
+              borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.25)' : '#BFDBFE'),
+            }}
+          >
+            <IconInfoCircle size={18} color="#2563EB" style={{ flexShrink: 0 }} />
+            <Typography sx={{ fontSize: 12, color: (theme) => (theme.palette.mode === 'dark' ? '#cbd5e1' : '#1e3a8a') }}>
+              Pick a subject below to open its workspace — each one has a <strong>Lesson Plan</strong>,{' '}
+              <strong>Lesson Note</strong> and <strong>Video Content</strong> tab for every week on the
+              scheme of work.
+            </Typography>
+          </Box>
+
           {loadingSubjects ? (
             <Grid container spacing={2}>
               {[0, 1, 2].map((item) => (
                 <Grid key={item} size={{ xs: 12, md: 4 }}>
-                  <Skeleton variant="rounded" height={140} />
+                  <Skeleton variant="rounded" height={140} sx={{ borderRadius: '14px' }} />
                 </Grid>
               ))}
             </Grid>
@@ -1084,16 +1183,38 @@ const filterMd = isAdmin ? 2 : 2;
                   variant="scrollable"
                   scrollButtons="auto"
                   allowScrollButtonsMobile
-                  sx={{ mb: 2.5, borderBottom: 1, borderColor: 'divider' }}
+                  slotProps={{ indicator: { sx: { display: 'none' } } }}
+                  sx={{
+                    mb: 2.5,
+                    minHeight: 44,
+                    p: 0.5,
+                    borderRadius: '12px',
+                    bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F1F5F9'),
+                    '& .MuiTabs-flexContainer': { gap: 0.5 },
+                  }}
                 >
                   {CONTENT_TABS.map((tab, index) => (
                     <Tab
                       key={tab.key}
                       value={index}
                       label={tab.label}
-                      icon={<tab.Icon size={18} />}
+                      icon={<tab.Icon size={17} />}
                       iconPosition="start"
-                      sx={{ textTransform: 'none', fontWeight: 700, minHeight: 48 }}
+                      disableRipple
+                      sx={{
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        minHeight: 38,
+                        borderRadius: '9px',
+                        color: 'text.secondary',
+                        transition: 'all 150ms ease',
+                        '&.Mui-selected': {
+                          color: '#fff',
+                          bgcolor: '#2563EB',
+                          boxShadow: '0 2px 6px rgba(37,99,235,0.35)',
+                        },
+                      }}
                     />
                   ))}
                 </Tabs>

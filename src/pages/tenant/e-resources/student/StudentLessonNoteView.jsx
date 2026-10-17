@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -12,35 +13,35 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Grid,
-  IconButton,
+  FormControlLabel,
   LinearProgress,
-  List,
-  ListItem,
   Paper,
   Radio,
   RadioGroup,
   Rating,
-  FormControlLabel,
   Skeleton,
   Stack,
-  TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
   IconArrowLeft,
+  IconBook2,
   IconChecks,
   IconFileText,
+  IconMessageCircle2,
   IconPlayerPlay,
   IconRefresh,
-  IconSend,
+  IconSparkles,
+  IconStarFilled,
 } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantStudentApi } from '@/api/tenant/e-resources/studentApi';
-import { tenantForumApi, tenantSharedApi } from '@/api/tenant/e-resources/browseApi';
+import { tenantSharedApi } from '@/api/tenant/e-resources/browseApi';
+import { ForumThread } from '@/pages/tenant/e-resources/teacher/lessonNoteShared';
 
 const BCrumb = [
   { to: '/', title: 'Dashboard' },
@@ -50,26 +51,20 @@ const BCrumb = [
 
 const ASSESSMENT_ROUTE = '/e-resources/student/assessment';
 
-const forumGetMessages = tenantForumApi.getMessages || tenantForumApi.list;
-const forumSendMessage = tenantForumApi.sendMessage || tenantForumApi.send;
 const sharedGetRatings = tenantSharedApi.getRatings || tenantSharedApi.getLessonRatings;
 const sharedRateLesson = tenantSharedApi.rateLesson || tenantSharedApi.rateLessons;
-
-const parseChatMessage = (raw) => {
-  if (!raw) return { text: '', media: '' };
-  if (typeof raw === 'object') return { text: raw.text ?? '', media: raw.media ?? '' };
-  try {
-    const parsed = JSON.parse(raw);
-    return { text: parsed?.text ?? '', media: parsed?.media ?? '' };
-  } catch {
-    return { text: String(raw), media: '' };
-  }
-};
 
 const contentItems = (content) => {
   if (!content) return [];
   const list = Array.isArray(content) ? content : [content];
   return list.filter(Boolean);
+};
+
+const cardSx = {
+  borderRadius: '14px',
+  border: '1px solid',
+  borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB'),
+  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
 };
 
 const renderContentItem = (item, key) => {
@@ -78,15 +73,23 @@ const renderContentItem = (item, key) => {
   const lower = src.toLowerCase();
   if (lower.endsWith('.pdf')) {
     return (
-      <Paper key={key} variant="outlined" sx={{ height: 700, overflow: 'hidden' }}>
+      <Paper
+        key={key}
+        variant="outlined"
+        sx={{ height: 700, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
+      >
         <iframe title={`lesson-${key}`} src={src} width="100%" height="100%" style={{ border: 0 }} />
       </Paper>
     );
   }
   if (/\.(png|jpe?g|gif|webp|svg)$/.test(lower)) {
     return (
-      <Paper key={key} variant="outlined" sx={{ p: 1, textAlign: 'center' }}>
-        <Box component="img" src={src} alt="" sx={{ maxWidth: '100%', maxHeight: 700 }} />
+      <Paper
+        key={key}
+        variant="outlined"
+        sx={{ p: 1, textAlign: 'center', borderRadius: '10px', borderColor: '#E5E7EB' }}
+      >
+        <Box component="img" src={src} alt="" sx={{ maxWidth: '100%', maxHeight: 700, borderRadius: '6px' }} />
       </Paper>
     );
   }
@@ -98,7 +101,7 @@ const renderContentItem = (item, key) => {
       target="_blank"
       rel="noopener noreferrer"
       startIcon={<IconFileText size={16} />}
-      sx={{ mb: 1 }}
+      sx={{ mb: 1, borderRadius: '8px', fontWeight: 600, justifyContent: 'flex-start' }}
     >
       Open lesson document
     </Button>
@@ -108,6 +111,8 @@ const renderContentItem = (item, key) => {
 const StudentLessonNoteView = () => {
   const navigate = useNavigate();
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [searchParams] = useSearchParams();
 
   const schemeOfWorkId = searchParams.get('schemeOfWorkId');
@@ -116,7 +121,6 @@ const StudentLessonNoteView = () => {
   const weekId = searchParams.get('weekId');
   const sessionTermId = searchParams.get('sessionTermId');
   const classArmId = searchParams.get('classArmId');
-  const authUserId = searchParams.get('userId');
   const subjectName = searchParams.get('subjectName') || '';
   const weekName = searchParams.get('weekName') || '';
 
@@ -132,10 +136,6 @@ const StudentLessonNoteView = () => {
   const [readingDialogOpen, setReadingDialogOpen] = useState(false);
   const [readingChoice, setReadingChoice] = useState('Ahead');
   const [savingReading, setSavingReading] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [forumBusy, setForumBusy] = useState(false);
-  const [forumText, setForumText] = useState('');
-  const [sending, setSending] = useState(false);
 
   const lessonNote = useMemo(() => {
     const notes = contentData?.lessonNote;
@@ -239,29 +239,6 @@ const StudentLessonNoteView = () => {
     loadRatings();
   }, [loadRatings]);
 
-  const loadForum = useCallback(async () => {
-    if (!lessonNoteId || !forumGetMessages) return;
-    setForumBusy(true);
-    try {
-      const res = await forumGetMessages({
-        model_id: lessonNoteId,
-        scope: 'lessonNote',
-      });
-      setMessages(Array.isArray(res) ? res : []);
-    } catch {
-      setMessages([]);
-    } finally {
-      setForumBusy(false);
-    }
-  }, [lessonNoteId]);
-
-  useEffect(() => {
-    loadForum();
-    if (!lessonNoteId) return undefined;
-    const timer = setInterval(loadForum, 15000);
-    return () => clearInterval(timer);
-  }, [loadForum, lessonNoteId]);
-
   const handleRate = async (value) => {
     if (!schemeOfWorkId || !sharedRateLesson) return;
     setRatingBusy(true);
@@ -316,25 +293,6 @@ const StudentLessonNoteView = () => {
     }
   };
 
-  const handleSendForumMessage = async () => {
-    const text = forumText.trim();
-    if (!text || !lessonNoteId || !forumSendMessage) return;
-    setSending(true);
-    try {
-      await forumSendMessage({
-        model_id: lessonNoteId,
-        scope: 'lessonNote',
-        message: text,
-      });
-      setForumText('');
-      await loadForum();
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Unable to send message');
-    } finally {
-      setSending(false);
-    }
-  };
-
   const openAssessment = () => {
     const params = new URLSearchParams({
       mode: 'lesson',
@@ -349,81 +307,130 @@ const StudentLessonNoteView = () => {
   };
 
   const displayItems = contentItems(contentData?.content);
+  const readingPercent = Number(progress?.reading_progress_percent ?? 0);
 
   return (
     <PageContainer title="Lesson Note" description="View your lesson note content">
       <Breadcrumb title={subjectName || 'Lesson Note'} items={BCrumb} />
 
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
+      {/* ── Hero header — subject, week & actions at a glance ────────────── */}
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 2,
+          borderRadius: '14px',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#BFDBFE',
+          background: isDark
+            ? 'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(37,99,235,0.1) 100%)'
+            : 'linear-gradient(135deg, #ffffff 0%, #EFF6FF 100%)',
+        }}
+      >
+        <Box sx={{ height: 3, background: 'linear-gradient(90deg, #2563EB, #2563EB88)' }} />
+        <Box sx={{ p: 2 }}>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
             spacing={1.5}
             justifyContent="space-between"
             alignItems={{ xs: 'flex-start', sm: 'center' }}
           >
-            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(37,99,235,0.12)', color: '#2563EB' }}>
+                <IconBook2 size={21} />
+              </Avatar>
+              <Box>
+                <Typography sx={{ fontWeight: 800, fontSize: 15.5, lineHeight: 1.2 }}>
+                  {subjectName || 'Lesson Note'}
+                </Typography>
+                <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" sx={{ mt: 0.4 }}>
+                  {weekName && (
+                    <Chip
+                      label={weekName}
+                      size="small"
+                      sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1E40AF' }}
+                    />
+                  )}
+                  {meta?.student_name && (
+                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
+                      {meta.student_name}
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
+
+            <Stack direction="row" spacing={1}>
               <Button
                 size="small"
                 startIcon={<IconArrowLeft size={15} />}
                 onClick={() => navigate('/e-resources/student')}
+                sx={{ fontWeight: 600 }}
               >
                 Back
               </Button>
-              {weekName && <Chip label={weekName} size="small" />}
-              {meta?.student_name && (
-                <Typography variant="body2" color="text.secondary">
-                  {meta.student_name}
-                </Typography>
-              )}
-            </Stack>
-            <Stack direction="row" spacing={1}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<IconRefresh size={15} />}
+                onClick={loadContent}
+                sx={{ borderRadius: '8px', fontWeight: 600 }}
+              >
+                Reload
+              </Button>
               {lessonNote?.qz_scheme_id != null && (
                 <Button
+                  size="small"
                   variant="contained"
                   startIcon={<IconPlayerPlay size={15} />}
                   onClick={openAssessment}
+                  sx={{ borderRadius: '8px', fontWeight: 700 }}
                 >
                   Take Assessment
                 </Button>
               )}
-              <Button
-                variant="outlined"
-                startIcon={<IconRefresh size={15} />}
-                onClick={loadContent}
-              >
-                Reload
-              </Button>
             </Stack>
           </Stack>
-        </CardContent>
-      </Card>
+        </Box>
+      </Paper>
 
       {unavailable && (
         <Alert
           severity="warning"
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, borderRadius: '10px' }}
           action={<Button color="inherit" onClick={loadContent}>Retry</Button>}
         >
           Lesson content service is temporarily unavailable. Please try again in a moment.
         </Alert>
       )}
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" onClick={loadContent}>Retry</Button>}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2, borderRadius: '10px' }}
+          action={<Button color="inherit" onClick={loadContent}>Retry</Button>}
+        >
           {error}
         </Alert>
       )}
 
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 8 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
+          gap: 2,
+          alignItems: 'flex-start',
+        }}
+      >
+        {/* ── Main column ─────────────────────────────────────────────── */}
+        <Box>
           {loading ? (
-            <Stack spacing={1}>
-              <Skeleton variant="rounded" height={60} />
-              <Skeleton variant="rounded" height={420} />
+            <Stack spacing={1.5}>
+              <Skeleton variant="rounded" height={90} sx={{ borderRadius: '14px' }} />
+              <Skeleton variant="rounded" height={420} sx={{ borderRadius: '14px' }} />
             </Stack>
           ) : (
             <>
-              <Card sx={{ mb: 2 }}>
+              <Card sx={{ ...cardSx, mb: 2 }}>
                 <CardContent>
                   <Stack
                     direction={{ xs: 'column', sm: 'row' }}
@@ -431,19 +438,24 @@ const StudentLessonNoteView = () => {
                     justifyContent="space-between"
                     alignItems={{ xs: 'flex-start', sm: 'center' }}
                   >
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                       {lessonNote?.topic && (
-                        <Typography variant="subtitle2" textTransform="uppercase">
-                          Topic: {lessonNote.topic}
+                        <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#2563EB', letterSpacing: 0.4 }}>
+                          TOPIC
+                        </Typography>
+                      )}
+                      {lessonNote?.topic && (
+                        <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#0f172a' }}>
+                          {lessonNote.topic}
                         </Typography>
                       )}
                       {lessonNote?.subtopic && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography sx={{ fontSize: 12.5, color: 'text.secondary', mt: 0.25 }}>
                           Sub-topic: {lessonNote.subtopic}
                         </Typography>
                       )}
                     </Box>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={1} flexShrink={0}>
                       {lessonNote?.subject_teacher_id != null && (
                         <Button
                           size="small"
@@ -451,42 +463,62 @@ const StudentLessonNoteView = () => {
                           startIcon={<IconChecks size={15} />}
                           disabled={marking}
                           onClick={handleMarkRead}
+                          sx={{ borderRadius: '8px', fontWeight: 600 }}
                         >
-                          {marking ? 'Marking...' : 'Mark as Read'}
+                          {marking ? 'Marking…' : 'Mark as Read'}
                         </Button>
                       )}
                       {lessonNote?.qz_scheme_id != null && (
-                        <Button size="small" variant="contained" onClick={openAssessment}>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={openAssessment}
+                          sx={{ borderRadius: '8px', fontWeight: 700 }}
+                        >
                           Take Formative
                         </Button>
                       )}
                     </Stack>
                   </Stack>
+
                   {progress && (
                     <Box mt={2}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="caption" fontWeight={700}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
+                        <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: '#0f172a' }}>
                           Reading progress
                         </Typography>
-                        <Typography variant="caption">
-                          {progress.read_count}/{progress.total_subtopics} subtopics (
-                          {progress.reading_progress_percent}%)
+                        <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: '#16A34A' }}>
+                          {progress.read_count}/{progress.total_subtopics} subtopics · {readingPercent}%
                         </Typography>
                       </Stack>
                       <LinearProgress
                         variant="determinate"
-                        value={Number(progress.reading_progress_percent ?? 0)}
-                        sx={{ mt: 0.5, height: 8, borderRadius: 4 }}
+                        value={readingPercent}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#E5E7EB',
+                          '& .MuiLinearProgress-bar': { bgcolor: '#16A34A', borderRadius: 4 },
+                        }}
                       />
                     </Box>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card sx={cardSx}>
                 <CardContent>
+                  <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+                    <IconBook2 size={16} color="#2563EB" />
+                    <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                      Lesson Content
+                    </Typography>
+                  </Stack>
+                  <Divider sx={{ mb: 1.75 }} />
                   {!unavailable && displayItems.length === 0 && (
-                    <Alert severity="info">No content available for this lesson yet.</Alert>
+                    <Alert severity="info" sx={{ borderRadius: '10px' }}>
+                      No content available for this lesson yet.
+                    </Alert>
                   )}
                   <Stack spacing={1.5}>
                     {displayItems.map((item, idx) => renderContentItem(item, idx))}
@@ -495,13 +527,22 @@ const StudentLessonNoteView = () => {
               </Card>
             </>
           )}
-        </Grid>
+        </Box>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ mb: 2 }}>
+        {/* ── Sidebar ─────────────────────────────────────────────────── */}
+        <Stack spacing={2}>
+          <Card sx={cardSx}>
             <CardContent>
-              <Typography variant="subtitle2" gutterBottom>
-                Rate this note
+              <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+                <Avatar sx={{ width: 28, height: 28, bgcolor: '#FFFBEB', color: '#F59E0B' }}>
+                  <IconStarFilled size={14} />
+                </Avatar>
+                <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
+                  Rate this lesson
+                </Typography>
+              </Stack>
+              <Typography sx={{ fontSize: 11.5, color: 'text.secondary', mb: 1.25 }}>
+                Your feedback helps your teacher improve future lessons.
               </Typography>
               <Rating
                 value={ratingValue}
@@ -511,149 +552,109 @@ const StudentLessonNoteView = () => {
                   if (value) handleRate(value);
                 }}
               />
-              <Divider sx={{ my: 1.5 }} />
-              <Typography variant="subtitle2" gutterBottom>
-                Class Interaction
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {messages.length} message{messages.length === 1 ? '' : 's'} on this lesson.
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent sx={{ pb: 1 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-                <Typography variant="subtitle2">Lesson Forum</Typography>
-                <IconButton size="small" onClick={loadForum} disabled={forumBusy}>
-                  <IconRefresh size={16} />
-                </IconButton>
-              </Stack>
-              <List
-                sx={{
-                  maxHeight: 360,
-                  overflowY: 'auto',
-                  bgcolor: 'background.default',
-                  borderRadius: 1,
-                  p: 1,
-                }}
-              >
-                {messages.length === 0 && (
-                  <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
-                    No messages yet. Start the discussion.
-                  </Typography>
-                )}
-                {messages.map((message) => {
-                  const parsed = parseChatMessage(message.message);
-                  const mine = authUserId
-                    ? String(message.sender_id) === String(authUserId)
-                    : false;
-                  return (
-                    <ListItem
-                      key={message.id}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: mine ? 'flex-end' : 'flex-start',
-                        px: 0.5,
-                      }}
-                    >
-                      <Typography variant="caption" color="text.secondary">
-                        {message.user
-                          ? `${message.user.fname ?? ''} ${message.user.lname ?? ''}`.trim()
-                          : 'Participant'}
-                      </Typography>
-                      {parsed.media && (
-                        <Box
-                          sx={{ maxWidth: '100%', '& img, & video': { maxWidth: '100%' } }}
-                          dangerouslySetInnerHTML={{ __html: parsed.media }}
-                        />
-                      )}
-                      {parsed.text && (
-                        <Paper
-                          variant="outlined"
-                          sx={{
-                            px: 1,
-                            py: 0.5,
-                            mt: 0.25,
-                            bgcolor: mine ? 'primary.light' : 'grey.100',
-                            color: mine ? 'primary.contrastText' : 'text.primary',
-                          }}
-                        >
-                          <Typography variant="body2">{parsed.text}</Typography>
-                        </Paper>
-                      )}
-                      <Typography variant="caption" color="text.disabled">
-                        {message.created_at
-                          ? new Date(message.created_at).toLocaleString()
-                          : ''}
-                      </Typography>
-                    </ListItem>
-                  );
-                })}
-              </List>
-              {lessonNoteId && (
-                <Stack direction="row" spacing={1} mt={1.5}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    placeholder="Type a message..."
-                    value={forumText}
-                    onChange={(e) => setForumText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSendForumMessage();
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    disabled={sending || !forumText.trim()}
-                    onClick={handleSendForumMessage}
-                    startIcon={<IconSend size={15} />}
-                  >
-                    {sending ? <CircularProgress size={16} color="inherit" /> : 'Send'}
-                  </Button>
+              {ratingBusy && (
+                <Stack direction="row" spacing={0.75} alignItems="center" mt={0.75}>
+                  <CircularProgress size={12} />
+                  <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>Saving…</Typography>
                 </Stack>
               )}
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
 
+          <Card sx={cardSx}>
+            <CardContent>
+              {lessonNoteId ? (
+                <ForumThread modelId={lessonNoteId} height={360} />
+              ) : (
+                <Stack spacing={1}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'rgba(37,99,235,0.1)',
+                        color: '#2563EB',
+                      }}
+                    >
+                      <IconMessageCircle2 size={15} />
+                    </Box>
+                    <Typography sx={{ fontSize: 13, fontWeight: 800 }}>Class Interaction</Typography>
+                  </Stack>
+                  <Alert severity="info" icon={<IconSparkles size={16} />} sx={{ borderRadius: '8px' }}>
+                    The discussion thread will appear once this lesson is published.
+                  </Alert>
+                </Stack>
+              )}
+            </CardContent>
+          </Card>
+        </Stack>
+      </Box>
+
+      {/* ── Reading-mode dialog ───────────────────────────────────────── */}
       <Dialog
         open={readingDialogOpen}
         maxWidth="xs"
         fullWidth
         disableEscapeKeyDown
-        PaperProps={{ sx: { borderTop: 4, borderColor: 'success.main' } }}
+        slotProps={{ paper: { sx: { borderRadius: '16px', overflow: 'hidden' } } }}
       >
-        <DialogTitle fontWeight={700} textAlign="center">
-          Just a Moment
+        <Box sx={{ height: 4, bgcolor: '#16A34A' }} />
+        <DialogTitle sx={{ textAlign: 'center', pt: 2.5 }}>
+          <Avatar sx={{ width: 44, height: 44, bgcolor: '#DCFCE7', color: '#16A34A', mx: 'auto', mb: 1 }}>
+            <IconChecks size={22} />
+          </Avatar>
+          <Typography sx={{ fontWeight: 800, fontSize: 16 }}>Just a Moment</Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" textAlign="center" fontStyle="italic" mb={2}>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary', textAlign: 'center', mb: 2 }}>
             Which of these applies to you?
           </Typography>
-          <RadioGroup
-            value={readingChoice}
-            onChange={(e) => setReadingChoice(e.target.value)}
-          >
+          <RadioGroup value={readingChoice} onChange={(e) => setReadingChoice(e.target.value)}>
             <FormControlLabel
               value="Ahead"
               control={<Radio />}
-              label={<b>I am reading ahead of the class</b>}
+              label={<Typography sx={{ fontSize: 13, fontWeight: 700 }}>I am reading ahead of the class</Typography>}
+              sx={{
+                m: 0,
+                mb: 1,
+                px: 1.5,
+                py: 1,
+                borderRadius: '10px',
+                border: '1px solid',
+                borderColor: readingChoice === 'Ahead' ? '#16A34A' : 'divider',
+                bgcolor: readingChoice === 'Ahead' ? 'rgba(22,163,74,0.06)' : 'transparent',
+              }}
             />
             <FormControlLabel
               value="After"
               control={<Radio />}
-              label={<b>I am reading after the class</b>}
+              label={<Typography sx={{ fontSize: 13, fontWeight: 700 }}>I am reading after the class</Typography>}
+              sx={{
+                m: 0,
+                px: 1.5,
+                py: 1,
+                borderRadius: '10px',
+                border: '1px solid',
+                borderColor: readingChoice === 'After' ? '#16A34A' : 'divider',
+                bgcolor: readingChoice === 'After' ? 'rgba(22,163,74,0.06)' : 'transparent',
+              }}
             />
           </RadioGroup>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-          <Button onClick={() => setReadingDialogOpen(false)} disabled={savingReading}>
+        <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2.5 }}>
+          <Button onClick={() => setReadingDialogOpen(false)} disabled={savingReading} sx={{ fontWeight: 600 }}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSaveReadingMode} disabled={savingReading}>
+          <Button
+            variant="contained"
+            onClick={handleSaveReadingMode}
+            disabled={savingReading}
+            sx={{ borderRadius: '8px', fontWeight: 700, bgcolor: '#16A34A', '&:hover': { bgcolor: '#15803D' } }}
+          >
             {savingReading ? <CircularProgress size={16} color="inherit" /> : 'Save and Proceed'}
           </Button>
         </DialogActions>

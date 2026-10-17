@@ -11,14 +11,19 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  List,
-  ListItem,
-  Paper,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
-import { IconFileUpload, IconRefresh, IconSend, IconTrash, IconUpload } from '@tabler/icons-react';
+import {
+  IconFileUpload,
+  IconMessageCircle2,
+  IconRefresh,
+  IconSend,
+  IconTrash,
+  IconUpload,
+  IconX,
+} from '@tabler/icons-react';
 import { sanitizeHtml } from '@/utils/sanitizeHtml';
 import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
@@ -447,7 +452,7 @@ export const LessonUploadModal = ({
       onClose={busy ? undefined : onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{ sx: { borderRadius: '16px' } }}
+      slotProps={{ paper: { sx: { borderRadius: '16px' } } }}
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -544,6 +549,45 @@ export const LessonUploadModal = ({
   );
 };
 
+// Deterministic avatar colour per sender — same person always gets the same
+// tint, so a thread stays easy to scan without needing real profile photos.
+const AVATAR_PALETTE = [
+  { bg: '#DBEAFE', color: '#2563EB' },
+  { bg: '#DCFCE7', color: '#16A34A' },
+  { bg: '#F3E8FF', color: '#9333EA' },
+  { bg: '#FFEDD5', color: '#EA580C' },
+  { bg: '#FCE7F3', color: '#DB2777' },
+  { bg: '#CCFBF1', color: '#0D9488' },
+];
+
+const avatarScheme = (seed) => {
+  const text = String(seed ?? '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+  return AVATAR_PALETTE[hash % AVATAR_PALETTE.length];
+};
+
+const initialsOf = (name) => {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return (parts[0][0] + (parts[1]?.[0] ?? '')).toUpperCase();
+};
+
+const relativeTime = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+};
+
 export const ForumThread = ({ modelId, height = 380 }) => {
   const notify = useNotification();
   const { user } = useAuth();
@@ -622,104 +666,220 @@ export const ForumThread = ({ modelId, height = 380 }) => {
 
   return (
     <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
-        <Typography variant="subtitle2">Class Interaction</Typography>
+      {/* ── Header: icon badge, title, live status, refresh ───────────── */}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.25}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'rgba(37,99,235,0.1)',
+              color: '#2563EB',
+            }}
+          >
+            <IconMessageCircle2 size={15} />
+          </Box>
+          <Box>
+            <Typography variant="subtitle2" fontWeight={800} lineHeight={1.2}>
+              Class Interaction
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10.5 }}>
+              {messages.length === 0
+                ? 'No messages yet'
+                : `${messages.length} message${messages.length === 1 ? '' : 's'} · updates live`}
+            </Typography>
+          </Box>
+        </Stack>
         <IconButton size="small" onClick={loadMessages} disabled={busy} aria-label="Refresh discussion">
-          {busy ? <CircularProgress size={16} /> : <IconRefresh size={16} />}
+          {busy ? <CircularProgress size={14} /> : <IconRefresh size={15} />}
         </IconButton>
       </Stack>
 
       {error && (
-        <Alert severity="warning" sx={{ mb: 1 }} action={<Button color="inherit" onClick={loadMessages}>Retry</Button>}>
+        <Alert
+          severity="warning"
+          sx={{ mb: 1, borderRadius: '8px' }}
+          action={<Button color="inherit" size="small" onClick={loadMessages}>Retry</Button>}
+        >
           {error}
         </Alert>
       )}
 
-      <List
+      {/* ── Message list ───────────────────────────────────────────────── */}
+      <Box
         ref={listRef}
         sx={{
           maxHeight: height,
           minHeight: 180,
           overflowY: 'auto',
-          bgcolor: 'background.default',
-          borderRadius: 1,
-          p: 1,
+          bgcolor: '#F8FAFC',
+          border: '1px solid #EEF2F6',
+          borderRadius: '10px',
+          p: 1.25,
         }}
       >
         {messages.length === 0 && !busy && (
-          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-            No messages yet. Start the discussion for this lesson.
-          </Typography>
-        )}
-        {messages.map((message) => {
-          const parsed = parseChatMessage(message.message);
-          const mine = user?.id != null && String(message.sender_id) === String(user.id);
-          return (
-            <ListItem
-              key={message.id}
+          <Stack alignItems="center" spacing={0.75} sx={{ py: 3.5 }}>
+            <Box
               sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: '#E2E8F0',
+                color: '#94A3B8',
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: mine ? 'flex-end' : 'flex-start',
-                px: 0.5,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <Typography variant="caption" color="text.secondary">
-                {message.user ? `${message.user.fname ?? ''} ${message.user.lname ?? ''}`.trim() : 'Participant'}
-              </Typography>
-              {parsed.media && (
-                <Box sx={{ maxWidth: '100%', '& img, & video': { maxWidth: '100%' } }} dangerouslySetInnerHTML={{ __html: parsed.media }} />
-              )}
-              {parsed.text && (
-                <Paper
-                  variant="outlined"
+              <IconMessageCircle2 size={20} />
+            </Box>
+            <Typography variant="body2" fontWeight={600} color="text.secondary" textAlign="center">
+              Start the conversation
+            </Typography>
+            <Typography variant="caption" color="text.disabled" textAlign="center" sx={{ maxWidth: 220 }}>
+              Questions, clarifications and comments on this lesson will show up here for the whole class.
+            </Typography>
+          </Stack>
+        )}
+
+        <Stack spacing={1.25}>
+          {messages.map((message) => {
+            const parsed = parseChatMessage(message.message);
+            const mine = user?.id != null && String(message.sender_id) === String(user.id);
+            const senderName = message.user
+              ? `${message.user.fname ?? ''} ${message.user.lname ?? ''}`.trim() || 'Participant'
+              : 'Participant';
+            const scheme = avatarScheme(message.sender_id);
+
+            return (
+              <Stack
+                key={message.id}
+                direction="row"
+                spacing={1}
+                alignItems="flex-start"
+                sx={{ flexDirection: mine ? 'row-reverse' : 'row' }}
+              >
+                <Avatar
                   sx={{
-                    px: 1,
-                    py: 0.5,
-                    mt: 0.25,
-                    bgcolor: mine ? 'primary.light' : 'grey.100',
-                    color: mine ? 'primary.contrastText' : 'text.primary',
+                    width: 28,
+                    height: 28,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    bgcolor: mine ? '#2563EB' : scheme.bg,
+                    color: mine ? '#fff' : scheme.color,
+                    flexShrink: 0,
                   }}
                 >
-                  <Typography variant="body2">{parsed.text}</Typography>
-                </Paper>
-              )}
-              <Stack direction="row" spacing={0.75} alignItems="center">
-                <Typography variant="caption" color="text.disabled">
-                  {message.created_at ? new Date(message.created_at).toLocaleString() : ''}
-                </Typography>
-                {mine && (
-                  <IconButton size="small" onClick={() => setDeletingId(message.id)} aria-label="Delete message">
-                    <IconTrash size={13} />
-                  </IconButton>
-                )}
-                {!mine && (
-                  <Button size="small" sx={{ minWidth: 0, py: 0, textTransform: 'none' }} onClick={() => setReplyTarget({ text: parsed.text })}>
-                    Reply
-                  </Button>
-                )}
-              </Stack>
-            </ListItem>
-          );
-        })}
-      </List>
+                  {initialsOf(senderName)}
+                </Avatar>
 
+                <Box sx={{ maxWidth: '78%', minWidth: 0 }}>
+                  <Stack
+                    direction="row"
+                    spacing={0.75}
+                    alignItems="center"
+                    justifyContent={mine ? 'flex-end' : 'flex-start'}
+                    sx={{ mb: 0.25 }}
+                  >
+                    <Typography sx={{ fontSize: 10.5, fontWeight: 700, color: '#475569' }}>
+                      {mine ? 'You' : senderName}
+                    </Typography>
+                    <Typography sx={{ fontSize: 10, color: '#94A3B8' }}>
+                      {relativeTime(message.created_at)}
+                    </Typography>
+                  </Stack>
+
+                  {parsed.media && (
+                    <Box
+                      sx={{ maxWidth: '100%', mb: 0.5, '& img, & video': { maxWidth: '100%', borderRadius: '8px' } }}
+                      dangerouslySetInnerHTML={{ __html: parsed.media }}
+                    />
+                  )}
+
+                  {parsed.text && (
+                    <Box
+                      sx={{
+                        px: 1.25,
+                        py: 0.75,
+                        borderRadius: mine ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                        bgcolor: mine ? '#2563EB' : '#ffffff',
+                        color: mine ? '#ffffff' : '#1e293b',
+                        border: mine ? 'none' : '1px solid #E5E7EB',
+                        boxShadow: mine ? 'none' : '0 1px 2px rgba(0,0,0,0.03)',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 12.5, lineHeight: 1.5 }}>{parsed.text}</Typography>
+                    </Box>
+                  )}
+
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
+                    justifyContent={mine ? 'flex-end' : 'flex-start'}
+                    sx={{ mt: 0.25 }}
+                  >
+                    {mine ? (
+                      <Button
+                        size="small"
+                        onClick={() => setDeletingId(message.id)}
+                        startIcon={<IconTrash size={11} />}
+                        sx={{ minWidth: 0, py: 0, px: 0.5, fontSize: 10, color: '#94A3B8', textTransform: 'none' }}
+                      >
+                        Delete
+                      </Button>
+                    ) : (
+                      <Button
+                        size="small"
+                        onClick={() => setReplyTarget({ text: parsed.text })}
+                        sx={{ minWidth: 0, py: 0, px: 0.5, fontSize: 10, color: '#2563EB', textTransform: 'none' }}
+                      >
+                        Reply
+                      </Button>
+                    )}
+                  </Stack>
+                </Box>
+              </Stack>
+            );
+          })}
+        </Stack>
+      </Box>
+
+      {/* ── Reply preview ──────────────────────────────────────────────── */}
       {replyTarget && (
-        <Stack direction="row" spacing={1} alignItems="center" mt={1}>
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
-            Replying to: {replyTarget.text || 'File'}
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{
+            mt: 1,
+            px: 1.25,
+            py: 0.6,
+            borderRadius: '8px',
+            bgcolor: 'rgba(37,99,235,0.06)',
+            borderLeft: '3px solid #2563EB',
+          }}
+        >
+          <Typography sx={{ fontSize: 11, color: '#475569', flex: 1 }} noWrap>
+            Replying to: <strong>{replyTarget.text || 'File'}</strong>
           </Typography>
-          <Button size="small" onClick={() => setReplyTarget(null)}>
-            Cancel
-          </Button>
+          <IconButton size="small" onClick={() => setReplyTarget(null)}>
+            <IconX size={13} />
+          </IconButton>
         </Stack>
       )}
 
-      <Stack direction="row" spacing={1} mt={1}>
+      {/* ── Composer ───────────────────────────────────────────────────── */}
+      <Stack direction="row" spacing={1} mt={1.25} alignItems="center">
         <TextField
           size="small"
           fullWidth
-          placeholder="Type a message..."
+          placeholder="Type a message for the class..."
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
@@ -728,21 +888,31 @@ export const ForumThread = ({ modelId, height = 380 }) => {
               handleSend();
             }
           }}
+          sx={{ '& .MuiOutlinedInput-root': { borderRadius: '999px', bgcolor: '#fff', fontSize: 12.5 } }}
         />
-        <Button
-          variant="contained"
-          disabled={sending || !text.trim() || !modelId}
+        <IconButton
           onClick={handleSend}
-          startIcon={sending ? <CircularProgress size={14} color="inherit" /> : <IconSend size={15} />}
+          disabled={sending || !text.trim() || !modelId}
+          sx={{
+            width: 38,
+            height: 38,
+            flexShrink: 0,
+            bgcolor: '#2563EB',
+            color: '#fff',
+            '&:hover': { bgcolor: '#1D4ED8' },
+            '&.Mui-disabled': { bgcolor: '#E2E8F0', color: '#94A3B8' },
+          }}
+          aria-label="Send message"
         >
-          Send
-        </Button>
+          {sending ? <CircularProgress size={16} color="inherit" /> : <IconSend size={16} />}
+        </IconButton>
       </Stack>
 
+      {/* ── Delete confirmation ────────────────────────────────────────── */}
       {deletingId && (
         <Alert
           severity="warning"
-          sx={{ mt: 1 }}
+          sx={{ mt: 1, borderRadius: '8px' }}
           action={
             <Stack direction="row" spacing={1}>
               <Button color="inherit" size="small" onClick={() => setDeletingId(null)}>

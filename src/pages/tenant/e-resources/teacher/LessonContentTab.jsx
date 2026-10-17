@@ -15,22 +15,24 @@ import {
   DialogTitle,
   Divider,
   Grid,
-  LinearProgress,
   Paper,
   Skeleton,
   Stack,
   Typography,
   useTheme,
 } from '@mui/material';
+import Chart from 'react-apexcharts';
 import {
   IconBook,
   IconBulb,
   IconCalendar,
   IconCheck,
+  IconInfoCircle,
   IconNotes,
   IconPlayerPlay,
   IconRefresh,
   IconSparkles,
+  IconTrendingUp,
   IconUpload,
   IconVideo,
   IconX,
@@ -111,12 +113,32 @@ const TAB_CONFIG = {
 // ─────────────────────────────────────────────────────────────────────────────
 // Status chip helper
 // ─────────────────────────────────────────────────────────────────────────────
+const STATUS_STYLE = {
+  inactive: { label: 'Pending approval', bg: '#FEF3C7', color: '#92400E' },
+  active: { label: 'Approved', bg: '#DCFCE7', color: '#166534', icon: IconCheck },
+  rejected: { label: 'Rejected', bg: '#FEE2E2', color: '#991B1B' },
+};
+
 const StatusChip = ({ status }) => {
-  if (!status) return <Chip size="small" variant="outlined" label="Not created yet" />;
-  if (status === 'inactive') return <Chip size="small" color="warning" label="Pending approval" />;
-  if (status === 'active') return <Chip size="small" color="success" label="Approved" icon={<IconCheck size={13} />} />;
-  if (status === 'rejected') return <Chip size="small" color="error" label="Rejected" />;
-  return <Chip size="small" label={String(status)} />;
+  if (!status) {
+    return (
+      <Chip
+        size="small"
+        label="Not created yet"
+        sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#F1F5F9', color: '#64748B' }}
+      />
+    );
+  }
+  const style = STATUS_STYLE[status] ?? { label: String(status), bg: '#F1F5F9', color: '#64748B' };
+  const Icon = style.icon;
+  return (
+    <Chip
+      size="small"
+      label={style.label}
+      icon={Icon ? <Icon size={13} /> : undefined}
+      sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: style.bg, color: style.color, '& .MuiChip-icon': { color: style.color } }}
+    />
+  );
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,11 +153,12 @@ const ContextHeader = ({ cfg, context, statusChip }) => {
       variant="outlined"
       sx={{
         mb: 2.5,
-        borderRadius: '12px',
+        borderRadius: '14px',
         borderColor: isDark ? 'rgba(255,255,255,0.1)' : cfg.accent + '44',
         background: isDark
           ? `linear-gradient(135deg, rgba(0,0,0,0.3) 0%, ${cfg.accentLight} 100%)`
           : `linear-gradient(135deg, #ffffff 0%, ${cfg.accentLight} 100%)`,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         overflow: 'hidden',
       }}
     >
@@ -244,7 +267,7 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
         width: '100%',
         background: s.bg,
         border: s.border,
-        borderRadius: '12px',
+        borderRadius: '14px',
         p: 2,
         cursor: disabled || busy ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
@@ -280,31 +303,44 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Progress stat bar (Lesson Note sidebar)
+// Progress gauge (Teaching Progress sidebar) — a small radial dial reads
+// faster than a thin bar at this size, and pairs two side by side so
+// "content created" and "actually read by the class" are easy to compare.
 // ─────────────────────────────────────────────────────────────────────────────
-const ProgressStat = ({ label, percent, caption, color }) => {
-  const value = Number(percent) || 0;
+const ProgressGauge = ({ label, percent, caption, color }) => {
+  const value = Math.round(Number(percent) || 0);
   return (
-    <Box mb={1.75}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={0.5}>
-        <Typography variant="caption" fontWeight={700} color={color}>
-          {label}
-        </Typography>
-        <Typography variant="caption" fontWeight={800} color={color}>
-          {value}%
-        </Typography>
-      </Stack>
-      <LinearProgress
-        variant="determinate"
-        value={value}
-        sx={{
-          height: 8,
-          borderRadius: 4,
-          bgcolor: 'action.hover',
-          '& .MuiLinearProgress-bar': { backgroundColor: color, borderRadius: 4 },
-        }}
-      />
-      <Typography variant="caption" color="text.secondary" display="block" mt={0.4}>
+    <Box sx={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+      <Box sx={{ width: 84, height: 84, mx: 'auto' }}>
+        <Chart
+          type="radialBar"
+          width={84}
+          height={84}
+          series={[value]}
+          options={{
+            chart: { sparkline: { enabled: true } },
+            colors: [color],
+            plotOptions: {
+              radialBar: {
+                hollow: { size: '60%' },
+                track: { background: 'rgba(148,163,184,0.18)' },
+                dataLabels: {
+                  name: { show: false },
+                  value: {
+                    fontSize: '14px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    offsetY: 4,
+                    formatter: (v) => `${v}%`,
+                  },
+                },
+              },
+            },
+          }}
+        />
+      </Box>
+      <Typography sx={{ fontSize: 11, fontWeight: 800, color: '#0f172a', mt: 0.25 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 9.5, color: 'text.secondary', lineHeight: 1.3, mt: 0.1 }}>
         {caption}
       </Typography>
     </Box>
@@ -540,7 +576,7 @@ const LessonContentTab = ({ type, context }) => {
           </Grid>
 
           {/* ── Loading skeleton ─────────────────────────────────────── */}
-          {loading && <Skeleton variant="rounded" height={340} sx={{ borderRadius: '12px' }} />}
+          {loading && <Skeleton variant="rounded" height={340} sx={{ borderRadius: '14px' }} />}
 
           {/* ── Empty state ──────────────────────────────────────────── */}
           {!loading && !hasContent && (
@@ -784,7 +820,7 @@ const LessonContentTab = ({ type, context }) => {
           {type === 'plan' && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '12px', borderColor: '#F59E0B44' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderColor: '#F59E0B44' }}
             >
               <CardContent>
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
@@ -818,60 +854,158 @@ const LessonContentTab = ({ type, context }) => {
             </Card>
           )}
 
-          {/* Teaching progress (Lesson Note) */}
+          {/* Teaching progress (Lesson Note) — two gauges + a plain-language
+              read on whether the class is keeping up with what's published */}
           {type === 'note' && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '12px', borderColor: '#0284C744' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderColor: '#0284C744', overflow: 'hidden' }}
             >
               <CardContent>
-                <Typography variant="subtitle2" fontWeight={700} mb={1.75}>
-                  Teaching Progress
-                </Typography>
-                <ProgressStat
-                  label="Lessons Generated"
-                  percent={teacherProgress?.lesson_notes_percent}
-                  caption={`${teacherProgress?.note_total_count ?? 0} of ${teacherProgress?.total_subtopics ?? 0} topics covered`}
-                  color="#0284C7"
-                />
-                <ProgressStat
-                  label="Class Engagement"
-                  percent={classProgress?.read_percentage}
-                  caption={`${classProgress?.read_count ?? 0} of ${classProgress?.enrolled_count ?? 0} learners engaged`}
-                  color="#16A34A"
-                />
+                <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: '#E0F2FE', color: '#0284C7' }}>
+                    <IconTrendingUp size={15} />
+                  </Avatar>
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    Teaching Progress
+                  </Typography>
+                </Stack>
+
+                <Stack direction="row" spacing={1}>
+                  <ProgressGauge
+                    label="Lessons Generated"
+                    percent={teacherProgress?.lesson_notes_percent}
+                    caption={`${teacherProgress?.note_total_count ?? 0} of ${teacherProgress?.total_subtopics ?? 0} topics`}
+                    color="#0284C7"
+                  />
+                  <ProgressGauge
+                    label="Class Engagement"
+                    percent={classProgress?.read_percentage}
+                    caption={`${classProgress?.read_count ?? 0} of ${classProgress?.enrolled_count ?? 0} learners`}
+                    color="#16A34A"
+                  />
+                </Stack>
+
+                {(() => {
+                  const genPercent = Number(teacherProgress?.lesson_notes_percent) || 0;
+                  const engPercent = Number(classProgress?.read_percentage) || 0;
+                  let insight;
+                  if (genPercent === 0) {
+                    insight = {
+                      Icon: IconBulb,
+                      bg: '#FEF3C7',
+                      color: '#92400E',
+                      text: "Nothing generated yet for this subject — this subtopic is a good place to start.",
+                    };
+                  } else if (engPercent + 5 >= genPercent) {
+                    insight = {
+                      Icon: IconCheck,
+                      bg: '#DCFCE7',
+                      color: '#166534',
+                      text: 'Your class is keeping pace with what you’ve published — nice work.',
+                    };
+                  } else {
+                    insight = {
+                      Icon: IconTrendingUp,
+                      bg: '#FFEDD5',
+                      color: '#9A3412',
+                      text: 'Content is ahead of class engagement — consider nudging learners to catch up.',
+                    };
+                  }
+                  return (
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      alignItems="flex-start"
+                      sx={{ mt: 1.75, p: 1.1, borderRadius: '10px', bgcolor: insight.bg }}
+                    >
+                      <insight.Icon size={15} color={insight.color} style={{ flexShrink: 0, marginTop: 1 }} />
+                      <Typography sx={{ fontSize: 11, color: insight.color, fontWeight: 600, lineHeight: 1.4 }}>
+                        {insight.text}
+                      </Typography>
+                    </Stack>
+                  );
+                })()}
               </CardContent>
             </Card>
           )}
 
-          {/* Video details (Video tab) */}
+          {/* Video details (Video tab) — a quick snapshot rather than a
+              plain label/value list, so the source and status jump out */}
           {isVideo && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '12px' }}
+              sx={{ mb: 2.5, borderRadius: '14px', overflow: 'hidden' }}
             >
               <CardContent>
-                <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-                  Details
-                </Typography>
-                <Divider sx={{ mb: 1.5 }} />
-                <Stack spacing={1.25}>
+                <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
+                  <Avatar sx={{ width: 28, height: 28, bgcolor: cfg.accentLight, color: cfg.accent }}>
+                    <IconInfoCircle size={15} />
+                  </Avatar>
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    Lesson Snapshot
+                  </Typography>
+                </Stack>
+
+                {/* Source + status banner */}
+                {(() => {
+                  const source = youtubeId
+                    ? { label: 'YouTube link', bg: '#FEE2E2', color: '#991B1B' }
+                    : uploadedVideo
+                      ? { label: 'Uploaded file', bg: '#CCFBF1', color: '#0D9488' }
+                      : hasAiContent
+                        ? { label: 'AI-generated link', bg: '#F3E8FF', color: '#7C3AED' }
+                        : { label: 'No video yet', bg: '#F1F5F9', color: '#64748B' };
+                  return (
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      sx={{ mb: 1.5, p: 1, borderRadius: '10px', bgcolor: source.bg }}
+                    >
+                      <Typography sx={{ fontSize: 11, fontWeight: 800, color: source.color }}>
+                        {source.label}
+                      </Typography>
+                      <StatusChip status={status} />
+                    </Stack>
+                  );
+                })()}
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 0.9,
+                  }}
+                >
                   {[
                     { label: 'Subject', value: context?.subjectName },
                     { label: 'Class', value: [context?.className, context?.armName].filter(Boolean).join(' – ') },
                     { label: 'Subtopic', value: context?.subtopic },
-                    { label: 'Status', value: status || 'Not created' },
+                    { label: 'Week', value: context?.weekName },
                   ].map(({ label, value }) => (
-                    <Stack key={label} direction="row" spacing={1} justifyContent="space-between" alignItems="flex-start">
-                      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ flexShrink: 0 }}>
-                        {label}
+                    <Box
+                      key={label}
+                      sx={{
+                        p: 1,
+                        borderRadius: '10px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#FAFBFC',
+                        border: '1px solid',
+                        borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
+                        minWidth: 0,
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 9.5, fontWeight: 700, color: '#94A3B8', letterSpacing: 0.3 }}>
+                        {label.toUpperCase()}
                       </Typography>
-                      <Typography variant="caption" fontWeight={700} textAlign="right" sx={{ wordBreak: 'break-word' }}>
+                      <Typography
+                        sx={{ fontSize: 11.5, fontWeight: 700, color: '#0f172a', wordBreak: 'break-word', mt: 0.1 }}
+                      >
                         {value || '—'}
                       </Typography>
-                    </Stack>
+                    </Box>
                   ))}
-                </Stack>
+                </Box>
               </CardContent>
             </Card>
           )}
@@ -880,7 +1014,7 @@ const LessonContentTab = ({ type, context }) => {
           {(type === 'note' || isVideo) && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '12px', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }}
             >
               <CardContent>
                 {record?.id ? (
@@ -902,7 +1036,7 @@ const LessonContentTab = ({ type, context }) => {
         onClose={() => setConfirmOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '16px' } }}
+        slotProps={{ paper: { sx: { borderRadius: '16px' } } }}
       >
         <DialogTitle sx={{ pb: 1 }}>
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -983,7 +1117,7 @@ const LessonContentTab = ({ type, context }) => {
         onClose={() => setApproveConfirmOpen(false)}
         maxWidth="xs"
         fullWidth
-        PaperProps={{ sx: { borderRadius: '16px' } }}
+        slotProps={{ paper: { sx: { borderRadius: '16px' } } }}
       >
         <DialogTitle fontWeight={700}>{approveLabel}</DialogTitle>
         <DialogContent>

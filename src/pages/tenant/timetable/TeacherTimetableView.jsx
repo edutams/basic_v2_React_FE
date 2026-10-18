@@ -23,6 +23,7 @@ import {
   Skeleton,
   Alert,
   Button,
+  Tooltip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -67,17 +68,21 @@ const isSameDay = (a, b) => toISODate(a) === toISODate(b);
 const formatShortDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 const STATUS_META = {
-  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended' },
-  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming' },
-  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled' },
-  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled' },
+  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended', description: 'The teacher confirmed this class held.' },
+  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming', description: "Hasn't happened yet." },
+  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled', description: 'The teacher cancelled this class.' },
+  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled', description: "This class's time has passed and the teacher never confirmed it." },
 };
 
 const StatusIcon = ({ status }) => {
   const meta = STATUS_META[status];
   if (!meta) return null;
   const Icon = meta.icon;
-  return <Icon fontSize="small" sx={{ color: meta.color }} />;
+  return (
+    <Tooltip title={`${meta.label} — ${meta.description}`}>
+      <Icon fontSize="small" sx={{ color: meta.color }} />
+    </Tooltip>
+  );
 };
 
 const emptyStats = {
@@ -456,12 +461,14 @@ const TeacherTimetableView = () => {
 
             <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap" sx={{ mt: 1.5 }}>
               {Object.entries(STATUS_META).map(([key, meta]) => (
-                <Stack key={key} direction="row" spacing={0.5} alignItems="center">
-                  <meta.icon sx={{ fontSize: 16, color: meta.color }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {meta.label}
-                  </Typography>
-                </Stack>
+                <Tooltip key={key} title={meta.description}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <meta.icon sx={{ fontSize: 16, color: meta.color }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {meta.label}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
               ))}
             </Stack>
           </Paper>

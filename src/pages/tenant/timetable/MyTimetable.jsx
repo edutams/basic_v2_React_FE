@@ -85,17 +85,21 @@ const formatLongDate = (date) =>
   });
 
 const STATUS_META = {
-  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended' },
-  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming' },
-  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled' },
-  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled' },
+  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended', description: 'You confirmed this class held.' },
+  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming', description: "Hasn't happened yet — click to confirm attendance or cancel once it's due." },
+  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled', description: 'You cancelled this class.' },
+  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled', description: "This class's time has passed and you never confirmed it — click to mark it attended or cancelled." },
 };
 
 const StatusIcon = ({ status, fontSize = 'small' }) => {
   const meta = STATUS_META[status];
   if (!meta) return null;
   const Icon = meta.icon;
-  return <Icon fontSize={fontSize} sx={{ color: meta.color }} />;
+  return (
+    <Tooltip title={`${meta.label} — ${meta.description}`}>
+      <Icon fontSize={fontSize} sx={{ color: meta.color }} />
+    </Tooltip>
+  );
 };
 
 const StatusBadge = ({ status }) => {
@@ -478,7 +482,7 @@ const MyTimetable = () => {
         </StatCardShell>
       </Box>
 
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
         <Paper
           id="my-timetable-grid"
           elevation={0}
@@ -620,7 +624,7 @@ const MyTimetable = () => {
                           return (
                             <TableCell
                               key={d.key}
-                              onClick={() => clickable && openAction(cell)}
+                              onClick={() => clickable && openAction({ ...cell, period })}
                               sx={{
                                 cursor: clickable ? 'pointer' : 'default',
                                 '&:hover': clickable ? { bgcolor: 'action.hover' } : undefined,
@@ -667,12 +671,14 @@ const MyTimetable = () => {
           >
             <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap">
               {Object.entries(STATUS_META).map(([key, meta]) => (
-                <Stack key={key} direction="row" spacing={0.5} alignItems="center">
-                  <meta.icon sx={{ fontSize: 16, color: meta.color }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {meta.label}
-                  </Typography>
-                </Stack>
+                <Tooltip key={key} title={meta.description}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <meta.icon sx={{ fontSize: 16, color: meta.color }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {meta.label}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
               ))}
             </Stack>
             <Typography variant="caption" color="text.secondary">
@@ -686,8 +692,6 @@ const MyTimetable = () => {
           sx={{
             width: { xs: '100%', lg: 300 },
             flexShrink: 0,
-            height: '100%',
-            minHeight: 0,
           }}
         >
           <Paper
@@ -723,28 +727,15 @@ const MyTimetable = () => {
 
           <Paper
             elevation={0}
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-              p: 1.5,
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
+            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
           >
-            <Typography variant="subtitle2" fontWeight={800} sx={{ flexShrink: 0 }}>
+            <Typography variant="subtitle2" fontWeight={800}>
               {isSameDay(selectedDate, today) ? "Today's Schedule" : 'Schedule'}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', mb: 1, flexShrink: 0 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
               {formatLongDate(selectedDate)}
             </Typography>
-            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <Box sx={{ maxHeight: 320, overflowY: 'auto' }}>
               <Stack spacing={1}>
                 {!selectedDayKey ? (
                   <Alert severity="info" sx={{ py: 0.25 }}>

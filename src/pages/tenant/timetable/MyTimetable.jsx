@@ -334,6 +334,7 @@ const MyTimetable = () => {
           icon={TodayIcon}
           iconColor="#16A34A"
           title="Today's Classes"
+          tooltip="How many of today's classes you've already confirmed vs. still have coming up."
           loading={loading}
         >
           <BarWithPct
@@ -350,6 +351,7 @@ const MyTimetable = () => {
           icon={FactCheckIcon}
           iconColor="#2563EB"
           title="Attendance Rate"
+          tooltip="Your real confirmed-vs-cancelled rate over the last 5 school weeks, up to today."
           loading={loading}
         >
           <BarWithPct
@@ -386,6 +388,7 @@ const MyTimetable = () => {
           icon={EventRepeatIcon}
           iconColor="#7E22CE"
           title="Classes This Week"
+          tooltip="How many classes this week you've confirmed vs. cancelled, out of the total scheduled."
           loading={loading}
         >
           <BarWithPct
@@ -406,6 +409,7 @@ const MyTimetable = () => {
           icon={ScheduleIcon}
           iconColor="#DC2626"
           title="Upcoming Next"
+          tooltip="The next class on your timetable that you haven't confirmed or cancelled yet."
           loading={loading}
         >
           {stats.upcoming_next ? (
@@ -447,6 +451,7 @@ const MyTimetable = () => {
           icon={EventBusyIcon}
           iconColor="#D97706"
           title="Cancelled Classes"
+          tooltip="Classes you've cancelled this week."
           loading={loading}
           linkText="View Details"
           onLinkClick={() =>
@@ -465,6 +470,7 @@ const MyTimetable = () => {
           icon={MenuBookIcon}
           iconColor="#0F766E"
           title={`My Subjects (${stats.subjects.length})`}
+          tooltip="Every subject you teach, based on your current subject-teacher allocations."
           loading={loading}
         >
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">

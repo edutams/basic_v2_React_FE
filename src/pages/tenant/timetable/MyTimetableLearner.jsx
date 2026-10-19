@@ -28,6 +28,10 @@ import {
   Alert,
   Button,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -90,7 +94,7 @@ const NOT_MARKED = { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Marked
 // something fake would be a dead link with extra steps, so they stay
 // visible but disabled until those pages actually exist.
 const QUICK_LINKS = [
-  { label: 'My Subjects', icon: MenuBookIcon, color: '#2563EB' },
+  { label: 'My Subjects', icon: MenuBookIcon, color: '#2563EB', action: 'subjects-modal' },
   { label: 'My Classes', icon: GroupsIcon, color: '#0F766E' },
   { label: 'My Assignments', icon: AssignmentIcon, color: '#7C3AED' },
   { label: 'Learning Resources', icon: AutoStoriesIcon, color: '#D97706' },
@@ -135,6 +139,7 @@ const MyTimetableLearner = () => {
   const [academicInfo, setAcademicInfo] = useState({ academic_session: '', academic_term: '' });
   const [attendanceTerm, setAttendanceTerm] = useState(null);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
+  const [subjectsModalOpen, setSubjectsModalOpen] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
@@ -605,32 +610,70 @@ const MyTimetableLearner = () => {
               Quick Links
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-              {QUICK_LINKS.map((link) => (
-                <Tooltip key={link.label} title="Not available yet — coming soon">
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      gap: 0.5,
-                      p: 1,
-                      borderRadius: 1.5,
-                      bgcolor: `${link.color}14`,
-                      color: link.color,
-                      cursor: 'not-allowed',
-                    }}
-                  >
-                    <link.icon sx={{ fontSize: 18 }} />
-                    <Typography variant="caption" fontWeight={700} sx={{ color: link.color }}>
-                      {link.label}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              ))}
+              {QUICK_LINKS.map((link) => {
+                const isWired = link.action === 'subjects-modal';
+                return (
+                  <Tooltip key={link.label} title={isWired ? 'View every subject you are registered for' : 'Not available yet — coming soon'}>
+                    <Box
+                      onClick={isWired ? () => setSubjectsModalOpen(true) : undefined}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        gap: 0.5,
+                        p: 1,
+                        borderRadius: 1.5,
+                        bgcolor: `${link.color}14`,
+                        color: link.color,
+                        cursor: isWired ? 'pointer' : 'not-allowed',
+                        '&:hover': isWired ? { bgcolor: `${link.color}26` } : undefined,
+                      }}
+                    >
+                      <link.icon sx={{ fontSize: 18 }} />
+                      <Typography variant="caption" fontWeight={700} sx={{ color: link.color }}>
+                        {link.label}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                );
+              })}
             </Box>
           </Paper>
         </Stack>
       </Stack>
+
+      <Dialog open={subjectsModalOpen} onClose={() => setSubjectsModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>My Subjects</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Every subject you're registered for in {academicInfo.academic_session || 'this session'} — {academicInfo.academic_term || 'this term'}.
+          </Typography>
+          {subjects.length === 0 ? (
+            <Alert severity="info">No subject registrations found for this term.</Alert>
+          ) : (
+            <Stack spacing={1}>
+              {subjects.map((s) => (
+                <Stack key={s.id} direction="row" alignItems="center" spacing={1.25} sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: getSubjectColor(s), flexShrink: 0 }} />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={700} noWrap>
+                      {s.name}
+                    </Typography>
+                    {s.code && (
+                      <Typography variant="caption" color="text.secondary">
+                        {s.code}
+                      </Typography>
+                    )}
+                  </Box>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSubjectsModalOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

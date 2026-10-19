@@ -266,7 +266,7 @@ const TeacherTimetableView = () => {
           </Stack>
 
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.25, mb: 2 }}>
-            <StatCardShell icon={TodayIcon} iconColor="#16A34A" title="Today's Classes" loading={loading}>
+            <StatCardShell icon={TodayIcon} iconColor="#16A34A" title="Today's Classes" tooltip="How many of this teacher's classes today are confirmed vs. still upcoming." loading={loading}>
               <BarWithPct
                 value={stats.today.total ? Math.round((stats.today.completed / stats.today.total) * 100) : 0}
                 mainLabel={stats.today.total}
@@ -275,7 +275,7 @@ const TeacherTimetableView = () => {
               />
             </StatCardShell>
 
-            <StatCardShell icon={FactCheckIcon} iconColor="#2563EB" title="Attendance Rate" loading={loading}>
+            <StatCardShell icon={FactCheckIcon} iconColor="#2563EB" title="Attendance Rate" tooltip="This teacher's confirmed-vs-cancelled rate over the last 5 school weeks, up to today." loading={loading}>
               <BarWithPct
                 value={stats.attendance_rate.percent}
                 mainLabel={`${stats.attendance_rate.percent}%`}
@@ -291,7 +291,7 @@ const TeacherTimetableView = () => {
               />
             </StatCardShell>
 
-            <StatCardShell icon={EventRepeatIcon} iconColor="#7E22CE" title="Classes This Week" loading={loading}>
+            <StatCardShell icon={EventRepeatIcon} iconColor="#7E22CE" title="Classes This Week" tooltip="How many classes this week this teacher has confirmed vs. cancelled, out of the total scheduled." loading={loading}>
               <BarWithPct
                 value={stats.this_week.percent}
                 mainLabel={stats.this_week.total}
@@ -306,7 +306,7 @@ const TeacherTimetableView = () => {
               />
             </StatCardShell>
 
-            <StatCardShell icon={ScheduleIcon} iconColor="#DC2626" title="Upcoming Next" loading={loading}>
+            <StatCardShell icon={ScheduleIcon} iconColor="#DC2626" title="Upcoming Next" tooltip="The next class on this teacher's timetable that hasn't been confirmed or cancelled yet." loading={loading}>
               {stats.upcoming_next ? (
                 <>
                   <Typography variant="body2" fontWeight={800}>
@@ -327,7 +327,7 @@ const TeacherTimetableView = () => {
               )}
             </StatCardShell>
 
-            <StatCardShell icon={EventBusyIcon} iconColor="#D97706" title="Cancelled Classes" loading={loading}>
+            <StatCardShell icon={EventBusyIcon} iconColor="#D97706" title="Cancelled Classes" tooltip="Classes this teacher has cancelled this week." loading={loading}>
               <Typography variant="h5" fontWeight={900} lineHeight={1}>
                 {stats.cancelled_this_week}
               </Typography>
@@ -336,7 +336,7 @@ const TeacherTimetableView = () => {
               </Typography>
             </StatCardShell>
 
-            <StatCardShell icon={MenuBookIcon} iconColor="#0F766E" title={`Subjects Taught (${stats.subjects.length})`} loading={loading}>
+            <StatCardShell icon={MenuBookIcon} iconColor="#0F766E" title={`Subjects Taught (${stats.subjects.length})`} tooltip="Every subject this teacher teaches, based on their current subject-teacher allocations." loading={loading}>
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                 {stats.subjects.map((s) => (
                   <Stack key={s.id} direction="row" spacing={0.5} alignItems="center">

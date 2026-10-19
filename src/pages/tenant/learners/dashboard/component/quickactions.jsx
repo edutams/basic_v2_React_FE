@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Button } from '@mui/material';
 
 const actions = [
-  { id: 'timetable', label: 'View Timetable', color: '#2563EB', bg: '#EFF6FF', path: '/my-timetable' },
+  { id: 'timetable', label: 'View Timetable', color: '#2563EB', bg: '#EFF6FF', path: '/timetable/my-timetable-learner' },
   { id: 'notes', label: 'Download Notes', color: '#059669', bg: '#ECFDF5' },
   { id: 'ask', label: 'Ask Question', color: '#D97706', bg: '#FEF3C7' },
   { id: 'library', label: 'Library', color: '#7C3AED', bg: '#F5F3FF' },

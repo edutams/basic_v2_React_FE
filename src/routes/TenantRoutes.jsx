@@ -52,6 +52,7 @@ const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/G
 const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
 const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
 const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
+const MyTimetableLearner = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
@@ -399,6 +400,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="timetable.my_timetable.index">
             <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/my-timetable-learner',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable_learner.index">
+            <MyTimetableLearner />
           </TenantProtectedRoute>
         ),
       },

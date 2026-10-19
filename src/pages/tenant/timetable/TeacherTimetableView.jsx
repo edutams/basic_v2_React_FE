@@ -4,6 +4,7 @@ import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import { getSubjectColor } from '@/utils/subjectColor';
+import { getSubjectIcon } from '@/utils/subjectIcons';
 import { StatCardShell, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
 import {
   Box,
@@ -19,7 +20,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Chip,
   Skeleton,
   Alert,
   Button,
@@ -433,18 +433,47 @@ const TeacherTimetableView = () => {
                               );
                             }
                             const subjectColor = getSubjectColor({ id: cell.subject_id, color: cell.subject_color });
+                            const SubjectIcon = getSubjectIcon(cell.subject_name);
                             return (
                               <TableCell key={d.key}>
                                 <Stack direction="row" spacing={0.5} alignItems="center">
-                                  <Box sx={{ minWidth: 0 }}>
-                                    <Chip
-                                      size="small"
-                                      label={cell.subject_name}
-                                      sx={{ bgcolor: subjectColor, color: '#fff', fontWeight: 700, height: 20 }}
-                                    />
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
-                                      {cell.class_name}
-                                    </Typography>
+                                  <Box
+                                    sx={{
+                                      flex: 1,
+                                      minWidth: 0,
+                                      bgcolor: `${subjectColor}14`,
+                                      border: '1px solid',
+                                      borderColor: `${subjectColor}3D`,
+                                      borderRadius: 1.5,
+                                      p: 0.6,
+                                    }}
+                                  >
+                                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                      <Box
+                                        sx={{
+                                          width: 26,
+                                          height: 26,
+                                          borderRadius: 1.25,
+                                          bgcolor: subjectColor,
+                                          color: '#fff',
+                                          boxShadow: `0 2px 6px ${subjectColor}66`,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        <SubjectIcon sx={{ fontSize: 15 }} />
+                                      </Box>
+                                      <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant="caption" fontWeight={800} noWrap sx={{ display: 'block', color: subjectColor }}>
+                                          {cell.subject_name}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                          {cell.class_name}
+                                        </Typography>
+                                      </Box>
+                                    </Stack>
                                   </Box>
                                   <StatusIcon status={cell.status} />
                                 </Stack>

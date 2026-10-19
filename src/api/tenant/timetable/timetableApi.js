@@ -20,6 +20,7 @@ const timetableApi = {
   getTeacherSchedule: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}`, { params }),
   getMySchedule: (params = {}) => tenantApi.get('/timetable/my-schedule', { params }),
   getMyScheduleOverview: (params = {}) => tenantApi.get('/timetable/my-schedule-overview', { params }),
+  getMyLearnerScheduleOverview: (params = {}) => tenantApi.get('/timetable/my-learner-schedule-overview', { params }),
   getTeacherScheduleOverview: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}/overview`, { params }),
   markAttendance: (data) => tenantApi.post('/timetable/occurrences/attend', data),
   cancelClass: (data) => tenantApi.post('/timetable/occurrences/cancel', data),

@@ -47,7 +47,9 @@ const dedupeBy = (arr, key) => {
 };
 
 const classArmLabel = (classArm) =>
-  [classArm?.programme_class?.class?.class_code, classArm?.class_arm_names].filter(Boolean).join(' ') || 'N/A';
+  [classArm?.programme_class?.class?.class_code, classArm?.class_arm_names]
+    .filter(Boolean)
+    .join(' ') || 'N/A';
 
 const OverflowList = ({ items, limit = 2 }) => {
   const visible = items.slice(0, limit);
@@ -218,19 +220,36 @@ const TeachingStaffTab = ({
           </TextField>
 
           <Tooltip title="Clear search and every filter back to defaults">
-            <Button size="small" variant="outlined" startIcon={<IconFilterOff size={16} />} onClick={onResetFilters}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<IconFilterOff size={16} />}
+              onClick={onResetFilters}
+            >
               Reset
             </Button>
           </Tooltip>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button variant="contained" size="small" fullWidth={{ xs: true, sm: false }} startIcon={<IconPlus />} onClick={handleAddStaff}>
+          <Button
+            variant="contained"
+            size="small"
+            fullWidth={{ xs: true, sm: false }}
+            startIcon={<IconPlus />}
+            onClick={handleAddStaff}
+          >
             Add Teaching Staff
           </Button>
 
           <ButtonGroup fullWidth={{ xs: true, sm: false }}>
-            <Button variant="contained" size="small" startIcon={<IconPlus />} sx={{ textTransform: 'none' }} onClick={handleUploadStaff}>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<IconPlus />}
+              sx={{ textTransform: 'none' }}
+              onClick={handleUploadStaff}
+            >
               Multiple Teachers Upload
             </Button>
 
@@ -258,19 +277,54 @@ const TeachingStaffTab = ({
           <Typography variant="body2" fontWeight={700} sx={{ mr: 1 }}>
             {selectedIds.size} selected
           </Typography>
-          <Button size="small" color="success" variant="outlined" startIcon={<IconCheck size={14} />} onClick={onBulkActivate} sx={{ px: 1, fontSize: '0.75rem' }}>
+          <Button
+            size="small"
+            color="success"
+            variant="contained"
+            startIcon={<IconCheck size={14} />}
+            onClick={onBulkActivate}
+            sx={{ px: 1, fontSize: '0.75rem' }}
+          >
             Activate
           </Button>
-          <Button size="small" color="warning" variant="outlined" startIcon={<IconX size={14} />} onClick={onBulkDeactivate} sx={{ px: 1, fontSize: '0.75rem' }}>
+          <Button
+            size="small"
+            color="warning"
+            variant="contained"
+            startIcon={<IconX size={14} />}
+            onClick={onBulkDeactivate}
+            sx={{ px: 1, fontSize: '0.75rem' }}
+          >
             Deactivate
           </Button>
-          <Button size="small" color="info" variant="outlined" startIcon={<IconBook size={14} />} onClick={onBulkAssignSubjects} sx={{ px: 1, fontSize: '0.75rem' }}>
+          <Button
+            size="small"
+            color="info"
+            variant="contained"
+            startIcon={<IconBook size={14} />}
+            onClick={onBulkAssignSubjects}
+            sx={{ px: 1, fontSize: '0.75rem' }}
+          >
             Assign Subjects
           </Button>
-          <Button size="small" color="secondary" variant="outlined" startIcon={<IconSchool size={14} />} onClick={onBulkAssignClasses} sx={{ px: 1, fontSize: '0.75rem' }}>
+          <Button
+            size="small"
+            color="secondary"
+            variant="contained"
+            startIcon={<IconSchool size={14} />}
+            onClick={onBulkAssignClasses}
+            sx={{ px: 1, fontSize: '0.75rem' }}
+          >
             Assign Classes
           </Button>
-          <Button size="small" color="error" variant="outlined" startIcon={<IconTrash size={14} />} onClick={onBulkDelete} sx={{ px: 1, fontSize: '0.75rem' }}>
+          <Button
+            size="small"
+            color="error"
+            variant="contained"
+            startIcon={<IconTrash size={14} />}
+            onClick={onBulkDelete}
+            sx={{ px: 1, fontSize: '0.75rem' }}
+          >
             Delete
           </Button>
         </Box>
@@ -279,7 +333,12 @@ const TeachingStaffTab = ({
       {/* Table */}
       <TableContainer>
         <Table size="small" stickyHeader>
-          <TableHead sx={{ bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa') }}>
+          <TableHead
+            sx={{
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa',
+            }}
+          >
             <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox
@@ -326,16 +385,36 @@ const TeachingStaffTab = ({
                     <Skeleton variant="text" width={90} height={16} />
                   </TableCell>
                   <TableCell>
-                    <Skeleton variant="rounded" width={90} height={22} sx={{ borderRadius: '12px' }} />
+                    <Skeleton
+                      variant="rounded"
+                      width={90}
+                      height={22}
+                      sx={{ borderRadius: '12px' }}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} />
+                    <Skeleton
+                      variant="rounded"
+                      width={70}
+                      height={22}
+                      sx={{ borderRadius: '12px' }}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} />
+                    <Skeleton
+                      variant="rounded"
+                      width={70}
+                      height={22}
+                      sx={{ borderRadius: '12px' }}
+                    />
                   </TableCell>
                   <TableCell>
-                    <Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} />
+                    <Skeleton
+                      variant="rounded"
+                      width={60}
+                      height={22}
+                      sx={{ borderRadius: '12px' }}
+                    />
                   </TableCell>
                   <TableCell align="center">
                     <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
@@ -355,11 +434,17 @@ const TeachingStaffTab = ({
                 const isClassTeacher = (staffMember.class_teachers?.length || 0) > 0;
                 const isSubjectTeacher = (staffMember.subject_teachers?.length || 0) > 0;
                 const subjectNames = dedupeBy(
-                  (staffMember.subject_teachers || []).map((st) => ({ id: st.subject_id, name: st.subject?.subject_name })),
+                  (staffMember.subject_teachers || []).map((st) => ({
+                    id: st.subject_id,
+                    name: st.subject?.subject_name,
+                  })),
                   'id',
                 ).map((s) => s.name || 'N/A');
                 const classLabels = dedupeBy(
-                  [...(staffMember.class_teachers || []), ...(staffMember.subject_teachers || [])].map((row) => ({
+                  [
+                    ...(staffMember.class_teachers || []),
+                    ...(staffMember.subject_teachers || []),
+                  ].map((row) => ({
                     id: row.class_arm_id,
                     label: classArmLabel(row.class_arm),
                   })),
@@ -388,7 +473,11 @@ const TeachingStaffTab = ({
                     }}
                   >
                     <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox size="small" checked={isRowSelected} onChange={() => toggleOne(staffMember.user_id)} />
+                      <Checkbox
+                        size="small"
+                        checked={isRowSelected}
+                        onChange={() => toggleOne(staffMember.user_id)}
+                      />
                     </TableCell>
                     <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell>
@@ -396,7 +485,14 @@ const TeachingStaffTab = ({
                         <Avatar
                           src={staffMember.user?.avatar}
                           alt={staffMember.user?.lname?.[0]}
-                          sx={{ width: 34, height: 34, fontSize: '12px', fontWeight: 700, bgcolor: 'primary.main', flexShrink: 0 }}
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            bgcolor: 'primary.main',
+                            flexShrink: 0,
+                          }}
                         />
                         <Box sx={{ minWidth: 0 }}>
                           <Typography variant="body2" fontWeight={600} noWrap>
@@ -417,7 +513,14 @@ const TeachingStaffTab = ({
                     <TableCell>
                       <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
                         {isClassTeacher && <Chip size="small" color="info" label="Class Teacher" />}
-                        {isSubjectTeacher && <Chip size="small" color="secondary" variant="outlined" label="Subject Teacher" />}
+                        {isSubjectTeacher && (
+                          <Chip
+                            size="small"
+                            color="secondary"
+                            variant="outlined"
+                            label="Subject Teacher"
+                          />
+                        )}
                         {!isClassTeacher && !isSubjectTeacher && (
                           <Typography variant="caption" color="textSecondary">
                             —
@@ -432,7 +535,11 @@ const TeachingStaffTab = ({
                       <OverflowList items={classLabels} />
                     </TableCell>
                     <TableCell>
-                      <Chip label={statusLabel(staffMember.staff_status)} color={getStatusColor(staffMember.staff_status)} size="small" />
+                      <Chip
+                        label={statusLabel(staffMember.staff_status)}
+                        color={getStatusColor(staffMember.staff_status)}
+                        size="small"
+                      />
                     </TableCell>
                     <TableCell align="center" onClick={(e) => e.stopPropagation()}>
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>

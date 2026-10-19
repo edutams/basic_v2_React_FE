@@ -862,7 +862,7 @@ const UploadScoresTab = () => {
           <Box sx={{ px: 2, pt: 1 }}>
             <Alert
               severity="info"
-              variant="outlined"
+              variant="contained"
               sx={{ borderRadius: '8px', py: 0.25, fontSize: '0.8125rem' }}
             >
               {isAdminRole ? (
@@ -872,10 +872,10 @@ const UploadScoresTab = () => {
                   here. Assign teachers under{' '}
                   <Link
                     component={RouterLink}
-                    to="/staff-setup?tab=allocations&sub=subject-teacher"
+                    to="/teaching-allocations?sub=subject-teacher"
                     fontWeight={700}
                   >
-                    Staff Manager → Subject Teacher Allocation
+                    Teaching Allocations → Subject Teacher Allocation
                   </Link>
                   , then click Fetch again.
                 </>
@@ -1016,7 +1016,7 @@ const UploadScoresTab = () => {
                               size="small"
                               label={a.teacher_name || 'Unassigned'}
                               color={a.has_teacher === false ? 'default' : 'primary'}
-                              variant="outlined"
+                              variant="contained"
                               sx={{ fontSize: '11px', maxWidth: 160 }}
                             />
                           </TableCell>

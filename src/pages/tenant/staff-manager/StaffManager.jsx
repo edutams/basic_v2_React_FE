@@ -52,7 +52,6 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
-import allocationApi from '@/api/tenant/allocations/allocationApi';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { useNotification } from '@/hooks/useNotification';
@@ -61,16 +60,8 @@ import StaffModal from './StaffModal';
 import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
-import ClassTeacherAllocation from './ClassTeacherAllocation';
-import SubjectTeacherAllocation from './SubjectTeacherAllocation';
 import TeacherOverviewPanel from './TeacherOverviewPanel';
 import BulkAssignModal from './components/BulkAssignModal';
-import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
-import {
-  migrateClassTeacherAllocations,
-  migrateSubjectTeacherAllocations,
-} from '@/api/tenant/term-migration/termMigrationApi';
-import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import UploadStaffModal from './components/UploadStaffModal';
 import StaffStatusModal from './components/StaffStatusModal';
 import dayjs from 'dayjs';
@@ -92,21 +83,8 @@ const StaffManager = () => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState([]);
-  // Deep-linkable from elsewhere (e.g. Score Manager's empty-state link) via
-  // ?tab=allocations&sub=subject-teacher — read once on mount, not kept in
-  // sync afterwards, so normal in-page tab clicks behave exactly as before.
-  // The old combined "allocations" tab is now two flat tabs, so translate
-  // the legacy ?tab=allocations&sub=X pair into the new tab value.
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'allocations') {
-      return searchParams.get('sub') === 'subject-teacher' ? 'subject-allocations' : 'class-allocations';
-    }
-    return tabParam || 'teaching';
-  });
-  const [migrateModalOpen, setMigrateModalOpen] = useState(false);
-  const [allocationsRefreshKey, setAllocationsRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'teaching');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [subjectFilter, setSubjectFilter] = useState('all');
@@ -147,8 +125,6 @@ const StaffManager = () => {
     inactiveNonTeaching: 0,
     supportFunctions: 0,
   });
-  const [allocationStats, setAllocationStats] = useState(null);
-  const [allocationStatsLoading, setAllocationStatsLoading] = useState(true);
 
   // Menu
   const [anchorEl, setAnchorEl] = useState(null);
@@ -205,26 +181,6 @@ const StaffManager = () => {
       .catch(() => {});
   }, [activeTab]);
 
-  useEffect(() => {
-    if (activeTab === 'class-allocations' || activeTab === 'subject-allocations') {
-      fetchAllocationStats();
-    }
-  }, [activeTab, allocationsRefreshKey]);
-
-  const fetchAllocationStats = async () => {
-    setAllocationStatsLoading(true);
-    try {
-      const response = await allocationApi.getAllocationStats();
-      if (response.status) {
-        setAllocationStats(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch allocation stats', error);
-    } finally {
-      setAllocationStatsLoading(false);
-    }
-  };
-
   const confirmImpersonateStaff = (staffMember) => {
     setStaffToImpersonate(staffMember);
     setImpersonateConfirmOpen(true);
@@ -248,8 +204,6 @@ const StaffManager = () => {
   };
 
   const fetchStaff = async () => {
-    // Only the Teaching/Non-Teaching tabs show a staff list — the
-    // Allocations tabs render their own components.
     if (activeTab !== 'teaching' && activeTab !== 'non-teaching') return;
 
     setLoading(true);
@@ -789,64 +743,14 @@ const StaffManager = () => {
     },
   ];
 
-  const classAllocationStatCards = [
-    {
-      title: 'Total Class Arms',
-      value: allocationStats?.total_class_arms ?? 0,
-      icon: IconSchool,
-    },
-    {
-      title: 'Arms With Class Teacher',
-      value: `${allocationStats?.class_arms_with_teacher ?? 0}/${allocationStats?.total_class_arms ?? 0}`,
-      icon: IconUserCheck,
-    },
-    {
-      title: 'Still Need a Teacher',
-      value: allocationStats?.class_arms_without_teacher ?? 0,
-      icon: IconUserX,
-    },
-    {
-      title: 'Class Teachers Assigned',
-      value: allocationStats?.total_class_teachers ?? 0,
-      icon: IconUsers,
-    },
-  ];
-
-  const subjectAllocationStatCards = [
-    {
-      title: 'Total Subject Slots',
-      value: allocationStats?.total_class_subject_pairs ?? 0,
-      icon: IconBook,
-    },
-    {
-      title: 'Slots With a Teacher',
-      value: `${allocationStats?.class_subject_pairs_with_teacher ?? 0}/${allocationStats?.total_class_subject_pairs ?? 0}`,
-      icon: IconUserCheck,
-    },
-    {
-      title: 'Still Need a Teacher',
-      value: allocationStats?.class_subject_pairs_without_teacher ?? 0,
-      icon: IconUserX,
-    },
-    {
-      title: 'Subject Teachers Assigned',
-      value: allocationStats?.total_subject_teachers ?? 0,
-      icon: IconUsers,
-    },
-  ];
-
   const statCards =
-    activeTab === 'class-allocations'
-      ? classAllocationStatCards
-      : activeTab === 'subject-allocations'
-        ? subjectAllocationStatCards
-        : activeTab === 'non-teaching'
-          ? nonTeachingStatCards
-          : activeTab === 'teaching'
-            ? teachingStatCards
-            : [];
+    activeTab === 'non-teaching'
+      ? nonTeachingStatCards
+      : activeTab === 'teaching'
+        ? teachingStatCards
+        : [];
 
-  const statCardsLoading = activeTab === 'class-allocations' || activeTab === 'subject-allocations' ? allocationStatsLoading : loading;
+  const statCardsLoading = loading;
 
   return (
     <PageContainer title="Staff Manager" description="Manage Teaching & Non Teaching Staff">
@@ -887,8 +791,6 @@ const StaffManager = () => {
         >
           <Tab label={`Teaching Staff (${stats.teaching})`} value="teaching" />
           <Tab label={`Non-Teaching Staff (${stats.nonTeaching})`} value="non-teaching" />
-          <Tab label="Subject Allocations" value="subject-allocations" />
-          <Tab label="Class Allocations" value="class-allocations" />
         </Tabs>
       </Box>
 
@@ -1022,28 +924,6 @@ const StaffManager = () => {
             </Stack>
           )}
 
-          {(activeTab === 'class-allocations' || activeTab === 'subject-allocations') && (
-            <Box>
-              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<MigrateIcon />}
-                  onClick={() => setMigrateModalOpen(true)}
-                  sx={{ whiteSpace: 'nowrap' }}
-                >
-                  Migrate from Previous Term
-                </Button>
-              </Box>
-              {activeTab === 'class-allocations' && (
-                <ClassTeacherAllocation key={`class-${allocationsRefreshKey}`} />
-              )}
-              {activeTab === 'subject-allocations' && (
-                <SubjectTeacherAllocation key={`subject-${allocationsRefreshKey}`} />
-              )}
-            </Box>
-          )}
-
         </Box>
       </Card>
 
@@ -1094,28 +974,6 @@ const StaffManager = () => {
           Upload Filled Template
         </MenuItem>
       </Menu>
-
-      {/* Term Migration Modal for Class/Subject Allocations */}
-      <TermMigrationModal
-        open={migrateModalOpen}
-        onClose={() => setMigrateModalOpen(false)}
-        title={
-          activeTab === 'class-allocations'
-            ? 'Migrate Class Teacher Allocations'
-            : 'Migrate Subject Teacher Allocations'
-        }
-        description={
-          activeTab === 'class-allocations'
-            ? "Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
-            : "Carries every active subject-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
-        }
-        migrateFn={
-          activeTab === 'class-allocations'
-            ? migrateClassTeacherAllocations
-            : migrateSubjectTeacherAllocations
-        }
-        onSuccess={() => setAllocationsRefreshKey((k) => k + 1)}
-      />
 
       {/* Add Staff Modal - Teaching */}
       {activeTab === 'teaching' && (

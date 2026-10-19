@@ -48,6 +48,9 @@ const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/Acti
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
+const TeachingAllocations = Loadable(
+  lazy(() => import('@/pages/tenant/teaching-allocations/TeachingAllocations')),
+);
 const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
 const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
 const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
@@ -361,6 +364,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="staff.setup.index">
             <StaffManager />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'teaching-allocations',
+        element: (
+          <TenantProtectedRoute permission="setup.academics.class_teacher.manage">
+            <TeachingAllocations />
           </TenantProtectedRoute>
         ),
       },

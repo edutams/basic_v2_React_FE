@@ -18,12 +18,29 @@ import {
   Paper,
   Collapse,
   IconButton,
+  Stack,
+  Tooltip,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import { IconTrash, IconSearch } from '@tabler/icons-react';
+import {
+  IconTrash,
+  IconSearch,
+  IconUsers,
+  IconUserCheck,
+  IconUserExclamation,
+  IconChalkboard,
+  IconWand,
+  IconDownload,
+  IconUpload,
+  IconFilterOff,
+} from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
+import ReusableModal from '@/components/shared/ReusableModal';
+import StatCard from '@/components/shared/StatCard';
+import UploadStaffForm from './components/UploadStaffForm';
+import ClassArmDetailPanel from './components/ClassArmDetailPanel';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
 import {
@@ -32,6 +49,20 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All Statuses' },
+  { value: 'assigned', label: 'Assigned' },
+  { value: 'partial', label: 'Partial' },
+  { value: 'unassigned', label: 'Unassigned' },
+];
+
+const groupStatus = (group) => {
+  const withTeacher = group.rows.filter((r) => r.teacher_id).length;
+  if (withTeacher === 0) return 'unassigned';
+  if (withTeacher === group.rows.length) return 'assigned';
+  return 'partial';
+};
 
 const formatClassList = (names) => {
   if (names.length === 0) return '';
@@ -58,12 +89,23 @@ const ClassTeacherAllocation = () => {
   const [selectedTerm, setSelectedTerm] = useState('');
   const [selectedProgramme, setSelectedProgramme] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Confirmation Dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [allocationToDelete, setAllocationToDelete] = useState(null);
   const [saving, setSaving] = useState(false);
   const [savingGroup, setSavingGroup] = useState(null);
+
+  // Right-side detail panel — set to one allocation row to show it.
+  const [detailArm, setDetailArm] = useState(null);
+
+  // Auto-Allocate
+  const [autoAllocateConfirmOpen, setAutoAllocateConfirmOpen] = useState(false);
+  const [autoAllocating, setAutoAllocating] = useState(false);
+
+  // Bulk Upload
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   // Warn-but-allow modal — shown when a teacher just picked already holds a
   // different class as its class teacher this term. Not a block: a small
@@ -99,6 +141,30 @@ const ClassTeacherAllocation = () => {
     });
     return Array.from(groups.values());
   }, [allocations]);
+
+  const filteredGroupedAllocations = useMemo(() => {
+    if (statusFilter === 'all') return groupedAllocations;
+    return groupedAllocations.filter((group) => groupStatus(group) === statusFilter);
+  }, [groupedAllocations, statusFilter]);
+
+  // All five stat cards come straight out of the already-fetched
+  // `allocations` array — no extra round trip for numbers the table itself
+  // already has.
+  const stats = useMemo(() => {
+    const totalArms = allocations.length;
+    const armsWithTeacher = allocations.filter((a) => a.teacher_id).length;
+    const totalClassTeachers = new Set(
+      allocations.filter((a) => a.teacher_id).map((a) => a.teacher_id),
+    ).size;
+
+    return {
+      totalClasses: groupedAllocations.length,
+      totalArms,
+      armsWithTeacher,
+      armsWithoutTeacher: totalArms - armsWithTeacher,
+      totalClassTeachers,
+    };
+  }, [allocations, groupedAllocations]);
 
   const toggleGroup = (className) => {
     setCollapsedGroups((prev) => {
@@ -397,6 +463,98 @@ const ClassTeacherAllocation = () => {
     }
   };
 
+  const handleRowOpenDetail = (allocation) => {
+    setDetailArm(allocation);
+  };
+
+  // Called from the Suggested Teachers panel — saves immediately (unlike
+  // the table's own Select, which only stages a pending change until Save
+  // is clicked) since there's no "Save" affordance inside the panel itself.
+  const handleAssignFromPanel = async (userId, teacherName) => {
+    if (!detailArm || !selectedTerm) return;
+
+    try {
+      const response = await allocationApi.saveClassTeacherAllocations({
+        session_term_id: selectedTerm,
+        allocations: [{ class_arm_id: detailArm.class_arm_id, user_id: userId }],
+      });
+      if (response.status) {
+        notify.success(`${teacherName} assigned as class teacher for ${detailArm.full_class_name}`);
+        setDetailArm((prev) =>
+          prev ? { ...prev, teacher_id: userId, teacher_name: teacherName } : prev,
+        );
+        fetchAllocations();
+      }
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Failed to assign teacher');
+      console.error(error);
+    }
+  };
+
+  const handleAutoAllocate = async () => {
+    if (!selectedProgramme || !selectedTerm) {
+      notify.error('Select a session, term, and programme first');
+      return;
+    }
+
+    setAutoAllocating(true);
+    try {
+      const response = await allocationApi.autoAllocateClassTeachers({
+        programme_id: selectedProgramme,
+        session_term_id: selectedTerm,
+      });
+      if (response.status) {
+        notify.success(response.message);
+        fetchAllocations();
+      }
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Failed to auto-allocate class teachers');
+      console.error(error);
+    } finally {
+      setAutoAllocating(false);
+      setAutoAllocateConfirmOpen(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    if (!selectedProgramme) {
+      notify.error('Select a programme first');
+      return;
+    }
+    try {
+      const res = await allocationApi.downloadClassTeacherTemplate({
+        programme_id: selectedProgramme,
+        session_term_id: selectedTerm || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'class_teacher_allocation_template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      notify.success('Template downloaded');
+    } catch (error) {
+      notify.error('Failed to download template');
+      console.error(error);
+    }
+  };
+
+  const handleUploadTemplate = async (file) => {
+    if (!selectedTerm) {
+      throw new Error('Select a session term first');
+    }
+    const res = await allocationApi.uploadClassTeacherTemplate(file, selectedTerm);
+    fetchAllocations();
+    return res?.message || 'Upload complete';
+  };
+
+  const handleResetFilters = () => {
+    setSelectedClass('');
+    setStatusFilter('all');
+  };
+
   return (
     <Box
       sx={{
@@ -405,14 +563,84 @@ const ClassTeacherAllocation = () => {
         borderRadius: 3,
       }}
     >
-      {/* Description */}
+      {/* Stat Cards */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {[
+          {
+            label: 'Total Classes',
+            count: stats.totalClasses,
+            icon: IconChalkboard,
+            colorIndex: 0,
+            subtitle: `${stats.totalArms} class arm${stats.totalArms !== 1 ? 's' : ''}`,
+          },
+          {
+            label: 'Total Class Arms',
+            count: stats.totalArms,
+            icon: IconUsers,
+            colorIndex: 2,
+            subtitle: 'All class arms in the programme',
+          },
+          {
+            label: 'Assigned',
+            count: stats.armsWithTeacher,
+            icon: IconUserCheck,
+            colorIndex: 1,
+            subtitle: 'Arms with a class teacher',
+          },
+          {
+            label: 'Unassigned',
+            count: stats.armsWithoutTeacher,
+            icon: IconUserExclamation,
+            colorIndex: 4,
+            subtitle: 'Arms needing a class teacher',
+          },
+          {
+            label: 'Class Teachers',
+            count: stats.totalClassTeachers,
+            icon: IconUserCheck,
+            colorIndex: 3,
+            subtitle: 'Distinct teachers assigned',
+          },
+        ].map((card) => (
+          <Grid key={card.label} size={{ xs: 12, sm: 6, md: 12 / 5 }}>
+            <StatCard
+              loading={loading && !hasFetched}
+              label={card.label}
+              count={card.count}
+              icon={card.icon}
+              colorIndex={card.colorIndex}
+              subtitle={card.subtitle}
+            />
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Description + legend */}
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
-        Select from classes below and allocate teacher to the class
+        Select from classes below and allocate teacher to the class. Click a row to open its detail
+        panel with suggested teachers.{' '}
+        <Box component="span" sx={{ display: 'inline-flex', gap: 1.5, ml: 1, flexWrap: 'wrap' }}>
+          <Chip
+            label="Assigned"
+            size="small"
+            sx={{ bgcolor: '#DCFCE7', color: '#166534', height: 20, fontSize: '0.7rem' }}
+          />
+          <Chip
+            label="Partial"
+            size="small"
+            sx={{ bgcolor: '#FEF3C7', color: '#92400E', height: 20, fontSize: '0.7rem' }}
+          />
+          <Chip
+            label="Unassigned"
+            size="small"
+            sx={{ bgcolor: '#FEE2E2', color: '#991B1B', height: 20, fontSize: '0.7rem' }}
+          />
+        </Box>
       </Alert>
 
-      {/* Filters Row: Session -> Term -> Programme -> Class -> Fetch */}
+      {/* Filters Row: Session -> Term -> Programme -> Class -> Status -> Fetch */}
       <Paper
-        variant="outlined"
+        variant="contained"
         sx={{
           p: 2,
           mb: 3,
@@ -423,7 +651,7 @@ const ClassTeacherAllocation = () => {
         }}
       >
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               size="small"
@@ -440,7 +668,7 @@ const ClassTeacherAllocation = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               size="small"
@@ -458,7 +686,7 @@ const ClassTeacherAllocation = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               size="small"
@@ -476,7 +704,7 @@ const ClassTeacherAllocation = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               select
               size="small"
@@ -495,7 +723,24 @@ const ClassTeacherAllocation = () => {
             </TextField>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              fullWidth
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <Button
               variant="contained"
               size="small"
@@ -508,190 +753,326 @@ const ClassTeacherAllocation = () => {
             </Button>
           </Grid>
         </Grid>
+
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-start',
+            flexWrap: 'wrap',
+            gap: 1,
+            mt: 2,
+          }}
+        >
+          <Button size="small" startIcon={<IconFilterOff size={16} />} onClick={handleResetFilters}>
+            Reset
+          </Button>
+          <Tooltip title="Fill every class arm without a class teacher, using whichever active teaching staff member currently has the lightest load">
+            <span>
+              <Button
+                size="small"
+                variant="contained"
+                color="secondary"
+                startIcon={<IconWand size={16} />}
+                onClick={() => setAutoAllocateConfirmOpen(true)}
+                disabled={!selectedProgramme || !selectedTerm || autoAllocating}
+              >
+                {autoAllocating ? 'Running…' : 'Auto-Allocate'}
+              </Button>
+            </span>
+          </Tooltip>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<IconDownload size={16} />}
+            onClick={handleDownloadTemplate}
+            disabled={!selectedProgramme}
+          >
+            Download Template
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<IconUpload size={16} />}
+            onClick={() => setUploadModalOpen(true)}
+          >
+            Bulk Upload
+          </Button>
+        </Box>
       </Paper>
 
-      {/* Table */}
-      {loading ? (
-        <TableContainer>
-          <Table sx={{ border: '1px solid #e0e0e0' }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <Skeleton variant="text" width={20} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width={100} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="rounded" width="100%" height={36} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="rounded" width={130} height={24} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : allocations.length === 0 ? (
-        <Box sx={{ py: 10, textAlign: 'center' }}>
-          <Typography color="textSecondary">
-            {hasFetched
-              ? 'No class allocations found for these filters'
-              : 'Select a session, term, and programme, then click Fetch'}
-          </Typography>
-        </Box>
-      ) : (
-        <>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              alignItems: 'center',
-              gap: 1,
-              mb: 1.5,
-            }}
-          >
-            <Button size="small" onClick={collapseAll}>
-              Collapse all
-            </Button>
-            <Button size="small" variant="outlined" onClick={expandAll}>
-              Expand all
-            </Button>
-            <Button variant="contained" size="small" onClick={handleSaveAll} disabled={saving}>
-              {saving ? 'Saving...' : 'Save All'}
-            </Button>
-          </Box>
+      {/* Table + detail panel */}
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
+        <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+          {loading ? (
+            <TableContainer>
+              <Table sx={{ border: '1px solid #e0e0e0' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Total Students</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <Skeleton variant="text" width={20} />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton variant="text" width={60} />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton variant="text" width={40} />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton variant="rounded" width="100%" height={36} />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton variant="rounded" width={80} height={22} />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton variant="rounded" width={130} height={24} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : allocations.length === 0 ? (
+            <Box sx={{ py: 10, textAlign: 'center' }}>
+              <Typography color="textSecondary">
+                {hasFetched
+                  ? 'No class allocations found for these filters'
+                  : 'Select a session, term, and programme, then click Fetch'}
+              </Typography>
+            </Box>
+          ) : filteredGroupedAllocations.length === 0 ? (
+            <Box sx={{ py: 10, textAlign: 'center' }}>
+              <Typography color="textSecondary">
+                No classes match the "{STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label}"
+                status filter
+              </Typography>
+            </Box>
+          ) : (
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 1.5,
+                }}
+              >
+                <Button size="small" onClick={collapseAll}>
+                  Collapse all
+                </Button>
+                <Button size="small" variant="contained" onClick={expandAll}>
+                  Expand all
+                </Button>
+                <Button variant="contained" size="small" onClick={handleSaveAll} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save All'}
+                </Button>
+              </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {groupedAllocations.map((group) => {
-              const collapsed = collapsedGroups.has(group.className);
-              const withTeacher = group.rows.filter((r) => r.teacher_id).length;
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {filteredGroupedAllocations.map((group) => {
+                  const collapsed = collapsedGroups.has(group.className);
 
-              return (
-                <Paper
-                  key={group.className}
-                  variant="outlined"
-                  sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 1.5,
-                      cursor: 'pointer',
-                      bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                      borderLeft: '4px solid',
-                      borderLeftColor: 'primary.main',
-                    }}
-                    onClick={() => toggleGroup(group.className)}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <IconButton size="small">
-                        {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-                      </IconButton>
-                      <Box>
-                        <Typography fontWeight={700}>
-                          {group.rows[0]?.programme_name} — {group.className}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {group.rows.length} arm{group.rows.length !== 1 ? 's' : ''} ·{' '}
-                          {withTeacher} with a teacher
-                          {group.rows.length - withTeacher > 0
-                            ? ` · ${group.rows.length - withTeacher} still need one`
-                            : ''}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Button
-                      size="small"
+                  return (
+                    <Paper
+                      key={group.className}
                       variant="contained"
-                      disabled={savingGroup === group.className}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSaveGroup(group);
-                      }}
+                      sx={{ borderRadius: 2, overflow: 'hidden', bgcolor: 'background.paper' }}
                     >
-                      {savingGroup === group.className ? 'Saving...' : 'Save'}
-                    </Button>
-                  </Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1.5,
+                          cursor: 'pointer',
+                          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+                          borderLeft: '4px solid',
+                          borderLeftColor: 'primary.main',
+                        }}
+                        onClick={() => toggleGroup(group.className)}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <IconButton size="small">
+                            {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                          </IconButton>
+                          <Box>
+                            <Typography fontWeight={700}>
+                              {group.rows[0]?.programme_name} — {group.className}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {group.rows.length} arm{group.rows.length !== 1 ? 's' : ''}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={
+                              groupStatus(group) === 'assigned'
+                                ? 'Assigned'
+                                : groupStatus(group) === 'partial'
+                                  ? 'Partial'
+                                  : 'Unassigned'
+                            }
+                            size="small"
+                            sx={{
+                              fontWeight: 600,
+                              ...(groupStatus(group) === 'assigned' && {
+                                bgcolor: '#DCFCE7',
+                                color: '#166534',
+                              }),
+                              ...(groupStatus(group) === 'partial' && {
+                                bgcolor: '#FEF3C7',
+                                color: '#92400E',
+                              }),
+                              ...(groupStatus(group) === 'unassigned' && {
+                                bgcolor: '#FEE2E2',
+                                color: '#991B1B',
+                              }),
+                            }}
+                          />
+                        </Box>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disabled={savingGroup === group.className}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveGroup(group);
+                          }}
+                        >
+                          {savingGroup === group.className ? 'Saving...' : 'Save'}
+                        </Button>
+                      </Box>
 
-                  <Collapse in={!collapsed}>
-                    <TableContainer>
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {group.rows.map((allocation) => (
-                            <TableRow key={allocation.id} hover>
-                              <TableCell>{allocation.arm_name}</TableCell>
-                              <TableCell>
-                                <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
-                                  <TextField
-                                    select
-                                    size="small"
-                                    fullWidth
-                                    placeholder="Select Teacher"
-                                    value={allocation.teacher_id || ''}
-                                    onChange={(e) =>
-                                      handleTeacherChange(allocation._index, e.target.value)
-                                    }
-                                  >
-                                    <MenuItem value="">Select Teacher</MenuItem>
-                                    {teachers.map((teacher) => (
-                                      <MenuItem key={teacher.user_id} value={teacher.user_id}>
-                                        {teacher.user.full_name} ({teacher.staff_id})
-                                      </MenuItem>
-                                    ))}
-                                  </TextField>
-                                </Box>
-                              </TableCell>
-                              <TableCell>
-                                {allocation.teacher_id && (
-                                  <Chip
-                                    label="Remove Allocation"
-                                    size="small"
-                                    onClick={() => handleRemoveAllocation(allocation._index)}
-                                    onDelete={() => handleRemoveAllocation(allocation._index)}
-                                    deleteIcon={<IconTrash size={14} />}
-                                    sx={{
-                                      bgcolor: '#ffebee',
-                                      color: '#c62828',
-                                      cursor: 'pointer',
-                                      '& .MuiChip-deleteIcon': {
-                                        color: '#c62828',
-                                      },
-                                    }}
-                                  />
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Collapse>
-                </Paper>
-              );
-            })}
+                      <Collapse in={!collapsed}>
+                        <TableContainer>
+                          <Table>
+                            <TableHead>
+                              <TableRow>
+                                <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Total Students</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Teachers Name</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {group.rows.map((allocation) => (
+                                <TableRow
+                                  key={allocation.id}
+                                  hover
+                                  onClick={() => handleRowOpenDetail(allocation)}
+                                  selected={detailArm?.class_arm_id === allocation.class_arm_id}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&.Mui-selected': {
+                                      bgcolor: 'rgba(37, 99, 235, 0.12)',
+                                      borderLeft: '3px solid',
+                                      borderLeftColor: 'primary.main',
+                                    },
+                                    '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
+                                  }}
+                                >
+                                  <TableCell>{allocation.arm_name}</TableCell>
+                                  <TableCell>{allocation.student_count ?? 0}</TableCell>
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
+                                      <TextField
+                                        select
+                                        size="small"
+                                        fullWidth
+                                        placeholder="Select Teacher"
+                                        value={allocation.teacher_id || ''}
+                                        onChange={(e) =>
+                                          handleTeacherChange(allocation._index, e.target.value)
+                                        }
+                                      >
+                                        <MenuItem value="">Select Teacher</MenuItem>
+                                        {teachers.map((teacher) => (
+                                          <MenuItem key={teacher.user_id} value={teacher.user_id}>
+                                            {teacher.user.full_name} ({teacher.staff_id})
+                                          </MenuItem>
+                                        ))}
+                                      </TextField>
+                                    </Box>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Chip
+                                      label={allocation.teacher_id ? 'Assigned' : 'Unassigned'}
+                                      size="small"
+                                      sx={
+                                        allocation.teacher_id
+                                          ? {
+                                              bgcolor: '#DCFCE7',
+                                              color: '#166534',
+                                              fontWeight: 600,
+                                            }
+                                          : {
+                                              bgcolor: '#FEE2E2',
+                                              color: '#991B1B',
+                                              fontWeight: 600,
+                                            }
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    {allocation.teacher_id && (
+                                      <Chip
+                                        label="Remove Allocation"
+                                        size="small"
+                                        onClick={() => handleRemoveAllocation(allocation._index)}
+                                        onDelete={() => handleRemoveAllocation(allocation._index)}
+                                        deleteIcon={<IconTrash size={14} />}
+                                        sx={{
+                                          bgcolor: '#ffebee',
+                                          color: '#c62828',
+                                          cursor: 'pointer',
+                                          '& .MuiChip-deleteIcon': {
+                                            color: '#c62828',
+                                          },
+                                        }}
+                                      />
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Collapse>
+                    </Paper>
+                  );
+                })}
+              </Box>
+            </>
+          )}
+        </Box>
+
+        {detailArm && (
+          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+            <ClassArmDetailPanel
+              arm={detailArm}
+              programmeId={selectedProgramme}
+              sessionTermId={selectedTerm}
+              onClose={() => setDetailArm(null)}
+              onAssignTeacher={handleAssignFromPanel}
+              onRemoved={() => {
+                setDetailArm(null);
+                fetchAllocations();
+              }}
+            />
           </Box>
-        </>
-      )}
+        )}
+      </Stack>
 
       {/* Confirmation Dialog */}
       <ConfirmationDialog
@@ -722,6 +1103,32 @@ const ClassTeacherAllocation = () => {
         confirmText="Yes, this is intentional"
         cancelText="No, undo this"
       />
+
+      {/* Auto-Allocate confirmation */}
+      <ConfirmationDialog
+        open={autoAllocateConfirmOpen}
+        onClose={() => setAutoAllocateConfirmOpen(false)}
+        onConfirm={handleAutoAllocate}
+        title="Auto-Allocate Class Teachers"
+        message="This fills every class arm in this programme that doesn't yet have a class teacher, picking whichever active teaching staff member currently has the lightest teaching load. Arms that already have a class teacher are never touched."
+        severity="info"
+        confirmText="Run Auto-Allocate"
+      />
+
+      {/* Bulk Upload */}
+      <ReusableModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        title="Bulk Upload Class Teacher Allocations"
+        size="small"
+      >
+        <UploadStaffForm
+          key={uploadModalOpen ? 'open' : 'closed'}
+          onUpload={handleUploadTemplate}
+          onCancel={() => setUploadModalOpen(false)}
+          onDownloadTemplate={handleDownloadTemplate}
+        />
+      </ReusableModal>
     </Box>
   );
 };

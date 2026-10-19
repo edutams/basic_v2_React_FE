@@ -181,8 +181,11 @@ export const richContentToHtml = (content) => {
 export const isDocumentLink = (content) => {
   const text = String(content || '').trim();
   if (!text || /^data:/i.test(text)) return false;
-  const hasOrigin = /^https?:\/\//i.test(text) || text.startsWith('/');
-  return hasOrigin && /\.(docx?|pdf|pptx?|xlsx?)($|\?)/i.test(text);
+  // Uploaded files are stored (and returned by the API) as bare relative
+  // paths like "lessons/123.docx" — no leading slash or http(s) origin —
+  // so this must not require one, or those uploads fall through to a
+  // plain "open in a new tab" link instead of the inline preview.
+  return /\.(docx?|pdf|pptx?|xlsx?)($|\?)/i.test(text);
 };
 
 export const toAbsoluteUrl = (path) => {

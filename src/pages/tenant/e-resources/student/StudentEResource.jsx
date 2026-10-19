@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -8,7 +8,6 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  Collapse,
   Grid,
   LinearProgress,
   Paper,
@@ -19,25 +18,23 @@ import {
 } from '@mui/material';
 import {
   IconActivity,
+  IconBolt,
   IconBooks,
   IconBulb,
   IconCheck,
-  IconChevronDown,
-  IconChevronUp,
-  IconClipboardList,
   IconFileText,
   IconPlayerPlay,
   IconProgressCheck,
   IconRefresh,
   IconSchool,
+  IconSparkles,
+  IconTrophy,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantStudentApi } from '@/api/tenant/e-resources/studentApi';
-import { tenantAssessmentApi } from '@/api/tenant/e-resources/assessmentApi';
-import { fetchWeeks } from '@/api/tenant/term-weeks/weekApi';
 
 const BCrumb = [
   { to: '/', title: 'Dashboard' },
@@ -46,18 +43,11 @@ const BCrumb = [
 ];
 
 const LESSON_NOTE_ROUTE = '/e-resources/student/lesson-note';
-const ASSESSMENT_ROUTE = '/e-resources/student/assessment';
 const PROGRESS_ROUTE = '/e-resources/student/progress';
 
 const isServiceUnavailable = (error) =>
   error?.response?.status === 503 ||
   error?.response?.data?.message === 'Assessment service unavailable';
-
-const isQuizTaken = (quizVisitCount, qzSchemeId) => {
-  if (!quizVisitCount) return false;
-  if (typeof quizVisitCount === 'number') return quizVisitCount >= 1;
-  return quizVisitCount.scheme_of_work_id === qzSchemeId;
-};
 
 const cardSx = (isDark) => ({
   borderRadius: '14px',
@@ -102,7 +92,7 @@ const SectionHeader = ({ icon: Icon, title, subtitle, accent = '#2563EB', accent
 // header + accent left border + progress block + status banner + footer
 // action) so the student and teacher lesson-note experiences read as one
 // product instead of two different styles.
-const StudentSubjectCard = ({ sub, isSelected, isLoadingOutline, onOpen }) => {
+const StudentSubjectCard = ({ sub, opening, onOpen }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -126,21 +116,19 @@ const StudentSubjectCard = ({ sub, isSelected, isLoadingOutline, onOpen }) => {
   return (
     <Paper
       elevation={0}
-      onClick={() => onOpen(sub.subject_id)}
+      onClick={() => onOpen(sub)}
       sx={{
         borderRadius: '14px',
         border: '1px solid',
         borderLeft: '4px solid',
-        borderColor: isSelected ? '#2563EB' : isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
         borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
         cursor: 'pointer',
-        boxShadow: isSelected
-          ? '0 0 0 2px rgba(37,99,235,0.18), 0 4px 14px rgba(15,23,42,0.08)'
-          : isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
+        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         '&:hover': {
           transform: 'translateY(-2px)',
@@ -273,30 +261,23 @@ const StudentSubjectCard = ({ sub, isSelected, isLoadingOutline, onOpen }) => {
         </Box>
       </Box>
 
-      {/* ── Footer action — shows its own spinner the instant this card is
-          the one being opened, so a click always gives visible feedback
-          even before the page scrolls down to the loaded outline ── */}
+      {/* ── Footer action — takes the student straight to the subject's
+          Lesson Content page (note, progress & chat), not an inline list ── */}
       <Box sx={{ p: 1.25, pt: 1, borderTop: '1px solid', borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6' }}>
         <Button
           fullWidth
           variant="contained"
           color="primary"
           size="small"
-          disabled={isSelected && isLoadingOutline}
-          startIcon={
-            isSelected && isLoadingOutline ? (
-              <CircularProgress size={13} color="inherit" />
-            ) : (
-              <IconBooks size={14} />
-            )
-          }
+          disabled={opening}
+          startIcon={opening ? <CircularProgress size={13} color="inherit" /> : <IconBooks size={14} />}
           onClick={(e) => {
             e.stopPropagation();
-            onOpen(sub.subject_id);
+            onOpen(sub);
           }}
           sx={{ fontWeight: 600, fontSize: '11px', textTransform: 'none', py: 0.5, borderRadius: '5px' }}
         >
-          {isSelected && isLoadingOutline ? 'Loading outline…' : 'View Lesson Outline'}
+          {opening ? 'Opening…' : 'Open Lesson Content'}
         </Button>
       </Box>
     </Paper>
@@ -314,42 +295,12 @@ const StudentEResource = () => {
   const [serviceDown, setServiceDown] = useState(false);
   const [hub, setHub] = useState(null);
   const [subjectsData, setSubjectsData] = useState(null);
-  const [weeks, setWeeks] = useState([]);
-  const [selectedSubjectId, setSelectedSubjectId] = useState(null);
-  const [outline, setOutline] = useState(null);
-  const [quizVisitCount, setQuizVisitCount] = useState(null);
-  const [outlineLoading, setOutlineLoading] = useState(false);
-  const [openWeekIndex, setOpenWeekIndex] = useState(0);
-  const outlineSectionRef = useRef(null);
+  const [openingSubjectId, setOpeningSubjectId] = useState(null);
 
   const subjects = useMemo(
     () => subjectsData?.subjects_with_lessons ?? [],
     [subjectsData],
   );
-
-  const selectedSubject = useMemo(
-    () => subjects.find((s) => s.subject_id === selectedSubjectId) ?? null,
-    [subjects, selectedSubjectId],
-  );
-
-  const groupedOutline = useMemo(() => {
-    if (!Array.isArray(outline)) return [];
-    const weeksMap = [];
-    outline.forEach((item) => {
-      let week = weeksMap.find((w) => w.week_name === item.week_name);
-      if (!week) {
-        week = { week_name: item.week_name, topics: [] };
-        weeksMap.push(week);
-      }
-      let topic = week.topics.find((t) => t.topic === item.topic);
-      if (!topic) {
-        topic = { topic: item.topic, subtopics: [] };
-        week.topics.push(topic);
-      }
-      topic.subtopics.push(item);
-    });
-    return weeksMap;
-  }, [outline]);
 
   // ── Page-level intelligence — a quick read on reading habits across all
   // registered subjects, shown as stat cards above the subject grid.
@@ -360,6 +311,32 @@ const StudentEResource = () => {
     const totalVideoViews = subjects.reduce((sum, s) => sum + (s.report_counts?.['video-content'] ?? 0), 0);
     const avgProgress = totalTopics > 0 ? Math.round((totalReads / totalTopics) * 100) : 0;
     return { totalSubjects, totalTopics, totalReads, totalVideoViews, avgProgress };
+  }, [subjects]);
+
+  // ── Smart study insights — replaces the old static "Weekly Assessment"
+  // list with a read on each student's own reading habits: what to resume,
+  // what's falling behind, and a nudge to use video content when it's being
+  // skipped, computed entirely from data already on this page.
+  const studyInsights = useMemo(() => {
+    if (subjects.length === 0) return null;
+    const withPercent = subjects.map((s) => {
+      const topicCount = s.topic_count || 0;
+      const reads = s.report_counts?.['lesson-note'] ?? 0;
+      const videoViews = s.report_counts?.['video-content'] ?? 0;
+      const percent = topicCount > 0 ? Math.min(100, Math.round((reads / topicCount) * 100)) : 0;
+      return { ...s, percent, videoViews };
+    });
+    const inProgress = withPercent.filter((s) => s.percent > 0 && s.percent < 100);
+    const notStarted = withPercent.filter((s) => s.percent === 0);
+    const resume = [...inProgress].sort((a, b) => b.percent - a.percent)[0]
+      || [...notStarted].sort((a, b) => (a.subject_name || '').localeCompare(b.subject_name || ''))[0]
+      || null;
+    const needsAttention = [...withPercent]
+      .filter((s) => resume == null || s.subject_id !== resume.subject_id)
+      .sort((a, b) => a.percent - b.percent)[0] || null;
+    const allComplete = withPercent.every((s) => s.percent >= 100);
+    const unwatchedVideoSubject = withPercent.find((s) => s.percent > 0 && s.videoViews === 0) || null;
+    return { resume, needsAttention, allComplete, unwatchedVideoSubject };
   }, [subjects]);
 
   const loadHub = useCallback(async () => {
@@ -374,16 +351,11 @@ const StudentEResource = () => {
         return;
       }
       setHub(index);
-      const [subjectsRes, weeksRes] = await Promise.all([
-        tenantStudentApi.getSubjectsWithAssessments({
-          userId: index.userId,
-          session_term: index.termId,
-        }),
-        fetchWeeks(index.termId).catch(() => ({ data: [] })),
-      ]);
+      const subjectsRes = await tenantStudentApi.getSubjectsWithAssessments({
+        userId: index.userId,
+        session_term: index.termId,
+      });
       setSubjectsData(subjectsRes);
-      const weeksBody = Array.isArray(weeksRes) ? weeksRes : weeksRes?.data ?? [];
-      setWeeks(Array.isArray(weeksBody) ? weeksBody : []);
     } catch (err) {
       if (isServiceUnavailable(err)) {
         setServiceDown(true);
@@ -399,86 +371,44 @@ const StudentEResource = () => {
     loadHub();
   }, [loadHub]);
 
-  const loadOutline = useCallback(
-    async (subjectId) => {
-      if (!hub) return;
-      setSelectedSubjectId(subjectId);
-      setOutlineLoading(true);
-      setOutline(null);
-      setQuizVisitCount(null);
-      setOpenWeekIndex(0);
-      // The outline panel sits below the whole subject grid, so a click on
-      // an earlier card can land off-screen with no visible change — scroll
-      // it into view right away instead of leaving the user guessing.
-      requestAnimationFrame(() => {
-        outlineSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Resolves the subject's earliest lesson up front — the same lookup the
+  // outline used to do inline — then navigates straight to the Lesson
+  // Content page with a concrete lesson already chosen, so the student
+  // never lands on a page with nothing to show.
+  const openSubject = async (sub) => {
+    if (!hub || openingSubjectId) return;
+    setOpeningSubjectId(sub.subject_id);
+    try {
+      const weeks = await tenantStudentApi.getSubjectOutline({
+        subject_id: sub.subject_id,
+        class_prog_id: hub.classProgId,
+        session_term_id: hub.termId,
       });
-      try {
-        const res = await tenantAssessmentApi.getSubjectAssessment({
-          subId: subjectId,
-          classProgId: hub.classProgId,
-          termId: hub.termId,
-        });
-        const lessons = Array.isArray(res) ? res[0] : [];
-        const visit = Array.isArray(res) ? res[1] : null;
-        setOutline(Array.isArray(lessons) ? lessons : []);
-        setQuizVisitCount(visit ?? null);
-      } catch (err) {
-        if (isServiceUnavailable(err)) {
-          notify.error('Assessment service is temporarily unavailable. Please try again shortly.');
-        } else {
-          notify.error(err?.response?.data?.message || 'Failed to load subject outline');
-        }
-      } finally {
-        setOutlineLoading(false);
+      const list = Array.isArray(weeks) ? weeks : [];
+      const first = list.find((week) => week.has_lesson_note) || list[0] || null;
+
+      if (!first) {
+        notify.error(`No lesson content has been set up for ${sub.subject_name} yet.`);
+        return;
       }
-    },
-    [hub, notify],
-  );
 
-  const openLessonNote = (sub) => {
-    const params = new URLSearchParams({
-      schemeOfWorkId: String(sub.scheme_of_work_id),
-      subjectId: String(sub.subject_id ?? selectedSubjectId ?? ''),
-      classProgId: String(hub?.classProgId ?? ''),
-      weekId: String(sub.week_id ?? ''),
-      sessionTermId: String(hub?.termId ?? ''),
-      classArmId: String(subjectsData?.cd_id ?? ''),
-      userId: String(hub?.userId ?? ''),
-      subjectName: selectedSubject?.subject_name ?? '',
-      weekName: sub.week_name ?? '',
-    });
-    navigate(`${LESSON_NOTE_ROUTE}?${params.toString()}`);
-  };
-
-  const openAssessment = (sub) => {
-    const params = new URLSearchParams({
-      mode: 'lesson',
-      sow: String(sub.scheme_of_work_id),
-      weekId: String(sub.week_id ?? ''),
-      subjectId: String(sub.subject_id ?? selectedSubjectId ?? ''),
-      classProgId: String(hub?.classProgId ?? ''),
-      sessTermId: String(hub?.termId ?? ''),
-      subjectName: selectedSubject?.subject_name ?? '',
-    });
-    navigate(`${ASSESSMENT_ROUTE}?${params.toString()}`);
-  };
-
-  const openWeeklyAssessment = (week) => {
-    // classProgId drives the random-question lookup on the assessment page
-    // — navigating without it used to land on a page that silently said
-    // "Missing weekly assessment reference" instead of anything useful.
-    if (!hub?.classProgId) {
-      notify.error('Your class/programme context is not available yet. Please refresh and try again.');
-      return;
+      const params = new URLSearchParams({
+        schemeOfWorkId: String(first.scheme_of_work_id),
+        subjectId: String(sub.subject_id ?? ''),
+        classProgId: String(hub.classProgId ?? ''),
+        weekId: String(first.week_id ?? ''),
+        sessionTermId: String(hub.termId ?? ''),
+        classArmId: String(subjectsData?.cd_id ?? ''),
+        userId: String(hub.userId ?? ''),
+        subjectName: sub.subject_name ?? '',
+        weekName: first.week_name ?? '',
+      });
+      navigate(`${LESSON_NOTE_ROUTE}?${params.toString()}`);
+    } catch (err) {
+      notify.error(err?.response?.data?.message || `Failed to open ${sub.subject_name}'s lesson content`);
+    } finally {
+      setOpeningSubjectId(null);
     }
-    const params = new URLSearchParams({
-      mode: 'weekly',
-      weekId: String(week.id),
-      classProgId: String(hub.classProgId),
-      weekName: week.week_name ?? '',
-    });
-    navigate(`${ASSESSMENT_ROUTE}?${params.toString()}`);
   };
 
   if (loading) {
@@ -645,13 +575,13 @@ const StudentEResource = () => {
           </Grid>
 
           <Grid container spacing={2}>
-            {/* ── Left panel — subjects + outline ─────────────────────── */}
+            {/* ── Left panel — subjects ────────────────────────────────── */}
             <Grid size={{ xs: 12, md: 9 }}>
-              <Card sx={{ ...cardSx(isDark), mb: 2, overflow: 'hidden' }}>
+              <Card sx={{ ...cardSx(isDark), overflow: 'hidden' }}>
                 <SectionHeader
                   icon={IconBooks}
                   title="Subjects with Lesson Analysis"
-                  subtitle="Pick a subject to see its weekly breakdown and take formative assessments"
+                  subtitle="Open a subject to read its lesson note, track progress and chat about it"
                 />
                 <CardContent>
                   {subjects.length === 0 ? (
@@ -662,9 +592,8 @@ const StudentEResource = () => {
                         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sub.subject_id}>
                           <StudentSubjectCard
                             sub={sub}
-                            isSelected={sub.subject_id === selectedSubjectId}
-                            isLoadingOutline={outlineLoading}
-                            onOpen={loadOutline}
+                            opening={openingSubjectId === sub.subject_id}
+                            onOpen={openSubject}
                           />
                         </Grid>
                       ))}
@@ -672,216 +601,141 @@ const StudentEResource = () => {
                   )}
                 </CardContent>
               </Card>
-
-              {selectedSubject && (
-                <Card ref={outlineSectionRef} sx={{ ...cardSx(isDark), overflow: 'hidden', scrollMarginTop: 16 }}>
-                  <SectionHeader
-                    icon={IconClipboardList}
-                    title={`${selectedSubject.subject_name} Outline`}
-                    subtitle={`${selectedSubject.topic_count} topics across ${groupedOutline.length} week${groupedOutline.length === 1 ? '' : 's'}`}
-                    accent="#9333EA"
-                    accentBg="#F3E8FF"
-                    action={
-                      <Button
-                        size="small"
-                        onClick={() => loadOutline(selectedSubject.subject_id)}
-                        startIcon={<IconRefresh size={14} />}
-                        sx={{ fontWeight: 600, flexShrink: 0 }}
-                      >
-                        Reload
-                      </Button>
-                    }
-                  />
-                  <CardContent>
-                    {outlineLoading && (
-                      <Stack alignItems="center" py={4}>
-                        <CircularProgress size={28} />
-                      </Stack>
-                    )}
-                    {!outlineLoading && groupedOutline.length === 0 && (
-                      <Alert severity="info" sx={{ borderRadius: '10px' }}>No outline available for this subject yet.</Alert>
-                    )}
-                    {!outlineLoading &&
-                      groupedOutline.map((week, weekIdx) => {
-                        const isOpen = openWeekIndex === weekIdx;
-                        return (
-                          <Box
-                            key={week.week_name || weekIdx}
-                            sx={{
-                              mb: 1.25,
-                              borderRadius: '12px',
-                              border: '1px solid',
-                              borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#EEF2F6',
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box
-                              onClick={() => setOpenWeekIndex(isOpen ? null : weekIdx)}
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                px: 1.5,
-                                py: 1,
-                                cursor: 'pointer',
-                                bgcolor: isOpen ? (isDark ? 'rgba(147,51,234,0.08)' : '#FAF5FF') : 'transparent',
-                              }}
-                            >
-                              <Stack direction="row" spacing={1} alignItems="center">
-                                <Box sx={{ width: 26, height: 26, borderRadius: '8px', bgcolor: '#F3E8FF', color: '#9333EA', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Typography sx={{ fontSize: 11.5, fontWeight: 800 }}>{weekIdx + 1}</Typography>
-                                </Box>
-                                <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>
-                                  {week.week_name}
-                                </Typography>
-                                <Chip
-                                  label={`${week.topics.reduce((sum, t) => sum + t.subtopics.length, 0)} lesson${week.topics.reduce((sum, t) => sum + t.subtopics.length, 0) === 1 ? '' : 's'}`}
-                                  size="small"
-                                  sx={{ fontSize: 10, fontWeight: 700, bgcolor: '#F3E8FF', color: '#7C3AED' }}
-                                />
-                              </Stack>
-                              {isOpen ? <IconChevronUp size={16} color="#9333EA" /> : <IconChevronDown size={16} color="#94A3B8" />}
-                            </Box>
-                            <Collapse in={isOpen}>
-                              <Box sx={{ px: 1.5, pb: 1.25, pt: 0.25 }}>
-                                {week.topics.map((topic, tIdx) => (
-                                  <Box key={`${topic.topic}-${tIdx}`} sx={{ mb: 1.25 }}>
-                                    <Typography sx={{ fontSize: 10, fontWeight: 700, color: '#9333EA', letterSpacing: 0.3, mb: 0.75 }}>
-                                      TOPIC · {topic.topic}
-                                    </Typography>
-                                    <Stack spacing={0.75}>
-                                      {topic.subtopics.map((sub, sIdx) => {
-                                        const taken = isQuizTaken(quizVisitCount, sub.qz_scheme_of_work_id);
-                                        return (
-                                          <Stack
-                                            key={`${sub.scheme_of_work_id}-${sIdx}`}
-                                            direction={{ xs: 'column', sm: 'row' }}
-                                            spacing={1}
-                                            alignItems={{ xs: 'flex-start', sm: 'center' }}
-                                            justifyContent="space-between"
-                                            sx={{
-                                              p: 1,
-                                              borderRadius: '10px',
-                                              bgcolor: isDark ? 'rgba(255,255,255,0.03)' : '#FAFBFC',
-                                              border: '1px solid',
-                                              borderColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
-                                            }}
-                                          >
-                                            <Typography sx={{ fontSize: 12, fontWeight: 600, color: '#1e293b' }}>
-                                              Lesson {sIdx + 1}: {sub.subtopic}
-                                            </Typography>
-                                            <Stack direction="row" spacing={0.75} flexShrink={0}>
-                                              {sub.lesson_id != null && (
-                                                <Button
-                                                  size="small"
-                                                  variant="outlined"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openLessonNote(sub);
-                                                  }}
-                                                  sx={{ borderRadius: '7px', fontWeight: 600, fontSize: 11 }}
-                                                >
-                                                  View Note
-                                                </Button>
-                                              )}
-                                              {sub.qz_scheme_of_work_id != null && (
-                                                <Button
-                                                  size="small"
-                                                  variant={taken ? 'outlined' : 'contained'}
-                                                  color={taken ? 'success' : 'primary'}
-                                                  disabled={taken}
-                                                  startIcon={taken ? <IconCheck size={13} /> : null}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    openAssessment(sub);
-                                                  }}
-                                                  sx={{ borderRadius: '7px', fontWeight: 700, fontSize: 11 }}
-                                                >
-                                                  {taken ? 'Formative Taken' : 'Take Formative'}
-                                                </Button>
-                                              )}
-                                            </Stack>
-                                          </Stack>
-                                        );
-                                      })}
-                                    </Stack>
-                                  </Box>
-                                ))}
-                              </Box>
-                            </Collapse>
-                          </Box>
-                        );
-                      })}
-                  </CardContent>
-                </Card>
-              )}
             </Grid>
 
-            {/* ── Right panel — weekly assessments + selected-subject recap ─ */}
+            {/* ── Right panel — smart study insights ──────────────────── */}
             <Grid size={{ xs: 12, md: 3 }}>
               <Card sx={{ ...cardSx(isDark), overflow: 'hidden' }}>
                 <SectionHeader
-                  icon={IconActivity}
-                  title="Weekly Assessment"
-                  accent="#16A34A"
-                  accentBg="#DCFCE7"
+                  icon={IconSparkles}
+                  title="Smart Study Insights"
+                  subtitle="Personalised to your reading habits"
+                  accent="#9333EA"
+                  accentBg="#F3E8FF"
                 />
-                <Box sx={{ px: 1.5, pt: 1.25 }}>
-                  <Stack
-                    direction="row"
-                    spacing={0.75}
-                    alignItems="flex-start"
-                    sx={{ p: 1, borderRadius: '10px', bgcolor: isDark ? 'rgba(245,158,11,0.1)' : '#FFFBEB' }}
-                  >
-                    <IconBulb size={14} color="#D97706" style={{ flexShrink: 0, marginTop: 1 }} />
-                    <Typography sx={{ fontSize: 10.5, color: '#92400E', fontWeight: 600, lineHeight: 1.4 }}>
-                      Finish the previous assessment before you can start the next one.
-                    </Typography>
-                  </Stack>
-                </Box>
                 <CardContent sx={{ pt: 1.25 }}>
-                  {weeks.length === 0 ? (
+                  {!studyInsights ? (
                     <Typography variant="body2" color="text.secondary">
-                      No weeks available yet.
+                      Start a subject to see personalised insights here.
                     </Typography>
                   ) : (
-                    <Stack spacing={0.75}>
-                      {weeks.map((week) => (
-                        <Button
-                          key={week.id}
-                          fullWidth
-                          variant="outlined"
-                          startIcon={<IconPlayerPlay size={14} />}
-                          onClick={() => openWeeklyAssessment(week)}
-                          sx={{ justifyContent: 'flex-start', textTransform: 'none', borderRadius: '8px', fontWeight: 600, fontSize: 12.5 }}
+                    <Stack spacing={1.5}>
+                      {studyInsights.resume && (
+                        <Box
+                          sx={{
+                            p: 1.25,
+                            borderRadius: '10px',
+                            bgcolor: isDark ? 'rgba(37,99,235,0.1)' : '#EFF6FF',
+                            border: '1px solid',
+                            borderColor: 'rgba(37,99,235,0.2)',
+                          }}
                         >
-                          {week.week_name} Assessment
-                        </Button>
-                      ))}
+                          <Stack direction="row" spacing={0.75} alignItems="center" mb={0.5}>
+                            <IconBolt size={13} color="#2563EB" />
+                            <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: '#2563EB', letterSpacing: 0.3 }}>
+                              CONTINUE LEARNING
+                            </Typography>
+                          </Stack>
+                          <Typography sx={{ fontSize: 12.5, fontWeight: 700, mb: 0.25 }}>
+                            {studyInsights.resume.subject_name}
+                          </Typography>
+                          <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
+                            {studyInsights.resume.percent > 0
+                              ? `${studyInsights.resume.percent}% read so far — pick up where you left off.`
+                              : "You haven't started this one yet — it's next in line."}
+                          </Typography>
+                          <Button
+                            size="small"
+                            fullWidth
+                            variant="contained"
+                            disabled={openingSubjectId === studyInsights.resume.subject_id}
+                            startIcon={
+                              openingSubjectId === studyInsights.resume.subject_id ? (
+                                <CircularProgress size={13} color="inherit" />
+                              ) : null
+                            }
+                            onClick={() => openSubject(studyInsights.resume)}
+                            sx={{ borderRadius: '8px', fontWeight: 700, fontSize: 11.5 }}
+                          >
+                            Resume Lesson
+                          </Button>
+                        </Box>
+                      )}
+
+                      {studyInsights.needsAttention && studyInsights.needsAttention.percent < 50 && (
+                        <Box
+                          sx={{
+                            p: 1.25,
+                            borderRadius: '10px',
+                            bgcolor: isDark ? 'rgba(234,88,12,0.1)' : '#FFF7ED',
+                            border: '1px solid',
+                            borderColor: 'rgba(234,88,12,0.2)',
+                          }}
+                        >
+                          <Stack direction="row" spacing={0.75} alignItems="center" mb={0.5}>
+                            <IconBulb size={13} color="#EA580C" />
+                            <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: '#EA580C', letterSpacing: 0.3 }}>
+                              NEEDS ATTENTION
+                            </Typography>
+                          </Stack>
+                          <Typography sx={{ fontSize: 12.5, fontWeight: 700, mb: 0.25 }}>
+                            {studyInsights.needsAttention.subject_name}
+                          </Typography>
+                          <Typography sx={{ fontSize: 11, color: 'text.secondary', mb: 1 }}>
+                            Only {studyInsights.needsAttention.percent}% read — you're at risk of falling behind.
+                          </Typography>
+                          <Button
+                            size="small"
+                            fullWidth
+                            variant="outlined"
+                            color="warning"
+                            disabled={openingSubjectId === studyInsights.needsAttention.subject_id}
+                            startIcon={
+                              openingSubjectId === studyInsights.needsAttention.subject_id ? (
+                                <CircularProgress size={13} color="inherit" />
+                              ) : null
+                            }
+                            onClick={() => openSubject(studyInsights.needsAttention)}
+                            sx={{ borderRadius: '8px', fontWeight: 700, fontSize: 11.5 }}
+                          >
+                            Start Reading
+                          </Button>
+                        </Box>
+                      )}
+
+                      {studyInsights.unwatchedVideoSubject && (
+                        <Box
+                          sx={{
+                            p: 1.25,
+                            borderRadius: '10px',
+                            bgcolor: isDark ? 'rgba(147,51,234,0.08)' : '#FAF5FF',
+                            border: '1px solid',
+                            borderColor: 'rgba(147,51,234,0.2)',
+                          }}
+                        >
+                          <Stack direction="row" spacing={0.75} alignItems="center" mb={0.5}>
+                            <IconPlayerPlay size={13} color="#9333EA" />
+                            <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: '#9333EA', letterSpacing: 0.3 }}>
+                              TIP
+                            </Typography>
+                          </Stack>
+                          <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
+                            You haven't watched any video content for{' '}
+                            <strong>{studyInsights.unwatchedVideoSubject.subject_name}</strong> yet — videos can help
+                            topics click faster.
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {studyInsights.allComplete && (
+                        <Alert severity="success" icon={<IconTrophy size={16} />} sx={{ borderRadius: '8px' }}>
+                          Great job! You're fully caught up on every subject.
+                        </Alert>
+                      )}
                     </Stack>
                   )}
                 </CardContent>
               </Card>
-
-              {selectedSubject && (
-                <Card sx={{ ...cardSx(isDark), mt: 2 }}>
-                  <CardContent>
-                    <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                      <Avatar sx={{ width: 28, height: 28, bgcolor: '#EEF2FF', color: '#2563EB' }}>
-                        <IconFileText size={14} />
-                      </Avatar>
-                      <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#0f172a' }}>
-                        {selectedSubject.subject_name}
-                      </Typography>
-                    </Stack>
-                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary', lineHeight: 1.5 }}>
-                      {selectedSubject.topic_count} unique topics across{' '}
-                      {(selectedSubject.lesson_contents ?? []).length} week
-                      {(selectedSubject.lesson_contents ?? []).length === 1 ? '' : 's'}.
-                    </Typography>
-                  </CardContent>
-                </Card>
-              )}
             </Grid>
           </Grid>
         </>

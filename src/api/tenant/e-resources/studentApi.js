@@ -19,6 +19,10 @@ export const tenantStudentApi = {
     );
     return response.data;
   },
+  getSubjectOutline: async (data) => {
+    const response = await tenantApi.post('/e-resources/student/subject-outline', data);
+    return response.data;
+  },
   getLessonContent: async (schemeOfWorkId) => {
     const response = await tenantApi.get(
       `/e-resources/student/lesson-content/${schemeOfWorkId}`,

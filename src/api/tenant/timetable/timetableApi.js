@@ -2,6 +2,7 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const timetableApi = {
   getStats: (params = {}) => tenantApi.get('/timetable/stats', { params }),
+  getAttendanceComplianceReport: (params = {}) => tenantApi.get('/timetable/attendance-compliance-report', { params }),
   saveSnapshot: (sessionTermId) => tenantApi.post('/timetable/save', { session_term_id: sessionTermId }),
   getClassArmGrid: (classArmId, params = {}) => tenantApi.get(`/timetable/class-arm/${classArmId}`, { params }),
   assignSlot: (data) => tenantApi.post('/timetable/slots', data),

@@ -51,6 +51,7 @@ const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/St
 const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
 const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
 const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
+const AttendanceComplianceReport = Loadable(lazy(() => import('@/pages/tenant/timetable/AttendanceComplianceReport')));
 const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
 const MyTimetableLearner = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')));
 const PageUnderDevelopment = Loadable(
@@ -384,6 +385,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="timetable.teacher_view.index">
             <TeacherTimetableView />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/attendance-compliance-report',
+        element: (
+          <TenantProtectedRoute permission="timetable.compliance_report.index">
+            <AttendanceComplianceReport />
           </TenantProtectedRoute>
         ),
       },

@@ -2,6 +2,7 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const timetableApi = {
   getStats: (params = {}) => tenantApi.get('/timetable/stats', { params }),
+  getAttendanceComplianceReport: (params = {}) => tenantApi.get('/timetable/attendance-compliance-report', { params }),
   saveSnapshot: (sessionTermId) => tenantApi.post('/timetable/save', { session_term_id: sessionTermId }),
   getClassArmGrid: (classArmId, params = {}) => tenantApi.get(`/timetable/class-arm/${classArmId}`, { params }),
   assignSlot: (data) => tenantApi.post('/timetable/slots', data),
@@ -20,6 +21,7 @@ const timetableApi = {
   getTeacherSchedule: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}`, { params }),
   getMySchedule: (params = {}) => tenantApi.get('/timetable/my-schedule', { params }),
   getMyScheduleOverview: (params = {}) => tenantApi.get('/timetable/my-schedule-overview', { params }),
+  getMyLearnerScheduleOverview: (params = {}) => tenantApi.get('/timetable/my-learner-schedule-overview', { params }),
   getTeacherScheduleOverview: (userId, params = {}) => tenantApi.get(`/timetable/teacher/${userId}/overview`, { params }),
   markAttendance: (data) => tenantApi.post('/timetable/occurrences/attend', data),
   cancelClass: (data) => tenantApi.post('/timetable/occurrences/cancel', data),

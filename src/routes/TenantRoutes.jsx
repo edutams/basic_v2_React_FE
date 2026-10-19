@@ -63,10 +63,15 @@ const EResourcesApproval = Loadable(lazy(() => import('@/pages/tenant/e-resource
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
+const TeachingAllocations = Loadable(
+  lazy(() => import('@/pages/tenant/teaching-allocations/TeachingAllocations')),
+);
 const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
 const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
 const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
+const AttendanceComplianceReport = Loadable(lazy(() => import('@/pages/tenant/timetable/AttendanceComplianceReport')));
 const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
+const MyTimetableLearner = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')));
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
@@ -386,6 +391,14 @@ const TenantRoutes = [
         ),
       },
       {
+        path: 'teaching-allocations',
+        element: (
+          <TenantProtectedRoute permission="setup.academics.class_teacher.manage">
+            <TeachingAllocations />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
         path: 'timetable/generate',
         element: (
           <TenantProtectedRoute permission="timetable.generate.manage">
@@ -410,6 +423,14 @@ const TenantRoutes = [
         ),
       },
       {
+        path: 'timetable/attendance-compliance-report',
+        element: (
+          <TenantProtectedRoute permission="timetable.compliance_report.index">
+            <AttendanceComplianceReport />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
         path: 'timetable/my-timetable',
         element: (
           <TenantProtectedRoute permission="timetable.my_timetable.index">
@@ -422,6 +443,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="timetable.my_timetable.index">
             <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/my-timetable-learner',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable_learner.index">
+            <MyTimetableLearner />
           </TenantProtectedRoute>
         ),
       },

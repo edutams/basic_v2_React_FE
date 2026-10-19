@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import { migrateTimetable } from '@/api/tenant/term-migration/termMigrationApi';
 import { StatCardShell, DividedStat, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
+import { getSubjectIcon, getBreakIcon } from '@/utils/subjectIcons';
 import {
   Box,
   Stack,
@@ -62,45 +63,11 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CalculateIcon from '@mui/icons-material/Calculate';
-import ScienceIcon from '@mui/icons-material/Science';
-import PublicIcon from '@mui/icons-material/Public';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import TranslateIcon from '@mui/icons-material/Translate';
-import ComputerIcon from '@mui/icons-material/Computer';
-import PaletteIcon from '@mui/icons-material/Palette';
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
-import HistoryEduIcon from '@mui/icons-material/HistoryEdu';
-import GrassIcon from '@mui/icons-material/Grass';
-import LocalCafeIcon from '@mui/icons-material/LocalCafe';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const ARM_DOT_COLORS = ['#2563EB', '#16A34A', '#9333EA', '#D97706', '#DC2626', '#0891B2'];
-
-const SUBJECT_ICON_RULES = [
-  [/math/i, CalculateIcon],
-  [/english|literature/i, MenuBookIcon],
-  [/science|biology|chemistry|physics/i, ScienceIcon],
-  [/geography/i, PublicIcon],
-  [/government|civic/i, AccountBalanceIcon],
-  [/physical|health|sport/i, FitnessCenterIcon],
-  [/french|yoruba|igbo|hausa|language/i, TranslateIcon],
-  [/computer|ict/i, ComputerIcon],
-  [/creative|art|music/i, PaletteIcon],
-  [/religio|bible|quran|islamic|christian/i, AutoStoriesIcon],
-  [/business|commerce|account/i, BusinessCenterIcon],
-  [/history/i, HistoryEduIcon],
-  [/agric/i, GrassIcon],
-];
-
-const getSubjectIcon = (name = '') =>
-  (SUBJECT_ICON_RULES.find(([re]) => re.test(name)) || [])[1] || MenuBookIcon;
-const getBreakIcon = (label = '') => (/lunch/i.test(label) ? RestaurantIcon : LocalCafeIcon);
 
 const WEEKDAYS = [
   { key: 'monday', label: 'Monday' },

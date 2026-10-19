@@ -13,6 +13,11 @@ const staffApi = {
     return response.data;
   },
 
+  getNonTeachingRoles: async () => {
+    const response = await tenantApi.get('/school_setup/staff/non-teaching-roles');
+    return response.data;
+  },
+
   getSingle: async (id) => {
     const response = await tenantApi.get(`/school_setup/staff/${id}`);
     return response.data;

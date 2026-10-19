@@ -3,6 +3,9 @@ import { Box, Paper, Stack, Typography, Avatar, Chip, IconButton, Tabs, Tab, Ske
 import CloseIcon from '@mui/icons-material/Close';
 import MessageIcon from '@mui/icons-material/Message';
 import EditIcon from '@mui/icons-material/Edit';
+import BadgeIcon from '@mui/icons-material/Badge';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
 import HomeIcon from '@mui/icons-material/Home';
 import ContactEmergencyIcon from '@mui/icons-material/ContactEmergency';
 import EventIcon from '@mui/icons-material/Event';
@@ -126,6 +129,7 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
   const classes = profile?.classes || [];
   const emergencyContact = profile?.emergency_contact || {};
   const hasEmergencyContact = emergencyContact.name || emergencyContact.phone || emergencyContact.address;
+  const isTeaching = profile?.staff_type !== 'non-teaching';
 
   const todayKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getDay()];
   const todaysRows = schedule?.schedule?.[todayKey] || [];
@@ -142,7 +146,13 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
               {fullName}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {profile?.is_subject_teacher ? 'Subject Teacher' : profile?.is_class_teacher ? 'Class Teacher' : 'Teacher'}
+              {!isTeaching
+                ? profile?.role || 'Non-Teaching Staff'
+                : profile?.is_subject_teacher
+                  ? 'Subject Teacher'
+                  : profile?.is_class_teacher
+                    ? 'Class Teacher'
+                    : 'Teacher'}
             </Typography>
           </Box>
         </Stack>
@@ -161,16 +171,25 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
       </Stack>
 
       {!loading && profile && (
-        <Stack spacing={0.25} sx={{ mb: 1.5 }}>
-          <Typography variant="caption" color="text.secondary">
-            {profile.staff_id}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {profile.phone || '—'}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {profile.email || '—'}
-          </Typography>
+        <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <BadgeIcon sx={{ fontSize: 15, color: '#2563EB' }} />
+            <Typography variant="caption" color="text.secondary">
+              {profile.staff_id}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <PhoneIcon sx={{ fontSize: 15, color: '#16A34A' }} />
+            <Typography variant="caption" color="text.secondary">
+              {profile.phone || '—'}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <EmailIcon sx={{ fontSize: 15, color: '#D97706' }} />
+            <Typography variant="caption" color="text.secondary">
+              {profile.email || '—'}
+            </Typography>
+          </Stack>
         </Stack>
       )}
 
@@ -185,9 +204,9 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
 
       <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ mb: 1.5, minHeight: 36, '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' } }}>
         <Tab value="overview" label="Overview" />
-        <Tab value="subjects" label={`Subjects (${subjects.length})`} />
-        <Tab value="classes" label={`Classes (${classes.length})`} />
-        <Tab value="timetable" label="Timetable" />
+        {isTeaching && <Tab value="subjects" label={`Subjects (${subjects.length})`} />}
+        {isTeaching && <Tab value="classes" label={`Classes (${classes.length})`} />}
+        {isTeaching && <Tab value="timetable" label="Timetable" />}
       </Tabs>
 
       {loading ? (

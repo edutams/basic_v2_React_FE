@@ -47,6 +47,7 @@ import {
   IconHistory,
   IconSchool,
   IconBook,
+  IconClipboardList,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -112,6 +113,8 @@ const StaffManager = () => {
   const [classFilter, setClassFilter] = useState('all');
   const [subjectOptions, setSubjectOptions] = useState([]);
   const [classOptions, setClassOptions] = useState([]);
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [roleOptions, setRoleOptions] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
@@ -140,6 +143,9 @@ const StaffManager = () => {
     teachingLoad: 0,
     classesCovered: 0,
     classesTotal: 0,
+    activeNonTeaching: 0,
+    inactiveNonTeaching: 0,
+    supportFunctions: 0,
   });
   const [allocationStats, setAllocationStats] = useState(null);
   const [allocationStatsLoading, setAllocationStatsLoading] = useState(true);
@@ -173,7 +179,7 @@ const StaffManager = () => {
 
   useEffect(() => {
     fetchStaff();
-  }, [activeTab, page, rowsPerPage, searchQuery, statusFilter, subjectFilter, classFilter]);
+  }, [activeTab, page, rowsPerPage, searchQuery, statusFilter, subjectFilter, classFilter, roleFilter]);
 
   useEffect(() => {
     fetchStats();
@@ -188,6 +194,14 @@ const StaffManager = () => {
     timetableApi
       .getClassArms()
       .then((res) => setClassOptions(res.data?.data || []))
+      .catch(() => {});
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 'non-teaching') return;
+    staffApi
+      .getNonTeachingRoles()
+      .then((res) => setRoleOptions(res.data || []))
       .catch(() => {});
   }, [activeTab]);
 
@@ -260,6 +274,10 @@ const StaffManager = () => {
         }
       }
 
+      if (activeTab === 'non-teaching' && roleFilter !== 'all') {
+        params.role = roleFilter;
+      }
+
       const response = await staffApi.getAll(params);
 
       if (response.status) {
@@ -293,8 +311,24 @@ const StaffManager = () => {
           teaching_load: teachingLoad,
           classes_covered: classesCovered,
           classes_total: classesTotal,
+          active_non_teaching: activeNonTeaching,
+          inactive_non_teaching: inactiveNonTeaching,
+          support_functions: supportFunctions,
         } = response.data;
-        setStats({ total, teaching, nonTeaching, onLeave, activeTeaching, inactiveTeaching, teachingLoad, classesCovered, classesTotal });
+        setStats({
+          total,
+          teaching,
+          nonTeaching,
+          onLeave,
+          activeTeaching,
+          inactiveTeaching,
+          teachingLoad,
+          classesCovered,
+          classesTotal,
+          activeNonTeaching,
+          inactiveNonTeaching,
+          supportFunctions,
+        });
       }
     } catch (error) {
       console.error(error);
@@ -612,6 +646,7 @@ const StaffManager = () => {
     setStatusFilter('all');
     setSubjectFilter('all');
     setClassFilter('all');
+    setRoleFilter('all');
     setPage(0);
   };
 
@@ -724,9 +759,34 @@ const StaffManager = () => {
   ];
 
   const nonTeachingStatCards = [
-    { title: 'Total Staff', value: stats.total, icon: IconUsers },
-    { title: 'Non-Teaching Staff', value: stats.nonTeaching, icon: IconUserX },
-    { title: 'On Leave', value: stats.onLeave, icon: IconCalendarOff },
+    {
+      title: 'Total Non-Teaching Staff',
+      value: stats.nonTeaching,
+      icon: IconUsers,
+      subtitle: 'All non-teaching staff in the school',
+      tooltip: 'Every staff member with staff_type = non-teaching, regardless of status.',
+    },
+    {
+      title: 'Active Staff',
+      value: stats.activeNonTeaching,
+      icon: IconUserCheck,
+      subtitle: 'Currently active',
+      tooltip: 'Non-teaching staff whose status is Active.',
+    },
+    {
+      title: 'Inactive Staff',
+      value: stats.inactiveNonTeaching,
+      icon: IconUserX,
+      subtitle: 'Deactivated or deceased',
+      tooltip: 'Non-teaching staff whose status is Inactive or Deceased.',
+    },
+    {
+      title: 'Support Functions',
+      value: stats.supportFunctions,
+      icon: IconClipboardList,
+      subtitle: 'Key non-teaching roles',
+      tooltip: 'Distinct role titles currently assigned to non-teaching staff (e.g. Librarian, Accounts Assistant) — not a headcount.',
+    },
   ];
 
   const classAllocationStatCards = [
@@ -908,24 +968,58 @@ const StaffManager = () => {
           )}
 
           {activeTab === 'non-teaching' && (
-            <NonTeachingStaffTab
-              loading={loading}
-              staff={staff}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              total={total}
-              handleChangePage={handleChangePage}
-              handleChangeRowsPerPage={handleChangeRowsPerPage}
-              handleAddStaff={handleAddStaff}
-              handleBulkMenuOpen={handleBulkMenuOpen}
-              handleUploadStaff={handleUploadStaff}
-              handleMenuOpen={handleMenuOpen}
-              getStatusColor={getStatusColor}
-            />
+            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
+              <Box
+                sx={
+                  detailPanelStaff
+                    ? { flex: 1, minWidth: 0, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }
+                    : { flex: 1, minWidth: 0 }
+                }
+              >
+                <NonTeachingStaffTab
+                  loading={loading}
+                  staff={staff}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  statusFilter={statusFilter}
+                  setStatusFilter={setStatusFilter}
+                  roleFilter={roleFilter}
+                  setRoleFilter={setRoleFilter}
+                  roleOptions={roleOptions}
+                  onResetFilters={handleResetFilters}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  total={total}
+                  handleChangePage={handleChangePage}
+                  handleChangeRowsPerPage={handleChangeRowsPerPage}
+                  handleAddStaff={handleAddStaff}
+                  handleBulkMenuOpen={handleBulkMenuOpen}
+                  handleUploadStaff={handleUploadStaff}
+                  handleMenuOpen={handleMenuOpen}
+                  getStatusColor={getStatusColor}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
+                  onBulkActivate={() => setBulkActivateConfirmOpen(true)}
+                  onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
+                  onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
+                  onRowClick={handleRowClick}
+                  selectedStaffId={detailPanelStaff?.user_id}
+                />
+              </Box>
+              {detailPanelStaff && (
+                <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+                  <TeacherOverviewPanel
+                    staffRow={detailPanelStaff}
+                    onClose={() => setDetailPanelStaff(null)}
+                    onEdit={(s) => {
+                      setSelectedStaff(s);
+                      handleEditStaff();
+                    }}
+                    onSendMessage={() => notify.info('Messaging from here is coming soon')}
+                  />
+                </Box>
+              )}
+            </Stack>
           )}
 
           {(activeTab === 'class-allocations' || activeTab === 'subject-allocations') && (

@@ -42,8 +42,23 @@ const AdmissionApply = Loadable(lazy(() => import('@/pages/tenant/auth/admission
 const ImpersonateLogin = Loadable(lazy(() => import('../utils/auth/ImpersonateLogin')));
 const Error = Loadable(lazy(() => import('../utils/auth/Error')));
 const SchoolNotFound = Loadable(lazy(() => import('../utils/auth/SchoolNotFound')));
+const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
+
+const EResourcesIndex = Loadable(lazy(() => import('@/pages/tenant/e-resources/Index')));
+const EResourcesVideoTutorials = Loadable(lazy(() => import('@/pages/tenant/e-resources/VideoTutorials')));
+const EResourcesStudentBrowse = Loadable(lazy(() => import('@/pages/tenant/e-resources/EResourceStudent')));
+const EResourcesStudentHub = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentEResource')));
+const EResourcesStudentLessonNote = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentLessonNoteView')));
+const EResourcesStudentAssessment = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentAssessment')));
+const EResourcesStudentProgress = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentProgress')));
+const EResourcesStaffLessonNote = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/StaffLessonNoteIndex')));
+const EResourcesLessonNoteEditor = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteEditor')));
+const EResourcesLessonPlanEditor = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonPlanEditor')));
+const EResourcesLessonVideoManager = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonVideoManager')));
+const EResourcesLessonNoteProgress = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteProgress')));
+const EResourcesApproval = Loadable(lazy(() => import('@/pages/tenant/e-resources/approval/LessonNoteApproval')));
 
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
@@ -205,6 +220,14 @@ const TenantRoutes = [
   {
     path: '/impersonate-login/:token',
     element: <ImpersonateLogin />,
+  },
+  // Public "Download Result" link from Result → Messaging — no session or
+  // permission guard; the backend route behind it re-applies the school's
+  // publish / result-payment gates.
+  {
+    path: '/verifyresult/:tenantId/:regId',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <VerifyResult /> }],
   },
   {
     path: '/school-not-found',
@@ -868,6 +891,111 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="manage.class_manager.attendance_psychomotor.view">
             <AttendancePsychomotor />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      {
+        path: 'e-resources',
+        element: (
+          <TenantProtectedRoute permission="e_resources.view">
+            <EResourcesIndex />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/video-tutorials',
+        element: (
+          <TenantProtectedRoute permission="e_resources.view">
+            <EResourcesVideoTutorials />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentHub />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/browse',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentBrowse />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/lesson-note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentLessonNote />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/assessment',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentAssessment />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/progress',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentProgress />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesStaffLessonNote />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonNoteEditor />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/plan',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonPlanEditor />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/video',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonVideoManager />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/progress',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonNoteProgress />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/approval',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.approval.view">
+            <EResourcesApproval />
           </TenantProtectedRoute>
         ),
       },

@@ -29,6 +29,7 @@ import {
   Menu,
   Tooltip,
   Stack,
+  LinearProgress,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -44,6 +45,7 @@ import {
   IconBook2,
   IconUserPlus,
   IconChevronDown,
+  IconCircleCheck,
 } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -79,6 +81,10 @@ const initials = (name) =>
     .map((n) => n[0])
     .join('')
     .toUpperCase();
+
+// Not a hard system cap — just a reasonable reference point ("a full
+// subject-teaching load") the workload bar is drawn relative to.
+const WORKLOAD_REFERENCE_MAX = 12;
 
 const LOAD_BUCKETS = [
   { label: '1-2', min: 1, max: 2 },
@@ -128,7 +134,11 @@ const SubjectTeacherAllocation = () => {
   const [workloadLoading, setWorkloadLoading] = useState(false);
 
   // Inline teacher-picker popover
-  const [popover, setPopover] = useState({ anchorEl: null, subjectId: null, excludingUserId: null });
+  const [popover, setPopover] = useState({
+    anchorEl: null,
+    subjectId: null,
+    excludingUserId: null,
+  });
   const [popoverSearch, setPopoverSearch] = useState('');
   const [popoverCandidates, setPopoverCandidates] = useState([]);
   const [popoverLoading, setPopoverLoading] = useState(false);
@@ -208,8 +218,9 @@ const SubjectTeacherAllocation = () => {
       const all = res.data || [];
       const buckets = LOAD_BUCKETS.map((b) => ({
         ...b,
-        count: all.filter((t) => t.subject_teacher_count >= b.min && t.subject_teacher_count <= b.max)
-          .length,
+        count: all.filter(
+          (t) => t.subject_teacher_count >= b.min && t.subject_teacher_count <= b.max,
+        ).length,
       }));
       setWorkloadBuckets(buckets);
     } catch (error) {
@@ -284,7 +295,8 @@ const SubjectTeacherAllocation = () => {
   const filteredClasses = useMemo(() => {
     return classes.filter((c) => {
       if (leftStatusFilter !== 'all' && c.status !== leftStatusFilter) return false;
-      if (leftSearch && !c.class_name.toLowerCase().includes(leftSearch.toLowerCase())) return false;
+      if (leftSearch && !c.class_name.toLowerCase().includes(leftSearch.toLowerCase()))
+        return false;
       return true;
     });
   }, [classes, leftSearch, leftStatusFilter]);
@@ -306,7 +318,11 @@ const SubjectTeacherAllocation = () => {
   // ── Teacher picker popover ──────────────────────────────────────────
   const openPopover = (event, subject) => {
     const currentUserId = pendingAssignments[subject.subject_id]?.user_id ?? subject.teacher_id;
-    setPopover({ anchorEl: event.currentTarget, subjectId: subject.subject_id, excludingUserId: currentUserId });
+    setPopover({
+      anchorEl: event.currentTarget,
+      subjectId: subject.subject_id,
+      excludingUserId: currentUserId,
+    });
     setPopoverSearch('');
     setPopoverExpanded(false);
     loadPopoverCandidates(currentUserId, 8);
@@ -347,7 +363,15 @@ const SubjectTeacherAllocation = () => {
   const handlePickTeacher = (subjectId, candidate) => {
     setPendingAssignments((prev) => ({
       ...prev,
-      [subjectId]: { user_id: candidate.user_id, name: candidate.name, staff_id: candidate.staff_id, phone: candidate.phone },
+      [subjectId]: {
+        user_id: candidate.user_id,
+        name: candidate.name,
+        staff_id: candidate.staff_id,
+        phone: candidate.phone,
+        // This assignment would add one more to their current load —
+        // shown as a preview before Save Changes commits it.
+        load: candidate.subject_teacher_count + 1,
+      },
     }));
     closePopover();
   };
@@ -527,85 +551,122 @@ const SubjectTeacherAllocation = () => {
         borderRadius: 3,
       }}
     >
-      {/* Stat Cards + Workload histogram */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Grid container spacing={2} sx={{ height: '100%' }}>
-            {[
-              { label: 'Classes', count: stats.totalClasses, icon: IconBook2, colorIndex: 0 },
-              {
-                label: 'Subject Slots',
-                count: stats.totalSlots,
-                icon: IconBook2,
-                colorIndex: 2,
-                subtitle: `${stats.totalClasses} classes`,
-              },
-              {
-                label: 'Assigned',
-                count: stats.assignedSlots,
-                icon: IconUserPlus,
-                colorIndex: 1,
-                subtitle: `${stats.assignedPct}%`,
-              },
-              {
-                label: 'Unassigned',
-                count: stats.unassignedSlots,
-                icon: IconUsers,
-                colorIndex: 4,
-                subtitle: stats.totalSlots > 0 ? `${100 - stats.assignedPct}%` : '0%',
-              },
-              { label: 'Teachers Active', count: stats.teachersActive, icon: IconUsers, colorIndex: 3 },
-            ].map((card) => (
-              <Grid key={card.label} size={{ xs: 12, sm: 6, md: 12 / 5 }}>
-                <StatCard
-                  loading={classesLoading && !hasFetched}
-                  label={card.label}
-                  count={card.count}
-                  icon={card.icon}
-                  colorIndex={card.colorIndex}
-                  subtitle={card.subtitle}
-                />
-              </Grid>
-            ))}
+      {/* Stat Cards + Workload histogram — one flat row, every card the
+          same height (StatCard's natural ~96px), so nothing looks
+          mismatched against its neighbors. */}
+      <Grid container spacing={2} sx={{ mb: 2, alignItems: 'stretch' }}>
+        {[
+          {
+            label: 'Classes',
+            count: stats.totalClasses,
+            icon: IconBook2,
+            colorIndex: 0,
+            tooltip: 'Every class in the selected programme',
+          },
+          {
+            label: 'Subject Slots',
+            count: stats.totalSlots,
+            icon: IconBook2,
+            colorIndex: 2,
+            subtitle: `${stats.totalClasses} classes`,
+            tooltip: 'Total (class, subject) pairs across every class in this programme',
+          },
+          {
+            label: 'Assigned',
+            count: stats.assignedSlots,
+            icon: IconUserPlus,
+            colorIndex: 1,
+            subtitle: `${stats.assignedPct}%`,
+            tooltip: 'Subject slots that already have a teacher assigned',
+          },
+          {
+            label: 'Unassigned',
+            count: stats.unassignedSlots,
+            icon: IconUsers,
+            colorIndex: 4,
+            subtitle: stats.totalSlots > 0 ? `${100 - stats.assignedPct}%` : '0%',
+            tooltip: 'Subject slots still needing a teacher',
+          },
+          {
+            label: 'Teachers Active',
+            count: stats.teachersActive,
+            icon: IconUsers,
+            colorIndex: 3,
+            tooltip:
+              'Distinct staff members currently assigned as a subject teacher in this programme',
+          },
+        ].map((card) => (
+          <Grid key={card.label} size={{ xs: 12, sm: 6, md: 2 }}>
+            <StatCard
+              loading={classesLoading && !hasFetched}
+              label={card.label}
+              count={card.count}
+              icon={card.icon}
+              colorIndex={card.colorIndex}
+              subtitle={card.subtitle}
+              tooltip={card.tooltip}
+            />
           </Grid>
-        </Grid>
+        ))}
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, height: '100%' }}>
-            <Typography variant="caption" fontWeight={700} color="text.secondary">
-              Teacher Workload (school-wide)
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: 70, mt: 1 }}>
-              {workloadLoading
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} variant="rounded" width="100%" height={40} />
-                  ))
-                : workloadBuckets.map((b) => (
-                    <Tooltip key={b.label} title={`${b.count} teacher(s) with ${b.label} subject assignments`}>
-                      <Box sx={{ flex: 1, textAlign: 'center' }}>
-                        <Box
-                          sx={{
-                            height: `${Math.max(6, (b.count / maxBucket) * 56)}px`,
-                            bgcolor: 'primary.main',
-                            borderRadius: '3px 3px 0 0',
-                            opacity: 0.4 + 0.6 * (b.count / maxBucket),
-                          }}
-                        />
-                        <Typography variant="caption" fontWeight={700} display="block">
-                          {b.count}
-                        </Typography>
-                      </Box>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Tooltip title="How many teaching staff (school-wide) currently carry each range of subject-teacher assignments">
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: '14px',
+                p: '14px',
+                width: '100%',
+                height: '100%',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Typography sx={{ fontSize: 11, fontWeight: 600, color: '#6B7280' }}>
+                Teacher Workload
+              </Typography>
+              {workloadLoading ? (
+                <Skeleton variant="rounded" height={36} sx={{ mt: 0.5 }} />
+              ) : (
+                <Box
+                  sx={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: 36, mt: 0.5 }}
+                >
+                  {workloadBuckets.map((b) => (
+                    <Tooltip
+                      key={b.label}
+                      title={`${b.count} teacher(s) with ${b.label} subject assignments`}
+                    >
+                      <Box
+                        sx={{
+                          flex: 1,
+                          height: `${Math.max(10, (b.count / maxBucket) * 36)}px`,
+                          bgcolor: 'primary.main',
+                          borderRadius: '2px 2px 0 0',
+                          opacity: 0.4 + 0.6 * (b.count / maxBucket),
+                        }}
+                      />
                     </Tooltip>
                   ))}
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              {LOAD_BUCKETS.map((b) => (
-                <Typography key={b.label} variant="caption" color="text.secondary" sx={{ flex: 1, textAlign: 'center' }}>
-                  {b.label}
-                </Typography>
-              ))}
-            </Box>
-          </Paper>
+                </Box>
+              )}
+              <Box sx={{ display: 'flex', gap: '3px', mt: '2px' }}>
+                {LOAD_BUCKETS.map((b) => (
+                  <Typography
+                    key={b.label}
+                    sx={{ flex: 1, textAlign: 'center', fontSize: 9, color: '#9CA3AF' }}
+                  >
+                    {b.label}
+                  </Typography>
+                ))}
+              </Box>
+            </Paper>
+          </Tooltip>
         </Grid>
       </Grid>
 
@@ -617,11 +678,25 @@ const SubjectTeacherAllocation = () => {
       {/* Filters */}
       <Paper
         variant="outlined"
-        sx={{ p: 2, mb: 3, bgcolor: 'background.paper', borderRadius: 2, borderTop: '3px solid', borderTopColor: 'primary.main' }}
+        sx={{
+          p: 2,
+          mb: 3,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          borderTop: '3px solid',
+          borderTopColor: 'primary.main',
+        }}
       >
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <TextField select size="small" label="Session" value={selectedSession} onChange={(e) => handleSessionChange(e.target.value)} fullWidth>
+            <TextField
+              select
+              size="small"
+              label="Session"
+              value={selectedSession}
+              onChange={(e) => handleSessionChange(e.target.value)}
+              fullWidth
+            >
               {sessions.map((s) => (
                 <MenuItem key={s.id} value={s.id}>
                   {s.session_name}
@@ -630,7 +705,15 @@ const SubjectTeacherAllocation = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <TextField select size="small" label="Term" value={selectedTerm} onChange={(e) => setSelectedTerm(e.target.value)} fullWidth disabled={!selectedSession}>
+            <TextField
+              select
+              size="small"
+              label="Term"
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              fullWidth
+              disabled={!selectedSession}
+            >
               {sessionTerms.map((t) => (
                 <MenuItem key={t.id} value={t.id}>
                   {t.term?.term_name || t.term_name}
@@ -639,7 +722,14 @@ const SubjectTeacherAllocation = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <TextField select size="small" label="Programme" value={selectedProgramme} onChange={(e) => setSelectedProgramme(e.target.value)} fullWidth>
+            <TextField
+              select
+              size="small"
+              label="Programme"
+              value={selectedProgramme}
+              onChange={(e) => setSelectedProgramme(e.target.value)}
+              fullWidth
+            >
               <MenuItem value="">Select Programme</MenuItem>
               {programmes.map((p) => (
                 <MenuItem key={p.id} value={p.id}>
@@ -649,7 +739,14 @@ const SubjectTeacherAllocation = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <TextField select size="small" label="Status" value={leftStatusFilter} onChange={(e) => setLeftStatusFilter(e.target.value)} fullWidth>
+            <TextField
+              select
+              size="small"
+              label="Status"
+              value={leftStatusFilter}
+              onChange={(e) => setLeftStatusFilter(e.target.value)}
+              fullWidth
+            >
               {STATUS_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>
                   {o.label}
@@ -658,40 +755,77 @@ const SubjectTeacherAllocation = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <Button variant="contained" size="small" fullWidth startIcon={<IconSearch size={16} />} onClick={fetchClasses} sx={{ height: '40px' }}>
+            <Button
+              variant="contained"
+              size="small"
+              fullWidth
+              startIcon={<IconSearch size={16} />}
+              onClick={fetchClasses}
+              sx={{ height: '40px' }}
+            >
               Fetch
             </Button>
           </Grid>
         </Grid>
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-          <Button size="small" startIcon={<IconFilterOff size={16} />} onClick={handleResetFilters}>
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconFilterOff size={16} />}
+            onClick={handleResetFilters}
+          >
             Reset
           </Button>
           <Tooltip title={selectedClass ? '' : 'Select a class first'}>
             <span>
-              <Button size="small" variant="outlined" color="secondary" startIcon={<IconWand size={16} />} onClick={() => setAutoAllocateConfirmOpen(true)} disabled={!selectedClass || autoAllocating}>
+              <Button
+                size="small"
+                variant="contained"
+                color="secondary"
+                startIcon={<IconWand size={16} />}
+                onClick={() => setAutoAllocateConfirmOpen(true)}
+                disabled={!selectedClass || autoAllocating}
+              >
                 {autoAllocating ? 'Running…' : 'Auto-Allocate'}
               </Button>
             </span>
           </Tooltip>
           <Tooltip title={selectedClass ? '' : 'Select a class first'}>
             <span>
-              <Button size="small" variant="outlined" startIcon={<IconDownload size={16} />} onClick={handleDownloadTemplate} disabled={!selectedClass}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconDownload size={16} />}
+                onClick={handleDownloadTemplate}
+                disabled={!selectedClass}
+              >
                 Export
               </Button>
             </span>
           </Tooltip>
           <Tooltip title={selectedClass ? '' : 'Select a class first'}>
             <span>
-              <Button size="small" variant="outlined" startIcon={<IconUpload size={16} />} onClick={() => setUploadModalOpen(true)} disabled={!selectedClass}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconUpload size={16} />}
+                onClick={() => setUploadModalOpen(true)}
+                disabled={!selectedClass}
+              >
                 Import
               </Button>
             </span>
           </Tooltip>
           <Tooltip title={selectedClass ? '' : 'Select a class first'}>
             <span>
-              <Button size="small" variant="outlined" startIcon={<IconCopy size={16} />} onClick={() => setCopyModalOpen(true)} disabled={!selectedClass || classes.length < 2}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconCopy size={16} />}
+                onClick={() => setCopyModalOpen(true)}
+                disabled={!selectedClass || classes.length < 2}
+              >
                 Copy from Class
               </Button>
             </span>
@@ -702,7 +836,10 @@ const SubjectTeacherAllocation = () => {
       {/* Master-detail layout */}
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
         {/* Left: Classes list */}
-        <Paper variant="outlined" sx={{ borderRadius: 2, width: { xs: '100%', lg: 340 }, flexShrink: 0 }}>
+        <Paper
+          variant="outlined"
+          sx={{ borderRadius: 2, width: { xs: '100%', lg: 340 }, flexShrink: 0 }}
+        >
           <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Typography fontWeight={700}>Classes ({filteredClasses.length})</Typography>
             <TextField
@@ -757,7 +894,11 @@ const SubjectTeacherAllocation = () => {
                       onClick={() => handleSelectClass(row)}
                       sx={{
                         cursor: 'pointer',
-                        '&.Mui-selected': { bgcolor: 'rgba(37, 99, 235, 0.12)', borderLeft: '3px solid', borderLeftColor: 'primary.main' },
+                        '&.Mui-selected': {
+                          bgcolor: 'rgba(37, 99, 235, 0.12)',
+                          borderLeft: '3px solid',
+                          borderLeftColor: 'primary.main',
+                        },
                         '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
                       }}
                     >
@@ -767,7 +908,14 @@ const SubjectTeacherAllocation = () => {
                         {row.assigned_count}/{row.total_subjects}
                       </TableCell>
                       <TableCell>
-                        <Chip label={statusLabel(row.status)} size="small" sx={statusChipSx(row.status)} />
+                        <Chip
+                          label={statusLabel(row.status)}
+                          size="small"
+                          icon={
+                            row.status === 'assigned' ? <IconCircleCheck size={14} /> : undefined
+                          }
+                          sx={statusChipSx(row.status)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
@@ -793,17 +941,36 @@ const SubjectTeacherAllocation = () => {
         <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
           {!selectedClass ? (
             <Paper variant="outlined" sx={{ borderRadius: 2, p: 6, textAlign: 'center' }}>
-              <Typography color="text.secondary">Select a class from the list to allocate its subject teachers</Typography>
+              <Typography color="text.secondary">
+                Select a class from the list to allocate its subject teachers
+              </Typography>
             </Paper>
           ) : (
             <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
               <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Typography fontWeight={700}>
                       {selectedClass.class_name} ({selectedClass.total_subjects} subjects)
                     </Typography>
-                    <Chip label={statusLabel(selectedClass.status)} size="small" sx={statusChipSx(selectedClass.status)} />
+                    <Chip
+                      label={statusLabel(selectedClass.status)}
+                      size="small"
+                      icon={
+                        selectedClass.status === 'assigned' ? (
+                          <IconCircleCheck size={14} />
+                        ) : undefined
+                      }
+                      sx={statusChipSx(selectedClass.status)}
+                    />
                   </Box>
                   <Button
                     variant="contained"
@@ -814,12 +981,13 @@ const SubjectTeacherAllocation = () => {
                     {saving ? 'Saving…' : 'Save Changes'}
                   </Button>
                 </Box>
-                <Stack direction="row" spacing={2} sx={{ mt: 1 }} flexWrap="wrap">
-                  <Typography variant="caption" color="text.secondary">
-                    Total Students: {selectedClass.student_count}
+                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
+                  <Typography variant="body2" color="text.primary">
+                    Total Students: <strong>{selectedClass.student_count}</strong>
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Arms ({selectedClass.arms.length}): {selectedClass.arms.map((a) => a.name).join(', ')}
+                  <Typography variant="body2" color="text.primary">
+                    Arms ({selectedClass.arms.length}):{' '}
+                    <strong>{selectedClass.arms.map((a) => a.name).join(', ')}</strong>
                   </Typography>
                 </Stack>
                 <TextField
@@ -846,6 +1014,11 @@ const SubjectTeacherAllocation = () => {
                       <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Teacher Assigned</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>
+                        <Tooltip title="Teacher's current total subject-teacher assignments this term, relative to a 12-assignment full load">
+                          <span>Workload</span>
+                        </Tooltip>
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700 }}>
                         Action
@@ -856,14 +1029,14 @@ const SubjectTeacherAllocation = () => {
                     {subjectsLoading ? (
                       Array.from({ length: 5 }).map((_, i) => (
                         <TableRow key={i}>
-                          <TableCell colSpan={6}>
+                          <TableCell colSpan={7}>
                             <Skeleton variant="rounded" height={36} />
                           </TableCell>
                         </TableRow>
                       ))
                     ) : pagedSubjects.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                        <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                           <Typography variant="body2" color="text.secondary">
                             No subjects found
                           </Typography>
@@ -876,6 +1049,10 @@ const SubjectTeacherAllocation = () => {
                         const displayStaffId = pending ? pending.staff_id : subject.staff_id;
                         const displayPhone = pending ? pending.phone : subject.teacher_phone;
                         const isAssigned = Boolean(pending ? pending.user_id : subject.teacher_id);
+                        const load = pending ? pending.load : subject.teacher_subject_load;
+                        const loadPct = load
+                          ? Math.min(100, Math.round((load / WORKLOAD_REFERENCE_MAX) * 100))
+                          : 0;
 
                         return (
                           <TableRow key={subject.subject_id} hover>
@@ -898,7 +1075,14 @@ const SubjectTeacherAllocation = () => {
                               >
                                 {displayName ? (
                                   <Stack direction="row" spacing={0.75} alignItems="center">
-                                    <Avatar sx={{ width: 20, height: 20, fontSize: 10, bgcolor: '#16A34A' }}>
+                                    <Avatar
+                                      sx={{
+                                        width: 15,
+                                        height: 15,
+                                        fontSize: 8,
+                                        bgcolor: '#16A34A',
+                                      }}
+                                    >
                                       {initials(displayName)}
                                     </Avatar>
                                     <span>
@@ -914,14 +1098,60 @@ const SubjectTeacherAllocation = () => {
                             </TableCell>
                             <TableCell>{displayPhone || '—'}</TableCell>
                             <TableCell>
+                              {isAssigned ? (
+                                <Box sx={{ minWidth: 90 }}>
+                                  <Stack direction="row" spacing={0.75} alignItems="center">
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={loadPct}
+                                      sx={{
+                                        flex: 1,
+                                        height: 6,
+                                        borderRadius: 3,
+                                        bgcolor: '#E5E7EB',
+                                        '& .MuiLinearProgress-bar': {
+                                          borderRadius: 3,
+                                          bgcolor:
+                                            loadPct >= 80
+                                              ? '#DC2626'
+                                              : loadPct >= 50
+                                                ? '#D97706'
+                                                : '#16A34A',
+                                        },
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="caption"
+                                      fontWeight={700}
+                                      sx={{ whiteSpace: 'nowrap' }}
+                                    >
+                                      {load}/{WORKLOAD_REFERENCE_MAX} {loadPct}%
+                                    </Typography>
+                                  </Stack>
+                                </Box>
+                              ) : (
+                                <Typography variant="caption" color="text.secondary">
+                                  —
+                                </Typography>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <Chip
                                 label={isAssigned ? 'Assigned' : 'Unassigned'}
                                 size="small"
-                                sx={isAssigned ? { bgcolor: '#DCFCE7', color: '#166534' } : { bgcolor: '#FEE2E2', color: '#991B1B' }}
+                                sx={
+                                  isAssigned
+                                    ? { bgcolor: '#DCFCE7', color: '#166534' }
+                                    : { bgcolor: '#FEE2E2', color: '#991B1B' }
+                                }
                               />
                             </TableCell>
                             <TableCell align="center">
-                              <IconButton size="small" onClick={(e) => handleOpenRowMenu(e, subject)} disabled={!subject.teacher_id}>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleOpenRowMenu(e, subject)}
+                                disabled={!subject.teacher_id}
+                              >
                                 <IconDotsVertical size={16} />
                               </IconButton>
                             </TableCell>
@@ -981,7 +1211,10 @@ const SubjectTeacherAllocation = () => {
                   sx={{ borderRadius: 1 }}
                 >
                   <ListItemAvatar>
-                    <Avatar src={candidate.avatar} sx={{ width: 28, height: 28, fontSize: 11, bgcolor: '#16A34A' }}>
+                    <Avatar
+                      src={candidate.avatar}
+                      sx={{ width: 28, height: 28, fontSize: 11, bgcolor: '#16A34A' }}
+                    >
                       {initials(candidate.name)}
                     </Avatar>
                   </ListItemAvatar>
@@ -1004,7 +1237,11 @@ const SubjectTeacherAllocation = () => {
       </Popover>
 
       {/* Row action menu */}
-      <Menu anchorEl={rowMenu.anchorEl} open={Boolean(rowMenu.anchorEl)} onClose={handleCloseRowMenu}>
+      <Menu
+        anchorEl={rowMenu.anchorEl}
+        open={Boolean(rowMenu.anchorEl)}
+        onClose={handleCloseRowMenu}
+      >
         <MenuItem
           onClick={() => {
             setRemoveConfirmOpen(true);
@@ -1040,11 +1277,16 @@ const SubjectTeacherAllocation = () => {
       />
 
       {/* Copy From Class */}
-      <ReusableModal open={copyModalOpen} onClose={() => setCopyModalOpen(false)} title="Copy From Class" size="small">
+      <ReusableModal
+        open={copyModalOpen}
+        onClose={() => setCopyModalOpen(false)}
+        title="Copy From Class"
+        size="small"
+      >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Copy subject-teacher assignments from another class into{' '}
-          <strong>{selectedClass?.class_name}</strong>. Only subjects both classes actually share are
-          copied, and this overwrites any existing assignment for those subjects.
+          <strong>{selectedClass?.class_name}</strong>. Only subjects both classes actually share
+          are copied, and this overwrites any existing assignment for those subjects.
         </Typography>
         <TextField
           select
@@ -1065,7 +1307,11 @@ const SubjectTeacherAllocation = () => {
         </TextField>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Button onClick={() => setCopyModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCopyFromClass} disabled={!copySourceId || copying}>
+          <Button
+            variant="contained"
+            onClick={handleCopyFromClass}
+            disabled={!copySourceId || copying}
+          >
             {copying ? 'Copying…' : 'Copy'}
           </Button>
         </Box>

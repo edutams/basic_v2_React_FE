@@ -572,6 +572,7 @@ const ClassTeacherAllocation = () => {
             icon: IconChalkboard,
             colorIndex: 0,
             subtitle: `${stats.totalArms} class arm${stats.totalArms !== 1 ? 's' : ''}`,
+            tooltip: 'Every class in the selected programme',
           },
           {
             label: 'Total Class Arms',
@@ -579,6 +580,7 @@ const ClassTeacherAllocation = () => {
             icon: IconUsers,
             colorIndex: 2,
             subtitle: 'All class arms in the programme',
+            tooltip: 'Every arm (e.g. A, B, C) across all classes in the selected programme',
           },
           {
             label: 'Assigned',
@@ -586,6 +588,7 @@ const ClassTeacherAllocation = () => {
             icon: IconUserCheck,
             colorIndex: 1,
             subtitle: 'Arms with a class teacher',
+            tooltip: 'Class arms that already have an active class teacher this term',
           },
           {
             label: 'Unassigned',
@@ -593,6 +596,7 @@ const ClassTeacherAllocation = () => {
             icon: IconUserExclamation,
             colorIndex: 4,
             subtitle: 'Arms needing a class teacher',
+            tooltip: 'Class arms with no class teacher assigned this term',
           },
           {
             label: 'Class Teachers',
@@ -600,6 +604,7 @@ const ClassTeacherAllocation = () => {
             icon: IconUserCheck,
             colorIndex: 3,
             subtitle: 'Distinct teachers assigned',
+            tooltip: 'Distinct staff members currently serving as a class teacher in this programme',
           },
         ].map((card) => (
           <Grid key={card.label} size={{ xs: 12, sm: 6, md: 12 / 5 }}>
@@ -607,6 +612,7 @@ const ClassTeacherAllocation = () => {
               loading={loading && !hasFetched}
               label={card.label}
               count={card.count}
+              tooltip={card.tooltip}
               icon={card.icon}
               colorIndex={card.colorIndex}
               subtitle={card.subtitle}
@@ -999,7 +1005,7 @@ const ClassTeacherAllocation = () => {
                                         <MenuItem value="">Select Teacher</MenuItem>
                                         {teachers.map((teacher) => (
                                           <MenuItem key={teacher.user_id} value={teacher.user_id}>
-                                            {teacher.user.full_name} ({teacher.staff_id})
+                                            {teacher.user.full_name} ({teacher.user?.user_id})
                                           </MenuItem>
                                         ))}
                                       </TextField>

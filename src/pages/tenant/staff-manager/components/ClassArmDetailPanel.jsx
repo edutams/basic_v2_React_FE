@@ -426,7 +426,7 @@ const ClassArmDetailPanel = ({
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
                       secondaryTypographyProps={{
                         variant: 'caption',
-                        color: subject.teacher_name ? 'text.secondary' : 'warning.main',
+                        sx: { color: subject.teacher_name ? 'text.secondary' : '#D97706', fontWeight: subject.teacher_name ? 400 : 700 },
                       }}
                     />
                   </ListItem>

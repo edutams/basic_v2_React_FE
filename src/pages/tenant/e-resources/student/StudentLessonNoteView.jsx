@@ -34,6 +34,7 @@ import {
   IconRefresh,
   IconSparkles,
   IconStarFilled,
+  IconUpload,
 } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
@@ -41,7 +42,12 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantStudentApi } from '@/api/tenant/e-resources/studentApi';
 import { tenantSharedApi } from '@/api/tenant/e-resources/browseApi';
-import { ForumThread } from '@/pages/tenant/e-resources/teacher/lessonNoteShared';
+import {
+  DocxPreview,
+  ForumThread,
+  RichContentView,
+  isDocumentLink,
+} from '@/pages/tenant/e-resources/teacher/lessonNoteShared';
 
 const BCrumb = [
   { to: '/', title: 'Dashboard' },
@@ -67,44 +73,103 @@ const cardSx = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
 };
 
+// A small labeled section wrapper so, when both an uploaded document and an
+// AI-drafted note exist for the same lesson, the student sees both clearly
+// told apart instead of only whichever one the page picked to show.
+const ContentSection = ({ icon: Icon, label, accent, children }) => (
+  <Box>
+    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+      <Icon size={14} color={accent} />
+      <Typography sx={{ fontSize: 11, fontWeight: 800, color: accent, letterSpacing: 0.3 }}>
+        {label.toUpperCase()}
+      </Typography>
+    </Stack>
+    {children}
+  </Box>
+);
+
 const renderContentItem = (item, key) => {
+  // AI-drafted note content — rendered through the same sanitised rich-text
+  // viewer the teacher workspace uses.
+  if (item && typeof item === 'object' && item.type === 'html') {
+    return (
+      <ContentSection key={key} icon={IconSparkles} label="AI-generated note" accent="#7C3AED">
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: '10px',
+            bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(124,58,237,0.06)' : '#FAF5FF'),
+            border: '1px solid',
+            borderColor: 'rgba(124,58,237,0.2)',
+          }}
+        >
+          <RichContentView content={item.value} />
+        </Box>
+      </ContentSection>
+    );
+  }
+
   const src = typeof item === 'string' ? item : item?.url ?? item?.path ?? '';
   if (!src) return null;
   const lower = src.toLowerCase();
+
   if (lower.endsWith('.pdf')) {
     return (
-      <Paper
-        key={key}
-        variant="outlined"
-        sx={{ height: 700, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
-      >
-        <iframe title={`lesson-${key}`} src={src} width="100%" height="100%" style={{ border: 0 }} />
-      </Paper>
+      <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
+        <Paper
+          variant="outlined"
+          sx={{ height: 700, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
+        >
+          <iframe title={`lesson-${key}`} src={src} width="100%" height="100%" style={{ border: 0 }} />
+        </Paper>
+      </ContentSection>
     );
   }
   if (/\.(png|jpe?g|gif|webp|svg)$/.test(lower)) {
     return (
-      <Paper
-        key={key}
-        variant="outlined"
-        sx={{ p: 1, textAlign: 'center', borderRadius: '10px', borderColor: '#E5E7EB' }}
-      >
-        <Box component="img" src={src} alt="" sx={{ maxWidth: '100%', maxHeight: 700, borderRadius: '6px' }} />
-      </Paper>
+      <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
+        <Paper
+          variant="outlined"
+          sx={{ p: 1, textAlign: 'center', borderRadius: '10px', borderColor: '#E5E7EB' }}
+        >
+          <Box component="img" src={src} alt="" sx={{ maxWidth: '100%', maxHeight: 700, borderRadius: '6px' }} />
+        </Paper>
+      </ContentSection>
+    );
+  }
+  if (isDocumentLink(src)) {
+    // Word/PowerPoint/Excel uploads render inline, same as the teacher view,
+    // instead of forcing a download just to see what was uploaded.
+    return (
+      <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
+        <DocxPreview url={src} />
+        <Button
+          size="small"
+          variant="text"
+          href={src}
+          target="_blank"
+          rel="noopener noreferrer"
+          startIcon={<IconFileText size={14} />}
+          sx={{ mt: 1, fontWeight: 600 }}
+        >
+          Open in a new tab
+        </Button>
+      </ContentSection>
     );
   }
   return (
-    <Button
-      key={key}
-      variant="outlined"
-      href={src}
-      target="_blank"
-      rel="noopener noreferrer"
-      startIcon={<IconFileText size={16} />}
-      sx={{ mb: 1, borderRadius: '8px', fontWeight: 600, justifyContent: 'flex-start' }}
-    >
-      Open lesson document
-    </Button>
+    <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
+      <Button
+        variant="outlined"
+        href={src}
+        target="_blank"
+        rel="noopener noreferrer"
+        startIcon={<IconFileText size={16} />}
+        sx={{ borderRadius: '8px', fontWeight: 600, justifyContent: 'flex-start' }}
+      >
+        Open lesson document
+      </Button>
+    </ContentSection>
   );
 };
 

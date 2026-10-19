@@ -653,24 +653,61 @@ const LessonContentTab = ({ type, context }) => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: '10px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#FAFAFA',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    minHeight: 120,
-                  }}
-                >
-                  {aiContent ? (
-                    <RichContentView content={aiContent} />
-                  ) : isDocumentLink(stored) ? (
-                    <DocxPreview url={stored} />
-                  ) : (
-                    <RichContentView content={stored} emptyMessage="No saved content yet." />
+                {/* An upload and an AI draft are not mutually exclusive — a
+                    teacher who uploaded a file and later generated AI content
+                    (or vice versa) should still be able to see both, each
+                    clearly labelled, instead of one silently hiding the other. */}
+                <Stack spacing={2}>
+                  {stored && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: '10px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#FAFAFA',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        minHeight: 120,
+                      }}
+                    >
+                      {hasAiContent && (
+                        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1.25 }}>
+                          <IconUpload size={13} color={cfg.accent} />
+                          <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: cfg.accent, letterSpacing: 0.3 }}>
+                            UPLOADED {cfg.label.toUpperCase()}
+                          </Typography>
+                        </Stack>
+                      )}
+                      {isDocumentLink(stored) ? (
+                        <DocxPreview url={stored} />
+                      ) : (
+                        <RichContentView content={stored} />
+                      )}
+                    </Box>
                   )}
-                </Box>
+
+                  {aiContent && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: '10px',
+                        bgcolor: isDark ? 'rgba(124,58,237,0.05)' : '#FAF5FF',
+                        border: '1px solid',
+                        borderColor: 'rgba(124,58,237,0.2)',
+                        minHeight: 120,
+                      }}
+                    >
+                      {stored && (
+                        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1.25 }}>
+                          <IconSparkles size={13} color="#7C3AED" />
+                          <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: '#7C3AED', letterSpacing: 0.3 }}>
+                            AI-GENERATED {cfg.label.toUpperCase()}
+                          </Typography>
+                        </Stack>
+                      )}
+                      <RichContentView content={aiContent} />
+                    </Box>
+                  )}
+                </Stack>
               </CardContent>
             </Card>
           )}
@@ -700,24 +737,77 @@ const LessonContentTab = ({ type, context }) => {
 
                 <Divider sx={{ mb: 2 }} />
 
+                {/* An AI-found link doesn't erase an uploaded file — both can
+                    show, each labelled, the same as the plan/note tabs. */}
+                {uploadedVideo && (
+                  <Box sx={{ mb: 2 }}>
+                    {(youtubeId || aiContent) && (
+                      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+                        <IconUpload size={13} color={cfg.accent} />
+                        <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: cfg.accent, letterSpacing: 0.3 }}>
+                          UPLOADED VIDEO
+                        </Typography>
+                      </Stack>
+                    )}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        pt: '56.25%',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        mb: 1,
+                        bgcolor: '#000',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      <video
+                        controls
+                        src={toAbsoluteUrl(uploadedVideo)}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+                      />
+                    </Box>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      sx={{ borderRadius: '10px' }}
+                      href={toAbsoluteUrl(uploadedVideo)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      startIcon={<IconVideo size={16} />}
+                    >
+                      Open uploaded video file
+                    </Button>
+                  </Box>
+                )}
+
                 {youtubeId ? (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      pt: '56.25%',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      mb: 2,
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    <iframe
-                      title="lesson-video"
-                      src={`https://www.youtube.com/embed/${youtubeId}`}
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                  <Box>
+                    {uploadedVideo && (
+                      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+                        <IconSparkles size={13} color="#7C3AED" />
+                        <Typography sx={{ fontSize: 10.5, fontWeight: 800, color: '#7C3AED', letterSpacing: 0.3 }}>
+                          AI-GENERATED VIDEO
+                        </Typography>
+                      </Stack>
+                    )}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        pt: '56.25%',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        mb: 2,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      <iframe
+                        title="lesson-video"
+                        src={`https://www.youtube.com/embed/${youtubeId}`}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </Box>
                   </Box>
                 ) : aiContent ? (
                   <Alert
@@ -739,39 +829,6 @@ const LessonContentTab = ({ type, context }) => {
                     A video link is saved for this lesson.
                   </Alert>
                 ) : null}
-
-                {uploadedVideo && !youtubeId && (
-                  <>
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        pt: '56.25%',
-                        borderRadius: '10px',
-                        overflow: 'hidden',
-                        mb: 1.5,
-                        bgcolor: '#000',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                      }}
-                    >
-                      <video
-                        controls
-                        src={toAbsoluteUrl(uploadedVideo)}
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-                      />
-                    </Box>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      sx={{ mb: 2, borderRadius: '10px' }}
-                      href={toAbsoluteUrl(uploadedVideo)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      startIcon={<IconVideo size={16} />}
-                    >
-                      Open uploaded video file
-                    </Button>
-                  </>
-                )}
 
                 {/* Replace CTA */}
                 <Stack direction="row" justifyContent="flex-end">

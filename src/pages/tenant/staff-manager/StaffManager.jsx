@@ -5,6 +5,7 @@ import {
   Typography,
   Card,
   Grid,
+  Stack,
   Button,
   TextField,
   Table,
@@ -51,6 +52,8 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
+import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
+import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { useNotification } from '@/hooks/useNotification';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import StaffModal from './StaffModal';
@@ -59,6 +62,8 @@ import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import ClassTeacherAllocation from './ClassTeacherAllocation';
 import SubjectTeacherAllocation from './SubjectTeacherAllocation';
+import TeacherOverviewPanel from './TeacherOverviewPanel';
+import BulkAssignModal from './components/BulkAssignModal';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import {
   migrateClassTeacherAllocations,
@@ -89,16 +94,36 @@ const StaffManager = () => {
   // Deep-linkable from elsewhere (e.g. Score Manager's empty-state link) via
   // ?tab=allocations&sub=subject-teacher — read once on mount, not kept in
   // sync afterwards, so normal in-page tab clicks behave exactly as before.
+  // The old combined "allocations" tab is now two flat tabs, so translate
+  // the legacy ?tab=allocations&sub=X pair into the new tab value.
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'teaching');
-  const [allocationSubTab, setAllocationSubTab] = useState(() => searchParams.get('sub') || 'class-teacher'); // For Class & Subject Allocations sub-tabs
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'allocations') {
+      return searchParams.get('sub') === 'subject-teacher' ? 'subject-allocations' : 'class-allocations';
+    }
+    return tabParam || 'teaching';
+  });
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [allocationsRefreshKey, setAllocationsRefreshKey] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [subjectFilter, setSubjectFilter] = useState('all');
+  const [classFilter, setClassFilter] = useState('all');
+  const [subjectOptions, setSubjectOptions] = useState([]);
+  const [classOptions, setClassOptions] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Teaching Staff tab: row selection + detail panel
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [detailPanelStaff, setDetailPanelStaff] = useState(null);
+  const [bulkActivateConfirmOpen, setBulkActivateConfirmOpen] = useState(false);
+  const [bulkDeactivateConfirmOpen, setBulkDeactivateConfirmOpen] = useState(false);
+  const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [bulkAssignMode, setBulkAssignMode] = useState(null); // null | 'classes' | 'subjects'
 
   const navigate = useNavigate();
 
@@ -110,6 +135,11 @@ const StaffManager = () => {
     teaching: 0,
     nonTeaching: 0,
     onLeave: 0,
+    activeTeaching: 0,
+    inactiveTeaching: 0,
+    teachingLoad: 0,
+    classesCovered: 0,
+    classesTotal: 0,
   });
   const [allocationStats, setAllocationStats] = useState(null);
   const [allocationStatsLoading, setAllocationStatsLoading] = useState(true);
@@ -143,14 +173,26 @@ const StaffManager = () => {
 
   useEffect(() => {
     fetchStaff();
-  }, [activeTab, page, rowsPerPage, searchQuery, statusFilter]);
+  }, [activeTab, page, rowsPerPage, searchQuery, statusFilter, subjectFilter, classFilter]);
 
   useEffect(() => {
     fetchStats();
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'allocations') {
+    if (activeTab !== 'teaching') return;
+    subjectRegistrationApi
+      .getSubjects({ per_page: 200 })
+      .then((res) => setSubjectOptions(res.data?.data || res.data || []))
+      .catch(() => {});
+    timetableApi
+      .getClassArms()
+      .then((res) => setClassOptions(res.data?.data || []))
+      .catch(() => {});
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'class-allocations' || activeTab === 'subject-allocations') {
       fetchAllocationStats();
     }
   }, [activeTab, allocationsRefreshKey]);
@@ -192,6 +234,10 @@ const StaffManager = () => {
   };
 
   const fetchStaff = async () => {
+    // Only the Teaching/Non-Teaching tabs show a staff list — the
+    // Allocations tabs render their own components.
+    if (activeTab !== 'teaching' && activeTab !== 'non-teaching') return;
+
     setLoading(true);
     try {
       const params = {
@@ -203,6 +249,15 @@ const StaffManager = () => {
 
       if (statusFilter !== 'all') {
         params.status = statusFilter;
+      }
+
+      if (activeTab === 'teaching') {
+        if (subjectFilter !== 'all') {
+          params.subject_id = subjectFilter;
+        }
+        if (classFilter !== 'all') {
+          params.class_arm_id = classFilter;
+        }
       }
 
       const response = await staffApi.getAll(params);
@@ -228,8 +283,18 @@ const StaffManager = () => {
     try {
       const response = await staffApi.getCounts();
       if (response.status) {
-        const { total, teaching, non_teaching: nonTeaching, on_leave: onLeave } = response.data;
-        setStats({ total, teaching, nonTeaching, onLeave });
+        const {
+          total,
+          teaching,
+          non_teaching: nonTeaching,
+          on_leave: onLeave,
+          active_teaching: activeTeaching,
+          inactive_teaching: inactiveTeaching,
+          teaching_load: teachingLoad,
+          classes_covered: classesCovered,
+          classes_total: classesTotal,
+        } = response.data;
+        setStats({ total, teaching, nonTeaching, onLeave, activeTeaching, inactiveTeaching, teachingLoad, classesCovered, classesTotal });
       }
     } catch (error) {
       console.error(error);
@@ -542,6 +607,57 @@ const StaffManager = () => {
     }
   };
 
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setSubjectFilter('all');
+    setClassFilter('all');
+    setPage(0);
+  };
+
+  const handleRowClick = (staffMember) => {
+    setDetailPanelStaff((prev) => (prev?.user_id === staffMember.user_id ? null : staffMember));
+  };
+
+  // Bulk actions loop the existing single-staff endpoints — the selection
+  // is always small (one page of rows), and this reuses the same
+  // guards/side-effects a single action already has, rather than adding a
+  // parallel bulk endpoint.
+  const runBulkStatusChange = async (status) => {
+    setBulkActionLoading(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await Promise.all(ids.map((id) => staffApi.updateStatus(id, { status })));
+      notify.success(`${ids.length} teacher(s) ${status === 'active' ? 'activated' : 'deactivated'}`);
+      setSelectedIds(new Set());
+      fetchStaff();
+      fetchStats();
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Some updates failed');
+    } finally {
+      setBulkActionLoading(false);
+      setBulkActivateConfirmOpen(false);
+      setBulkDeactivateConfirmOpen(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setBulkActionLoading(true);
+    try {
+      const ids = Array.from(selectedIds);
+      await Promise.all(ids.map((id) => staffApi.delete(id)));
+      notify.success(`${ids.length} teacher(s) deleted`);
+      setSelectedIds(new Set());
+      setBulkDeleteConfirmOpen(false);
+      fetchStaff();
+      fetchStats();
+    } catch (error) {
+      notify.error(error.response?.data?.message || 'Some deletions failed');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -569,31 +685,48 @@ const StaffManager = () => {
     }
   };
 
-  const staffStatCards = [
+  const teachingStatCards = [
     {
-      title: 'Total Staff',
-      value: stats.total,
-      icon: IconUsers,
-      color: 'primary',
-    },
-    {
-      title: 'Teaching Staff',
+      title: 'Total Teachers',
       value: stats.teaching,
+      icon: IconUsers,
+      subtitle: 'All teaching staff in the school',
+      tooltip: 'Every staff member with staff_type = teaching, regardless of status.',
+    },
+    {
+      title: 'Active Teachers',
+      value: stats.activeTeaching,
       icon: IconUserCheck,
-      color: 'primary',
+      subtitle: 'Currently active',
+      tooltip: 'Teaching staff whose status is Active.',
     },
     {
-      title: 'Non-Teaching Staff',
-      value: stats.nonTeaching,
+      title: 'Inactive Teachers',
+      value: stats.inactiveTeaching,
       icon: IconUserX,
-      color: 'primary',
+      subtitle: 'Not active / on leave',
+      tooltip: 'Teaching staff whose status is Inactive or On Leave. Retired/transferred/suspended staff aren’t counted in either this or Active.',
     },
     {
-      title: 'On Leave',
-      value: stats.onLeave,
-      icon: IconCalendarOff,
-      color: 'primary',
+      title: 'Teaching Load',
+      value: stats.teachingLoad,
+      icon: IconBook,
+      subtitle: 'Assigned subjects/classes',
+      tooltip: 'Total active class-teacher + subject-teacher allocations this term — a sum of assignments, not a count of teachers.',
     },
+    {
+      title: 'Classes Covered',
+      value: `${stats.classesCovered}/${stats.classesTotal}`,
+      icon: IconSchool,
+      subtitle: 'Classes with a teacher',
+      tooltip: 'Active class arms that have a class teacher assigned, out of all active class arms.',
+    },
+  ];
+
+  const nonTeachingStatCards = [
+    { title: 'Total Staff', value: stats.total, icon: IconUsers },
+    { title: 'Non-Teaching Staff', value: stats.nonTeaching, icon: IconUserX },
+    { title: 'On Leave', value: stats.onLeave, icon: IconCalendarOff },
   ];
 
   const classAllocationStatCards = [
@@ -643,32 +776,40 @@ const StaffManager = () => {
   ];
 
   const statCards =
-    activeTab === 'allocations'
-      ? allocationSubTab === 'class-teacher'
-        ? classAllocationStatCards
-        : subjectAllocationStatCards
-      : staffStatCards;
+    activeTab === 'class-allocations'
+      ? classAllocationStatCards
+      : activeTab === 'subject-allocations'
+        ? subjectAllocationStatCards
+        : activeTab === 'non-teaching'
+          ? nonTeachingStatCards
+          : activeTab === 'teaching'
+            ? teachingStatCards
+            : [];
 
-  const statCardsLoading = activeTab === 'allocations' ? allocationStatsLoading : loading;
+  const statCardsLoading = activeTab === 'class-allocations' || activeTab === 'subject-allocations' ? allocationStatsLoading : loading;
 
   return (
     <PageContainer title="Staff Manager" description="Manage Teaching & Non Teaching Staff">
       <Breadcrumb title="Staff Manager" items={BCrumb} />
 
       {/* Stat Cards */}
-      <Grid container spacing={3} sx={{ mb: 1 }}>
-        {statCards.map((stat, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-            <StatCard
-              count={stat.value}
-              label={stat.title}
-              icon={stat.icon}
-              colorIndex={i}
-              loading={statCardsLoading}
-            />
-          </Grid>
-        ))}
-      </Grid>
+      {statCards.length > 0 && (
+        <Grid container spacing={3} sx={{ mb: 1 }}>
+          {statCards.map((stat, i) => (
+            <Grid size={{ xs: 12, sm: 6, md: 12 / statCards.length }} key={i}>
+              <StatCard
+                count={stat.value}
+                label={stat.title}
+                icon={stat.icon}
+                subtitle={stat.subtitle}
+                tooltip={stat.tooltip}
+                colorIndex={i}
+                loading={statCardsLoading}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       {/* Main Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
@@ -677,12 +818,17 @@ const StaffManager = () => {
           onChange={(e, newValue) => {
             setActiveTab(newValue);
             setPage(0);
+            setSelectedIds(new Set());
+            setDetailPanelStaff(null);
           }}
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
         >
-          <Tab label="Teaching Staff" value="teaching" />
-          <Tab label="Non-Teaching Staff" value="non-teaching" />
-          <Tab label="Class & Subject Allocations" value="allocations" />
+          <Tab label={`Teaching Staff (${stats.teaching})`} value="teaching" />
+          <Tab label={`Non-Teaching Staff (${stats.nonTeaching})`} value="non-teaching" />
+          <Tab label="Subject Allocations" value="subject-allocations" />
+          <Tab label="Class Allocations" value="class-allocations" />
         </Tabs>
       </Box>
 
@@ -702,24 +848,63 @@ const StaffManager = () => {
         {/* Content Area */}
         <Box>
           {activeTab === 'teaching' && (
-            <TeachingStaffTab
-              loading={loading}
-              staff={staff}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              statusFilter={statusFilter}
-              setStatusFilter={setStatusFilter}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              total={total}
-              handleChangePage={handleChangePage}
-              handleChangeRowsPerPage={handleChangeRowsPerPage}
-              handleAddStaff={handleAddStaff}
-              handleBulkMenuOpen={handleBulkMenuOpen}
-              handleUploadStaff={handleUploadStaff}
-              handleMenuOpen={handleMenuOpen}
-              getStatusColor={getStatusColor}
-            />
+            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
+              <Box
+                sx={
+                  detailPanelStaff
+                    ? { flex: 1, minWidth: 0, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }
+                    : { flex: 1, minWidth: 0 }
+                }
+              >
+                <TeachingStaffTab
+                  loading={loading}
+                  staff={staff}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  statusFilter={statusFilter}
+                  setStatusFilter={setStatusFilter}
+                  subjectFilter={subjectFilter}
+                  setSubjectFilter={setSubjectFilter}
+                  classFilter={classFilter}
+                  setClassFilter={setClassFilter}
+                  subjectOptions={subjectOptions}
+                  classOptions={classOptions}
+                  onResetFilters={handleResetFilters}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  total={total}
+                  handleChangePage={handleChangePage}
+                  handleChangeRowsPerPage={handleChangeRowsPerPage}
+                  handleAddStaff={handleAddStaff}
+                  handleBulkMenuOpen={handleBulkMenuOpen}
+                  handleUploadStaff={handleUploadStaff}
+                  handleMenuOpen={handleMenuOpen}
+                  getStatusColor={getStatusColor}
+                  selectedIds={selectedIds}
+                  setSelectedIds={setSelectedIds}
+                  onBulkActivate={() => setBulkActivateConfirmOpen(true)}
+                  onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
+                  onBulkAssignSubjects={() => setBulkAssignMode('subjects')}
+                  onBulkAssignClasses={() => setBulkAssignMode('classes')}
+                  onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
+                  onRowClick={handleRowClick}
+                  selectedStaffId={detailPanelStaff?.user_id}
+                />
+              </Box>
+              {detailPanelStaff && (
+                <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+                  <TeacherOverviewPanel
+                    staffRow={detailPanelStaff}
+                    onClose={() => setDetailPanelStaff(null)}
+                    onEdit={(s) => {
+                      setSelectedStaff(s);
+                      handleEditStaff();
+                    }}
+                    onSendMessage={() => notify.info('Messaging from here is coming soon')}
+                  />
+                </Box>
+              )}
+            </Stack>
           )}
 
           {activeTab === 'non-teaching' && (
@@ -743,28 +928,9 @@ const StaffManager = () => {
             />
           )}
 
-          {activeTab === 'allocations' && (
+          {(activeTab === 'class-allocations' || activeTab === 'subject-allocations') && (
             <Box>
-              <Box
-                sx={{
-                  mb: 3,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: 2,
-                }}
-              >
-                <Tabs
-                  value={allocationSubTab}
-                  onChange={(e, newValue) => setAllocationSubTab(newValue)}
-                  sx={{
-                    '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '14px' },
-                  }}
-                >
-                  <Tab label="Class Allocations" value="class-teacher" />
-                  <Tab label="Subject Allocations" value="subject-teacher" />
-                </Tabs>
+              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="outlined"
                   size="small"
@@ -775,14 +941,15 @@ const StaffManager = () => {
                   Migrate from Previous Term
                 </Button>
               </Box>
-              {allocationSubTab === 'class-teacher' && (
+              {activeTab === 'class-allocations' && (
                 <ClassTeacherAllocation key={`class-${allocationsRefreshKey}`} />
               )}
-              {allocationSubTab === 'subject-teacher' && (
+              {activeTab === 'subject-allocations' && (
                 <SubjectTeacherAllocation key={`subject-${allocationsRefreshKey}`} />
               )}
             </Box>
           )}
+
         </Box>
       </Card>
 
@@ -799,19 +966,19 @@ const StaffManager = () => {
           View Details
         </MenuItem> */}
         <MenuItem onClick={() => confirmImpersonateStaff(selectedStaff)}>
-          <IconUser size={18} style={{ marginRight: 8 }} />
+          <IconUser size={18} color="#2563EB" style={{ marginRight: 8 }} />
           Login As Staff
         </MenuItem>
         <MenuItem onClick={handleEditStaff}>
-          <IconEdit size={18} style={{ marginRight: 8 }} />
+          <IconEdit size={18} color="#7C3AED" style={{ marginRight: 8 }} />
           Edit
         </MenuItem>
         <MenuItem onClick={handleUpdateStatusClick}>
-          <IconHistory size={18} style={{ marginRight: 8 }} />
+          <IconHistory size={18} color="#D97706" style={{ marginRight: 8 }} />
           Update Status
         </MenuItem>
         <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-          <IconTrash size={18} style={{ marginRight: 8 }} />
+          <IconTrash size={18} color="#DC2626" style={{ marginRight: 8 }} />
           Delete
         </MenuItem>
       </Menu>
@@ -839,17 +1006,17 @@ const StaffManager = () => {
         open={migrateModalOpen}
         onClose={() => setMigrateModalOpen(false)}
         title={
-          allocationSubTab === 'class-teacher'
+          activeTab === 'class-allocations'
             ? 'Migrate Class Teacher Allocations'
             : 'Migrate Subject Teacher Allocations'
         }
         description={
-          allocationSubTab === 'class-teacher'
+          activeTab === 'class-allocations'
             ? "Carries every active class-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
             : "Carries every active subject-teacher assignment forward from the term you pick into the term you're moving to. Only works within the same session."
         }
         migrateFn={
-          allocationSubTab === 'class-teacher'
+          activeTab === 'class-allocations'
             ? migrateClassTeacherAllocations
             : migrateSubjectTeacherAllocations
         }
@@ -1062,6 +1229,51 @@ const StaffManager = () => {
         title="Delete Staff"
         message={`Are you sure you want to delete ${selectedStaff?.user?.fname} ${selectedStaff?.user?.lname}? This action cannot be undone.`}
         severity="error"
+      />
+
+      {/* Bulk Activate Confirmation */}
+      <ConfirmationDialog
+        open={bulkActivateConfirmOpen}
+        onClose={() => setBulkActivateConfirmOpen(false)}
+        onConfirm={() => runBulkStatusChange('active')}
+        title="Activate Teachers"
+        message={`Activate ${selectedIds.size} selected teacher(s)? They'll regain login access immediately.`}
+        severity="info"
+      />
+
+      {/* Bulk Deactivate Confirmation */}
+      <ConfirmationDialog
+        open={bulkDeactivateConfirmOpen}
+        onClose={() => setBulkDeactivateConfirmOpen(false)}
+        onConfirm={() => runBulkStatusChange('inactive')}
+        title="Deactivate Teachers"
+        message={`Deactivate ${selectedIds.size} selected teacher(s)? They'll lose login access immediately.`}
+        severity="warning"
+      />
+
+      {/* Bulk Delete Confirmation */}
+      <ConfirmationDialog
+        open={bulkDeleteConfirmOpen}
+        onClose={() => setBulkDeleteConfirmOpen(false)}
+        onConfirm={handleBulkDelete}
+        title="Delete Teachers"
+        message={`Delete ${selectedIds.size} selected teacher(s)? This action cannot be undone.`}
+        severity="error"
+      />
+
+      {/* Bulk Assign Subjects/Classes */}
+      <BulkAssignModal
+        open={Boolean(bulkAssignMode)}
+        mode={bulkAssignMode}
+        onClose={() => setBulkAssignMode(null)}
+        teachers={staff.filter((s) => selectedIds.has(s.user_id))}
+        classOptions={classOptions}
+        subjectOptions={subjectOptions}
+        onSuccess={() => {
+          setSelectedIds(new Set());
+          fetchStaff();
+          fetchStats();
+        }}
       />
     </PageContainer>
   );

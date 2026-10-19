@@ -652,18 +652,16 @@ export const ForumThread = ({ modelId, height = 380 }) => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingId) return;
-    setBusy(true);
+  const handleDelete = async (id) => {
+    setDeletingId(id);
     try {
-      await tenantForumApi.deleteMessage({ id: deletingId });
+      await tenantForumApi.deleteMessage({ id });
       notify.success('Message deleted successfully');
-      setDeletingId(null);
       await loadMessages();
     } catch (err) {
       notify.error(apiErrorMessage(err, 'Unable to delete message'));
     } finally {
-      setBusy(false);
+      setDeletingId(null);
     }
   };
 
@@ -830,8 +828,15 @@ export const ForumThread = ({ modelId, height = 380 }) => {
                     {mine ? (
                       <Button
                         size="small"
-                        onClick={() => setDeletingId(message.id)}
-                        startIcon={<IconTrash size={11} />}
+                        onClick={() => handleDelete(message.id)}
+                        disabled={deletingId === message.id}
+                        startIcon={
+                          deletingId === message.id ? (
+                            <CircularProgress size={10} color="inherit" />
+                          ) : (
+                            <IconTrash size={11} />
+                          )
+                        }
                         sx={{ minWidth: 0, py: 0, px: 0.5, fontSize: 10, color: '#94A3B8', textTransform: 'none' }}
                       >
                         Delete
@@ -910,26 +915,6 @@ export const ForumThread = ({ modelId, height = 380 }) => {
           {sending ? <CircularProgress size={16} color="inherit" /> : <IconSend size={16} />}
         </IconButton>
       </Stack>
-
-      {/* ── Delete confirmation ────────────────────────────────────────── */}
-      {deletingId && (
-        <Alert
-          severity="warning"
-          sx={{ mt: 1, borderRadius: '8px' }}
-          action={
-            <Stack direction="row" spacing={1}>
-              <Button color="inherit" size="small" onClick={() => setDeletingId(null)}>
-                Cancel
-              </Button>
-              <Button color="error" size="small" onClick={handleDelete}>
-                Delete
-              </Button>
-            </Stack>
-          }
-        >
-          Delete this message permanently?
-        </Alert>
-      )}
     </Box>
   );
 };

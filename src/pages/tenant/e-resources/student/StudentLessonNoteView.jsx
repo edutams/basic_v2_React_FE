@@ -124,7 +124,7 @@ const renderContentItem = (item, key) => {
       <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
         <Paper
           variant="outlined"
-          sx={{ height: 700, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
+          sx={{ height: { xs: 420, sm: 700 }, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
         >
           <iframe title={`lesson-${key}`} src={src} width="100%" height="100%" style={{ border: 0 }} />
         </Paper>
@@ -170,6 +170,7 @@ const StudentLessonNoteView = () => {
   const classArmId = searchParams.get('classArmId');
   const subjectName = searchParams.get('subjectName') || '';
   const weekName = searchParams.get('weekName') || '';
+  const subTopicId = searchParams.get('subTopicId') || '';
 
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -225,8 +226,12 @@ const StudentLessonNoteView = () => {
     [outline, schemeOfWorkId],
   );
 
-  const selectWeek = useCallback(
-    (week) => {
+  // Builds the full param set for a week + subtopic combination and
+  // navigates to it. Changing either one re-fetches lesson content — the
+  // backend filters by sub_topics_id when one of several notes under the
+  // same week is tied to a specific subtopic.
+  const selectLesson = useCallback(
+    (week, subtopicId) => {
       if (!week) return;
       const params = new URLSearchParams({
         schemeOfWorkId: String(week.scheme_of_work_id),
@@ -237,10 +242,16 @@ const StudentLessonNoteView = () => {
         classArmId: String(classArmId || ''),
         subjectName,
         weekName: week.week_name ?? '',
+        subTopicId: String(subtopicId ?? ''),
       });
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
     },
     [navigate, location.pathname, subjectId, classProgId, sessionTermId, classArmId, subjectName],
+  );
+
+  const selectWeek = useCallback(
+    (week) => selectLesson(week, week?.topics?.[0]?.sub_topics?.[0]?.id),
+    [selectLesson],
   );
 
   // No specific week chosen yet (arrived straight from the subject card) —
@@ -253,29 +264,29 @@ const StudentLessonNoteView = () => {
   }, [schemeOfWorkId, outline, selectWeek]);
 
   // Topic/Subtopic — cascading, same as the legacy Week/Topic/Subtopic
-  // dropdowns in LessonPlan.vue. The lesson note shown only ever changes
-  // with the week (scheme_of_work_id is bound per-week in this schema), so
-  // these two are a drill-down view of what's in the chosen week rather
-  // than a separate fetch — matching how the legacy page itself behaves.
-  const [selectedTopic, setSelectedTopic] = useState('');
-  const [selectedSubtopic, setSelectedSubtopic] = useState('');
-
+  // dropdowns in LessonPlan.vue, except picking a subtopic here actually
+  // changes the fetched lesson content (when a note is tied to it).
   const topicOptions = currentWeek?.topics ?? [];
   const currentTopic = useMemo(
-    () => topicOptions.find((t) => t.topic_name === selectedTopic) || topicOptions[0] || null,
-    [topicOptions, selectedTopic],
+    () => topicOptions.find((t) => t.sub_topics.some((s) => String(s.id) === String(subTopicId)))
+      || topicOptions[0]
+      || null,
+    [topicOptions, subTopicId],
   );
   const subtopicOptions = currentTopic?.sub_topics ?? [];
+  const currentSubtopic = useMemo(
+    () => subtopicOptions.find((s) => String(s.id) === String(subTopicId)) || subtopicOptions[0] || null,
+    [subtopicOptions, subTopicId],
+  );
 
+  // Resolve to the default subtopic whenever the URL doesn't already point
+  // at one that belongs to the current week (first load, or just switched
+  // weeks and the old subTopicId no longer applies).
   useEffect(() => {
-    setSelectedTopic(topicOptions[0]?.topic_name ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentWeek]);
-
-  useEffect(() => {
-    setSelectedSubtopic(subtopicOptions[0] ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTopic]);
+    if (!schemeOfWorkId || !currentSubtopic) return;
+    if (String(currentSubtopic.id) === String(subTopicId)) return;
+    selectLesson(currentWeek, currentSubtopic.id);
+  }, [schemeOfWorkId, currentWeek, currentSubtopic, subTopicId, selectLesson]);
 
   const loadContent = useCallback(async () => {
     if (!schemeOfWorkId) {
@@ -299,7 +310,7 @@ const StudentLessonNoteView = () => {
     setError('');
     setUnavailable(false);
     try {
-      const res = await tenantStudentApi.getLessonContent(schemeOfWorkId);
+      const res = await tenantStudentApi.getLessonContent(schemeOfWorkId, subTopicId);
       setContentData(res);
       const visitedLessonId = res?.lesson?.lesson_id;
       if (sessionTermId && visitedLessonId) {
@@ -326,7 +337,7 @@ const StudentLessonNoteView = () => {
     } finally {
       setLoading(false);
     }
-  }, [schemeOfWorkId, sessionTermId, subjectId, classProgId, weekId, outlineAttempted, outline.length]);
+  }, [schemeOfWorkId, subTopicId, sessionTermId, subjectId, classProgId, weekId, outlineAttempted, outline.length]);
 
   useEffect(() => {
     loadContent();
@@ -504,7 +515,7 @@ const StudentLessonNoteView = () => {
               </Box>
             </Stack>
 
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Button
                 size="small"
                 startIcon={<IconArrowLeft size={15} />}
@@ -558,14 +569,14 @@ const StudentLessonNoteView = () => {
       </Paper>
 
       {/* ── Week / Topic / Subtopic switcher — mirrors the legacy app's
-          LessonPlan.vue dropdown row. scheme_of_work_id (and so the lesson
-          note shown) is bound per-week in this schema, so only the Week
-          dropdown changes the fetched content; Topic/Subtopic drill down
-          into what's in that week, same as the legacy page. ───────────── */}
+          LessonPlan.vue dropdown row. Picking a different week or subtopic
+          re-fetches the lesson content (the backend serves the note tied
+          to that subtopic when one exists, falling back to the week's
+          general note otherwise). ───────────────────────────────────────── */}
       {outline.length > 0 && (
         <Paper elevation={0} sx={{ ...cardSx, mb: 2, p: 1.5 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
-            <FormControl size="small" sx={{ minWidth: 180 }}>
+            <FormControl size="small" sx={{ width: { xs: '100%', sm: 180 } }}>
               <InputLabel id="lesson-week-label">Week</InputLabel>
               <Select
                 labelId="lesson-week-label"
@@ -585,13 +596,17 @@ const StudentLessonNoteView = () => {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 180, flex: 1 }} disabled={topicOptions.length === 0}>
+            <FormControl size="small" fullWidth sx={{ flex: 1 }} disabled={topicOptions.length === 0}>
               <InputLabel id="lesson-topic-label">Topic</InputLabel>
               <Select
                 labelId="lesson-topic-label"
                 label="Topic"
                 value={currentTopic?.topic_name || ''}
-                onChange={(e) => setSelectedTopic(e.target.value)}
+                onChange={(e) => {
+                  const topic = topicOptions.find((t) => t.topic_name === e.target.value);
+                  const firstSub = topic?.sub_topics?.[0];
+                  if (firstSub) selectLesson(currentWeek, firstSub.id);
+                }}
               >
                 {topicOptions.map((t, i) => (
                   <MenuItem key={`${t.topic_name}-${i}`} value={t.topic_name}>
@@ -601,17 +616,20 @@ const StudentLessonNoteView = () => {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 180, flex: 1 }} disabled={subtopicOptions.length === 0}>
+            <FormControl size="small" fullWidth sx={{ flex: 1 }} disabled={subtopicOptions.length === 0}>
               <InputLabel id="lesson-subtopic-label">Subtopic</InputLabel>
               <Select
                 labelId="lesson-subtopic-label"
                 label="Subtopic"
-                value={selectedSubtopic || ''}
-                onChange={(e) => setSelectedSubtopic(e.target.value)}
+                value={currentSubtopic ? String(currentSubtopic.id) : ''}
+                onChange={(e) => {
+                  const subtopic = subtopicOptions.find((s) => String(s.id) === e.target.value);
+                  if (subtopic) selectLesson(currentWeek, subtopic.id);
+                }}
               >
-                {subtopicOptions.map((s, i) => (
-                  <MenuItem key={`${s}-${i}`} value={s}>
-                    {s}
+                {subtopicOptions.map((s) => (
+                  <MenuItem key={s.id} value={String(s.id)}>
+                    {s.subtopic_name}
                   </MenuItem>
                 ))}
               </Select>

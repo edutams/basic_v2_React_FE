@@ -3,6 +3,7 @@ import PageContainer from '@/components/container/PageContainer';
 import { useNotification } from '@/hooks/useNotification';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import { getSubjectColor } from '@/utils/subjectColor';
+import { getSubjectIcon } from '@/utils/subjectIcons';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { StatCardShell, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -20,7 +21,6 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  Chip,
   Skeleton,
   Alert,
   Button,
@@ -85,17 +85,21 @@ const formatLongDate = (date) =>
   });
 
 const STATUS_META = {
-  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended' },
-  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming' },
-  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled' },
-  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled' },
+  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended', description: 'You confirmed this class held.' },
+  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming', description: "Hasn't happened yet — click to confirm attendance or cancel once it's due." },
+  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled', description: 'You cancelled this class.' },
+  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled', description: "This class's time has passed and you never confirmed it — click to mark it attended or cancelled." },
 };
 
 const StatusIcon = ({ status, fontSize = 'small' }) => {
   const meta = STATUS_META[status];
   if (!meta) return null;
   const Icon = meta.icon;
-  return <Icon fontSize={fontSize} sx={{ color: meta.color }} />;
+  return (
+    <Tooltip title={`${meta.label} — ${meta.description}`}>
+      <Icon fontSize={fontSize} sx={{ color: meta.color }} />
+    </Tooltip>
+  );
 };
 
 const StatusBadge = ({ status }) => {
@@ -330,6 +334,7 @@ const MyTimetable = () => {
           icon={TodayIcon}
           iconColor="#16A34A"
           title="Today's Classes"
+          tooltip="How many of today's classes you've already confirmed vs. still have coming up."
           loading={loading}
         >
           <BarWithPct
@@ -346,6 +351,7 @@ const MyTimetable = () => {
           icon={FactCheckIcon}
           iconColor="#2563EB"
           title="Attendance Rate"
+          tooltip="Your real confirmed-vs-cancelled rate over the last 5 school weeks, up to today."
           loading={loading}
         >
           <BarWithPct
@@ -382,6 +388,7 @@ const MyTimetable = () => {
           icon={EventRepeatIcon}
           iconColor="#7E22CE"
           title="Classes This Week"
+          tooltip="How many classes this week you've confirmed vs. cancelled, out of the total scheduled."
           loading={loading}
         >
           <BarWithPct
@@ -402,6 +409,7 @@ const MyTimetable = () => {
           icon={ScheduleIcon}
           iconColor="#DC2626"
           title="Upcoming Next"
+          tooltip="The next class on your timetable that you haven't confirmed or cancelled yet."
           loading={loading}
         >
           {stats.upcoming_next ? (
@@ -443,6 +451,7 @@ const MyTimetable = () => {
           icon={EventBusyIcon}
           iconColor="#D97706"
           title="Cancelled Classes"
+          tooltip="Classes you've cancelled this week."
           loading={loading}
           linkText="View Details"
           onLinkClick={() =>
@@ -461,6 +470,7 @@ const MyTimetable = () => {
           icon={MenuBookIcon}
           iconColor="#0F766E"
           title={`My Subjects (${stats.subjects.length})`}
+          tooltip="Every subject you teach, based on your current subject-teacher allocations."
           loading={loading}
         >
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
@@ -478,7 +488,7 @@ const MyTimetable = () => {
         </StatCardShell>
       </Box>
 
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
+      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
         <Paper
           id="my-timetable-grid"
           elevation={0}
@@ -616,35 +626,55 @@ const MyTimetable = () => {
                             id: cell.subject_id,
                             color: cell.subject_color,
                           });
+                          const SubjectIcon = getSubjectIcon(cell.subject_name);
                           const clickable = isActionable(cell.status);
                           return (
                             <TableCell
                               key={d.key}
-                              onClick={() => clickable && openAction(cell)}
+                              onClick={() => clickable && openAction({ ...cell, period })}
                               sx={{
                                 cursor: clickable ? 'pointer' : 'default',
                                 '&:hover': clickable ? { bgcolor: 'action.hover' } : undefined,
                               }}
                             >
                               <Stack direction="row" spacing={0.5} alignItems="center">
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Chip
-                                    size="small"
-                                    label={cell.subject_name}
-                                    sx={{
-                                      bgcolor: subjectColor,
-                                      color: '#fff',
-                                      fontWeight: 700,
-                                      height: 20,
-                                    }}
-                                  />
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{ display: 'block', mt: 0.25 }}
-                                  >
-                                    {cell.class_name}
-                                  </Typography>
+                                <Box
+                                  sx={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    bgcolor: `${subjectColor}14`,
+                                    border: '1px solid',
+                                    borderColor: `${subjectColor}3D`,
+                                    borderRadius: 1.5,
+                                    p: 0.6,
+                                  }}
+                                >
+                                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                    <Box
+                                      sx={{
+                                        width: 26,
+                                        height: 26,
+                                        borderRadius: 1.25,
+                                        bgcolor: subjectColor,
+                                        color: '#fff',
+                                        boxShadow: `0 2px 6px ${subjectColor}66`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      <SubjectIcon sx={{ fontSize: 15 }} />
+                                    </Box>
+                                    <Box sx={{ minWidth: 0 }}>
+                                      <Typography variant="caption" fontWeight={800} noWrap sx={{ display: 'block', color: subjectColor }}>
+                                        {cell.subject_name}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                        {cell.class_name}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
                                 </Box>
                                 <StatusIcon status={cell.status} />
                               </Stack>
@@ -667,12 +697,14 @@ const MyTimetable = () => {
           >
             <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap">
               {Object.entries(STATUS_META).map(([key, meta]) => (
-                <Stack key={key} direction="row" spacing={0.5} alignItems="center">
-                  <meta.icon sx={{ fontSize: 16, color: meta.color }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {meta.label}
-                  </Typography>
-                </Stack>
+                <Tooltip key={key} title={meta.description}>
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <meta.icon sx={{ fontSize: 16, color: meta.color }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {meta.label}
+                    </Typography>
+                  </Stack>
+                </Tooltip>
               ))}
             </Stack>
             <Typography variant="caption" color="text.secondary">
@@ -686,8 +718,6 @@ const MyTimetable = () => {
           sx={{
             width: { xs: '100%', lg: 300 },
             flexShrink: 0,
-            height: '100%',
-            minHeight: 0,
           }}
         >
           <Paper
@@ -723,28 +753,15 @@ const MyTimetable = () => {
 
           <Paper
             elevation={0}
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-              p: 1.5,
-              flex: 1,
-              minHeight: 0,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
+            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
           >
-            <Typography variant="subtitle2" fontWeight={800} sx={{ flexShrink: 0 }}>
+            <Typography variant="subtitle2" fontWeight={800}>
               {isSameDay(selectedDate, today) ? "Today's Schedule" : 'Schedule'}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ display: 'block', mb: 1, flexShrink: 0 }}
-            >
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
               {formatLongDate(selectedDate)}
             </Typography>
-            <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+            <Box sx={{ maxHeight: 320, overflowY: 'auto' }}>
               <Stack spacing={1}>
                 {!selectedDayKey ? (
                   <Alert severity="info" sx={{ py: 0.25 }}>

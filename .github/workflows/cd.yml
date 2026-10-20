@@ -1,0 +1,48 @@
+name: CD — Update Helm values for ArgoCD
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  bump-image-tag:
+    name: Bump image tag
+    runs-on: ubuntu-latest
+    env:
+      VALUES_FILE: helm/basic-v2-fe/values.yaml
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bump image tag and push (with retry)
+        run: |
+          NEW_TAG="sha-$(echo "${{ github.sha }}" | cut -c1-7)"
+          BRANCH="${{ github.ref_name }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3 4 5; do
+            git fetch origin "${BRANCH}"
+            git reset --hard "origin/${BRANCH}"
+
+            if grep -q "^  tag: ${NEW_TAG}$" "${VALUES_FILE}"; then
+              echo "Already at ${NEW_TAG}"
+              exit 0
+            fi
+
+            sed -i "s/^  tag: .*/  tag: ${NEW_TAG}/" "${VALUES_FILE}"
+            git commit -am "deploy: basic-v2-fe image ${NEW_TAG}"
+
+            if git push; then
+              echo "✅ Pushed (attempt $attempt)"
+              exit 0
+            fi
+            echo "⚠️  Push rejected (attempt $attempt/5), retrying..."
+          done
+
+          echo "❌ Push still failing after 5 attempts"
+          exit 1

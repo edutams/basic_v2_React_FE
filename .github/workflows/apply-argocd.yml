@@ -1,0 +1,140 @@
+name: Apply ArgoCD control files
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - argocd/application.yaml
+
+jobs:
+  apply:
+    name: kubectl apply argocd/application.yaml
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Decode OpenVPN config and write credentials
+        run: |
+          mkdir -p $HOME/.openvpn
+
+          echo "::add-mask::${{ secrets.OPENVPN_CONFIG_DATA }}"
+          printf '%s' "${{ secrets.OPENVPN_CONFIG_DATA }}" | base64 -d > $HOME/.openvpn/client.ovpn
+          chmod 600 $HOME/.openvpn/client.ovpn
+
+          echo "::add-mask::${{ secrets.OPENVPN_USERNAME }}"
+          echo "::add-mask::${{ secrets.OPENVPN_PASSWORD }}"
+          printf '%s\n%s\n' \
+            "${{ secrets.OPENVPN_USERNAME }}" \
+            "${{ secrets.OPENVPN_PASSWORD }}" \
+            > $HOME/.openvpn/credentials.txt
+          chmod 600 $HOME/.openvpn/credentials.txt
+
+          sed -i "s|^auth-user-pass.*|auth-user-pass $HOME/.openvpn/credentials.txt|" \
+            $HOME/.openvpn/client.ovpn
+
+      - name: Install OpenVPN
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openvpn
+
+      - name: Prepare TUN device
+        run: |
+          sudo modprobe tun || true
+          sudo mkdir -p /dev/net
+          sudo mknod /dev/net/tun c 10 200 2>/dev/null || true
+          sudo chmod 600 /dev/net/tun
+          ls -la /dev/net/tun || echo "WARNING: /dev/net/tun not found"
+
+      - name: Start OpenVPN and wait for tunnel
+        run: |
+          OVPN_LOG=/tmp/openvpn.log
+          sudo touch $OVPN_LOG
+          sudo chmod 644 $OVPN_LOG
+
+          sudo openvpn \
+            --config $HOME/.openvpn/client.ovpn \
+            --daemon \
+            --verb 3 \
+            --log $OVPN_LOG \
+            --ping 5 \
+            --ping-restart 120 \
+            --ping-timer-rem \
+            --persist-tun \
+            --persist-key \
+            --pull-filter ignore "ping-restart" \
+            --pull-filter ignore "ping"
+
+          echo "Waiting for VPN tunnel (tun0)..."
+          for i in $(seq 1 60); do
+            if ip route | grep -q tun0; then
+              echo "✅ VPN tunnel is up (attempt $i)"
+              ip route | grep tun0
+              exit 0
+            fi
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "--- OpenVPN log at attempt $i ---"
+              tail -20 $OVPN_LOG
+              echo "---------------------------------"
+            else
+              echo "  attempt $i/60 — tunnel not up yet..."
+            fi
+            sleep 1
+          done
+
+          echo "❌ VPN tunnel did not come up after 60s"
+          cat $OVPN_LOG
+          ip link show && ip route
+          exit 1
+
+      - name: Clean up VPN credentials
+        if: always()
+        run: rm -f $HOME/.openvpn/credentials.txt
+
+      - name: Decode kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "::add-mask::${{ secrets.KUBECONFIG_DATA }}"
+          printf '%s' "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+
+      - name: Wait for cluster API to be reachable
+        run: |
+          echo "=== VPN Routes ==="
+          ip route | grep tun0
+
+          echo ""
+          echo "=== Waiting for Kubernetes API at 192.168.45.66:6443 ==="
+          for i in $(seq 1 12); do
+            RESPONSE=$(curl -sk --max-time 10 https://192.168.45.66:6443/version 2>&1) || true
+            if echo "$RESPONSE" | grep -q '"gitVersion"'; then
+              echo "✅ Cluster API reachable (attempt $i)"
+              echo "$RESPONSE"
+              exit 0
+            fi
+            echo "  attempt $i/12 — not reachable yet, waiting 10s..."
+            sleep 10
+          done
+
+          echo "❌ Cluster API not reachable after 2 minutes — aborting"
+          exit 1
+
+      - name: Apply ArgoCD Applications
+        run: |
+          kubectl apply -f argocd/application.yaml
+
+      - name: Show result
+        if: always()
+        continue-on-error: true
+        run: |
+          kubectl get application basic-v2-fe -n argocd -o wide || true
+
+      - name: Notify on failure
+        if: failure()
+        continue-on-error: true
+        run: |
+          echo "❌ Apply FAILED."
+          cat /tmp/openvpn.log || true

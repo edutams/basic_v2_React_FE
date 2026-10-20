@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: basic-v2-fe
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:edutams/basic_v2_React_FE.git
+    targetRevision: main
+    path: helm/basic-v2-fe
+    helm:
+      valueFiles:
+        - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: basic-v2
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    automated:
+      prune: true
+      selfHeal: true

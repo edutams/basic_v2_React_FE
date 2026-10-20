@@ -1,0 +1,27 @@
+app:
+  name: basic-v2-fe
+
+image:
+  repository: ghcr.io/edutams/basic_v2_fe
+  tag: latest
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+replicas: 2
+
+resources:
+  requests:
+    memory: "32Mi"
+    cpu: "20m"
+  limits:
+    memory: "128Mi"
+    cpu: "200m"
+
+ingress:
+  hosts:
+    - basicv2.essential.kub.ttihub.ng
+  tls:
+    enabled: true
+    issuer: letsencrypt-prod

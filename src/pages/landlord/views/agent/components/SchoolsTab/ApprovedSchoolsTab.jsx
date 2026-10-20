@@ -33,7 +33,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { IconRefresh } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, StatusChip, formatDate } from './schoolTabHelpers';
+import { getSpaContact, StatusChip, formatDate } from './Schooltabhelpers';
 
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 

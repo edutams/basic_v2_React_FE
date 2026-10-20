@@ -29,7 +29,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { IconDotsVertical, IconRefresh } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
+import { getSpaContact, formatDate, StatusChip } from './Schooltabhelpers';
 
 const SetupApprovals = ({
   schoolList,

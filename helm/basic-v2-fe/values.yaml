@@ -19,6 +19,11 @@ resources:
     memory: "128Mi"
     cpu: "200m"
 
+backend:
+  service: basic-v2-be-service
+  paths:
+    - /tenancy/assets
+
 ingress:
   hosts:
     - basicv2.essential.kub.ttihub.ng

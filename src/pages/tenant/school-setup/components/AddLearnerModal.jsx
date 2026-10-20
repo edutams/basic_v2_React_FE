@@ -28,6 +28,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { getClassArms, getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
+import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import learnerApi from '@/api/tenant/learners/learnerApi';
 import { useNotification } from '@/hooks/useNotification';
 import dayjs from 'dayjs';
@@ -103,6 +104,7 @@ const AddLearnerModal = ({
   const notify = useNotification();
   const [classArms, setClassArms] = useState([]);
   const [allClasses, setAllClasses] = useState([]);
+  const [paymentCategories, setPaymentCategories] = useState([]);
 
   const [parentSearch, setParentSearch] = useState('');
   const [parentResults, setParentResults] = useState([]);
@@ -119,6 +121,18 @@ const AddLearnerModal = ({
   useEffect(() => {
     if (open) setAvatarUrl(initialValues?.avatar ?? null);
   }, [open, initialValues]);
+
+  // Payment category options for a new learner — admin picks one instead of
+  // every learner being silently registered under "New Student Category".
+  useEffect(() => {
+    if (!open || isEdit) return;
+    fetchActiveCategories()
+      .then((res) => setPaymentCategories(res?.data ?? []))
+      .catch(() => setPaymentCategories([]));
+  }, [open, isEdit]);
+
+  const defaultPaymentCategoryId =
+    paymentCategories.find((c) => c.code === 'new')?.id ?? paymentCategories[0]?.id ?? '';
 
   const handlePhotoSelected = async (e) => {
     const file = e.target.files?.[0];
@@ -201,6 +215,7 @@ const AddLearnerModal = ({
             middle_name: '',
             gender: '',
             date_of_birth: null,
+            bursary_payment_category_id: defaultPaymentCategoryId,
           },
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -259,7 +274,8 @@ const AddLearnerModal = ({
     formik.values.first_name &&
     formik.values.gender &&
     formik.values.programme_class_id &&
-    formik.values.class_arm_id;
+    formik.values.class_arm_id &&
+    (isEdit || formik.values.bursary_payment_category_id);
 
   const renderTitle = () => {
     if (isEdit) return 'Edit Learner';
@@ -438,6 +454,25 @@ const AddLearnerModal = ({
               ))}
             </Select>
           </FormControl>
+
+          {!isEdit && (
+            <FormControl fullWidth sx={{ mt: 3 }}>
+              <InputLabel>Payment Category</InputLabel>
+              <Select
+                name="bursary_payment_category_id"
+                value={formik.values.bursary_payment_category_id}
+                onChange={formik.handleChange}
+                label="Payment Category"
+              >
+                <MenuItem value="">Select Payment Category</MenuItem>
+                {paymentCategories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {showLinkParents && (
             <>

@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: git@github.com:edutams/basic_v2_React_FE.git
-    targetRevision: main
+    targetRevision: nobus-infra
     path: helm/basic-v2-fe
     helm:
       valueFiles:

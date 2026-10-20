@@ -3,7 +3,7 @@ name: Apply ArgoCD control files
 on:
   push:
     branches:
-      - main
+      - nobus-infra
     paths:
       - argocd/application.yaml
 

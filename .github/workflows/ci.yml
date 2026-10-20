@@ -3,7 +3,7 @@ name: CI — Build, Push & Scan
 on:
   push:
     branches:
-      - main
+      - nobus-infra
 
 permissions:
   contents: write

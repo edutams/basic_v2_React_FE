@@ -6,6 +6,14 @@ const learnerApi = {
   getClassArms: (params = {}) => tenantApi.get('/learners/class-arms', { params }),
   getAll: (params = {}) => tenantApi.get('/learners', { params }),
   update: (id, data) => tenantApi.put(`/learners/${id}`, data),
+  updatePhoto: (id, file) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    return tenantApi.post(`/learners/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  resetPassword: (id) => tenantApi.post(`/learners/${id}/reset-password`),
   updateRegistration: (id, data) => tenantApi.patch(`/learners/${id}/registration`, data),
   remove: (id) => tenantApi.delete(`/learners/${id}`),
   getParents: (id) => tenantApi.get(`/learners/${id}/parents`),

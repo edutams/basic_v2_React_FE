@@ -47,18 +47,42 @@ const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/School
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
 
 const EResourcesIndex = Loadable(lazy(() => import('@/pages/tenant/e-resources/Index')));
-const EResourcesVideoTutorials = Loadable(lazy(() => import('@/pages/tenant/e-resources/VideoTutorials')));
-const EResourcesStudentBrowse = Loadable(lazy(() => import('@/pages/tenant/e-resources/EResourceStudent')));
-const EResourcesStudentHub = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentEResource')));
-const EResourcesStudentLessonNote = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentLessonNoteView')));
-const EResourcesStudentAssessment = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentAssessment')));
-const EResourcesStudentProgress = Loadable(lazy(() => import('@/pages/tenant/e-resources/student/StudentProgress')));
-const EResourcesStaffLessonNote = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/StaffLessonNoteIndex')));
-const EResourcesLessonNoteEditor = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteEditor')));
-const EResourcesLessonPlanEditor = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonPlanEditor')));
-const EResourcesLessonVideoManager = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonVideoManager')));
-const EResourcesLessonNoteProgress = Loadable(lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteProgress')));
-const EResourcesApproval = Loadable(lazy(() => import('@/pages/tenant/e-resources/approval/LessonNoteApproval')));
+const EResourcesVideoTutorials = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/VideoTutorials')),
+);
+const EResourcesStudentBrowse = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/EResourceStudent')),
+);
+const EResourcesStudentHub = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentEResource')),
+);
+const EResourcesStudentLessonNote = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentLessonNoteView')),
+);
+const EResourcesStudentAssessment = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentAssessment')),
+);
+const EResourcesStudentProgress = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentProgress')),
+);
+const EResourcesStaffLessonNote = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/StaffLessonNoteIndex')),
+);
+const EResourcesLessonNoteEditor = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteEditor')),
+);
+const EResourcesLessonPlanEditor = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonPlanEditor')),
+);
+const EResourcesLessonVideoManager = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonVideoManager')),
+);
+const EResourcesLessonNoteProgress = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteProgress')),
+);
+const EResourcesApproval = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/approval/LessonNoteApproval')),
+);
 
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
@@ -66,12 +90,20 @@ const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/St
 const TeachingAllocations = Loadable(
   lazy(() => import('@/pages/tenant/teaching-allocations/TeachingAllocations')),
 );
-const GenerateTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')));
+const GenerateTimetable = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')),
+);
 const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
-const TeacherTimetableView = Loadable(lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')));
-const AttendanceComplianceReport = Loadable(lazy(() => import('@/pages/tenant/timetable/AttendanceComplianceReport')));
+const TeacherTimetableView = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')),
+);
+const AttendanceComplianceReport = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/AttendanceComplianceReport')),
+);
 const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
-const MyTimetableLearner = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')));
+const MyTimetableLearner = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')),
+);
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
@@ -910,7 +942,7 @@ const TenantRoutes = [
       {
         path: 'class-register',
         element: (
-          <TenantProtectedRoute permission="manage.class_manager.class_register.view">
+          <TenantProtectedRoute permission="class_manager.class_register_view">
             <ClassRegister />
           </TenantProtectedRoute>
         ),

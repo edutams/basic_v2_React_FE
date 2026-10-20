@@ -58,6 +58,7 @@ import {
   IconWallet,
   IconMessage,
   IconUser,
+  IconKey,
 } from '@tabler/icons-react';
 import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -143,6 +144,10 @@ const ParentManagement = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [parentToDelete, setParentToDelete] = useState(null);
 
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [parentToResetPassword, setParentToResetPassword] = useState(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
   const [toggleStatusModalOpen, setToggleStatusModalOpen] = useState(false);
   const [parentToToggle, setParentToToggle] = useState(null);
 
@@ -183,7 +188,10 @@ const ParentManagement = () => {
       case 'recent':
         return { recent_days: 7 };
       case 'needs_attention':
-        return { needs_attention: true };
+        // Laravel's `boolean` rule only accepts true/false/0/1/"0"/"1" — a
+        // plain JS boolean serializes to the string "true" in the query
+        // string, which isn't one of them, so this must go as 1.
+        return { needs_attention: 1 };
       default:
         return {};
     }
@@ -336,6 +344,27 @@ const ParentManagement = () => {
     setDeleteModalOpen(true);
     handleMenuClose();
     setDrawerOpen(false);
+  };
+
+  const handleOpenResetPassword = (row) => {
+    setParentToResetPassword(row);
+    setResetPasswordOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!parentToResetPassword) return;
+    try {
+      setResetPasswordLoading(true);
+      await guardianApi.resetPassword(parentToResetPassword.user_id);
+      notify.success('Password reset to "12345"');
+      setResetPasswordOpen(false);
+      setParentToResetPassword(null);
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetPasswordLoading(false);
+    }
   };
 
   const handleOpenLinkWard = (row) => {
@@ -883,6 +912,10 @@ const ParentManagement = () => {
                             <IconEdit size={18} style={{ marginRight: 8 }} />
                             Edit
                           </MenuItem>
+                          <MenuItem onClick={() => handleOpenResetPassword(row)}>
+                            <IconKey size={18} style={{ marginRight: 8 }} />
+                            Reset Password
+                          </MenuItem>
                           <MenuItem onClick={() => handleOpenLinkWard(row)}>
                             <IconLink size={18} style={{ marginRight: 8 }} />
                             Link Ward
@@ -966,6 +999,32 @@ const ParentManagement = () => {
         <DialogActions>
           <Button variant="contained" color="inherit" size="small" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
           <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={resetPasswordOpen} onClose={() => setResetPasswordOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            Reset the password for{' '}
+            <strong>
+              {parentToResetPassword?.user
+                ? `${parentToResetPassword.user.fname} ${parentToResetPassword.user.lname}`
+                : 'this parent'}
+            </strong>
+            ?
+          </Typography>
+          <Alert severity="info">
+            The password will be reset to the default: <strong>12345</strong>
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setResetPasswordOpen(false)} disabled={resetPasswordLoading}>
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleConfirmResetPassword} disabled={resetPasswordLoading} autoFocus>
+            {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
         </DialogActions>
       </Dialog>
 

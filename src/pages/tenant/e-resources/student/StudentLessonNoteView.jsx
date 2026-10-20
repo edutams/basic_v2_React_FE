@@ -359,7 +359,10 @@ const StudentLessonNoteView = () => {
   }, [classProgId, sessionTermId, subjectId, weekId]);
 
   useEffect(() => {
-    if (contentData) loadReadingMode();
+    // The dialog asks how the student is reading — pointless in front of a
+    // page that has nothing to read.
+    if (!contentData || contentItems(contentData.content).length === 0) return;
+    loadReadingMode();
   }, [contentData, loadReadingMode]);
 
   const loadProgress = useCallback(async () => {

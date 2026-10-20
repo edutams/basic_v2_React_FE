@@ -42,6 +42,8 @@ const timetableApi = {
   getBasicSettings: () => tenantApi.get('/timetable/basic-settings'),
   previewSchedule: (data) => tenantApi.post('/timetable/preview-schedule', data),
   saveSchedule: (data) => tenantApi.post('/timetable/save-schedule', data),
+  previewSchedulePdf: (data) =>
+    tenantApi.post('/timetable/schedule-pdf', data, { responseType: 'blob' }),
 };
 
 export default timetableApi;

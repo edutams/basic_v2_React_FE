@@ -95,6 +95,7 @@ const PeriodSettings = () => {
 
   const [saving, setSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const loadSettings = useCallback(
     async (autoPreview = true) => {
@@ -176,6 +177,25 @@ const PeriodSettings = () => {
     setSchedule([]);
     setGenerateError('');
     loadSettings(false);
+  };
+
+  const handlePreviewPdf = async () => {
+    setPdfLoading(true);
+    try {
+      const res = await timetableApi.previewSchedulePdf({
+        day_start_time: dayStart,
+        day_end_time: dayEnd,
+        lesson_duration_minutes: lessonDuration,
+        breaks: breaks.filter((b) => b.label && b.start_time && b.end_time),
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      window.open(blobUrl, '_blank');
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+    } catch (err) {
+      notify.error('Failed to generate PDF preview');
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -533,8 +553,13 @@ const PeriodSettings = () => {
               </Stack>
 
               <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ flexShrink: 0 }}>
-                <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={() => window.print()}>
-                  Preview as PDF
+                <Button
+                  variant="outlined"
+                  startIcon={<PictureAsPdfIcon />}
+                  onClick={handlePreviewPdf}
+                  disabled={pdfLoading}
+                >
+                  {pdfLoading ? 'Generating...' : 'Preview as PDF'}
                 </Button>
                 <Button
                   variant="contained"

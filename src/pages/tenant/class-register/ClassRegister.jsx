@@ -63,7 +63,7 @@ const ClassRegister = () => {
               <Tab label="Multiple Arm View" />
             </Tabs>
 
-            {can('manage.class_manager.class_register.bulk_register') && (
+            {can('class_manager.class_register.bulk_register') && (
               <Button
                 variant="contained"
                 startIcon={<MigrateIcon />}

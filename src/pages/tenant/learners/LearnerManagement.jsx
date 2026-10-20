@@ -3,7 +3,16 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
-import { IconEdit, IconTrash, IconUser, IconUserPlus, IconFileDescription, IconToggleRight } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconTrash,
+  IconUser,
+  IconUserPlus,
+  IconFileDescription,
+  IconToggleRight,
+  IconCamera,
+  IconKey,
+} from '@tabler/icons-react';
 import {
   Box,
   Typography,
@@ -53,6 +62,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import SchoolIcon from '@mui/icons-material/School';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt';
+import PersonIcon from '@mui/icons-material/Person';
 
 import learnerApi from '@/api/tenant/learners/learnerApi';
 import { getClassesWithDivisions, createLearner } from '@/api/tenant/set-up/tenant-setup';
@@ -140,6 +150,16 @@ const LearnerManagement = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [learnerToDelete, setLearnerToDelete] = useState(null);
+
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [learnerToResetPassword, setLearnerToResetPassword] = useState(null);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+
+  const [updatePhotoOpen, setUpdatePhotoOpen] = useState(false);
+  const [learnerToUpdatePhoto, setLearnerToUpdatePhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [updatePhotoLoading, setUpdatePhotoLoading] = useState(false);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
   const [linkParentOpen, setLinkParentOpen] = useState(false);
@@ -190,13 +210,16 @@ const LearnerManagement = () => {
       case 'active':
         return { status: 'student' };
       case 'inactive':
-        return { inactive: true };
+        // Laravel's `boolean` validation rule only accepts true/false/0/1/"0"/"1"
+        // — the string "true" that a plain JS boolean serializes to in a
+        // query string is NOT one of them, so this must go as 1, not true.
+        return { inactive: 1 };
       case 'new_enrolments':
         return { recent_days: 7 };
       case 'graduated':
         return { status: 'graduate' };
       case 'needs_attention':
-        return { needs_attention: true };
+        return { needs_attention: 1 };
       default:
         return {};
     }
@@ -322,13 +345,18 @@ const LearnerManagement = () => {
   const handleOpenEdit = (row) => {
     setLearnerToEdit(row);
     setEditValues({
+      user_id: row.user_id ?? row.user?.id ?? '',
+      avatar: row.user?.avatar ?? '',
       first_name: row.user?.fname ?? '',
       last_name: row.user?.lname ?? '',
       middle_name: row.user?.mname ?? '',
       gender: row.user?.sex ?? '',
       date_of_birth: row.user?.dob ?? '',
       learner_id: row.user?.user_id ?? '',
-      class_id: row.current_registration?.class_arm?.programme_class?.class?.id ?? '',
+      // AddLearnerModal's form field is `programme_class_id` (the
+      // ProgrammeClass pivot id, same value its own Class dropdown uses) —
+      // not the SchoolClass id further down the chain.
+      programme_class_id: row.current_registration?.class_arm?.programme_class?.id ?? '',
       class_arm_id: row.current_registration?.class_arm_id ?? '',
     });
     setEditLearnerOpen(true);
@@ -379,6 +407,59 @@ const LearnerManagement = () => {
       refreshAll();
     } catch (err) {
       notify.error(err?.response?.data?.message || 'Failed to delete learner');
+    }
+  };
+
+  const handleOpenResetPassword = (row) => {
+    setLearnerToResetPassword(row);
+    setResetPasswordOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!learnerToResetPassword) return;
+    try {
+      setResetPasswordLoading(true);
+      const res = await learnerApi.resetPassword(learnerToResetPassword.user_id);
+      notify.success(`Password reset to "${res?.data?.data?.password}"`);
+      setResetPasswordOpen(false);
+      setLearnerToResetPassword(null);
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
+  const handleOpenUpdatePhoto = (row) => {
+    setLearnerToUpdatePhoto(row);
+    setPhotoPreview(row.user?.avatar || null);
+    setPhotoFile(null);
+    setUpdatePhotoOpen(true);
+    handleMenuClose();
+  };
+
+  const handlePhotoFileSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleConfirmUpdatePhoto = async () => {
+    if (!learnerToUpdatePhoto || !photoFile) return;
+    try {
+      setUpdatePhotoLoading(true);
+      await learnerApi.updatePhoto(learnerToUpdatePhoto.user_id, photoFile);
+      notify.success('Photo updated successfully');
+      setUpdatePhotoOpen(false);
+      setLearnerToUpdatePhoto(null);
+      setPhotoFile(null);
+      refreshAll();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update photo');
+    } finally {
+      setUpdatePhotoLoading(false);
     }
   };
 
@@ -912,6 +993,14 @@ const LearnerManagement = () => {
                               <IconEdit size={18} style={{ marginRight: 8 }} />
                               Edit
                             </MenuItem>
+                            <MenuItem onClick={() => handleOpenUpdatePhoto(row)}>
+                              <IconCamera size={18} style={{ marginRight: 8 }} />
+                              Update Photo
+                            </MenuItem>
+                            <MenuItem onClick={() => handleOpenResetPassword(row)}>
+                              <IconKey size={18} style={{ marginRight: 8 }} />
+                              Reset Password
+                            </MenuItem>
                             <MenuItem onClick={() => handleOpenDelete(row)} sx={{ color: 'error.main' }}>
                               <IconTrash size={18} style={{ marginRight: 8 }} />
                               Delete
@@ -1040,6 +1129,56 @@ const LearnerManagement = () => {
         <DialogActions>
           <Button variant="contained" color="inherit" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>Delete</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={resetPasswordOpen} onClose={() => setResetPasswordOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            Reset the password for{' '}
+            <strong>
+              {learnerToResetPassword?.user
+                ? `${learnerToResetPassword.user.fname} ${learnerToResetPassword.user.lname}`
+                : 'this learner'}
+            </strong>
+            ?
+          </Typography>
+          <Alert severity="info">
+            The password will be reset to their surname, lowercase:{' '}
+            <strong>{learnerToResetPassword?.user?.lname?.toLowerCase() || '—'}</strong>
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setResetPasswordOpen(false)} disabled={resetPasswordLoading}>
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleConfirmResetPassword} disabled={resetPasswordLoading} autoFocus>
+            {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={updatePhotoOpen} onClose={() => setUpdatePhotoOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Update Photo</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 1 }}>
+            <Avatar src={photoPreview || undefined} sx={{ width: 96, height: 96 }}>
+              <PersonIcon sx={{ fontSize: 40 }} />
+            </Avatar>
+            <Button component="label" variant="outlined" size="small">
+              Choose Photo
+              <input type="file" accept="image/*" hidden onChange={handlePhotoFileSelected} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" color="inherit" size="small" onClick={() => setUpdatePhotoOpen(false)} disabled={updatePhotoLoading}>
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleConfirmUpdatePhoto} disabled={updatePhotoLoading || !photoFile} autoFocus>
+            {updatePhotoLoading ? 'Uploading...' : 'Save Photo'}
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -11,6 +11,7 @@ const guardianApi = {
   admissionParentSignup: (data) => tenantApi.post('/guardians/register', data),
   update: (id, data) => tenantApi.put(`/guardians/${id}`, data),
   toggleStatus: (id) => tenantApi.patch(`/guardians/${id}/toggle-status`),
+  resetPassword: (id) => tenantApi.post(`/guardians/${id}/reset-password`),
   remove: (id) => tenantApi.delete(`/guardians/${id}`),
   downloadTemplate: () =>
     tenantApi.get('/guardians/download-guardian-template', { responseType: 'blob' }),

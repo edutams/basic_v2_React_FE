@@ -13,14 +13,20 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControl,
   FormControlLabel,
+  InputLabel,
   LinearProgress,
+  MenuItem,
   Paper,
   Radio,
   RadioGroup,
   Rating,
+  Select,
   Skeleton,
   Stack,
+  Tab,
+  Tabs,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -28,15 +34,16 @@ import {
   IconArrowLeft,
   IconBook2,
   IconChecks,
-  IconFileText,
   IconMessageCircle2,
+  IconNotes,
   IconPlayerPlay,
   IconRefresh,
   IconSparkles,
   IconStarFilled,
   IconUpload,
+  IconVideo,
 } from '@tabler/icons-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
@@ -46,7 +53,6 @@ import {
   DocxPreview,
   ForumThread,
   RichContentView,
-  isDocumentLink,
 } from '@/pages/tenant/e-resources/teacher/lessonNoteShared';
 
 const BCrumb = [
@@ -118,7 +124,7 @@ const renderContentItem = (item, key) => {
       <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
         <Paper
           variant="outlined"
-          sx={{ height: 700, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
+          sx={{ height: { xs: 420, sm: 700 }, overflow: 'hidden', borderRadius: '10px', borderColor: '#E5E7EB' }}
         >
           <iframe title={`lesson-${key}`} src={src} width="100%" height="100%" style={{ border: 0 }} />
         </Paper>
@@ -137,44 +143,20 @@ const renderContentItem = (item, key) => {
       </ContentSection>
     );
   }
-  if (isDocumentLink(src)) {
-    // Word/PowerPoint/Excel uploads render inline, same as the teacher view,
-    // instead of forcing a download just to see what was uploaded.
-    return (
-      <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
-        <DocxPreview url={src} />
-        <Button
-          size="small"
-          variant="text"
-          href={src}
-          target="_blank"
-          rel="noopener noreferrer"
-          startIcon={<IconFileText size={14} />}
-          sx={{ mt: 1, fontWeight: 600 }}
-        >
-          Open in a new tab
-        </Button>
-      </ContentSection>
-    );
-  }
+  // Any other uploaded file (Word, PowerPoint, Excel, or anything else the
+  // teacher uploaded) renders inline via the same docs-preview component the
+  // teacher workspace uses — the lesson should be readable on this page
+  // itself, never require leaving to a new tab to see it.
   return (
     <ContentSection key={key} icon={IconUpload} label="Uploaded document" accent="#2563EB">
-      <Button
-        variant="outlined"
-        href={src}
-        target="_blank"
-        rel="noopener noreferrer"
-        startIcon={<IconFileText size={16} />}
-        sx={{ borderRadius: '8px', fontWeight: 600, justifyContent: 'flex-start' }}
-      >
-        Open lesson document
-      </Button>
+      <DocxPreview url={src} />
     </ContentSection>
   );
 };
 
 const StudentLessonNoteView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const notify = useNotification();
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -188,6 +170,7 @@ const StudentLessonNoteView = () => {
   const classArmId = searchParams.get('classArmId');
   const subjectName = searchParams.get('subjectName') || '';
   const weekName = searchParams.get('weekName') || '';
+  const subTopicId = searchParams.get('subTopicId') || '';
 
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -201,6 +184,8 @@ const StudentLessonNoteView = () => {
   const [readingDialogOpen, setReadingDialogOpen] = useState(false);
   const [readingChoice, setReadingChoice] = useState('Ahead');
   const [savingReading, setSavingReading] = useState(false);
+  const [outline, setOutline] = useState([]);
+  const [outlineAttempted, setOutlineAttempted] = useState(false);
 
   const lessonNote = useMemo(() => {
     const notes = contentData?.lessonNote;
@@ -210,17 +195,122 @@ const StudentLessonNoteView = () => {
   const lesson = contentData?.lesson ?? null;
   const lessonNoteId = lesson?.lesson_id ?? null;
 
+  // ── Subject outline — week → topic → subtopic, read from this tenant's
+  // own database (not the OGSERA-backed assessment endpoint). In this
+  // schema scheme_of_work_id is bound per week, so each entry here IS a
+  // week — this lets a student land here from a subject card (no specific
+  // lesson chosen yet) and switch weeks in-place, the same way the legacy
+  // app's Lesson Content page works.
+  const loadOutline = useCallback(async () => {
+    if (!subjectId || !classProgId || !sessionTermId) return;
+    try {
+      const res = await tenantStudentApi.getSubjectOutline({
+        subject_id: subjectId,
+        class_prog_id: classProgId,
+        session_term_id: sessionTermId,
+      });
+      setOutline(Array.isArray(res) ? res : []);
+    } catch {
+      setOutline([]);
+    } finally {
+      setOutlineAttempted(true);
+    }
+  }, [subjectId, classProgId, sessionTermId]);
+
+  useEffect(() => {
+    loadOutline();
+  }, [loadOutline]);
+
+  const currentWeek = useMemo(
+    () => outline.find((w) => String(w.scheme_of_work_id) === String(schemeOfWorkId)) || null,
+    [outline, schemeOfWorkId],
+  );
+
+  // Builds the full param set for a week + subtopic combination and
+  // navigates to it. Changing either one re-fetches lesson content — the
+  // backend filters by sub_topics_id when one of several notes under the
+  // same week is tied to a specific subtopic.
+  const selectLesson = useCallback(
+    (week, subtopicId) => {
+      if (!week) return;
+      const params = new URLSearchParams({
+        schemeOfWorkId: String(week.scheme_of_work_id),
+        subjectId: String(subjectId || ''),
+        classProgId: String(classProgId || ''),
+        weekId: String(week.week_id ?? ''),
+        sessionTermId: String(sessionTermId || ''),
+        classArmId: String(classArmId || ''),
+        subjectName,
+        weekName: week.week_name ?? '',
+        subTopicId: String(subtopicId ?? ''),
+      });
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    },
+    [navigate, location.pathname, subjectId, classProgId, sessionTermId, classArmId, subjectName],
+  );
+
+  const selectWeek = useCallback(
+    (week) => selectLesson(week, week?.topics?.[0]?.sub_topics?.[0]?.id),
+    [selectLesson],
+  );
+
+  // No specific week chosen yet (arrived straight from the subject card) —
+  // auto-pick the earliest week with a lesson note so the page always
+  // lands on something useful instead of a dead end.
+  useEffect(() => {
+    if (schemeOfWorkId || outline.length === 0) return;
+    const first = outline.find((week) => week.has_lesson_note) || outline[0];
+    if (first) selectWeek(first);
+  }, [schemeOfWorkId, outline, selectWeek]);
+
+  // Topic/Subtopic — cascading, same as the legacy Week/Topic/Subtopic
+  // dropdowns in LessonPlan.vue, except picking a subtopic here actually
+  // changes the fetched lesson content (when a note is tied to it).
+  const topicOptions = currentWeek?.topics ?? [];
+  const currentTopic = useMemo(
+    () => topicOptions.find((t) => t.sub_topics.some((s) => String(s.id) === String(subTopicId)))
+      || topicOptions[0]
+      || null,
+    [topicOptions, subTopicId],
+  );
+  const subtopicOptions = currentTopic?.sub_topics ?? [];
+  const currentSubtopic = useMemo(
+    () => subtopicOptions.find((s) => String(s.id) === String(subTopicId)) || subtopicOptions[0] || null,
+    [subtopicOptions, subTopicId],
+  );
+
+  // Resolve to the default subtopic whenever the URL doesn't already point
+  // at one that belongs to the current week (first load, or just switched
+  // weeks and the old subTopicId no longer applies).
+  useEffect(() => {
+    if (!schemeOfWorkId || !currentSubtopic) return;
+    if (String(currentSubtopic.id) === String(subTopicId)) return;
+    selectLesson(currentWeek, currentSubtopic.id);
+  }, [schemeOfWorkId, currentWeek, currentSubtopic, subTopicId, selectLesson]);
+
   const loadContent = useCallback(async () => {
     if (!schemeOfWorkId) {
-      setError('Missing lesson reference.');
+      if (!subjectId) {
+        setLoading(false);
+        setError('Missing lesson reference.');
+        return;
+      }
+      if (!outlineAttempted || outline.length > 0) {
+        // Outline is still being fetched, or it came back with lessons and
+        // the auto-select effect is about to redirect to one of them —
+        // either way this resolves on its own in a moment.
+        setLoading(true);
+        return;
+      }
       setLoading(false);
+      setError('No lesson content has been set up for this subject yet.');
       return;
     }
     setLoading(true);
     setError('');
     setUnavailable(false);
     try {
-      const res = await tenantStudentApi.getLessonContent(schemeOfWorkId);
+      const res = await tenantStudentApi.getLessonContent(schemeOfWorkId, subTopicId);
       setContentData(res);
       const visitedLessonId = res?.lesson?.lesson_id;
       if (sessionTermId && visitedLessonId) {
@@ -247,7 +337,7 @@ const StudentLessonNoteView = () => {
     } finally {
       setLoading(false);
     }
-  }, [schemeOfWorkId, sessionTermId, subjectId, classProgId, weekId]);
+  }, [schemeOfWorkId, subTopicId, sessionTermId, subjectId, classProgId, weekId, outlineAttempted, outline.length]);
 
   useEffect(() => {
     loadContent();
@@ -269,7 +359,10 @@ const StudentLessonNoteView = () => {
   }, [classProgId, sessionTermId, subjectId, weekId]);
 
   useEffect(() => {
-    if (contentData) loadReadingMode();
+    // The dialog asks how the student is reading — pointless in front of a
+    // page that has nothing to read.
+    if (!contentData || contentItems(contentData.content).length === 0) return;
+    loadReadingMode();
   }, [contentData, loadReadingMode]);
 
   const loadProgress = useCallback(async () => {
@@ -293,12 +386,15 @@ const StudentLessonNoteView = () => {
   const loadRatings = useCallback(async () => {
     if (!schemeOfWorkId || !sharedGetRatings) return;
     try {
-      const res = await sharedGetRatings(schemeOfWorkId, { lesson_type: 'lesson_note' });
+      const res = await sharedGetRatings(schemeOfWorkId, {
+        lesson_type: 'lesson_note',
+        ...(currentSubtopic?.id ? { sub_topics_id: Number(currentSubtopic.id) } : {}),
+      });
       setRatingValue(Number(res?.lesson_ratings ?? 0));
     } catch {
       setRatingValue(0);
     }
-  }, [schemeOfWorkId]);
+  }, [schemeOfWorkId, currentSubtopic?.id]);
 
   useEffect(() => {
     loadRatings();
@@ -308,7 +404,11 @@ const StudentLessonNoteView = () => {
     if (!schemeOfWorkId || !sharedRateLesson) return;
     setRatingBusy(true);
     try {
-      await sharedRateLesson(schemeOfWorkId, { rating: value, lesson_type: 'lesson_note' });
+      await sharedRateLesson(schemeOfWorkId, {
+        rating: value,
+        lesson_type: 'lesson_note',
+        ...(currentSubtopic?.id ? { sub_topics_id: Number(currentSubtopic.id) } : {}),
+      });
       setRatingValue(value);
       notify.success('Rating saved successfully');
     } catch (err) {
@@ -343,6 +443,9 @@ const StudentLessonNoteView = () => {
     try {
       const res = await tenantStudentApi.markRead(schemeOfWorkId, {
         subject_teacher_id: lessonNote.subject_teacher_id,
+        // The note the student is actually looking at — one row per subtopic.
+        ...(lesson?.lesson_id ? { lesson_note_id: Number(lesson.lesson_id) } : {}),
+        ...(currentSubtopic?.id ? { sub_topic_id: Number(currentSubtopic.id) } : {}),
       });
       notify.success(res?.message || 'Subtopic marked as read successfully');
       loadProgress();
@@ -425,7 +528,7 @@ const StudentLessonNoteView = () => {
               </Box>
             </Stack>
 
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               <Button
                 size="small"
                 startIcon={<IconArrowLeft size={15} />}
@@ -458,6 +561,95 @@ const StudentLessonNoteView = () => {
           </Stack>
         </Box>
       </Paper>
+
+      {/* ── Lesson Content tab strip — matches the legacy app's Lesson
+          Content page (Lesson Note tab active; Video Content reserved for
+          when video lessons are enabled for students). ──────────────────── */}
+      <Paper elevation={0} sx={{ ...cardSx, mb: 2, overflow: 'hidden' }}>
+        <Tabs
+          value="note"
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            minHeight: 44,
+            px: 1,
+            '& .MuiTab-root': { minHeight: 44, fontWeight: 700, fontSize: 12.5, textTransform: 'none' },
+          }}
+        >
+          <Tab icon={<IconNotes size={16} />} iconPosition="start" value="note" label="Lesson Note" />
+          <Tab icon={<IconVideo size={16} />} iconPosition="start" value="video" label="Video Content" disabled />
+        </Tabs>
+      </Paper>
+
+      {/* ── Week / Topic / Subtopic switcher — mirrors the legacy app's
+          LessonPlan.vue dropdown row. Picking a different week or subtopic
+          re-fetches the lesson content (the backend serves the note tied
+          to that subtopic when one exists, falling back to the week's
+          general note otherwise). ───────────────────────────────────────── */}
+      {outline.length > 0 && (
+        <Paper elevation={0} sx={{ ...cardSx, mb: 2, p: 1.5 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+            <FormControl size="small" sx={{ width: { xs: '100%', sm: 180 } }}>
+              <InputLabel id="lesson-week-label">Week</InputLabel>
+              <Select
+                labelId="lesson-week-label"
+                label="Week"
+                value={currentWeek ? String(currentWeek.scheme_of_work_id) : ''}
+                onChange={(e) => {
+                  const week = outline.find((w) => String(w.scheme_of_work_id) === e.target.value);
+                  if (week) selectWeek(week);
+                }}
+              >
+                {outline.map((w) => (
+                  <MenuItem key={w.scheme_of_work_id} value={String(w.scheme_of_work_id)}>
+                    {w.week_name}
+                    {!w.has_lesson_note ? ' (no note yet)' : ''}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth sx={{ flex: 1 }} disabled={topicOptions.length === 0}>
+              <InputLabel id="lesson-topic-label">Topic</InputLabel>
+              <Select
+                labelId="lesson-topic-label"
+                label="Topic"
+                value={currentTopic?.topic_name || ''}
+                onChange={(e) => {
+                  const topic = topicOptions.find((t) => t.topic_name === e.target.value);
+                  const firstSub = topic?.sub_topics?.[0];
+                  if (firstSub) selectLesson(currentWeek, firstSub.id);
+                }}
+              >
+                {topicOptions.map((t, i) => (
+                  <MenuItem key={`${t.topic_name}-${i}`} value={t.topic_name}>
+                    {t.topic_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth sx={{ flex: 1 }} disabled={subtopicOptions.length === 0}>
+              <InputLabel id="lesson-subtopic-label">Subtopic</InputLabel>
+              <Select
+                labelId="lesson-subtopic-label"
+                label="Subtopic"
+                value={currentSubtopic ? String(currentSubtopic.id) : ''}
+                onChange={(e) => {
+                  const subtopic = subtopicOptions.find((s) => String(s.id) === e.target.value);
+                  if (subtopic) selectLesson(currentWeek, subtopic.id);
+                }}
+              >
+                {subtopicOptions.map((s) => (
+                  <MenuItem key={s.id} value={String(s.id)}>
+                    {s.subtopic_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </Paper>
+      )}
 
       {unavailable && (
         <Alert

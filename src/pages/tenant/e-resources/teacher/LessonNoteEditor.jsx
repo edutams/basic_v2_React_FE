@@ -63,6 +63,7 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
   const topic = param('topic');
   const subtopic = param('subtopic');
   const subTopicsId = param('subTopicsId');
+  const subtopicScope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
 
   const [record, setRecord] = useState(null);
   const [content, setContent] = useState('');
@@ -82,9 +83,11 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
   const loadNote = useCallback(async () => {
     if (!schemeOfWorkId || !staffSubjectId) return;
     setLoading(true);
+    const scope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
     try {
       const res = await tenantLessonNoteApi.getLessonNotes(schemeOfWorkId, {
         staff_subject_id: staffSubjectId,
+        ...scope,
       });
       const note = res?.lesson_notes ?? null;
       setRecord(note);
@@ -99,7 +102,7 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
     } finally {
       setLoading(false);
     }
-  }, [notify, schemeOfWorkId, staffSubjectId]);
+  }, [notify, schemeOfWorkId, staffSubjectId, subTopicsId]);
 
   useEffect(() => {
     loadNote();
@@ -114,6 +117,7 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
         subject_name: subjectName,
         class_name: className,
         staff_subject_id: staffSubjectId,
+        ...subtopicScope,
       });
       setAiContent(res?.data ?? '');
     } catch (err) {
@@ -148,13 +152,14 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
           staff_subject_id: staffSubjectId,
           scheme_of_work_id: Number(schemeOfWorkId),
           updated_lesson_note: value,
+          ...subtopicScope,
         });
       } else {
         await tenantLessonNoteApi.addlessonNoteContent({
           scheme_of_work_id: Number(schemeOfWorkId),
           staff_subject_id: staffSubjectId,
           textData: textToDataUrl(value),
-          ...(subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {}),
+          ...subtopicScope,
         });
       }
       notify.success('Lesson note saved successfully');
@@ -172,7 +177,7 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
       scheme_of_work_id: Number(schemeOfWorkId),
       staff_subject_id: staffSubjectId,
       textData: dataUrl,
-      ...(subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {}),
+      ...subtopicScope,
     });
     notify.success('Lesson note document uploaded successfully');
     await loadNote();

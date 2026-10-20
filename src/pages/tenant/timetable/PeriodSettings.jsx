@@ -146,7 +146,10 @@ const PeriodSettings = () => {
   };
 
   const addBreak = () => {
-    setBreaks((prev) => [...prev, { label: `Break ${prev.length + 1}`, start_time: '', end_time: '' }]);
+    setBreaks((prev) => [
+      ...prev,
+      { label: `Break ${prev.length + 1}`, start_time: '', end_time: '' },
+    ]);
   };
 
   const handleGenerate = async () => {
@@ -166,7 +169,10 @@ const PeriodSettings = () => {
       setSchedule(res.data.data || []);
       setHasGenerated(true);
     } catch (err) {
-      setGenerateError(err.response?.data?.message || 'Failed to generate schedule — check your times for overlaps.');
+      setGenerateError(
+        err.response?.data?.message ||
+          'Failed to generate schedule — check your times for overlaps.',
+      );
     } finally {
       setGenerating(false);
     }
@@ -231,10 +237,31 @@ const PeriodSettings = () => {
   }, [schedule]);
 
   return (
-    <PageContainer title="School Day & Period Settings" description="Enter the key time settings below and generate the timetable schedule for the weekdays.">
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 2.5 }}>
+    <PageContainer
+      title="School Day & Period Settings"
+      description="Enter the key time settings below and generate the timetable schedule for the weekdays."
+    >
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        sx={{ mb: 2.5 }}
+      >
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              bgcolor: '#2563EB',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             <CalendarMonthIcon />
           </Box>
           <Box>
@@ -242,15 +269,26 @@ const PeriodSettings = () => {
               School Day & Period Settings
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Enter the key time settings below and generate the timetable schedule for the weekdays.
+              Enter the key time settings below and generate the timetable schedule for the
+              weekdays.
             </Typography>
           </Box>
         </Stack>
         <Breadcrumbs separator="›">
-          <Link component={RouterLink} to="/school-dashboard" underline="hover" color="text.secondary">
+          <Link
+            component={RouterLink}
+            to="/school-dashboard"
+            underline="hover"
+            color="text.secondary"
+          >
             Dashboard
           </Link>
-          <Link component={RouterLink} to="/timetable/generate" underline="hover" color="text.secondary">
+          <Link
+            component={RouterLink}
+            to="/timetable/generate"
+            underline="hover"
+            color="text.secondary"
+          >
             Timetable Manager
           </Link>
           <Typography color="text.primary">School Day & Period Settings</Typography>
@@ -274,7 +312,21 @@ const PeriodSettings = () => {
           }}
         >
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.25, flexShrink: 0 }}>
-            <Box sx={{ width: 22, height: 22, borderRadius: '50%', bgcolor: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+            <Box
+              sx={{
+                width: 22,
+                height: 22,
+                borderRadius: '50%',
+                bgcolor: '#2563EB',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 800,
+                flexShrink: 0,
+              }}
+            >
               1
             </Box>
             <Typography variant="h6" fontWeight={800}>
@@ -293,29 +345,49 @@ const PeriodSettings = () => {
             </Stack>
           ) : (
             <Stack spacing={1.75} sx={{ flex: 1, overflowY: 'auto', minHeight: 0, pr: 0.5 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <AccessTimeIcon sx={{ color: '#16A34A', flexShrink: 0 }} />
-                <TextField
-                  label="School Day Start Time"
-                  type="time"
-                  size="small"
-                  sx={{ width: 190 }}
-                  value={dayStart}
-                  onChange={(e) => setDayStart(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
+              <Stack spacing={0.15}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  School Day Start Time
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <AccessTimeIcon sx={{ color: '#16A34A', flexShrink: 0 }} />
+                  <TextField
+                    type="time"
+                    size="small"
+                    sx={{ width: 160 }}
+                    value={dayStart}
+                    onChange={(e) => setDayStart(e.target.value)}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ whiteSpace: 'nowrap' }}
+                  >
+                    24-hr · {formatTime12h(dayStart)}
+                  </Typography>
+                </Stack>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <AccessTimeIcon sx={{ color: '#DC2626', flexShrink: 0 }} />
-                <TextField
-                  label="School Day End Time"
-                  type="time"
-                  size="small"
-                  sx={{ width: 190 }}
-                  value={dayEnd}
-                  onChange={(e) => setDayEnd(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
+              <Stack spacing={0.25}>
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  School Day End Time
+                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <AccessTimeIcon sx={{ color: '#DC2626', flexShrink: 0 }} />
+                  <TextField
+                    type="time"
+                    size="small"
+                    sx={{ width: 160 }}
+                    value={dayEnd}
+                    onChange={(e) => setDayEnd(e.target.value)}
+                  />
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ whiteSpace: 'nowrap' }}
+                  >
+                    24-hr · {formatTime12h(dayEnd)}
+                  </Typography>
+                </Stack>
               </Stack>
               <Stack direction="row" spacing={1} alignItems="center">
                 <HourglassBottomIcon sx={{ color: '#9333EA', flexShrink: 0 }} />
@@ -326,14 +398,26 @@ const PeriodSettings = () => {
                   sx={{ width: 190 }}
                   value={lessonDuration}
                   onChange={(e) => setLessonDuration(Number(e.target.value))}
-                  slotProps={{ input: { endAdornment: <Typography variant="caption" color="text.secondary">mins</Typography> } }}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <Typography variant="caption" color="text.secondary">
+                          mins
+                        </Typography>
+                      ),
+                    },
+                  }}
                 />
               </Stack>
-              <Alert severity="info" icon={false} sx={{ bgcolor: '#DBEAFE', color: '#1E40AF', fontWeight: 600, py: 0.5 }}>
+              <Alert
+                severity="info"
+                icon={false}
+                sx={{ bgcolor: '#DBEAFE', color: '#1E40AF', fontWeight: 600, py: 0.5 }}
+              >
                 Each class period will last {lessonDuration || 0} minutes.
               </Alert>
 
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 0.5 }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ pt: 0.3 }}>
                 <FreeBreakfastIcon sx={{ color: '#D97706' }} />
                 <Typography variant="subtitle2" fontWeight={700}>
                   Break Times
@@ -343,7 +427,7 @@ const PeriodSettings = () => {
                 <Stack
                   key={idx}
                   spacing={0.75}
-                  sx={{ bgcolor: idx % 2 === 0 ? '#FEF3C7' : '#DCFCE7', borderRadius: 1.5, p: 1 }}
+                  sx={{ bgcolor: idx % 2 === 0 ? '#FEF3C7' : '#DCFCE7', borderRadius: 1.5, p: 0.5 }}
                 >
                   <Stack direction="row" alignItems="center" justifyContent="space-between">
                     <TextField
@@ -354,7 +438,11 @@ const PeriodSettings = () => {
                       placeholder="Break name"
                       slotProps={{ input: { disableUnderline: true, sx: { fontWeight: 700 } } }}
                     />
-                    <IconButton size="small" sx={{ color: 'error.main' }} onClick={() => removeBreak(idx)}>
+                    <IconButton
+                      size="small"
+                      sx={{ color: 'error.main' }}
+                      onClick={() => removeBreak(idx)}
+                    >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Stack>
@@ -378,13 +466,23 @@ const PeriodSettings = () => {
                       slotProps={{ inputLabel: { shrink: true } }}
                       sx={{ bgcolor: 'background.paper', borderRadius: 1 }}
                     />
-                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ flex: 1, textAlign: 'right' }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.secondary"
+                      sx={{ flex: 1, textAlign: 'right' }}
+                    >
                       {rowDuration(b) != null ? `(${formatDuration(rowDuration(b))})` : ''}
                     </Typography>
                   </Stack>
                 </Stack>
               ))}
-              <Button size="small" startIcon={<AddIcon fontSize="small" />} onClick={addBreak} sx={{ alignSelf: 'flex-start' }}>
+              <Button
+                size="small"
+                startIcon={<AddIcon fontSize="small" />}
+                onClick={addBreak}
+                sx={{ alignSelf: 'flex-start' }}
+              >
                 Add Break
               </Button>
 
@@ -406,9 +504,13 @@ const PeriodSettings = () => {
                 </Button>
               </Stack>
 
-              <Alert severity="info" icon={false} sx={{ bgcolor: '#F1F5F9', color: 'text.secondary', fontWeight: 500 }}>
-                The system will automatically calculate all class periods for Monday to Friday based on the settings above. You can then review
-                the timetable time schedule on the right.
+              <Alert
+                severity="info"
+                icon={false}
+                sx={{ bgcolor: '#F1F5F9', color: 'text.secondary', fontWeight: 500 }}
+              >
+                The system will automatically calculate all class periods for Monday to Friday based
+                on the settings above. You can then review the timetable time schedule on the right.
               </Alert>
             </Stack>
           )}
@@ -430,30 +532,64 @@ const PeriodSettings = () => {
             maxHeight: { lg: 'calc(100vh - 230px)' },
           }}
         >
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.25, flexShrink: 0 }}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            sx={{ mb: 0.25, flexShrink: 0 }}
+          >
             <Stack direction="row" spacing={1} alignItems="center">
-              <Box sx={{ width: 22, height: 22, borderRadius: '50%', bgcolor: '#9333EA', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+              <Box
+                sx={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  bgcolor: '#9333EA',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 800,
+                  flexShrink: 0,
+                }}
+              >
                 2
               </Box>
               <Typography variant="h6" fontWeight={800}>
                 Generated Timetable Schedule
               </Typography>
             </Stack>
-            {hasGenerated && <Chip size="small" icon={<CheckCircleIcon sx={{ fontSize: 14 }} />} label="Auto Generated" color="success" variant="outlined" />}
+            {hasGenerated && (
+              <Chip
+                size="small"
+                icon={<CheckCircleIcon sx={{ fontSize: 14 }} />}
+                label="Auto Generated"
+                color="success"
+                variant="outlined"
+              />
+            )}
           </Stack>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2, flexShrink: 0 }}>
             This is the time schedule for all weekdays (Monday to Friday) based on your settings.
           </Typography>
 
           {!hasGenerated ? (
-            <Alert severity="info">Click "Generate Schedule" to preview the periods and breaks before saving.</Alert>
+            <Alert severity="info">
+              Click "Generate Schedule" to preview the periods and breaks before saving.
+            </Alert>
           ) : (
             <Stack sx={{ flex: 1, minHeight: 0 }}>
               <Box sx={{ flex: 1, overflow: 'auto', mb: 1.5 }}>
                 <Table
                   size="small"
                   sx={{
-                    '& .MuiTableCell-root': { py: 0.5, px: 1, fontSize: '0.78rem', whiteSpace: 'nowrap' },
+                    '& .MuiTableCell-root': {
+                      py: 0.5,
+                      px: 1,
+                      fontSize: '0.78rem',
+                      whiteSpace: 'nowrap',
+                    },
                     '& .MuiTableCell-head': { fontWeight: 800, bgcolor: '#F1F5F9' },
                   }}
                 >
@@ -480,7 +616,10 @@ const PeriodSettings = () => {
                             </TableCell>
                             <TableCell>{duration}</TableCell>
                             {DAY_COLUMNS.map((d) => (
-                              <TableCell key={d} sx={{ fontWeight: 800, color: isLunch ? '#166534' : '#92400E' }}>
+                              <TableCell
+                                key={d}
+                                sx={{ fontWeight: 800, color: isLunch ? '#166534' : '#92400E' }}
+                              >
                                 {row.label}
                               </TableCell>
                             ))}
@@ -505,48 +644,86 @@ const PeriodSettings = () => {
                 </Table>
               </Box>
 
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1.5, flexShrink: 0 }}>
-                <Paper elevation={0} sx={{ flex: '1 1 130px', bgcolor: '#DBEAFE', borderRadius: 2, p: 1 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                useFlexGap
+                flexWrap="wrap"
+                sx={{ mb: 1.5, flexShrink: 0 }}
+              >
+                <Paper
+                  elevation={0}
+                  sx={{ flex: '1 1 130px', bgcolor: '#DBEAFE', borderRadius: 2, p: 1 }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <MenuBookIcon sx={{ color: '#1D4ED8', fontSize: 22 }} />
                     <Typography variant="h5" fontWeight={900} color="#1D4ED8" lineHeight={1}>
                       {summary.totalPeriods}
                     </Typography>
                   </Stack>
-                  <Typography variant="caption" fontWeight={700} color="#1E3A8A" sx={{ display: 'block', mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="#1E3A8A"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
                     Total Periods / day
                   </Typography>
                 </Paper>
-                <Paper elevation={0} sx={{ flex: '1 1 130px', bgcolor: '#FEF3C7', borderRadius: 2, p: 1 }}>
+                <Paper
+                  elevation={0}
+                  sx={{ flex: '1 1 130px', bgcolor: '#FEF3C7', borderRadius: 2, p: 1 }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <LocalCafeIcon sx={{ color: '#B45309', fontSize: 22 }} />
                     <Typography variant="h5" fontWeight={900} color="#B45309" lineHeight={1}>
                       {summary.breaksCount}
                     </Typography>
                   </Stack>
-                  <Typography variant="caption" fontWeight={700} color="#92400E" sx={{ display: 'block', mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="#92400E"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
                     Breaks ({summary.breaksDurationLabel})
                   </Typography>
                 </Paper>
-                <Paper elevation={0} sx={{ flex: '1 1 130px', bgcolor: '#F3E8FF', borderRadius: 2, p: 1 }}>
+                <Paper
+                  elevation={0}
+                  sx={{ flex: '1 1 130px', bgcolor: '#F3E8FF', borderRadius: 2, p: 1 }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <ScheduleIcon sx={{ color: '#7E22CE', fontSize: 22 }} />
                     <Typography variant="h5" fontWeight={900} color="#7E22CE" lineHeight={1}>
                       {summary.totalSchoolHours}
                     </Typography>
                   </Stack>
-                  <Typography variant="caption" fontWeight={700} color="#6B21A8" sx={{ display: 'block', mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="#6B21A8"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
                     School Hours / day
                   </Typography>
                 </Paper>
-                <Paper elevation={0} sx={{ flex: '1 1 130px', bgcolor: '#FEE2E2', borderRadius: 2, p: 1 }}>
+                <Paper
+                  elevation={0}
+                  sx={{ flex: '1 1 130px', bgcolor: '#FEE2E2', borderRadius: 2, p: 1 }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center">
                     <EventAvailableIcon sx={{ color: '#B91C1C', fontSize: 22 }} />
                     <Typography variant="h5" fontWeight={900} color="#B91C1C" lineHeight={1}>
                       5 Days
                     </Typography>
                   </Stack>
-                  <Typography variant="caption" fontWeight={700} color="#991B1B" sx={{ display: 'block', mt: 0.5 }}>
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    color="#991B1B"
+                    sx={{ display: 'block', mt: 0.5 }}
+                  >
                     Monday – Friday
                   </Typography>
                 </Paper>
@@ -575,19 +752,40 @@ const PeriodSettings = () => {
         </Paper>
       </Stack>
 
-      <Dialog open={saveConfirmOpen} onClose={() => setSaveConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={saveConfirmOpen}
+        onClose={() => setSaveConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Save Schedule</DialogTitle>
         <DialogContent>
           <Typography>
-            This replaces the entire period schedule with what's shown on the right. <strong>Any timetable periods already assigned to a class
-            (in Generate Timetable) will be cleared</strong>, since they're tied to the periods being replaced. This cannot be undone.
+            This replaces the entire period schedule with what's shown on the right.{' '}
+            <strong>
+              Any timetable periods already assigned to a class (in Generate Timetable) will be
+              cleared
+            </strong>
+            , since they're tied to the periods being replaced. This cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setSaveConfirmOpen(false)}>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setSaveConfirmOpen(false)}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleSaveSettings} disabled={saving} autoFocus>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={handleSaveSettings}
+            disabled={saving}
+            autoFocus
+          >
             Save & Replace
           </Button>
         </DialogActions>

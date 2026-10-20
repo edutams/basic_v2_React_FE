@@ -19,9 +19,14 @@ export const tenantStudentApi = {
     );
     return response.data;
   },
-  getLessonContent: async (schemeOfWorkId) => {
+  getSubjectOutline: async (data) => {
+    const response = await tenantApi.post('/e-resources/student/subject-outline', data);
+    return response.data;
+  },
+  getLessonContent: async (schemeOfWorkId, subTopicId) => {
     const response = await tenantApi.get(
       `/e-resources/student/lesson-content/${schemeOfWorkId}`,
+      { params: subTopicId ? { sub_topic_id: subTopicId } : {} },
     );
     return response.data;
   },

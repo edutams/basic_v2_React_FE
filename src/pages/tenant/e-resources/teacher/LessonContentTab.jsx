@@ -360,6 +360,10 @@ const LessonContentTab = ({ type, context }) => {
 
   const schemeOfWorkId = context?.schemeOfWorkId ?? '';
   const staffSubjectId = context?.staffSubjectId ?? '';
+  // Content lives one row per subtopic, so every load, upload, AI call and
+  // approval has to say which subtopic of the week it is about.
+  const subTopicsId = context?.subTopicsId ?? '';
+  const subtopicScope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
 
   // ── State ─────────────────────────────────────────────────────────────────
   const [record, setRecord] = useState(null);
@@ -385,13 +389,25 @@ const LessonContentTab = ({ type, context }) => {
   const load = useCallback(async () => {
     if (contextMissing) return;
     setLoading(true);
+    // Built inside the callback: a fresh object literal in the dependency
+    // array would re-run this effect on every render.
+    const scope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
     try {
       const res =
         type === 'plan'
-          ? await tenantLessonNoteApi.getLessonPlans(schemeOfWorkId, { staff_subject_id: staffSubjectId })
+          ? await tenantLessonNoteApi.getLessonPlans(schemeOfWorkId, {
+              staff_subject_id: staffSubjectId,
+              ...scope,
+            })
           : type === 'video'
-            ? await tenantLessonNoteApi.getLessonVideos(schemeOfWorkId, { staff_subject_id: staffSubjectId })
-            : await tenantLessonNoteApi.getLessonNotes(schemeOfWorkId, { staff_subject_id: staffSubjectId });
+            ? await tenantLessonNoteApi.getLessonVideos(schemeOfWorkId, {
+                staff_subject_id: staffSubjectId,
+                ...scope,
+              })
+            : await tenantLessonNoteApi.getLessonNotes(schemeOfWorkId, {
+                staff_subject_id: staffSubjectId,
+                ...scope,
+              });
       const payload =
         type === 'plan' ? res?.lesson_plans : type === 'video' ? res?.lesson_videos : res?.lesson_notes;
       setRecord(payload ?? null);
@@ -400,7 +416,7 @@ const LessonContentTab = ({ type, context }) => {
     } finally {
       setLoading(false);
     }
-  }, [cfg.label, contextMissing, notify, schemeOfWorkId, staffSubjectId, type]);
+  }, [cfg.label, contextMissing, notify, schemeOfWorkId, staffSubjectId, subTopicsId, type]);
 
   useEffect(() => {
     load();
@@ -445,6 +461,7 @@ const LessonContentTab = ({ type, context }) => {
         subject_name: context?.subjectName,
         class_name: context?.className,
         staff_subject_id: staffSubjectId,
+        ...subtopicScope,
       };
       if (type === 'plan') {
         await tenantLessonNoteApi.generateLessonPlanAi(schemeOfWorkId, user?.id, payload);
@@ -465,16 +482,27 @@ const LessonContentTab = ({ type, context }) => {
   // ── Uploads via modal (matches basic's Create from scratch / Re-upload) ──
   const handleFileUpload = async (dataUrl) => {
     if (isVideo) {
-      await tenantLessonNoteApi.uploadLessonVideo({ ssi: staffSubjectId, sowi: schemeOfWorkId, videoData: dataUrl });
+      await tenantLessonNoteApi.uploadLessonVideo({
+        ssi: staffSubjectId,
+        sowi: schemeOfWorkId,
+        videoData: dataUrl,
+        ...subtopicScope,
+      });
       notify.success('Video uploaded successfully');
     } else if (type === 'plan') {
-      await tenantLessonNoteApi.lessonPlanContent({ ssi: staffSubjectId, sowi: schemeOfWorkId, textData: dataUrl });
+      await tenantLessonNoteApi.lessonPlanContent({
+        ssi: staffSubjectId,
+        sowi: schemeOfWorkId,
+        textData: dataUrl,
+        ...subtopicScope,
+      });
       notify.success('Lesson plan document uploaded successfully');
     } else {
       await tenantLessonNoteApi.addlessonNoteContent({
         scheme_of_work_id: Number(schemeOfWorkId),
         staff_subject_id: staffSubjectId,
         textData: dataUrl,
+        ...subtopicScope,
       });
       notify.success('Lesson note document uploaded successfully');
     }
@@ -492,6 +520,7 @@ const LessonContentTab = ({ type, context }) => {
       const res = await tenantLessonNoteApi.approveLessonPlan({
         staff_subject_id: staffSubjectId,
         scheme_of_work_id: Number(schemeOfWorkId),
+        ...subtopicScope,
       });
       const newStatus = res?.new_status;
       setRecord((prev) => (prev ? { ...prev, status: newStatus } : prev));

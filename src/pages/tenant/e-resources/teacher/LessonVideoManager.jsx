@@ -45,6 +45,8 @@ const LessonVideoManager = ({ context, embedded = false }) => {
   const weekName = param('weekName');
   const topic = param('topic');
   const subtopic = param('subtopic');
+  const subTopicsId = param('subTopicsId');
+  const subtopicScope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
 
   const [record, setRecord] = useState(null);
   const [aiLink, setAiLink] = useState('');
@@ -60,9 +62,11 @@ const LessonVideoManager = ({ context, embedded = false }) => {
   const loadVideo = useCallback(async () => {
     if (!schemeOfWorkId || !staffSubjectId) return;
     setLoading(true);
+    const scope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
     try {
       const res = await tenantLessonNoteApi.getLessonVideos(schemeOfWorkId, {
         staff_subject_id: staffSubjectId,
+        ...scope,
       });
       setRecord(res?.lesson_videos ?? null);
     } catch (err) {
@@ -70,7 +74,7 @@ const LessonVideoManager = ({ context, embedded = false }) => {
     } finally {
       setLoading(false);
     }
-  }, [notify, schemeOfWorkId, staffSubjectId]);
+  }, [notify, schemeOfWorkId, staffSubjectId, subTopicsId]);
 
   useEffect(() => {
     loadVideo();
@@ -85,6 +89,7 @@ const LessonVideoManager = ({ context, embedded = false }) => {
         subject_name: subjectName,
         class_name: className,
         staff_subject_id: staffSubjectId,
+        ...subtopicScope,
       });
       const link = res?.data ?? '';
       setAiLink(link);
@@ -107,6 +112,7 @@ const LessonVideoManager = ({ context, embedded = false }) => {
       ssi: staffSubjectId,
       sowi: schemeOfWorkId,
       videoData: dataUrl,
+      ...subtopicScope,
     });
     notify.success('Video uploaded successfully');
     await loadVideo();

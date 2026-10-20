@@ -68,6 +68,7 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
   const topic = param('topic');
   const subtopic = param('subtopic');
   const subTopicsId = param('subTopicsId');
+  const subtopicScope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
 
   const [record, setRecord] = useState(null);
   const [content, setContent] = useState('');
@@ -89,9 +90,11 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
   const loadPlan = useCallback(async () => {
     if (!schemeOfWorkId || !staffSubjectId) return;
     setLoading(true);
+    const scope = subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {};
     try {
       const res = await tenantLessonNoteApi.getLessonPlans(schemeOfWorkId, {
         staff_subject_id: staffSubjectId,
+        ...scope,
       });
       const plan = res?.lesson_plans ?? null;
       setRecord(plan);
@@ -105,7 +108,7 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
     } finally {
       setLoading(false);
     }
-  }, [notify, schemeOfWorkId, staffSubjectId]);
+  }, [notify, schemeOfWorkId, staffSubjectId, subTopicsId]);
 
   useEffect(() => {
     loadPlan();
@@ -120,6 +123,7 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
         subject_name: subjectName,
         class_name: className,
         staff_subject_id: staffSubjectId,
+        ...subtopicScope,
       });
       setAiContent(res?.data ?? '');
     } catch (err) {
@@ -154,13 +158,14 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
           staff_subject_id: staffSubjectId,
           scheme_of_work_id: Number(schemeOfWorkId),
           updated_lesson_plan: value,
+          ...subtopicScope,
         });
       } else {
         await tenantLessonNoteApi.lessonPlanContent({
           ssi: staffSubjectId,
           sowi: schemeOfWorkId,
           textData: textToDataUrl(value),
-          ...(subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {}),
+          ...subtopicScope,
         });
       }
       notify.success('Lesson plan saved successfully');
@@ -178,7 +183,7 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
       ssi: staffSubjectId,
       sowi: schemeOfWorkId,
       textData: dataUrl,
-      ...(subTopicsId ? { sub_topics_id: Number(subTopicsId) } : {}),
+      ...subtopicScope,
     });
     notify.success('Lesson plan document uploaded successfully');
     await loadPlan();
@@ -203,6 +208,7 @@ const LessonPlanEditor = ({ context, embedded = false }) => {
       const res = await tenantLessonNoteApi.approveLessonPlan({
         staff_subject_id: staffSubjectId,
         scheme_of_work_id: Number(schemeOfWorkId),
+        ...subtopicScope,
       });
       const newStatus = res?.new_status;
       setRecord((prev) => (prev ? { ...prev, status: newStatus } : prev));

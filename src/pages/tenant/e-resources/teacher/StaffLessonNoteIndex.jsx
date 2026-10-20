@@ -372,6 +372,9 @@ const StaffLessonNoteIndex = () => {
   const [selectedWeek, setSelectedWeek] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState('');
   const [selectedSubtopic, setSelectedSubtopic] = useState('');
+  // The id travels with the name: lesson notes are stored one row per
+  // subtopic, so every load/upload has to carry which subtopic is picked.
+  const [selectedSubtopicId, setSelectedSubtopicId] = useState('');
   const [loadingWeeks, setLoadingWeeks] = useState(false);
   const [loadingTopics, setLoadingTopics] = useState(false);
   const [loadingSubtopics, setLoadingSubtopics] = useState(false);
@@ -618,12 +621,14 @@ const StaffLessonNoteIndex = () => {
       setLoadingSubtopics(true);
       setSubtopics([]);
       setSelectedSubtopic('');
+      setSelectedSubtopicId('');
       try {
         if (!topic?.topic_id) return;
         const res = await tenantLessonNoteApi.getTopicSubtopics({ topic_id: topic.topic_id });
         const rows = Array.isArray(res) ? res : [];
         setSubtopics(rows);
         setSelectedSubtopic(rows[0]?.subtopic_name ?? '');
+        setSelectedSubtopicId(rows[0]?.subtopic_id ?? '');
       } catch (err) {
         notify.error(err?.response?.data?.message || 'Failed to load subtopics for this topic');
       } finally {
@@ -642,6 +647,7 @@ const StaffLessonNoteIndex = () => {
       setSelectedTopic('');
       setSubtopics([]);
       setSelectedSubtopic('');
+      setSelectedSubtopicId('');
       try {
         if (!week?.scheme_of_work_id) return;
         const res = await tenantLessonNoteApi.getSchemeWeekTopics({
@@ -692,6 +698,7 @@ const StaffLessonNoteIndex = () => {
       setSelectedTopic('');
       setSubtopics([]);
       setSelectedSubtopic('');
+      setSelectedSubtopicId('');
       setActiveContentTab(0);
       try {
         const res = await tenantLessonNoteApi.getSchemeWeeks({
@@ -755,6 +762,7 @@ const StaffLessonNoteIndex = () => {
       weekName: String(selectedWeek?.week_name ?? ''),
       topic: String(selectedTopic ?? ''),
       subtopic: String(selectedSubtopic ?? ''),
+      subTopicsId: String(selectedSubtopicId ?? ''),
     };
   }, [
     selectedSubject,
@@ -764,6 +772,7 @@ const StaffLessonNoteIndex = () => {
     selectedWeek,
     selectedTopic,
     selectedSubtopic,
+    selectedSubtopicId,
   ]);
 
   const filtersReady = selectedSesTerm && selectedProgId && selectedClassDesc;
@@ -817,7 +826,6 @@ const filterMd = isAdmin ? 2 : 2;
               subtitle="Lesson notes generated"
               icon={IconGauge}
               colorIndex={2}
-              progress={workspaceStats.avgCoverage}
               loading={loadingSubjects}
             />
           </Grid>
@@ -1051,7 +1059,12 @@ const filterMd = isAdmin ? 2 : 2;
                         size="small"
                         label="Subtopic"
                         value={selectedSubtopic}
-                        onChange={(e) => setSelectedSubtopic(e.target.value)}
+                        onChange={(e) => {
+                          setSelectedSubtopic(e.target.value);
+                          setSelectedSubtopicId(
+                            subtopics.find((row) => row.subtopic_name === e.target.value)?.subtopic_id ?? '',
+                          );
+                        }}
                         disabled={loadingSubtopics || subtopics.length === 0}
                       >
                         {subtopics.map((subtopic) => (
@@ -1223,21 +1236,21 @@ const filterMd = isAdmin ? 2 : 2;
                     saved against a different week/topic. */}
                 {activeContentTab === 0 && (
                   <LessonContentTab
-                    key={`plan-${editorContext.schemeOfWorkId}-${editorContext.subtopic}`}
+                    key={`plan-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
                     type="plan"
                     context={editorContext}
                   />
                 )}
                 {activeContentTab === 1 && (
                   <LessonContentTab
-                    key={`note-${editorContext.schemeOfWorkId}-${editorContext.subtopic}`}
+                    key={`note-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
                     type="note"
                     context={editorContext}
                   />
                 )}
                 {activeContentTab === 2 && (
                   <LessonContentTab
-                    key={`video-${editorContext.schemeOfWorkId}-${editorContext.subtopic}`}
+                    key={`video-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
                     type="video"
                     context={editorContext}
                   />

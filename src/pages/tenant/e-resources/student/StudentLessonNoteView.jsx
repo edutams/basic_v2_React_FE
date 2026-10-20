@@ -383,12 +383,15 @@ const StudentLessonNoteView = () => {
   const loadRatings = useCallback(async () => {
     if (!schemeOfWorkId || !sharedGetRatings) return;
     try {
-      const res = await sharedGetRatings(schemeOfWorkId, { lesson_type: 'lesson_note' });
+      const res = await sharedGetRatings(schemeOfWorkId, {
+        lesson_type: 'lesson_note',
+        ...(currentSubtopic?.id ? { sub_topics_id: Number(currentSubtopic.id) } : {}),
+      });
       setRatingValue(Number(res?.lesson_ratings ?? 0));
     } catch {
       setRatingValue(0);
     }
-  }, [schemeOfWorkId]);
+  }, [schemeOfWorkId, currentSubtopic?.id]);
 
   useEffect(() => {
     loadRatings();
@@ -398,7 +401,11 @@ const StudentLessonNoteView = () => {
     if (!schemeOfWorkId || !sharedRateLesson) return;
     setRatingBusy(true);
     try {
-      await sharedRateLesson(schemeOfWorkId, { rating: value, lesson_type: 'lesson_note' });
+      await sharedRateLesson(schemeOfWorkId, {
+        rating: value,
+        lesson_type: 'lesson_note',
+        ...(currentSubtopic?.id ? { sub_topics_id: Number(currentSubtopic.id) } : {}),
+      });
       setRatingValue(value);
       notify.success('Rating saved successfully');
     } catch (err) {
@@ -433,6 +440,9 @@ const StudentLessonNoteView = () => {
     try {
       const res = await tenantStudentApi.markRead(schemeOfWorkId, {
         subject_teacher_id: lessonNote.subject_teacher_id,
+        // The note the student is actually looking at — one row per subtopic.
+        ...(lesson?.lesson_id ? { lesson_note_id: Number(lesson.lesson_id) } : {}),
+        ...(currentSubtopic?.id ? { sub_topic_id: Number(currentSubtopic.id) } : {}),
       });
       notify.success(res?.message || 'Subtopic marked as read successfully');
       loadProgress();

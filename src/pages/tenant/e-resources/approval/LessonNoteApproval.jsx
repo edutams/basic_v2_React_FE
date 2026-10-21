@@ -146,6 +146,9 @@ const LessonNoteApproval = () => {
   const [perPage, setPerPage] = useState(20);
   const [loading, setLoading] = useState(false);
   const [queueError, setQueueError] = useState('');
+  // Term-wide totals from the API — `rows` only ever holds one page, so the
+  // cards cannot be counted from it.
+  const [queueStats, setQueueStats] = useState(null);
 
   const [selectedRow, setSelectedRow] = useState(null);
   const [action, setAction] = useState(null);
@@ -228,6 +231,35 @@ const LessonNoteApproval = () => {
     loadQueue();
   }, [loadQueue, selectedSesTerm]);
 
+  const loadStats = useCallback(async () => {
+    if (!selectedSesTerm) return;
+    // Drop the previous term's figures rather than showing them against the
+    // new one while this is in flight.
+    setQueueStats(null);
+    try {
+      const res = await tenantApprovalApi.getLessonApprovalStats({
+        category,
+        selectedSesTerm,
+        selectedTermId: selectedSesTerm,
+        session_term_id: selectedSesTerm,
+      });
+      setQueueStats({
+        total: Number(res?.total ?? 0),
+        pending: Number(res?.pending ?? 0),
+        approved: Number(res?.approved ?? 0),
+        rejected: Number(res?.rejected ?? 0),
+      });
+    } catch {
+      // The cards fall back to counting the loaded page in `stats` below.
+      setQueueStats(null);
+    }
+  }, [category, selectedSesTerm]);
+
+  useEffect(() => {
+    if (!selectedSesTerm) return;
+    loadStats();
+  }, [loadStats, selectedSesTerm]);
+
   const handleCategoryChange = (value) => {
     setCategory(value);
     setPage(0);
@@ -263,6 +295,7 @@ const LessonNoteApproval = () => {
       setAction(null);
       setComment('');
       await loadQueue();
+      await loadStats();
     } catch (err) {
       notify.error(apiErrorMessage(err, 'Failed to process the approval'));
     } finally {
@@ -277,6 +310,11 @@ const LessonNoteApproval = () => {
   }, [selectedRow]);
 
   const stats = useMemo(() => {
+    // Normal case: counts for the whole term and category, counted in SQL.
+    if (queueStats) return queueStats;
+
+    // Fallback when the stats endpoint can't be reached — this only ever
+    // describes the page of rows that happens to be loaded.
     let pending = 0;
     let approved = 0;
     let rejected = 0;
@@ -292,7 +330,7 @@ const LessonNoteApproval = () => {
       approved,
       rejected,
     };
-  }, [rows, total]);
+  }, [queueStats, rows, total]);
 
   const filteredRows = useMemo(() => {
     let list = rows;

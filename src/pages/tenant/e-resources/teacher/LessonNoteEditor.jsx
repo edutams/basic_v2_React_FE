@@ -7,6 +7,11 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   Skeleton,
@@ -14,7 +19,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { IconArrowLeft, IconSparkles, IconDeviceFloppy, IconEye, IconNotes, IconUpload } from '@tabler/icons-react';
+import { IconArrowLeft, IconSparkles, IconCheck, IconDeviceFloppy, IconEye, IconNotes, IconUpload, IconX } from '@tabler/icons-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -75,6 +80,8 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [viewMode, setViewMode] = useState(false);
+  const [approveConfirmOpen, setApproveConfirmOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const forumModelId = record?.id ?? null;
@@ -193,6 +200,28 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
   }, [record]);
 
   const contextMissing = !schemeOfWorkId || !staffSubjectId;
+
+  const isApproved = record?.status === 'active';
+  const approveLabel = isApproved ? 'Disapprove Lesson Note' : 'Approve Lesson Note';
+
+  const handleApproveToggle = async () => {
+    setApproveConfirmOpen(false);
+    setApproving(true);
+    try {
+      const res = await tenantLessonNoteApi.approveLessonNote({
+        staff_subject_id: staffSubjectId,
+        scheme_of_work_id: Number(schemeOfWorkId),
+        ...subtopicScope,
+      });
+      const newStatus = res?.new_status;
+      setRecord((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      notify.success(res?.message || `Lesson note status updated to ${newStatus}`);
+    } catch (err) {
+      notify.error(apiErrorMessage(err, 'Failed to update the lesson note status'));
+    } finally {
+      setApproving(false);
+    }
+  };
 
   const headerCard = (
       <Card variant="outlined" sx={{ mb: 3 }}>
@@ -357,6 +386,30 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
                   Updated: {record.updated_at}
                 </Typography>
               )}
+
+              {/* Approve / Disapprove (matches basic's Plan tab) */}
+              {!loading && record?.id && (
+                <Stack direction="row" justifyContent="flex-end" mt={2}>
+                  <Button
+                    variant={isApproved ? 'outlined' : 'contained'}
+                    color={isApproved ? 'error' : 'success'}
+                    size="small"
+                    disabled={approving}
+                    onClick={() => setApproveConfirmOpen(true)}
+                    startIcon={
+                      approving ? (
+                        <CircularProgress size={13} color="inherit" />
+                      ) : isApproved ? (
+                        <IconX size={14} />
+                      ) : (
+                        <IconCheck size={14} />
+                      )
+                    }
+                  >
+                    {approveLabel}
+                  </Button>
+                </Stack>
+              )}
             </CardContent>
           </Card>
 
@@ -385,6 +438,41 @@ const LessonNoteEditor = ({ context, embedded = false }) => {
         maxMB={10}
         onUpload={handleFileUpload}
       />
+
+      {/* Approve / Disapprove confirmation */}
+      <Dialog
+        open={approveConfirmOpen}
+        onClose={() => setApproveConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '16px' } }}
+      >
+        <DialogTitle fontWeight={700}>{approveLabel}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mt: 1 }}>
+            Are you sure you want to {isApproved ? 'disapprove' : 'approve'} this lesson note?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={() => setApproveConfirmOpen(false)}
+            disabled={approving}
+          >
+            No, exit
+          </Button>
+          <Button
+            variant="contained"
+            color={isApproved ? 'error' : 'success'}
+            onClick={handleApproveToggle}
+            disabled={approving}
+            startIcon={approving ? <CircularProgress size={15} color="inherit" /> : null}
+          >
+            Yes, continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 

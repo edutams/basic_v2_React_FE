@@ -31,7 +31,6 @@ import {
   Stack,
   LinearProgress,
 } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import {
   IconSearch,
   IconWand,
@@ -46,6 +45,7 @@ import {
   IconUserPlus,
   IconChevronDown,
   IconCircleCheck,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
@@ -115,8 +115,12 @@ const SubjectTeacherAllocation = () => {
   const [leftPage, setLeftPage] = useState(0);
   const [leftRowsPerPage, setLeftRowsPerPage] = useState(10);
 
-  // Right pane — selected class's subjects
+  // Right pane — selected class's subjects, scoped to one arm at a time. A
+  // subject teacher is allocated per class ARM (a teacher can't physically
+  // cover 3 arms of the same class at once), so the grid always edits
+  // exactly one arm — switchable via the arm chips in the header.
   const [selectedClass, setSelectedClass] = useState(null);
+  const [selectedArmId, setSelectedArmId] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [subjectsLoading, setSubjectsLoading] = useState(false);
   const [rightSearch, setRightSearch] = useState('');
@@ -161,6 +165,17 @@ const SubjectTeacherAllocation = () => {
     initData();
     fetchWorkload();
   }, []);
+
+  // Prefill-and-go: once the default session/term/programme resolve on
+  // load, fetch the classes list automatically instead of leaving the user
+  // looking at an empty "click Fetch" screen. Guarded by `hasFetched` so it
+  // only fires once — the Fetch button still drives every later refetch.
+  useEffect(() => {
+    if (selectedProgramme && selectedTerm && !hasFetched) {
+      fetchClasses();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgramme, selectedTerm]);
 
   const initData = async () => {
     try {
@@ -257,9 +272,8 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const fetchSubjects = async (classRow) => {
-    const firstArmId = classRow.arms?.[0]?.id;
-    if (!firstArmId) {
+  const fetchSubjects = async (armId) => {
+    if (!armId) {
       setSubjects([]);
       return;
     }
@@ -268,11 +282,11 @@ const SubjectTeacherAllocation = () => {
       const res = await allocationApi.getSubjectTeacherAllocations({
         programme_id: selectedProgramme,
         session_term_id: selectedTerm || undefined,
-        class_arm_id: firstArmId,
+        class_arm_id: armId,
       });
       setSubjects(res.data || []);
     } catch (error) {
-      notify.error('Failed to fetch subjects for this class');
+      notify.error('Failed to fetch subjects for this class arm');
       console.error(error);
     } finally {
       setSubjectsLoading(false);
@@ -284,7 +298,18 @@ const SubjectTeacherAllocation = () => {
     setPendingAssignments({});
     setRightSearch('');
     setRightPage(0);
-    fetchSubjects(row);
+    const firstArmId = row.arms?.[0]?.id || '';
+    setSelectedArmId(firstArmId);
+    fetchSubjects(firstArmId);
+  };
+
+  const handleSelectArm = (armId) => {
+    if (armId === selectedArmId) return;
+    setSelectedArmId(armId);
+    setPendingAssignments({});
+    setRightSearch('');
+    setRightPage(0);
+    fetchSubjects(armId);
   };
 
   const handleResetFilters = () => {
@@ -300,6 +325,29 @@ const SubjectTeacherAllocation = () => {
       return true;
     });
   }, [classes, leftSearch, leftStatusFilter]);
+
+  // The selected ARM's own status (not the whole class's) — a class shows
+  // "Partial" overall while one specific arm can already be fully done, so
+  // the detail panel's badge must reflect whichever arm is actually open,
+  // computed straight from the subjects already loaded for it.
+  const armStatus = useMemo(() => {
+    if (subjects.length === 0) return 'unassigned';
+    const assigned = subjects.filter((s) => s.teacher_id).length;
+    if (assigned === 0) return 'unassigned';
+    return assigned === subjects.length ? 'assigned' : 'partial';
+  }, [subjects]);
+
+  // Every arm across every class, for the "Copy from Arm" source picker.
+  const armFlatList = useMemo(
+    () =>
+      classes.flatMap((c) =>
+        (c.arms || []).map((a) => ({
+          class_arm_id: a.id,
+          label: `${c.class_name} - ${a.name}`,
+        })),
+      ),
+    [classes],
+  );
 
   const filteredSubjects = useMemo(() => {
     if (!rightSearch) return subjects;
@@ -378,7 +426,7 @@ const SubjectTeacherAllocation = () => {
 
   // ── Save ─────────────────────────────────────────────────────────────
   const handleSaveChanges = async () => {
-    if (!selectedClass || !selectedTerm) return;
+    if (!selectedArmId || !selectedTerm) return;
     const entries = Object.entries(pendingAssignments);
     if (entries.length === 0) {
       notify.error('No changes to save');
@@ -390,15 +438,15 @@ const SubjectTeacherAllocation = () => {
         subject_id: subjectId,
         user_id: pick.user_id,
       }));
-      const response = await allocationApi.saveSubjectTeacherAllocationsForClass({
+      const response = await allocationApi.saveSubjectTeacherAllocations({
         session_term_id: selectedTerm,
-        programme_class_id: selectedClass.programme_class_id,
+        class_arm_id: selectedArmId,
         allocations: allocationsData,
       });
       if (response.status) {
         notify.success('Subject teacher allocations saved successfully');
         setPendingAssignments({});
-        fetchSubjects(selectedClass);
+        fetchSubjects(selectedArmId);
         fetchClasses();
       }
     } catch (error) {
@@ -417,19 +465,15 @@ const SubjectTeacherAllocation = () => {
   const handleCloseRowMenu = () => setRowMenu({ anchorEl: null, subject: null });
 
   const confirmRemoveAssignment = async () => {
-    if (!rowMenu.subject || !selectedClass) return;
+    if (!rowMenu.subject?.allocation_id) return;
     setRemoving(true);
     try {
-      const res = await allocationApi.removeSubjectTeacherAllocationForClass({
-        programme_class_id: selectedClass.programme_class_id,
-        subject_id: rowMenu.subject.subject_id,
-        session_term_id: selectedTerm,
-      });
-      notify.success(res.message || 'Assignment removed');
-      fetchSubjects(selectedClass);
+      await allocationApi.removeSubjectTeacherAllocation(rowMenu.subject.allocation_id);
+      notify.success('Assignment removed');
+      fetchSubjects(selectedArmId);
       fetchClasses();
     } catch (error) {
-      notify.error('Failed to remove assignment');
+      notify.error(error.response?.data?.message || 'Failed to remove assignment');
     } finally {
       setRemoving(false);
       setRemoveConfirmOpen(false);
@@ -437,18 +481,18 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  // ── Auto-Allocate / Copy From Class / Template ──────────────────────
+  // ── Auto-Allocate / Copy From Arm / Template ────────────────────────
   const handleAutoAllocate = async () => {
-    if (!selectedClass || !selectedTerm) return;
+    if (!selectedArmId || !selectedTerm) return;
     setAutoAllocating(true);
     try {
       const response = await allocationApi.autoAllocateSubjectTeachers({
-        programme_class_id: selectedClass.programme_class_id,
+        class_arm_id: selectedArmId,
         session_term_id: selectedTerm,
       });
       if (response.status) {
         notify.success(response.message);
-        fetchSubjects(selectedClass);
+        fetchSubjects(selectedArmId);
         fetchClasses();
       }
     } catch (error) {
@@ -459,18 +503,18 @@ const SubjectTeacherAllocation = () => {
     }
   };
 
-  const handleCopyFromClass = async () => {
-    if (!selectedClass || !selectedTerm || !copySourceId) return;
+  const handleCopyFromArm = async () => {
+    if (!selectedArmId || !selectedTerm || !copySourceId) return;
     setCopying(true);
     try {
-      const response = await allocationApi.copySubjectTeachersToClass({
-        from_programme_class_id: copySourceId,
-        to_programme_class_id: selectedClass.programme_class_id,
+      const response = await allocationApi.copySubjectTeachersToArm({
+        from_class_arm_id: copySourceId,
+        to_class_arm_id: selectedArmId,
         session_term_id: selectedTerm,
       });
       if (response.status) {
         notify.success(response.message);
-        fetchSubjects(selectedClass);
+        fetchSubjects(selectedArmId);
         fetchClasses();
       }
     } catch (error) {
@@ -483,11 +527,11 @@ const SubjectTeacherAllocation = () => {
   };
 
   const handleDownloadTemplate = async () => {
-    if (!selectedClass) return;
+    if (!selectedArmId) return;
     try {
       const res = await allocationApi.downloadSubjectTeacherTemplate({
         programme_id: selectedProgramme,
-        programme_class_id: selectedClass.programme_class_id,
+        class_arm_id: selectedArmId,
         session_term_id: selectedTerm || undefined,
       });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -505,23 +549,19 @@ const SubjectTeacherAllocation = () => {
   };
 
   const handleUploadTemplate = async (file) => {
-    if (!selectedClass || !selectedTerm) {
-      throw new Error('Select a class first');
+    if (!selectedArmId || !selectedTerm) {
+      throw new Error('Select a class arm first');
     }
-    const res = await allocationApi.uploadSubjectTeacherTemplate(
-      file,
-      selectedClass.programme_class_id,
-      selectedTerm,
-    );
-    fetchSubjects(selectedClass);
+    const res = await allocationApi.uploadSubjectTeacherTemplate(file, selectedArmId, selectedTerm);
+    fetchSubjects(selectedArmId);
     fetchClasses();
     return res?.message || 'Upload complete';
   };
 
   // ── Stat cards ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const totalSlots = classes.reduce((sum, c) => sum + c.total_subjects, 0);
-    const assignedSlots = classes.reduce((sum, c) => sum + c.assigned_count, 0);
+    const totalSlots = classes.reduce((sum, c) => sum + c.total_slots, 0);
+    const assignedSlots = classes.reduce((sum, c) => sum + c.assigned_slots, 0);
     return {
       totalClasses: classes.length,
       totalSlots,
@@ -544,13 +584,7 @@ const SubjectTeacherAllocation = () => {
   const maxBucket = Math.max(1, ...workloadBuckets.map((b) => b.count));
 
   return (
-    <Box
-      sx={{
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
-        p: { xs: 1.5, sm: 2.5 },
-        borderRadius: 3,
-      }}
-    >
+    <Box>
       {/* Stat Cards + Workload histogram — one flat row, every card the
           same height (StatCard's natural ~96px), so nothing looks
           mismatched against its neighbors. */}
@@ -671,8 +705,9 @@ const SubjectTeacherAllocation = () => {
       </Grid>
 
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
-        Select a class from the list, then allocate a teacher to each of its subjects. One teacher
-        is assigned per subject per class and applies across every arm of that class.
+        Select a class, pick an arm, then allocate a teacher to each of its subjects. A teacher is
+        assigned per class arm — a class with several arms can have a different teacher per arm
+        for the same subject.
       </Alert>
 
       {/* Filters */}
@@ -777,7 +812,7 @@ const SubjectTeacherAllocation = () => {
           >
             Reset
           </Button>
-          <Tooltip title={selectedClass ? '' : 'Select a class first'}>
+          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
             <span>
               <Button
                 size="small"
@@ -785,48 +820,48 @@ const SubjectTeacherAllocation = () => {
                 color="secondary"
                 startIcon={<IconWand size={16} />}
                 onClick={() => setAutoAllocateConfirmOpen(true)}
-                disabled={!selectedClass || autoAllocating}
+                disabled={!selectedArmId || autoAllocating}
               >
                 {autoAllocating ? 'Running…' : 'Auto-Allocate'}
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={selectedClass ? '' : 'Select a class first'}>
+          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
             <span>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<IconDownload size={16} />}
                 onClick={handleDownloadTemplate}
-                disabled={!selectedClass}
+                disabled={!selectedArmId}
               >
                 Export
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={selectedClass ? '' : 'Select a class first'}>
+          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
             <span>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<IconUpload size={16} />}
                 onClick={() => setUploadModalOpen(true)}
-                disabled={!selectedClass}
+                disabled={!selectedArmId}
               >
                 Import
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title={selectedClass ? '' : 'Select a class first'}>
+          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
             <span>
               <Button
                 size="small"
                 variant="contained"
                 startIcon={<IconCopy size={16} />}
                 onClick={() => setCopyModalOpen(true)}
-                disabled={!selectedClass || classes.length < 2}
+                disabled={!selectedArmId || armFlatList.length < 2}
               >
-                Copy from Class
+                Copy from Arm
               </Button>
             </span>
           </Tooltip>
@@ -864,7 +899,11 @@ const SubjectTeacherAllocation = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Assigned</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    <Tooltip title="Filled (arm, subject) slots out of the total — a class with 3 arms and 9 subjects has 27 slots, not 9">
+                      <span>Assigned</span>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
                 </TableRow>
               </TableHead>
@@ -905,7 +944,7 @@ const SubjectTeacherAllocation = () => {
                       <TableCell>{leftPage * leftRowsPerPage + idx + 1}</TableCell>
                       <TableCell>{row.class_name}</TableCell>
                       <TableCell>
-                        {row.assigned_count}/{row.total_subjects}
+                        {row.assigned_slots}/{row.total_slots}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -959,18 +998,16 @@ const SubjectTeacherAllocation = () => {
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <Typography fontWeight={700}>
-                      {selectedClass.class_name} ({selectedClass.total_subjects} subjects)
+                      {selectedClass.class_name} ({selectedClass.subject_count} subjects)
                     </Typography>
-                    <Chip
-                      label={statusLabel(selectedClass.status)}
-                      size="small"
-                      icon={
-                        selectedClass.status === 'assigned' ? (
-                          <IconCircleCheck size={14} />
-                        ) : undefined
-                      }
-                      sx={statusChipSx(selectedClass.status)}
-                    />
+                    <Tooltip title="This status is for the selected arm only — other arms of this class may differ">
+                      <Chip
+                        label={statusLabel(armStatus)}
+                        size="small"
+                        icon={armStatus === 'assigned' ? <IconCircleCheck size={14} /> : undefined}
+                        sx={statusChipSx(armStatus)}
+                      />
+                    </Tooltip>
                   </Box>
                   <Button
                     variant="contained"
@@ -981,15 +1018,46 @@ const SubjectTeacherAllocation = () => {
                     {saving ? 'Saving…' : 'Save Changes'}
                   </Button>
                 </Box>
-                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
+                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap" alignItems="center">
                   <Typography variant="body2" color="text.primary">
                     Total Students: <strong>{selectedClass.student_count}</strong>
                   </Typography>
-                  <Typography variant="body2" color="text.primary">
-                    Arms ({selectedClass.arms.length}):{' '}
-                    <strong>{selectedClass.arms.map((a) => a.name).join(', ')}</strong>
-                  </Typography>
+                  <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                    <Typography variant="body2" color="text.primary">
+                      Arm:
+                    </Typography>
+                    {selectedClass.arms.map((a) => (
+                      <Chip
+                        key={a.id}
+                        label={a.name}
+                        size="small"
+                        onClick={() => handleSelectArm(a.id)}
+                        color={a.id === selectedArmId ? 'primary' : 'default'}
+                        variant={a.id === selectedArmId ? 'filled' : 'outlined'}
+                        sx={{ fontWeight: 700, cursor: 'pointer' }}
+                      />
+                    ))}
+                    <TextField
+                      select
+                      size="small"
+                      value={selectedArmId}
+                      onChange={(e) => handleSelectArm(e.target.value)}
+                      sx={{ minWidth: 110, ml: 1, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    >
+                      {selectedClass.arms.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>
+                          Arm {a.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    <Tooltip title="A subject teacher is assigned per arm — a class with several arms can have a different teacher per arm for the same subject. Switch arms here to allocate a different one.">
+                      <IconInfoCircle size={16} style={{ color: '#9CA3AF', cursor: 'help' }} />
+                    </Tooltip>
+                  </Stack>
                 </Stack>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  A subject teacher is assigned per arm — pick an arm above before allocating.
+                </Typography>
                 <TextField
                   size="small"
                   placeholder="Search subject or teacher..."
@@ -1261,7 +1329,7 @@ const SubjectTeacherAllocation = () => {
         }}
         onConfirm={confirmRemoveAssignment}
         title="Remove Subject Teacher"
-        message={`Remove the teacher assigned to ${rowMenu.subject?.subject_name || 'this subject'} across every arm of ${selectedClass?.class_name || 'this class'}?`}
+        message={`Remove the teacher assigned to ${rowMenu.subject?.subject_name || 'this subject'} for this arm?`}
         severity="error"
         confirmText={removing ? 'Removing…' : 'Remove'}
       />
@@ -1271,47 +1339,47 @@ const SubjectTeacherAllocation = () => {
         onClose={() => setAutoAllocateConfirmOpen(false)}
         onConfirm={handleAutoAllocate}
         title="Auto-Allocate Subject Teachers"
-        message={`This fills every subject gap in ${selectedClass?.class_name || 'this class'} with whichever active teaching staff member currently has the lightest subject-teacher load. Subjects (and arms) that already have a teacher are never touched.`}
+        message={`This fills every subject gap in ${selectedClass?.class_name || 'this class'} — ${selectedClass?.arms.find((a) => a.id === selectedArmId)?.name || 'this arm'} only — with whichever active teaching staff member currently has the lightest subject-teacher load. Subjects that already have a teacher on this arm are never touched.`}
         severity="info"
         confirmText="Run Auto-Allocate"
       />
 
-      {/* Copy From Class */}
+      {/* Copy From Arm */}
       <ReusableModal
         open={copyModalOpen}
         onClose={() => setCopyModalOpen(false)}
-        title="Copy From Class"
+        title="Copy From Arm"
         size="small"
       >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Copy subject-teacher assignments from another class into{' '}
-          <strong>{selectedClass?.class_name}</strong>. Only subjects both classes actually share
-          are copied, and this overwrites any existing assignment for those subjects.
+          Copy subject-teacher assignments from another class arm into{' '}
+          <strong>
+            {selectedClass?.class_name} -{' '}
+            {selectedClass?.arms.find((a) => a.id === selectedArmId)?.name}
+          </strong>
+          . Only subjects both arms' classes actually share are copied, and this overwrites any
+          existing assignment for those subjects.
         </Typography>
         <TextField
           select
           size="small"
-          label="Source Class"
+          label="Source Arm"
           value={copySourceId}
           onChange={(e) => setCopySourceId(e.target.value)}
           fullWidth
           sx={{ mb: 2 }}
         >
-          {classes
-            .filter((c) => c.programme_class_id !== selectedClass?.programme_class_id)
-            .map((c) => (
-              <MenuItem key={c.programme_class_id} value={c.programme_class_id}>
-                {c.class_name}
+          {armFlatList
+            .filter((a) => a.class_arm_id !== selectedArmId)
+            .map((a) => (
+              <MenuItem key={a.class_arm_id} value={a.class_arm_id}>
+                {a.label}
               </MenuItem>
             ))}
         </TextField>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Button onClick={() => setCopyModalOpen(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={handleCopyFromClass}
-            disabled={!copySourceId || copying}
-          >
+          <Button variant="contained" onClick={handleCopyFromArm} disabled={!copySourceId || copying}>
             {copying ? 'Copying…' : 'Copy'}
           </Button>
         </Box>

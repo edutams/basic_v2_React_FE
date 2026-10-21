@@ -10,6 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
+import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import {
   Box,
   Stack,
@@ -30,6 +31,10 @@ import {
   DialogActions,
   TextField,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import TodayIcon from '@mui/icons-material/Today';
@@ -154,6 +159,112 @@ const MyTimetable = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => new Date());
 
+  // Session / Term — lets the teacher look at a past term's timetable, not
+  // just whatever's currently active.
+  const [sessions, setSessions] = useState([]);
+  const [sessionTerms, setSessionTerms] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedTermId, setSelectedTermId] = useState('');
+
+  // Programme / Class / Arm — the same "only what I'm assigned to" scoping
+  // Score Upload uses, so a teacher who teaches several classes can focus
+  // the week grid on just one. Empty arm = every assigned class, merged.
+  const [myClassArms, setMyClassArms] = useState([]);
+  const [selectedProgrammeId, setSelectedProgrammeId] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [selectedArmId, setSelectedArmId] = useState('');
+
+  const loadTermsForSession = useCallback(async (sessionId) => {
+    try {
+      const res = await fetchSessionTerms(sessionId);
+      const terms = res.data || [];
+      setSessionTerms(terms);
+      const activeTerm = terms.find((t) => t.status === 'active') || terms[0];
+      setSelectedTermId(activeTerm ? activeTerm.id : '');
+    } catch {
+      notify.error('Failed to fetch terms for the selected session');
+    }
+  }, [notify]);
+
+  useEffect(() => {
+    fetchTenantSessions({ pagination: false })
+      .then((res) => {
+        const allSessions = res.data || [];
+        setSessions(allSessions);
+        const activeSession = allSessions.find((s) => s.status === 'active') || allSessions[0];
+        if (activeSession) {
+          setSelectedSessionId(activeSession.id);
+          loadTermsForSession(activeSession.id);
+        }
+      })
+      .catch(() => notify.error('Failed to fetch sessions'));
+
+    timetableApi
+      .getMyClassArms()
+      .then((res) => {
+        const arms = res.data.data || [];
+        setMyClassArms(arms);
+        // An arm already implies its class and programme — prefill all
+        // three from the teacher's first assigned arm instead of leaving
+        // the filters empty and making them pick through 3 dropdowns to
+        // see what we already know they teach.
+        const first = arms[0];
+        if (first) {
+          setSelectedProgrammeId(first.programme_id);
+          setSelectedClassId(first.class_id);
+          setSelectedArmId(first.class_arm_id);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSessionChange = async (sessionId) => {
+    setSelectedSessionId(sessionId);
+    setSelectedTermId('');
+    setSessionTerms([]);
+    if (sessionId) await loadTermsForSession(sessionId);
+  };
+
+  const programmeOptions = useMemo(() => {
+    const map = new Map();
+    myClassArms.forEach((a) => {
+      if (!map.has(a.programme_id)) map.set(a.programme_id, { id: a.programme_id, name: a.programme_name });
+    });
+    return Array.from(map.values());
+  }, [myClassArms]);
+
+  const classOptions = useMemo(() => {
+    const map = new Map();
+    myClassArms
+      .filter((a) => !selectedProgrammeId || a.programme_id === selectedProgrammeId)
+      .forEach((a) => {
+        if (!map.has(a.class_id)) map.set(a.class_id, { id: a.class_id, name: a.class_name });
+      });
+    return Array.from(map.values());
+  }, [myClassArms, selectedProgrammeId]);
+
+  const armOptions = useMemo(
+    () =>
+      myClassArms.filter(
+        (a) =>
+          (!selectedProgrammeId || a.programme_id === selectedProgrammeId) &&
+          (!selectedClassId || a.class_id === selectedClassId),
+      ),
+    [myClassArms, selectedProgrammeId, selectedClassId],
+  );
+
+  const handleProgrammeFilterChange = (value) => {
+    setSelectedProgrammeId(value);
+    setSelectedClassId('');
+    setSelectedArmId('');
+  };
+
+  const handleClassFilterChange = (value) => {
+    setSelectedClassId(value);
+    setSelectedArmId('');
+  };
+
   const weekStart = useMemo(() => startOfWeek(selectedDate), [selectedDate]);
   const weekStartISO = useMemo(() => toISODate(weekStart), [weekStart]);
   const today = useMemo(() => new Date(), []);
@@ -170,9 +281,14 @@ const MyTimetable = () => {
 
   const fetchOverview = useCallback(
     async (weekStartParam) => {
+      if (!selectedTermId) return;
       setLoading(true);
       try {
-        const res = await timetableApi.getMyScheduleOverview({ week_start: weekStartParam });
+        const res = await timetableApi.getMyScheduleOverview({
+          week_start: weekStartParam,
+          session_term_id: selectedTermId,
+          class_arm_id: selectedArmId || undefined,
+        });
         setOverview(res.data.data);
       } catch {
         notify.error('Failed to load your timetable');
@@ -180,13 +296,13 @@ const MyTimetable = () => {
         setLoading(false);
       }
     },
-    [notify],
+    [selectedTermId, selectedArmId, notify],
   );
 
   useEffect(() => {
     fetchOverview(weekStartISO);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekStartISO]);
+  }, [weekStartISO, selectedTermId, selectedArmId]);
 
   const schedule = overview.schedule || {};
   const stats = overview.stats || emptyStats;
@@ -321,6 +437,91 @@ const MyTimetable = () => {
           </Box>
         </Stack>
       </Stack>
+
+      <Paper
+        elevation={0}
+        sx={{ p: 1.5, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
+      >
+        <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="center">
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Session</InputLabel>
+            <Select
+              label="Session"
+              value={selectedSessionId}
+              onChange={(e) => handleSessionChange(e.target.value)}
+            >
+              {sessions.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.session_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 130 }} disabled={!selectedSessionId}>
+            <InputLabel>Term</InputLabel>
+            <Select label="Term" value={selectedTermId} onChange={(e) => setSelectedTermId(e.target.value)}>
+              {sessionTerms.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.term?.term_name || t.term_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 170 }}>
+            <InputLabel>Programme</InputLabel>
+            <Select
+              label="Programme"
+              value={selectedProgrammeId}
+              onChange={(e) => handleProgrammeFilterChange(e.target.value)}
+            >
+              <MenuItem value="">All My Classes</MenuItem>
+              {programmeOptions.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 170 }} disabled={!selectedProgrammeId}>
+            <InputLabel>Class</InputLabel>
+            <Select
+              label="Class"
+              value={selectedClassId}
+              onChange={(e) => handleClassFilterChange(e.target.value)}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classOptions.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }} disabled={!selectedClassId}>
+            <InputLabel>Arm</InputLabel>
+            <Select label="Arm" value={selectedArmId} onChange={(e) => setSelectedArmId(e.target.value)}>
+              <MenuItem value="">All Arms</MenuItem>
+              {armOptions.map((a) => (
+                <MenuItem key={a.class_arm_id} value={a.class_arm_id}>
+                  {a.arm_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {selectedArmId && (
+            <Button
+              size="small"
+              onClick={() => {
+                setSelectedProgrammeId('');
+                setSelectedClassId('');
+                setSelectedArmId('');
+              }}
+            >
+              Clear Class Filter
+            </Button>
+          )}
+        </Stack>
+      </Paper>
 
       <Box
         sx={{

@@ -87,17 +87,6 @@ const allocationApi = {
     return response.data;
   },
 
-  // One teacher per (class, subject), applied to every arm of the class.
-  saveSubjectTeacherAllocationsForClass: async (data) => {
-    const response = await tenantApi.post('/allocations/subject-teacher/for-class', data);
-    return response.data;
-  },
-
-  removeSubjectTeacherAllocationForClass: async (data) => {
-    const response = await tenantApi.post('/allocations/subject-teacher/for-class/remove', data);
-    return response.data;
-  },
-
   getSubjectAllocationClassesOverview: async (params = {}) => {
     const response = await tenantApi.get('/allocations/subject-teacher/classes-overview', {
       params,
@@ -117,8 +106,8 @@ const allocationApi = {
     return response.data;
   },
 
-  copySubjectTeachersToClass: async (data) => {
-    const response = await tenantApi.post('/allocations/subject-teacher/copy-from-class', data);
+  copySubjectTeachersToArm: async (data) => {
+    const response = await tenantApi.post('/allocations/subject-teacher/copy-from-arm', data);
     return response.data;
   },
 
@@ -130,10 +119,10 @@ const allocationApi = {
     return response;
   },
 
-  uploadSubjectTeacherTemplate: async (file, programmeClassId, sessionTermId) => {
+  uploadSubjectTeacherTemplate: async (file, classArmId, sessionTermId) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('programme_class_id', programmeClassId);
+    formData.append('class_arm_id', classArmId);
     formData.append('session_term_id', sessionTermId);
     const response = await tenantApi.post('/allocations/subject-teacher/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

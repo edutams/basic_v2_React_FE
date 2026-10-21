@@ -8,6 +8,7 @@ import { getSubjectColor } from '@/utils/subjectColor';
 import { useNavigate } from 'react-router-dom';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import { migrateTimetable } from '@/api/tenant/term-migration/termMigrationApi';
+import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { StatCardShell, DividedStat, BarWithPct, LegendDot } from '@/components/shared/timetable/StatCardParts';
 import { getSubjectIcon, getBreakIcon } from '@/utils/subjectIcons';
 import {
@@ -96,6 +97,11 @@ const GenerateTimetable = () => {
 
   const [academicInfo, setAcademicInfo] = useState({ academic_session: '', academic_term: '' });
 
+  const [sessions, setSessions] = useState([]);
+  const [sessionTerms, setSessionTerms] = useState([]);
+  const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedTermId, setSelectedTermId] = useState('');
+
   const [divisionsData, setDivisionsData] = useState([]);
   const [programmeId, setProgrammeId] = useState('');
   const [programmeClassId, setProgrammeClassId] = useState('');
@@ -148,16 +154,21 @@ const GenerateTimetable = () => {
   const [swapSaving, setSwapSaving] = useState(false);
 
   const fetchStats = useCallback(async () => {
+    if (!selectedTermId) return;
     setStatsLoading(true);
     try {
-      const res = await timetableApi.getStats();
+      const res = await timetableApi.getStats({ session_term_id: selectedTermId });
       setStats(res.data.data || {});
     } catch {
       notify.error('Failed to load timetable stats');
     } finally {
       setStatsLoading(false);
     }
-  }, [notify]);
+  }, [selectedTermId, notify]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const fetchAcademicInfo = useCallback(async () => {
     try {
@@ -167,6 +178,41 @@ const GenerateTimetable = () => {
       // Non-critical — the filter chips just stay blank.
     }
   }, []);
+
+  const loadTermsForSession = useCallback(async (sessionId, preferredTermId) => {
+    try {
+      const res = await fetchSessionTerms(sessionId);
+      const terms = res.data || [];
+      setSessionTerms(terms);
+      const preferred = preferredTermId && terms.some((t) => t.id === preferredTermId) ? preferredTermId : null;
+      const activeTerm = terms.find((t) => t.status === 'active') || terms[0];
+      setSelectedTermId(preferred || (activeTerm ? activeTerm.id : ''));
+    } catch {
+      notify.error('Failed to fetch terms for the selected session');
+    }
+  }, [notify]);
+
+  const fetchSessions = useCallback(async () => {
+    try {
+      const res = await fetchTenantSessions({ pagination: false });
+      const allSessions = res.data || [];
+      setSessions(allSessions);
+      const activeSession = allSessions.find((s) => s.status === 'active') || allSessions[0];
+      if (activeSession) {
+        setSelectedSessionId(activeSession.id);
+        await loadTermsForSession(activeSession.id);
+      }
+    } catch {
+      notify.error('Failed to fetch sessions');
+    }
+  }, [loadTermsForSession, notify]);
+
+  const handleSessionChange = async (sessionId) => {
+    setSelectedSessionId(sessionId);
+    setSelectedTermId('');
+    setSessionTerms([]);
+    if (sessionId) await loadTermsForSession(sessionId);
+  };
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -193,11 +239,11 @@ const GenerateTimetable = () => {
   }, [notify]);
 
   useEffect(() => {
-    fetchStats();
     fetchAcademicInfo();
     fetchClasses();
     fetchRoomsTeachers();
-  }, [fetchStats, fetchAcademicInfo, fetchClasses, fetchRoomsTeachers]);
+    fetchSessions();
+  }, [fetchAcademicInfo, fetchClasses, fetchRoomsTeachers, fetchSessions]);
 
   // ── Programme → Class cascade ───────────────────────────────────────
   const programmes = useMemo(() => {
@@ -277,14 +323,18 @@ const GenerateTimetable = () => {
   }, [fetchArms]);
 
   const fetchGrid = useCallback(async () => {
-    if (arms.length === 0) {
+    if (arms.length === 0 || !selectedTermId) {
       setPeriods([]);
       setGridByArm({});
       return;
     }
     setGridLoading(true);
     try {
-      const results = await Promise.all(arms.map((arm) => timetableApi.getClassArmGrid(arm.id, { day_of_week: selectedDay })));
+      const results = await Promise.all(
+        arms.map((arm) =>
+          timetableApi.getClassArmGrid(arm.id, { day_of_week: selectedDay, session_term_id: selectedTermId }),
+        ),
+      );
       const rows0 = results[0]?.data?.data || [];
       const byArm = {};
       arms.forEach((arm, idx) => {
@@ -301,7 +351,7 @@ const GenerateTimetable = () => {
     } finally {
       setGridLoading(false);
     }
-  }, [arms, selectedDay, notify]);
+  }, [arms, selectedDay, selectedTermId, notify]);
 
   useEffect(() => {
     fetchGrid();
@@ -387,6 +437,7 @@ const GenerateTimetable = () => {
         period_id: periodId,
         day_of_week: selectedDay,
         subject_id: subjectId,
+        session_term_id: selectedTermId,
       });
       notify.success('Period assigned successfully');
       refreshAll();
@@ -407,6 +458,7 @@ const GenerateTimetable = () => {
         day_of_week: selectedDay,
         subject_id: assignSubjectId,
         room_id: assignRoomId || null,
+        session_term_id: selectedTermId,
       };
       if (slot?.id) {
         await timetableApi.updateSlot(slot.id, payload);
@@ -443,7 +495,7 @@ const GenerateTimetable = () => {
     setClearing(true);
     try {
       const targetArmIds = clearArmTarget ? [clearArmTarget] : Array.from(visibleArmIds);
-      await Promise.all(targetArmIds.map((armId) => timetableApi.clearClassArm(armId)));
+      await Promise.all(targetArmIds.map((armId) => timetableApi.clearClassArm(armId, selectedTermId)));
       notify.success(clearArmTarget ? 'Class arm timetable cleared' : 'Class timetable cleared');
       setClearConfirmOpen(false);
       setClearArmTarget(null);
@@ -460,7 +512,7 @@ const GenerateTimetable = () => {
   const handleSaveTimetable = async () => {
     setSavingSnapshot(true);
     try {
-      await timetableApi.saveSnapshot();
+      await timetableApi.saveSnapshot(selectedTermId);
       notify.success(
         'Timetable saved — every change here already saves as you make it; this just checkpoints completion % for the trend line.',
       );
@@ -486,7 +538,7 @@ const GenerateTimetable = () => {
       // against the others live, so two requests racing for the same
       // teacher/period at once could both "succeed" before either commits.
       for (const armId of visibleArmIds) {
-        const res = await timetableApi.autoFillClassArm(armId);
+        const res = await timetableApi.autoFillClassArm(armId, selectedTermId);
         totalAssigned += res.data.data.assigned;
         totalSkipped += res.data.data.skipped;
       }
@@ -504,7 +556,7 @@ const GenerateTimetable = () => {
   const handleGenerateAll = async () => {
     setGeneratingAll(true);
     try {
-      const res = await timetableApi.autoFillAllClasses();
+      const res = await timetableApi.autoFillAllClasses(selectedTermId);
       notify.success(res.data.message);
       setGenerateConfirmOpen(false);
       refreshAll();
@@ -549,6 +601,7 @@ const GenerateTimetable = () => {
         period_id: copyPeriodId,
         day_of_week: selectedDay,
         target_class_arm_ids: Array.from(copyTargetArmIds),
+        session_term_id: selectedTermId,
       });
       notify.success(res.data.message);
       setCopyDialogOpen(false);
@@ -576,6 +629,7 @@ const GenerateTimetable = () => {
         period_id_a: swapPeriodA,
         period_id_b: swapPeriodB,
         day_of_week: selectedDay,
+        session_term_id: selectedTermId,
       });
       notify.success('Periods swapped successfully');
       setSwapDialogOpen(false);
@@ -871,16 +925,32 @@ const GenerateTimetable = () => {
               justifyContent="space-between"
             >
               <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap" alignItems="flex-end">
-                <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+                <FormControl size="small" sx={{ minWidth: 150 }}>
                   <InputLabel>Session</InputLabel>
-                  <Select label="Session" value="current">
-                    <MenuItem value="current">{academicInfo.academic_session || '—'}</MenuItem>
+                  <Select
+                    label="Session"
+                    value={selectedSessionId}
+                    onChange={(e) => handleSessionChange(e.target.value)}
+                  >
+                    {sessions.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.session_name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ minWidth: 130 }} disabled>
+                <FormControl size="small" sx={{ minWidth: 130 }} disabled={!selectedSessionId}>
                   <InputLabel>Term</InputLabel>
-                  <Select label="Term" value="current">
-                    <MenuItem value="current">{academicInfo.academic_term || '—'}</MenuItem>
+                  <Select
+                    label="Term"
+                    value={selectedTermId}
+                    onChange={(e) => setSelectedTermId(e.target.value)}
+                  >
+                    {sessionTerms.map((t) => (
+                      <MenuItem key={t.id} value={t.id}>
+                        {t.term?.term_name || t.term_name}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <FormControl size="small" sx={{ minWidth: 170 }}>

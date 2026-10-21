@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Card, Tabs, Tab, Button } from '@mui/material';
+import { Box, Tabs, Tab, Button } from '@mui/material';
 import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -58,23 +58,10 @@ const TeachingAllocations = () => {
         </Button>
       </Box>
 
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.08)'
-              : '1px solid #eee',
-          overflow: 'hidden',
-          p: 1.5,
-        }}
-      >
-        <Box>
-          {activeTab === 'class' && <ClassTeacherAllocation key={`class-${refreshKey}`} />}
-          {activeTab === 'subject' && <SubjectTeacherAllocation key={`subject-${refreshKey}`} />}
-        </Box>
-      </Card>
+      <Box>
+        {activeTab === 'class' && <ClassTeacherAllocation key={`class-${refreshKey}`} />}
+        {activeTab === 'subject' && <SubjectTeacherAllocation key={`subject-${refreshKey}`} />}
+      </Box>
 
       <TermMigrationModal
         open={migrateModalOpen}

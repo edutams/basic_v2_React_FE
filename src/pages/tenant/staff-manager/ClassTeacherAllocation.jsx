@@ -185,6 +185,17 @@ const ClassTeacherAllocation = () => {
     initData();
   }, []);
 
+  // Prefill-and-go: once the default session/term/programme resolve on
+  // load, fetch the table automatically instead of leaving the user
+  // looking at an empty "click Fetch" screen. Guarded by `hasFetched` so it
+  // only fires once — the Fetch button still drives every later refetch.
+  useEffect(() => {
+    if (selectedProgramme && selectedTerm && !hasFetched) {
+      fetchAllocations();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgramme, selectedTerm]);
+
   const initData = async () => {
     try {
       const [sessionsRes, progsRes, staffRes] = await Promise.all([
@@ -556,13 +567,7 @@ const ClassTeacherAllocation = () => {
   };
 
   return (
-    <Box
-      sx={{
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
-        p: { xs: 1.5, sm: 2.5 },
-        borderRadius: 3,
-      }}
-    >
+    <Box>
       {/* Stat Cards */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {[

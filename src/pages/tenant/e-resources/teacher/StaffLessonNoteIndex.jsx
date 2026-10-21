@@ -37,7 +37,10 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import useAuth from '@/hooks/useAuth';
-import { fetchActiveTenantSessionTerm, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import {
+  fetchActiveTenantSessionTerm,
+  fetchSessionTerms,
+} from '@/api/tenant/session-term/sessionTermApi';
 import { tenantLessonNoteApi } from '@/api/tenant/e-resources/lessonNoteApi';
 import StatCard from '@/components/shared/StatCard';
 import LessonContentTab from './LessonContentTab';
@@ -181,14 +184,25 @@ const SubjectCard = ({ item, onSelect }) => {
             gap: 0.75,
           }}
         >
-          <Typography variant="caption" fontWeight={500} color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+          <Typography
+            variant="caption"
+            fontWeight={500}
+            color="text.secondary"
+            sx={{ fontSize: '0.75rem' }}
+          >
             Registered learners: <strong>{learners}</strong>
           </Typography>
           <Chip
             label={statusLabel}
             size="small"
             color={statusColor}
-            icon={isComplete ? <IconCheck size={12} /> : isStarted ? <IconProgressCheck size={12} /> : undefined}
+            icon={
+              isComplete ? (
+                <IconCheck size={12} />
+              ) : isStarted ? (
+                <IconProgressCheck size={12} />
+              ) : undefined
+            }
             sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
           />
         </Box>
@@ -197,11 +211,23 @@ const SubjectCard = ({ item, onSelect }) => {
       {/* ── Content Section with Progress Bar ───────────────── */}
       <Box sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               Lesson Note Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               {percent}%
             </Typography>
           </Box>
@@ -248,7 +274,12 @@ const SubjectCard = ({ item, onSelect }) => {
             mt: 'auto',
           }}
         >
-          <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.725rem' }}>
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: '0.725rem' }}
+          >
             Generation Status:{' '}
             <Typography
               component="span"
@@ -281,7 +312,13 @@ const SubjectCard = ({ item, onSelect }) => {
           endIcon={<IconExternalLink size={14} />}
           title="Opens this subject's workspace in a new tab"
           onClick={() => onSelect && onSelect(item)}
-          sx={{ fontWeight: 600, fontSize: '11px', textTransform: 'none', py: 0.5, borderRadius: '5px' }}
+          sx={{
+            fontWeight: 600,
+            fontSize: '11px',
+            textTransform: 'none',
+            py: 0.5,
+            borderRadius: '5px',
+          }}
         >
           Manage Content
         </Button>
@@ -296,14 +333,12 @@ const StaffLessonNoteIndex = () => {
   const { user, roles } = useAuth();
 
   const isAdmin = useMemo(
-  () =>
-    (roles || []).some((role) =>
-      ['super_admin', 'school_admin'].includes(
-        typeof role === 'string' ? role : role?.name
-      )
-    ),
-  [roles],
-);
+    () =>
+      (roles || []).some((role) =>
+        ['super_admin', 'school_admin'].includes(typeof role === 'string' ? role : role?.name),
+      ),
+    [roles],
+  );
 
   // Deep link: the new tab carries a single opaque token holding the
   // subject/session-term/programme/class ids — no descriptive parameter
@@ -318,12 +353,7 @@ const StaffLessonNoteIndex = () => {
       const sessionTermId = parsed?.session_term_id;
       const progId = parsed?.programme_id;
       const classDesc = parsed?.class_id;
-      if (
-        subjectId == null ||
-        sessionTermId == null ||
-        progId == null ||
-        classDesc == null
-      ) {
+      if (subjectId == null || sessionTermId == null || progId == null || classDesc == null) {
         return null;
       }
       return {
@@ -394,21 +424,26 @@ const StaffLessonNoteIndex = () => {
     };
   };
 
-  const loadProgrammes = useCallback(async (termId) => {
-    setLoadingProgrammes(true);
-    try {
-      const res = await tenantLessonNoteApi.getProgramme({
-        filter: { selectedTermId: termId, selectedSesTerm: termId },
-      });
-      const rows = Array.isArray(res) ? res : [];
-      setProgrammes(rows);
-      setSelectedProgId((prev) => (rows.some((row) => row.id === prev) ? prev : rows[0]?.id ?? ''));
-    } catch (err) {
-      notify.error(err?.response?.data?.message || 'Failed to load programmes');
-    } finally {
-      setLoadingProgrammes(false);
-    }
-  }, [notify]);
+  const loadProgrammes = useCallback(
+    async (termId) => {
+      setLoadingProgrammes(true);
+      try {
+        const res = await tenantLessonNoteApi.getProgramme({
+          filter: { selectedTermId: termId, selectedSesTerm: termId },
+        });
+        const rows = Array.isArray(res) ? res : [];
+        setProgrammes(rows);
+        setSelectedProgId((prev) =>
+          rows.some((row) => row.id === prev) ? prev : (rows[0]?.id ?? ''),
+        );
+      } catch (err) {
+        notify.error(err?.response?.data?.message || 'Failed to load programmes');
+      } finally {
+        setLoadingProgrammes(false);
+      }
+    },
+    [notify],
+  );
 
   const loadClasses = useCallback(
     async (termId, progId) => {
@@ -422,12 +457,12 @@ const StaffLessonNoteIndex = () => {
         const res = await tenantLessonNoteApi.getClasses({
           filter: { progId, selectedSesTerm: termId },
         });
-        const rows = Array.isArray(res) ? res : res?.classes ?? [];
+        const rows = Array.isArray(res) ? res : (res?.classes ?? []);
         setClasses(rows);
         setSelectedClassDesc((prev) =>
           rows.some((row) => row.class_description_id === prev)
             ? prev
-            : rows[0]?.class_description_id ?? '',
+            : (rows[0]?.class_description_id ?? ''),
         );
       } catch (err) {
         notify.error(err?.response?.data?.message || 'Failed to load classes');
@@ -508,7 +543,7 @@ const StaffLessonNoteIndex = () => {
         const defaultSessionId =
           active?.session_id != null && options.some((session) => session.id === active.session_id)
             ? active.session_id
-            : options[0]?.id ?? '';
+            : (options[0]?.id ?? '');
         if (defaultSessionId) setSelectedSession(defaultSessionId);
       } catch (err) {
         notify.error(err?.response?.data?.message || 'Failed to load session terms');
@@ -539,7 +574,8 @@ const StaffLessonNoteIndex = () => {
       return;
     }
     const activeMatchesSession =
-      activeSesTerm?.session_id != null && String(activeSesTerm.session_id) === String(selectedSession);
+      activeSesTerm?.session_id != null &&
+      String(activeSesTerm.session_id) === String(selectedSession);
     const activeMatch = activeMatchesSession
       ? sessionFilteredTerms.find((row) => row.id === activeSesTerm.id)
       : null;
@@ -776,24 +812,30 @@ const StaffLessonNoteIndex = () => {
   ]);
 
   const filtersReady = selectedSesTerm && selectedProgId && selectedClassDesc;
-const filterMd = isAdmin ? 2 : 2;
 
   // ── Workspace intelligence — a quick read on coverage across every
   // subject the current filters return, before picking one to work on.
   const workspaceStats = useMemo(() => {
     const totalSubjects = teachingSubjects.length;
-    const totalLearners = teachingSubjects.reduce((sum, s) => sum + (s.registered_students || 0), 0);
+    const totalLearners = teachingSubjects.reduce(
+      (sum, s) => sum + (s.registered_students || 0),
+      0,
+    );
     const completed = teachingSubjects.filter((s) => (s.lesson_plan_percentage ?? 0) >= 100).length;
     const notStarted = teachingSubjects.filter((s) => (s.lesson_plan_percentage ?? 0) === 0).length;
     const avgCoverage = totalSubjects
       ? Math.round(
-          teachingSubjects.reduce((sum, s) => sum + (s.lesson_plan_percentage ?? 0), 0) / totalSubjects,
+          teachingSubjects.reduce((sum, s) => sum + (s.lesson_plan_percentage ?? 0), 0) /
+            totalSubjects,
         )
       : 0;
     return { totalSubjects, totalLearners, completed, notStarted, avgCoverage };
   }, [teachingSubjects]);
   return (
-    <PageContainer title="Lesson Notes" description="Create and manage lesson notes, plans and videos">
+    <PageContainer
+      title="Lesson Notes"
+      description="Create and manage lesson notes, plans and videos"
+    >
       <Breadcrumb title="Teaching Resources" items={BCrumb} />
 
       {/* ── Workspace intelligence — coverage across the filtered subjects ── */}
@@ -858,7 +900,8 @@ const filterMd = isAdmin ? 2 : 2;
         sx={{
           borderRadius: '14px',
           border: '1px solid',
-          borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB'),
+          borderColor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
         }}
       >
         {/* ── Card header: filters + Fetch + Back to subjects ────────── */}
@@ -869,7 +912,8 @@ const filterMd = isAdmin ? 2 : 2;
               py: 2,
               borderBottom: 1,
               borderColor: 'divider',
-              bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC'),
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
             }}
           >
             <Stack
@@ -881,135 +925,138 @@ const filterMd = isAdmin ? 2 : 2;
               {!isDeepLink && !selectedSubject && (
                 <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <Grid container spacing={2} alignItems="center">
-                    <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Session"
-                value={selectedSession}
-                onChange={(e) => {
-                  setSelectedSession(e.target.value);
-                  setSelectedProgId('');
-                  setSelectedClassDesc('');
-                  setSelectedTeacherId('');
-                  setSelectedSubjectId('');
-                }}
-                disabled={loadingTerms}
-              >
-                {sessionOptions.map((session) => (
-                  <MenuItem key={session.id} value={session.id}>
-                    {session.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Term"
-                value={selectedSesTerm}
-                onChange={(e) => {
-                  setSelectedSesTerm(e.target.value);
-                  setSelectedProgId('');
-                  setSelectedClassDesc('');
-                  setSelectedTeacherId('');
-                  setSelectedSubjectId('');
-                }}
-                disabled={loadingTerms || sessionFilteredTerms.length === 0}
-              >
-                {sessionFilteredTerms.map((term) => (
-                  <MenuItem key={term.id} value={term.id}>
-                    {term.term?.term_name || term.term_name || 'Term'}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Programme"
-                value={selectedProgId}
-                onChange={(e) => {
-                  setSelectedProgId(e.target.value);
-                  setSelectedClassDesc('');
-                  setSelectedTeacherId('');
-                }}
-                disabled={loadingProgrammes || !selectedSesTerm}
-              >
-                {programmes.map((programme) => (
-                  <MenuItem key={programme.id} value={programme.id}>
-                    {programme.programme_name || programme.prog_name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Class"
-                value={selectedClassDesc}
-                onChange={(e) => {
-                  setSelectedClassDesc(e.target.value);
-                  setSelectedTeacherId('');
-                  setSelectedSubjectId('');
-                }}
-                disabled={loadingClasses || !selectedProgId}
-              >
-                {classes.map((cls) => (
-                  <MenuItem key={cls.class_description_id} value={cls.class_description_id}>
-                    {cls.class_name} {cls.arm_name ? `- ${cls.arm_name}` : ''}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            {isAdmin && (
-              <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Teacher"
-                  value={selectedTeacherId}
-                  onChange={(e) => {
-                    setSelectedTeacherId(e.target.value);
-                    setSelectedSubjectId('');
-                  }}
-                  disabled={!selectedClassDesc}
-                >
-                  <MenuItem value="">All Teachers</MenuItem>
-                  {teachers.map((teacher, index) => (
-                    <MenuItem key={`${teacher.teacher_id}-${index}`} value={teacher.teacher_id}>
-                      {teacher.fname} {teacher.lname} ({teacher.user_id})
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-            )}
-            <Grid size={{ xs: 12, sm: 6, md:filterMd }}>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                label="Subject"
-                value={selectedSubjectId}
-                onChange={(e) => setSelectedSubjectId(e.target.value)}
-                disabled={!selectedClassDesc}
-              >
-                <MenuItem value="">All Subjects</MenuItem>
-                {uniqueSubjects.map((subject) => (
-                  <MenuItem key={subject.subject_id} value={subject.subject_id}>
-                    {subject.subject_name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Session"
+                        value={selectedSession}
+                        onChange={(e) => {
+                          setSelectedSession(e.target.value);
+                          setSelectedProgId('');
+                          setSelectedClassDesc('');
+                          setSelectedTeacherId('');
+                          setSelectedSubjectId('');
+                        }}
+                        disabled={loadingTerms}
+                      >
+                        {sessionOptions.map((session) => (
+                          <MenuItem key={session.id} value={session.id}>
+                            {session.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Term"
+                        value={selectedSesTerm}
+                        onChange={(e) => {
+                          setSelectedSesTerm(e.target.value);
+                          setSelectedProgId('');
+                          setSelectedClassDesc('');
+                          setSelectedTeacherId('');
+                          setSelectedSubjectId('');
+                        }}
+                        disabled={loadingTerms || sessionFilteredTerms.length === 0}
+                      >
+                        {sessionFilteredTerms.map((term) => (
+                          <MenuItem key={term.id} value={term.id}>
+                            {term.term?.term_name || term.term_name || 'Term'}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 2.2 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Programme"
+                        value={selectedProgId}
+                        onChange={(e) => {
+                          setSelectedProgId(e.target.value);
+                          setSelectedClassDesc('');
+                          setSelectedTeacherId('');
+                        }}
+                        disabled={loadingProgrammes || !selectedSesTerm}
+                      >
+                        {programmes.map((programme) => (
+                          <MenuItem key={programme.id} value={programme.id}>
+                            {programme.programme_name || programme.prog_name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Class"
+                        value={selectedClassDesc}
+                        onChange={(e) => {
+                          setSelectedClassDesc(e.target.value);
+                          setSelectedTeacherId('');
+                          setSelectedSubjectId('');
+                        }}
+                        disabled={loadingClasses || !selectedProgId}
+                      >
+                        {classes.map((cls) => (
+                          <MenuItem key={cls.class_description_id} value={cls.class_description_id}>
+                            {cls.class_name} {cls.arm_name ? `- ${cls.arm_name}` : ''}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    {isAdmin && (
+                      <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                        <TextField
+                          select
+                          fullWidth
+                          size="small"
+                          label="Teacher"
+                          value={selectedTeacherId}
+                          onChange={(e) => {
+                            setSelectedTeacherId(e.target.value);
+                            setSelectedSubjectId('');
+                          }}
+                          disabled={!selectedClassDesc}
+                        >
+                          <MenuItem value="">All Teachers</MenuItem>
+                          {teachers.map((teacher, index) => (
+                            <MenuItem
+                              key={`${teacher.teacher_id}-${index}`}
+                              value={teacher.teacher_id}
+                            >
+                              {teacher.fname} {teacher.lname} ({teacher.user_id})
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    )}
+                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Subject"
+                        value={selectedSubjectId}
+                        onChange={(e) => setSelectedSubjectId(e.target.value)}
+                        disabled={!selectedClassDesc}
+                      >
+                        <MenuItem value="">All Subjects</MenuItem>
+                        {uniqueSubjects.map((subject) => (
+                          <MenuItem key={subject.subject_id} value={subject.subject_id}>
+                            {subject.subject_name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
                   </Grid>
                 </Box>
               )}
@@ -1062,7 +1109,8 @@ const filterMd = isAdmin ? 2 : 2;
                         onChange={(e) => {
                           setSelectedSubtopic(e.target.value);
                           setSelectedSubtopicId(
-                            subtopics.find((row) => row.subtopic_name === e.target.value)?.subtopic_id ?? '',
+                            subtopics.find((row) => row.subtopic_name === e.target.value)
+                              ?.subtopic_id ?? '',
                           );
                         }}
                         disabled={loadingSubtopics || subtopics.length === 0}
@@ -1114,151 +1162,161 @@ const filterMd = isAdmin ? 2 : 2;
         )}
 
         <CardContent>
-
-      {!isDeepLink && !selectedSubject && (
-        <>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.25,
-              p: 1.5,
-              mb: 2,
-              borderRadius: '12px',
-              bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.08)' : '#EFF6FF'),
-              border: '1px solid',
-              borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.25)' : '#BFDBFE'),
-            }}
-          >
-            <IconInfoCircle size={18} color="#2563EB" style={{ flexShrink: 0 }} />
-            <Typography sx={{ fontSize: 12, color: (theme) => (theme.palette.mode === 'dark' ? '#cbd5e1' : '#1e3a8a') }}>
-              Pick a subject below to open its workspace — each one has a <strong>Lesson Plan</strong>,{' '}
-              <strong>Lesson Note</strong> and <strong>Video Content</strong> tab for every week on the
-              scheme of work.
-            </Typography>
-          </Box>
-
-          {loadingSubjects ? (
-            <Grid container spacing={2}>
-              {[0, 1, 2].map((item) => (
-                <Grid key={item} size={{ xs: 12, md: 4 }}>
-                  <Skeleton variant="rounded" height={140} sx={{ borderRadius: '14px' }} />
-                </Grid>
-              ))}
-            </Grid>
-          ) : teachingSubjects.length === 0 ? (
-            <Alert severity="info">
-              {filtersReady
-                ? 'No teaching resources found. Try changing the term, programme, class, teacher or subject filters.'
-                : 'Select a term, programme and class to see your teaching subjects.'}
-            </Alert>
-          ) : (
-            <Grid container spacing={2}>
-              {teachingSubjects.map((item) => (
-                <Grid key={`${item.subject_id}-${item.class_description_id || item.class_id}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                  <SubjectCard item={item} onSelect={handleOpenSubject} />
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </>
-      )}
-
-      {/* First frame of a deep-link tab, before the boot effect seeds the
-          subject from its token. */}
-      {isDeepLink && !selectedSubject && (
-        <Stack spacing={1}>
-          <Skeleton variant="rounded" height={40} />
-          <Skeleton variant="rounded" height={140} />
-        </Stack>
-      )}
-
-      {selectedSubject && (
-        <>
-            {loadingWeeks && (
-              <Stack spacing={1} mt={1}>
-                <Skeleton variant="rounded" height={40} />
-                <Skeleton variant="rounded" height={120} />
-              </Stack>
-            )}
-
-            {!loadingWeeks && weeks.length === 0 && (
-              <Alert severity="info" sx={{ mt: 1 }}>
-                No scheme of work weeks found for this subject, class and term.
-              </Alert>
-            )}
-
-            {!loadingWeeks && schemeOfWorkId && editorContext && (
-              <Box mt={1}>
-                <Tabs
-                  value={activeContentTab}
-                  onChange={(_, value) => setActiveContentTab(value)}
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  allowScrollButtonsMobile
-                  slotProps={{ indicator: { sx: { display: 'none' } } }}
+          {!isDeepLink && !selectedSubject && (
+            <>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.25,
+                  p: 1.5,
+                  mb: 2,
+                  borderRadius: '12px',
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.08)' : '#EFF6FF',
+                  border: '1px solid',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.25)' : '#BFDBFE',
+                }}
+              >
+                <IconInfoCircle size={18} color="#2563EB" style={{ flexShrink: 0 }} />
+                <Typography
                   sx={{
-                    mb: 2.5,
-                    minHeight: 44,
-                    p: 0.5,
-                    borderRadius: '12px',
-                    bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F1F5F9'),
-                    '& .MuiTabs-flexContainer': { gap: 0.5 },
+                    fontSize: 12,
+                    color: (theme) => (theme.palette.mode === 'dark' ? '#cbd5e1' : '#1e3a8a'),
                   }}
                 >
-                  {CONTENT_TABS.map((tab, index) => (
-                    <Tab
-                      key={tab.key}
-                      value={index}
-                      label={tab.label}
-                      icon={<tab.Icon size={17} />}
-                      iconPosition="start"
-                      disableRipple
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 700,
-                        fontSize: 12.5,
-                        minHeight: 38,
-                        borderRadius: '9px',
-                        color: 'text.secondary',
-                        transition: 'all 150ms ease',
-                        '&.Mui-selected': {
-                          color: '#fff',
-                          bgcolor: '#2563EB',
-                          boxShadow: '0 2px 6px rgba(37,99,235,0.35)',
-                        },
-                      }}
-                    />
-                  ))}
-                </Tabs>
-
-                {/* Remount on selection change so unsaved edits never end up
-                    saved against a different week/topic. */}
-                {activeContentTab === 0 && (
-                  <LessonContentTab
-                    key={`plan-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
-                    type="plan"
-                    context={editorContext}
-                  />
-                )}
-                {activeContentTab === 1 && (
-                  <LessonContentTab
-                    key={`note-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
-                    type="note"
-                    context={editorContext}
-                  />
-                )}
-                {activeContentTab === 2 && (
-                  <LessonContentTab
-                    key={`video-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
-                    type="video"
-                    context={editorContext}
-                  />
-                )}
+                  Pick a subject below to open its workspace — each one has a{' '}
+                  <strong>Lesson Plan</strong>, <strong>Lesson Note</strong> and{' '}
+                  <strong>Video Content</strong> tab for every week on the scheme of work.
+                </Typography>
               </Box>
-            )}
-        </>
-      )}
+
+              {loadingSubjects ? (
+                <Grid container spacing={2}>
+                  {[0, 1, 2].map((item) => (
+                    <Grid key={item} size={{ xs: 12, md: 4 }}>
+                      <Skeleton variant="rounded" height={140} sx={{ borderRadius: '14px' }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : teachingSubjects.length === 0 ? (
+                <Alert severity="info">
+                  {filtersReady
+                    ? 'No teaching resources found. Try changing the term, programme, class, teacher or subject filters.'
+                    : 'Select a term, programme and class to see your teaching subjects.'}
+                </Alert>
+              ) : (
+                <Grid container spacing={2}>
+                  {teachingSubjects.map((item) => (
+                    <Grid
+                      key={`${item.subject_id}-${item.class_description_id || item.class_id}`}
+                      size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                    >
+                      <SubjectCard item={item} onSelect={handleOpenSubject} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
+          )}
+
+          {/* First frame of a deep-link tab, before the boot effect seeds the
+          subject from its token. */}
+          {isDeepLink && !selectedSubject && (
+            <Stack spacing={1}>
+              <Skeleton variant="rounded" height={40} />
+              <Skeleton variant="rounded" height={140} />
+            </Stack>
+          )}
+
+          {selectedSubject && (
+            <>
+              {loadingWeeks && (
+                <Stack spacing={1} mt={1}>
+                  <Skeleton variant="rounded" height={40} />
+                  <Skeleton variant="rounded" height={120} />
+                </Stack>
+              )}
+
+              {!loadingWeeks && weeks.length === 0 && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  No scheme of work weeks found for this subject, class and term.
+                </Alert>
+              )}
+
+              {!loadingWeeks && schemeOfWorkId && editorContext && (
+                <Box mt={1}>
+                  <Tabs
+                    value={activeContentTab}
+                    onChange={(_, value) => setActiveContentTab(value)}
+                    variant="scrollable"
+                    scrollButtons="auto"
+                    allowScrollButtonsMobile
+                    slotProps={{ indicator: { sx: { display: 'none' } } }}
+                    sx={{
+                      mb: 2.5,
+                      minHeight: 44,
+                      p: 0.5,
+                      borderRadius: '12px',
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
+                      '& .MuiTabs-flexContainer': { gap: 0.5 },
+                    }}
+                  >
+                    {CONTENT_TABS.map((tab, index) => (
+                      <Tab
+                        key={tab.key}
+                        value={index}
+                        label={tab.label}
+                        icon={<tab.Icon size={17} />}
+                        iconPosition="start"
+                        disableRipple
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          fontSize: 12.5,
+                          minHeight: 38,
+                          borderRadius: '9px',
+                          color: 'text.secondary',
+                          transition: 'all 150ms ease',
+                          '&.Mui-selected': {
+                            color: '#fff',
+                            bgcolor: '#2563EB',
+                            boxShadow: '0 2px 6px rgba(37,99,235,0.35)',
+                          },
+                        }}
+                      />
+                    ))}
+                  </Tabs>
+
+                  {/* Remount on selection change so unsaved edits never end up
+                    saved against a different week/topic. */}
+                  {activeContentTab === 0 && (
+                    <LessonContentTab
+                      key={`plan-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
+                      type="plan"
+                      context={editorContext}
+                    />
+                  )}
+                  {activeContentTab === 1 && (
+                    <LessonContentTab
+                      key={`note-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
+                      type="note"
+                      context={editorContext}
+                    />
+                  )}
+                  {activeContentTab === 2 && (
+                    <LessonContentTab
+                      key={`video-${editorContext.schemeOfWorkId}-${editorContext.subTopicsId}`}
+                      type="video"
+                      context={editorContext}
+                    />
+                  )}
+                </Box>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </PageContainer>

@@ -125,6 +125,10 @@ export const tenantLessonNoteApi = {
     const response = await tenantApi.post('/e-resources/lesson-note/plan/approve', data);
     return response.data;
   },
+  approveLessonNote: async (data) => {
+    const response = await tenantApi.post('/e-resources/lesson-note/note/approve', data);
+    return response.data;
+  },
   updateLessonNote: async (schemeOfWorkId, data) => {
     const response = await tenantApi.post(
       `/e-resources/lesson-note/note/${schemeOfWorkId}/update`,
@@ -155,6 +159,10 @@ export const tenantApprovalApi = {
   },
   getLessonApprovalContent: async (data, params) => {
     const response = await tenantApi.post('/e-resources/approval/content', data, { params });
+    return response.data;
+  },
+  getLessonApprovalStats: async (data) => {
+    const response = await tenantApi.post('/e-resources/approval/stats', data);
     return response.data;
   },
   approveLessonContent: async (data) => {

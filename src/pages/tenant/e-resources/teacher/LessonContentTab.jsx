@@ -383,7 +383,7 @@ const LessonContentTab = ({ type, context }) => {
   const status = record?.status ?? null;
   const contextMissing = !schemeOfWorkId || !staffSubjectId;
   const isApproved = status === 'active';
-  const approveLabel = isApproved ? 'Disapprove Lesson Plan' : 'Approve Lesson Plan';
+  const approveLabel = isApproved ? `Disapprove ${cfg.label}` : `Approve ${cfg.label}`;
 
   // ── Data loaders ──────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -512,21 +512,25 @@ const LessonContentTab = ({ type, context }) => {
   const youtubeId = getYouTubeId(aiContent || '');
   const uploadedVideo = firstFileUrl(record?.lesson_video);
 
-  // ── Approve / Disapprove (Lesson Plan, matches basic) ─────────────────────
+  // ── Approve / Disapprove (Lesson Plan & Lesson Note, matches basic) ──────
   const handleApproveToggle = async () => {
     setApproveConfirmOpen(false);
     setApproving(true);
     try {
-      const res = await tenantLessonNoteApi.approveLessonPlan({
+      const payload = {
         staff_subject_id: staffSubjectId,
         scheme_of_work_id: Number(schemeOfWorkId),
         ...subtopicScope,
-      });
+      };
+      const res =
+        type === 'note'
+          ? await tenantLessonNoteApi.approveLessonNote(payload)
+          : await tenantLessonNoteApi.approveLessonPlan(payload);
       const newStatus = res?.new_status;
       setRecord((prev) => (prev ? { ...prev, status: newStatus } : prev));
-      notify.success(res?.message || `Lesson plan status updated to ${newStatus}`);
+      notify.success(res?.message || `${cfg.label} status updated to ${newStatus}`);
     } catch (err) {
-      notify.error(apiErrorMessage(err, 'Failed to update the lesson plan status'));
+      notify.error(apiErrorMessage(err, `Failed to update the ${cfg.label.toLowerCase()} status`));
     } finally {
       setApproving(false);
     }
@@ -875,8 +879,8 @@ const LessonContentTab = ({ type, context }) => {
             </Card>
           )}
 
-          {/* ── Approve / Disapprove Lesson Plan (matches basic) ──────── */}
-          {type === 'plan' && !loading && hasContent && (
+          {/* ── Approve / Disapprove Lesson Plan & Lesson Note (matches basic) ── */}
+          {(type === 'plan' || type === 'note') && !loading && hasContent && (
             <Stack direction="row" justifyContent="flex-end" mt={2.5}>
               <Button
                 variant={isApproved ? 'outlined' : 'contained'}
@@ -1197,7 +1201,7 @@ const LessonContentTab = ({ type, context }) => {
         </DialogActions>
       </Dialog>
 
-      {/* ── Approve / Disapprove confirmation (Lesson Plan) ────────────── */}
+      {/* ── Approve / Disapprove confirmation (Lesson Plan & Lesson Note) ──── */}
       <Dialog
         open={approveConfirmOpen}
         onClose={() => setApproveConfirmOpen(false)}
@@ -1208,7 +1212,7 @@ const LessonContentTab = ({ type, context }) => {
         <DialogTitle fontWeight={700}>{approveLabel}</DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mt: 1 }}>
-            Are you sure you want to {isApproved ? 'disapprove' : 'approve'} this lesson plan?
+            Are you sure you want to {isApproved ? 'disapprove' : 'approve'} this {cfg.label.toLowerCase()}?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>

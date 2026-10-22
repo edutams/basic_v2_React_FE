@@ -14,7 +14,6 @@ import {
   TextField,
   InputAdornment,
   Button,
-  ButtonGroup,
   TablePagination,
   Avatar,
   Skeleton,
@@ -22,12 +21,11 @@ import {
   Stack,
   Tooltip,
   MenuItem,
+  Paper,
 } from '@mui/material';
 import {
   IconSearch,
-  IconPlus,
   IconDotsVertical,
-  IconChevronDown,
   IconCheck,
   IconX,
   IconBook,
@@ -150,11 +148,12 @@ const TeachingStaffTab = ({
   return (
     <Box>
       {/* Toolbar */}
-      <Box
+      <Paper
+        variant="outlined"
         sx={{
-          pb: 1.5,
+          p: 1.5,
           mb: 1.5,
-          borderBottom: '1px solid #f0f0f0',
+          borderRadius: 2,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -243,39 +242,12 @@ const TeachingStaffTab = ({
             </Button>
           </Tooltip>
         </Box>
-
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            variant="contained"
-            size="small"
-            fullWidth={{ xs: true, sm: false }}
-            startIcon={<IconPlus />}
-            onClick={handleAddStaff}
-          >
-            Add Teaching Staff
-          </Button>
-
-          <ButtonGroup fullWidth={{ xs: true, sm: false }}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconPlus />}
-              sx={{ textTransform: 'none' }}
-              onClick={handleUploadStaff}
-            >
-              Multiple Teachers Upload
-            </Button>
-
-            <Button variant="contained" size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
-              <IconChevronDown size={16} />
-            </Button>
-          </ButtonGroup>
-        </Box>
-      </Box>
+      </Paper>
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <Box
+        <Paper
+          variant="outlined"
           sx={{
             mb: 1.5,
             p: 1,
@@ -340,260 +312,274 @@ const TeachingStaffTab = ({
           >
             Delete
           </Button>
-        </Box>
+        </Paper>
       )}
 
       {/* Table */}
-      <TableContainer>
-        <Table size="small" stickyHeader>
-          <TableHead
-            sx={{
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa',
-            }}
-          >
-            <TableRow>
-              <TableCell padding="checkbox">
-                <Checkbox
-                  size="small"
-                  indeterminate={someSelected}
-                  checked={allSelected}
-                  onChange={toggleAll}
-                  disabled={staff.length === 0}
-                />
-              </TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>FullName</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Contact</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Subjects</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Classes</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-              <TableCell align="center" sx={{ fontWeight: 700 }}>
-                Action
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell padding="checkbox">
-                    <Skeleton variant="rounded" width={18} height={18} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width={20} />
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Skeleton variant="circular" width={34} height={34} />
-                      <Box>
-                        <Skeleton variant="text" width={120} height={20} />
-                        <Skeleton variant="text" width={70} height={14} />
-                      </Box>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton variant="text" width={140} height={20} />
-                    <Skeleton variant="text" width={90} height={16} />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton
-                      variant="rounded"
-                      width={90}
-                      height={22}
-                      sx={{ borderRadius: '12px' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton
-                      variant="rounded"
-                      width={70}
-                      height={22}
-                      sx={{ borderRadius: '12px' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton
-                      variant="rounded"
-                      width={70}
-                      height={22}
-                      sx={{ borderRadius: '12px' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton
-                      variant="rounded"
-                      width={60}
-                      height={22}
-                      sx={{ borderRadius: '12px' }}
-                    />
-                  </TableCell>
-                  <TableCell align="center">
-                    <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : staff.length === 0 ? (
+      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <TableContainer>
+          <Table size="small" stickyHeader>
+            <TableHead
+              sx={{
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : '#fafafa',
+              }}
+            >
               <TableRow>
-                <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                  <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                    No staff found
-                  </Alert>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={someSelected}
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    disabled={staff.length === 0}
+                  />
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>FullName</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Subjects</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Classes</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>
+                  Action
                 </TableCell>
               </TableRow>
-            ) : (
-              staff.map((staffMember, index) => {
-                const isClassTeacher = (staffMember.class_teachers?.length || 0) > 0;
-                const isSubjectTeacher = (staffMember.subject_teachers?.length || 0) > 0;
-                const subjectNames = dedupeBy(
-                  (staffMember.subject_teachers || []).map((st) => ({
-                    id: st.subject_id,
-                    name: st.subject?.subject_name,
-                  })),
-                  'id',
-                ).map((s) => s.name || 'N/A');
-                const classLabels = dedupeBy(
-                  [
-                    ...(staffMember.class_teachers || []),
-                    ...(staffMember.subject_teachers || []),
-                  ].map((row) => ({
-                    id: row.class_arm_id,
-                    label: classArmLabel(row.class_arm),
-                  })),
-                  'id',
-                ).map((c) => c.label);
-
-                const isRowSelected = selectedIds.has(staffMember.user_id);
-
-                return (
-                  <TableRow
-                    key={staffMember.user_id}
-                    hover
-                    selected={selectedStaffId === staffMember.user_id || isRowSelected}
-                    onClick={() => {
-                      toggleOne(staffMember.user_id);
-                      onRowClick?.(staffMember);
-                    }}
-                    sx={{
-                      cursor: 'pointer',
-                      '&.Mui-selected': {
-                        bgcolor: 'rgba(37, 99, 235, 0.12)',
-                        borderLeft: '3px solid',
-                        borderLeftColor: 'primary.main',
-                      },
-                      '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
-                    }}
-                  >
-                    <TableCell
-                      padding="checkbox"
-                      onClick={(e) => {
-                        // Stop it reaching the row's own onClick (which would
-                        // call toggleOne a second time and cancel this one
-                        // out) — but a checkbox click should open the side
-                        // drawer exactly like clicking anywhere else in the
-                        // row, so that part still needs firing here.
-                        e.stopPropagation();
-                        onRowClick?.(staffMember);
-                      }}
-                    >
-                      <Checkbox
-                        size="small"
-                        checked={isRowSelected}
-                        onChange={() => toggleOne(staffMember.user_id)}
-                      />
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell padding="checkbox">
+                      <Skeleton variant="rounded" width={18} height={18} />
                     </TableCell>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell>
+                      <Skeleton variant="text" width={20} />
+                    </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar
-                          src={staffMember.user?.avatar}
-                          alt={staffMember.user?.lname?.[0]}
-                          sx={{
-                            width: 34,
-                            height: 34,
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            bgcolor: 'primary.main',
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="body2" fontWeight={600} noWrap>
-                            {staffMember.user?.full_name}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary" noWrap>
-                            {staffMember.staff_id || staffMember.user?.user_id || 'N/A'}
-                          </Typography>
+                        <Skeleton variant="circular" width={34} height={34} />
+                        <Box>
+                          <Skeleton variant="text" width={120} height={20} />
+                          <Skeleton variant="text" width={70} height={14} />
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2">{staffMember.user?.email || 'N/A'}</Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {staffMember.user?.phone || 'N/A'}
-                      </Typography>
+                      <Skeleton variant="text" width={140} height={20} />
+                      <Skeleton variant="text" width={90} height={16} />
                     </TableCell>
                     <TableCell>
-                      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-                        {isClassTeacher && <Chip size="small" color="info" label="Class Teacher" />}
-                        {isSubjectTeacher && (
-                          <Chip
-                            size="small"
-                            color="secondary"
-                            variant="outlined"
-                            label="Subject Teacher"
-                          />
-                        )}
-                        {!isClassTeacher && !isSubjectTeacher && (
-                          <Typography variant="caption" color="textSecondary">
-                            —
-                          </Typography>
-                        )}
-                      </Stack>
+                      <Skeleton
+                        variant="rounded"
+                        width={90}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
                     </TableCell>
                     <TableCell>
-                      <OverflowList items={subjectNames} />
+                      <Skeleton
+                        variant="rounded"
+                        width={70}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
                     </TableCell>
                     <TableCell>
-                      <OverflowList items={classLabels} />
+                      <Skeleton
+                        variant="rounded"
+                        width={70}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
                     </TableCell>
                     <TableCell>
-                      {(() => {
-                        const statusColor = getStatusColor(staffMember.staff_status);
-                        const StatusIcon = STATUS_ICON[statusColor] || STATUS_ICON.default;
-                        return (
-                          <Chip
-                            icon={<StatusIcon size={14} />}
-                            label={statusLabel(staffMember.staff_status)}
-                            color={statusColor}
-                            size="small"
-                          />
-                        );
-                      })()}
+                      <Skeleton
+                        variant="rounded"
+                        width={60}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
                     </TableCell>
-                    <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                      <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
-                        <IconDotsVertical size={18} />
-                      </IconButton>
+                    <TableCell align="center">
+                      <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
                     </TableCell>
                   </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                ))
+              ) : staff.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      No staff found
+                    </Alert>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                staff.map((staffMember, index) => {
+                  const isClassTeacher = (staffMember.class_teachers?.length || 0) > 0;
+                  const isSubjectTeacher = (staffMember.subject_teachers?.length || 0) > 0;
+                  const subjectNames = dedupeBy(
+                    (staffMember.subject_teachers || []).map((st) => ({
+                      id: st.subject_id,
+                      name: st.subject?.subject_name,
+                    })),
+                    'id',
+                  ).map((s) => s.name || 'N/A');
+                  const classLabels = dedupeBy(
+                    [
+                      ...(staffMember.class_teachers || []),
+                      ...(staffMember.subject_teachers || []),
+                    ].map((row) => ({
+                      id: row.class_arm_id,
+                      label: classArmLabel(row.class_arm),
+                    })),
+                    'id',
+                  ).map((c) => c.label);
 
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 20, 50]}
-        component="div"
-        count={total}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-      />
+                  const isRowSelected = selectedIds.has(staffMember.user_id);
+
+                  return (
+                    <TableRow
+                      key={staffMember.user_id}
+                      hover
+                      selected={selectedStaffId === staffMember.user_id || isRowSelected}
+                      onClick={() => {
+                        toggleOne(staffMember.user_id);
+                        onRowClick?.(staffMember);
+                      }}
+                      sx={{
+                        cursor: 'pointer',
+                        '&.Mui-selected': {
+                          bgcolor: 'rgba(37, 99, 235, 0.12)',
+                          borderLeft: '3px solid',
+                          borderLeftColor: 'primary.main',
+                        },
+                        '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
+                      }}
+                    >
+                      <TableCell
+                        padding="checkbox"
+                        onClick={(e) => {
+                          // Stop it reaching the row's own onClick (which would
+                          // call toggleOne a second time and cancel this one
+                          // out) — but a checkbox click should open the side
+                          // drawer exactly like clicking anywhere else in the
+                          // row, so that part still needs firing here.
+                          e.stopPropagation();
+                          onRowClick?.(staffMember);
+                        }}
+                      >
+                        <Checkbox
+                          size="small"
+                          checked={isRowSelected}
+                          onChange={() => toggleOne(staffMember.user_id)}
+                        />
+                      </TableCell>
+                      <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar
+                            src={staffMember.user?.avatar}
+                            alt={staffMember.user?.lname?.[0]}
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              bgcolor: 'primary.main',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={600} noWrap>
+                              {staffMember.user?.full_name}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary" noWrap>
+                              {staffMember.staff_id || staffMember.user?.user_id || 'N/A'}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="textSecondary"
+                              display="block"
+                              noWrap
+                            >
+                              {staffMember.user?.email || 'N/A'}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="textSecondary"
+                              display="block"
+                              noWrap
+                            >
+                              {staffMember.user?.phone || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
+
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                          {isClassTeacher && (
+                            <Chip size="small" color="info" label="Class Teacher" />
+                          )}
+                          {isSubjectTeacher && (
+                            <Chip
+                              size="small"
+                              color="secondary"
+                              variant="outlined"
+                              label="Subject Teacher"
+                            />
+                          )}
+                          {!isClassTeacher && !isSubjectTeacher && (
+                            <Typography variant="caption" color="textSecondary">
+                              —
+                            </Typography>
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <OverflowList items={subjectNames} />
+                      </TableCell>
+                      <TableCell>
+                        <OverflowList items={classLabels} />
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const statusColor = getStatusColor(staffMember.staff_status);
+                          const StatusIcon = STATUS_ICON[statusColor] || STATUS_ICON.default;
+                          return (
+                            <Chip
+                              icon={<StatusIcon size={14} />}
+                              label={statusLabel(staffMember.staff_status)}
+                              color={statusColor}
+                              size="small"
+                            />
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 20, 50]}
+          component="div"
+          count={total}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </Paper>
     </Box>
   );
 };

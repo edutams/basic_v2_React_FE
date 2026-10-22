@@ -54,7 +54,6 @@ import {
   IconKey,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
@@ -73,14 +72,6 @@ import dayjs from 'dayjs';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
-
-const BCrumb = [
-  {
-    to: '/',
-    title: 'Dashboard',
-  },
-  { title: 'Staff Manager' },
-];
 
 const StaffManager = () => {
   const { impersonateStaff } = useContext(TenantAuthContext);
@@ -829,7 +820,51 @@ const StaffManager = () => {
 
   return (
     <PageContainer title="Staff Manager" description="Manage Teaching & Non Teaching Staff">
-      <Breadcrumb title="Staff Manager" items={BCrumb} />
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', md: 'center' }}
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight={700}>
+            Staff Manager
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage teaching and non-teaching staff, allocations and timetables.
+          </Typography>
+        </Box>
+        {activeTab !== 'timetable' && (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<IconDownload size={16} />}
+              onClick={handleDownloadTemplate}
+            >
+              Export Report
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<IconUpload size={16} />}
+              onClick={handleUploadStaff}
+            >
+              {activeTab === 'non-teaching' ? 'Import Non-Teaching Staff' : 'Import Teachers'}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              color="primary"
+              startIcon={<IconPlus size={16} />}
+              onClick={handleAddStaff}
+            >
+              {activeTab === 'non-teaching' ? 'Add Non-Teaching Staff' : 'Add Teacher'}
+            </Button>
+          </Box>
+        )}
+      </Stack>
 
       {/* Stat Cards */}
       {statCards.length > 0 && (
@@ -934,6 +969,25 @@ const StaffManager = () => {
                     handleEditStaff();
                   }}
                   onSendMessage={() => notify.info('Messaging from here is coming soon')}
+                  onImpersonate={(s) => confirmImpersonateStaff(s)}
+                  onUpdatePhoto={(s) => {
+                    setSelectedStaff(s);
+                    setPhotoPreview(s?.user?.avatar || null);
+                    setPhotoFile(null);
+                    setUpdatePhotoOpen(true);
+                  }}
+                  onResetPassword={(s) => {
+                    setSelectedStaff(s);
+                    setResetPasswordOpen(true);
+                  }}
+                  onUpdateStatus={(s) => {
+                    setSelectedStaff(s);
+                    setStatusModalOpen(true);
+                  }}
+                  onDelete={(s) => {
+                    setSelectedStaff(s);
+                    setDeleteModalOpen(true);
+                  }}
                 />
               </Box>
             )}
@@ -996,6 +1050,25 @@ const StaffManager = () => {
                     handleEditStaff();
                   }}
                   onSendMessage={() => notify.info('Messaging from here is coming soon')}
+                  onImpersonate={(s) => confirmImpersonateStaff(s)}
+                  onUpdatePhoto={(s) => {
+                    setSelectedStaff(s);
+                    setPhotoPreview(s?.user?.avatar || null);
+                    setPhotoFile(null);
+                    setUpdatePhotoOpen(true);
+                  }}
+                  onResetPassword={(s) => {
+                    setSelectedStaff(s);
+                    setResetPasswordOpen(true);
+                  }}
+                  onUpdateStatus={(s) => {
+                    setSelectedStaff(s);
+                    setStatusModalOpen(true);
+                  }}
+                  onDelete={(s) => {
+                    setSelectedStaff(s);
+                    setDeleteModalOpen(true);
+                  }}
                 />
               </Box>
             )}
@@ -1026,11 +1099,11 @@ const StaffManager = () => {
           Edit
         </MenuItem>
         <MenuItem onClick={handleOpenUpdatePhoto}>
-          <IconCamera size={18} color="#2563EB" style={{ marginRight: 8 }} />
+          <IconCamera size={18} color="#0D9488" style={{ marginRight: 8 }} />
           Update Photo
         </MenuItem>
         <MenuItem onClick={handleOpenResetPassword}>
-          <IconKey size={18} color="#D97706" style={{ marginRight: 8 }} />
+          <IconKey size={18} color="#0891B2" style={{ marginRight: 8 }} />
           Reset Password
         </MenuItem>
         <MenuItem onClick={handleUpdateStatusClick}>

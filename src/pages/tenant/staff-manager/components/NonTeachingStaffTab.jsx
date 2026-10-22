@@ -14,19 +14,17 @@ import {
   TextField,
   InputAdornment,
   Button,
-  ButtonGroup,
   TablePagination,
   Avatar,
   Skeleton,
   Alert,
   MenuItem,
   Tooltip,
+  Paper,
 } from '@mui/material';
 import {
   IconSearch,
-  IconPlus,
   IconDotsVertical,
-  IconChevronDown,
   IconCheck,
   IconX,
   IconTrash,
@@ -102,11 +100,12 @@ const NonTeachingStaffTab = ({
   return (
     <Box>
       {/* Toolbar */}
-      <Box
+      <Paper
+        variant="outlined"
         sx={{
-          pb: 1.5,
+          p: 1.5,
           mb: 1.5,
-          borderBottom: '1px solid #f0f0f0',
+          borderRadius: 2,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -178,37 +177,12 @@ const NonTeachingStaffTab = ({
             </Button>
           </Tooltip>
         </Box>
-
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<IconPlus />}
-            onClick={handleAddStaff}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
-          >
-            Add Non-Teaching Staff
-          </Button>
-          <ButtonGroup sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<IconPlus />}
-              sx={{ textTransform: 'none', flex: 1 }}
-              onClick={handleUploadStaff}
-            >
-              Multiple Staff Upload
-            </Button>
-            <Button variant="contained" size="small" onClick={handleBulkMenuOpen} sx={{ px: 1 }}>
-              <IconChevronDown size={16} />
-            </Button>
-          </ButtonGroup>
-        </Box>
-      </Box>
+      </Paper>
 
       {/* Bulk action bar */}
       {selectedIds.size > 0 && (
-        <Box
+        <Paper
+          variant="outlined"
           sx={{
             mb: 1.5,
             p: 1,
@@ -253,10 +227,11 @@ const NonTeachingStaffTab = ({
           >
             Delete
           </Button>
-        </Box>
+        </Paper>
       )}
 
       {/* Table */}
+      <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
       <TableContainer>
         <Table size="small" stickyHeader>
           <TableHead
@@ -394,6 +369,12 @@ const NonTeachingStaffTab = ({
                           <Typography variant="caption" color="textSecondary" noWrap>
                             {staffMember.staff_id || staffMember.user?.user_id || 'N/A'}
                           </Typography>
+                          <Typography variant="caption" color="textSecondary" display="block" noWrap>
+                            {staffMember.user?.email || 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary" display="block" noWrap>
+                            {staffMember.user?.phone || 'N/A'}
+                          </Typography>
                         </Box>
                       </Box>
                     </TableCell>
@@ -448,6 +429,7 @@ const NonTeachingStaffTab = ({
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+      </Paper>
     </Box>
   );
 };

@@ -27,7 +27,12 @@ const StatCardSkeleton = ({ isDark, theme }) => (
       justifyContent: 'space-between',
     }}
   >
-    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: '12px', flexShrink: 0 }} />
+    <Skeleton
+      variant="rounded"
+      width={40}
+      height={40}
+      sx={{ borderRadius: '12px', flexShrink: 0 }}
+    />
     <Box sx={{ flexGrow: 1, pl: 1, textAlign: 'right' }}>
       <Skeleton variant="text" width="50%" height={28} sx={{ ml: 'auto' }} />
       <Skeleton variant="text" width="40%" height={16} sx={{ ml: 'auto' }} />
@@ -134,28 +139,43 @@ const StatCard = ({
             zIndex: 1,
           }}
         >
+          {isLeft && (
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: isDark ? '#ffffff' : '#4B5563',
+              }}
+            >
+              {label}
+            </Typography>
+          )}
+
           <Typography
             sx={{
               fontSize: isLeft ? 24 : 22,
               fontWeight: 800,
               lineHeight: 1,
               letterSpacing: '-0.02em',
+              mt: isLeft ? 0.5 : 0,
               color: isDark ? '#fff' : scheme.color,
             }}
           >
             {count}
           </Typography>
 
-          <Typography
-            sx={{
-              mt: 0.5,
-              fontSize: 13,
-              fontWeight: 600,
-              color: isDark ? '#ffffff' : '#4B5563',
-            }}
-          >
-            {label}
-          </Typography>
+          {!isLeft && (
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontSize: 13,
+                fontWeight: 600,
+                color: isDark ? '#ffffff' : '#4B5563',
+              }}
+            >
+              {label}
+            </Typography>
+          )}
 
           {subtitle && (
             <Typography
@@ -173,7 +193,9 @@ const StatCard = ({
       </Box>
 
       {progress !== undefined && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative', zIndex: 1 }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative', zIndex: 1 }}
+        >
           <LinearProgress
             variant="determinate"
             value={Math.min(100, Math.max(0, progress))}
@@ -206,9 +228,7 @@ const StatCard = ({
   if (tooltip) {
     return (
       <Tooltip title={tooltip} placement={tooltipPlacement} arrow>
-        <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>
-          {cardContent}
-        </Box>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>{cardContent}</Box>
       </Tooltip>
     );
   }

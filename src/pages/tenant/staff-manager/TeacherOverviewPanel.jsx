@@ -1,8 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Paper, Stack, Typography, Avatar, Chip, IconButton, Tabs, Tab, Skeleton, Alert, Button, Tooltip } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Stack,
+  Typography,
+  Avatar,
+  Chip,
+  IconButton,
+  Tabs,
+  Tab,
+  Skeleton,
+  Alert,
+  Button,
+  Tooltip,
+  Menu,
+  MenuItem,
+} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MessageIcon from '@mui/icons-material/Message';
 import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PersonIcon from '@mui/icons-material/Person';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import DeleteIcon from '@mui/icons-material/Delete';
 import BadgeIcon from '@mui/icons-material/Badge';
 import PhoneIcon from '@mui/icons-material/Phone';
 import EmailIcon from '@mui/icons-material/Email';
@@ -30,7 +52,19 @@ const INFO_ROW_COLORS = { appointment: '#2563EB', address: '#16A34A', emergency:
 
 const InfoRow = ({ icon: Icon, color, label, value }) => (
   <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1 }}>
-    <Box sx={{ width: 26, height: 26, borderRadius: 1, bgcolor: `${color}1A`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+    <Box
+      sx={{
+        width: 26,
+        height: 26,
+        borderRadius: 1,
+        bgcolor: `${color}1A`,
+        color,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}
+    >
       <Icon sx={{ fontSize: 15 }} />
     </Box>
     <Box sx={{ minWidth: 0 }}>
@@ -55,12 +89,23 @@ const InfoRow = ({ icon: Icon, color, label, value }) => (
  * fields — none of them have a real concept behind them in this codebase
  * (see GET /school_setup/staff/{id}/profile's own docblock).
  */
-const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
+const TeacherOverviewPanel = ({
+  staffRow,
+  onClose,
+  onEdit,
+  onSendMessage,
+  onImpersonate,
+  onUpdatePhoto,
+  onResetPassword,
+  onUpdateStatus,
+  onDelete,
+}) => {
   const notify = useNotification();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('overview');
   const [activityModalOpen, setActivityModalOpen] = useState(false);
+  const [moreAnchorEl, setMoreAnchorEl] = useState(null);
 
   const [activities, setActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
@@ -96,7 +141,9 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
     setActivitiesLoading(true);
     Promise.all([
       aclApi.getUserActivityLogs(staffRow.user_id, { limit: 10 }).catch(() => ({ data: [] })),
-      aclApi.getUserActivityLogsAsSubject(staffRow.user_id, { limit: 10 }).catch(() => ({ data: [] })),
+      aclApi
+        .getUserActivityLogsAsSubject(staffRow.user_id, { limit: 10 })
+        .catch(() => ({ data: [] })),
     ])
       .then(([caused, about]) => {
         const merged = [...(caused?.data || []), ...(about?.data || [])]
@@ -124,19 +171,31 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
 
   if (!staffRow) return null;
 
-  const fullName = profile?.name || `${staffRow.user?.fname || ''} ${staffRow.user?.lname || ''}`.trim();
+  const fullName =
+    profile?.name || `${staffRow.user?.fname || ''} ${staffRow.user?.lname || ''}`.trim();
   const subjects = profile?.subjects || [];
   const classes = profile?.classes || [];
   const emergencyContact = profile?.emergency_contact || {};
-  const hasEmergencyContact = emergencyContact.name || emergencyContact.phone || emergencyContact.address;
+  const hasEmergencyContact =
+    emergencyContact.name || emergencyContact.phone || emergencyContact.address;
   const isTeaching = profile?.staff_type !== 'non-teaching';
 
-  const todayKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getDay()];
+  const todayKey = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
+    new Date().getDay()
+  ];
   const todaysRows = schedule?.schedule?.[todayKey] || [];
 
   return (
-    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1.5 }}>
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2 }}
+    >
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        sx={{ mb: 1.5 }}
+      >
         <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
           <Avatar src={profile?.avatar || staffRow.user?.avatar} sx={{ width: 48, height: 48 }}>
             {fullName[0]}
@@ -194,15 +253,109 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
       )}
 
       <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
-        <Button size="small" variant="contained" startIcon={<MessageIcon sx={{ fontSize: 16 }} />} onClick={() => onSendMessage?.(staffRow)} sx={{ bgcolor: '#2563EB', '&:hover': { bgcolor: '#1D4ED8' }, fontSize: '0.75rem', px: 1.25 }}>
+        <Button
+          size="small"
+          variant="contained"
+          startIcon={<MessageIcon sx={{ fontSize: 16 }} />}
+          onClick={() => onSendMessage?.(staffRow)}
+          sx={{
+            bgcolor: '#2563EB',
+            '&:hover': { bgcolor: '#1D4ED8' },
+            fontSize: '0.75rem',
+            px: 1.25,
+          }}
+        >
           Send Message
         </Button>
-        <Button size="small" variant="outlined" startIcon={<EditIcon sx={{ fontSize: 16 }} />} onClick={() => onEdit?.(staffRow)} sx={{ fontSize: '0.75rem', px: 1.25 }}>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+          onClick={() => onEdit?.(staffRow)}
+          sx={{ fontSize: '0.75rem', px: 1.25 }}
+        >
           Edit
         </Button>
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={(e) => setMoreAnchorEl(e.currentTarget)}
+          sx={{ fontSize: '0.75rem', px: 1 }}
+        >
+          More <MoreVertIcon sx={{ fontSize: 16 }} />
+        </Button>
+        <Menu
+          anchorEl={moreAnchorEl}
+          open={Boolean(moreAnchorEl)}
+          onClose={() => setMoreAnchorEl(null)}
+        >
+          <MenuItem
+            onClick={() => {
+              setMoreAnchorEl(null);
+              onImpersonate?.(staffRow);
+            }}
+          >
+            <PersonIcon fontSize="small" sx={{ mr: 1, color: '#2563EB' }} />
+            Login As Staff
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMoreAnchorEl(null);
+              onUpdatePhoto?.(staffRow);
+            }}
+          >
+            <CameraAltIcon fontSize="small" sx={{ mr: 1, color: '#0D9488' }} />
+            Update Photo
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMoreAnchorEl(null);
+              onResetPassword?.(staffRow);
+            }}
+          >
+            <VpnKeyIcon fontSize="small" sx={{ mr: 1, color: '#0891B2' }} />
+            Reset Password
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMoreAnchorEl(null);
+              onUpdateStatus?.(staffRow);
+            }}
+            sx={{ color: profile?.status === 'active' ? 'warning.main' : 'success.main' }}
+          >
+            <ToggleOnIcon fontSize="small" sx={{ mr: 1 }} />
+            {profile?.status === 'active' ? 'Deactivate' : 'Activate'}
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setMoreAnchorEl(null);
+              onDelete?.(staffRow);
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+            Delete
+          </MenuItem>
+        </Menu>
       </Stack>
 
-      <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons={false} allowScrollButtonsMobile={false} sx={{ mb: 1.5, minHeight: 36, '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' } }}>
+      <Tabs
+        value={tab}
+        onChange={(e, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons={false}
+        allowScrollButtonsMobile={false}
+        sx={{
+          mb: 1.5,
+          minHeight: 36,
+          '& .MuiTab-root': {
+            minHeight: 36,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+          },
+        }}
+      >
         <Tab value="overview" label="Overview" />
         {isTeaching && <Tab value="subjects" label={`Subjects (${subjects.length})`} />}
         {isTeaching && <Tab value="classes" label={`Classes (${classes.length})`} />}
@@ -219,27 +372,48 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
         <Alert severity="error">Failed to load this teacher's profile.</Alert>
       ) : tab === 'overview' ? (
         <Box>
-          <InfoRow icon={EventIcon} color={INFO_ROW_COLORS.appointment} label="Date of Appointment" value={profile.date_of_appointment} />
-          <InfoRow icon={HomeIcon} color={INFO_ROW_COLORS.address} label="Address" value={profile.address} />
+          <InfoRow
+            icon={EventIcon}
+            color={INFO_ROW_COLORS.appointment}
+            label="Date of Appointment"
+            value={profile.date_of_appointment}
+          />
+          <InfoRow
+            icon={HomeIcon}
+            color={INFO_ROW_COLORS.address}
+            label="Address"
+            value={profile.address}
+          />
           <InfoRow
             icon={ContactEmergencyIcon}
             color={INFO_ROW_COLORS.emergency}
             label="Emergency Contact"
             value={
               hasEmergencyContact
-                ? [emergencyContact.name, emergencyContact.relationship, emergencyContact.phone].filter(Boolean).join(' · ')
+                ? [emergencyContact.name, emergencyContact.relationship, emergencyContact.phone]
+                    .filter(Boolean)
+                    .join(' · ')
                 : null
             }
           />
 
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 2, mb: 1 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ mt: 2, mb: 1 }}
+          >
             <Stack direction="row" spacing={0.75} alignItems="center">
               <HistoryIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
               <Typography variant="subtitle2" fontWeight={800}>
                 Recent Activity
               </Typography>
             </Stack>
-            <Button size="small" onClick={() => setActivityModalOpen(true)} sx={{ fontSize: '0.7rem' }}>
+            <Button
+              size="small"
+              onClick={() => setActivityModalOpen(true)}
+              sx={{ fontSize: '0.7rem' }}
+            >
               View All
             </Button>
           </Stack>
@@ -258,13 +432,28 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
               <Stack spacing={1.5}>
                 {activities.map((item) => (
                   <Stack key={item.id} direction="row" spacing={1.5} alignItems="flex-start">
-                    <Box sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#F3E8FF', color: '#7C3AED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        bgcolor: '#F3E8FF',
+                        color: '#7C3AED',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
                       <HistoryIcon sx={{ fontSize: 15 }} />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography variant="body2">{item.description || 'Activity logged'}</Typography>
+                      <Typography variant="body2">
+                        {item.description || 'Activity logged'}
+                      </Typography>
                       <Typography variant="caption" color="text.disabled">
-                        {item.my_updated_at || (item.created_at ? dayjs(item.created_at).fromNow() : 'Recently')}
+                        {item.my_updated_at ||
+                          (item.created_at ? dayjs(item.created_at).fromNow() : 'Recently')}
                       </Typography>
                     </Box>
                   </Stack>
@@ -282,8 +471,26 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
               const SubjectIcon = getSubjectIcon(s.subject_name);
               const color = getSubjectColor({ id: s.subject_id });
               return (
-                <Stack key={s.id} direction="row" spacing={1} alignItems="center" sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-                  <Box sx={{ width: 26, height: 26, borderRadius: 1, bgcolor: color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Stack
+                  key={s.id}
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                >
+                  <Box
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: 1,
+                      bgcolor: color,
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
                     <SubjectIcon sx={{ fontSize: 14 }} />
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
@@ -305,8 +512,26 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
             <Alert severity="info">Not a class teacher for any arm this term.</Alert>
           ) : (
             classes.map((c) => (
-              <Stack key={c.id} direction="row" spacing={1} alignItems="center" sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: 1, bgcolor: '#F3E8FF', color: '#7E22CE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Stack
+                key={c.id}
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+              >
+                <Box
+                  sx={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 1,
+                    bgcolor: '#F3E8FF',
+                    color: '#7E22CE',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
                   <SchoolIcon sx={{ fontSize: 15 }} />
                 </Box>
                 <Typography variant="body2" fontWeight={700}>
@@ -353,7 +578,13 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
               <Alert severity="info">No classes scheduled today.</Alert>
             ) : (
               todaysRows.map((row) => (
-                <Stack key={row.slot_id} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
+                <Stack
+                  key={row.slot_id}
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                >
                   <Box sx={{ minWidth: 0 }}>
                     <Typography variant="caption" fontWeight={700} color="text.secondary">
                       {row.period.start_time?.slice(0, 5)}-{row.period.end_time?.slice(0, 5)}
@@ -372,7 +603,11 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
         </Box>
       )}
 
-      <ActivityLogModal open={activityModalOpen} onClose={() => setActivityModalOpen(false)} user={{ user_id: profile?.user_id }} />
+      <ActivityLogModal
+        open={activityModalOpen}
+        onClose={() => setActivityModalOpen(false)}
+        user={{ user_id: profile?.user_id }}
+      />
     </Paper>
   );
 };

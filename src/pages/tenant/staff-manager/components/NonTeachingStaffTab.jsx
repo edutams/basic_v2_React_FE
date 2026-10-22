@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -22,6 +22,8 @@ import {
   Tooltip,
   Paper,
   Stack,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -87,9 +89,28 @@ const NonTeachingStaffTab = ({
   onBulkDelete,
   onRowClick,
   selectedStaffId,
+  totalCount = 0,
+  activeCount = 0,
+  inactiveCount = 0,
 }) => {
+  const [groupByRole, setGroupByRole] = useState(false);
+
   const allSelected = staff.length > 0 && staff.every((s) => selectedIds.has(s.user_id));
   const someSelected = staff.some((s) => selectedIds.has(s.user_id)) && !allSelected;
+
+  // "By Role" groups this page's rows under a header per distinct role —
+  // a lightweight client-side grouping of whatever's currently loaded,
+  // not a separate server query.
+  const roleGroups = useMemo(() => {
+    if (!groupByRole) return null;
+    const groups = new Map();
+    staff.forEach((s) => {
+      const key = s.role || 'Unassigned';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(s);
+    });
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [groupByRole, staff]);
 
   const toggleAll = () => {
     const next = new Set(selectedIds);
@@ -113,6 +134,33 @@ const NonTeachingStaffTab = ({
 
   return (
     <Box>
+      {/* Quick-filter tabs */}
+      <Tabs
+        value={
+          groupByRole
+            ? 'by_role'
+            : statusFilter === 'active' || statusFilter === 'inactive'
+              ? statusFilter
+              : 'all'
+        }
+        onChange={(_, v) => {
+          if (v === 'by_role') {
+            setGroupByRole(true);
+            return;
+          }
+          setGroupByRole(false);
+          setStatusFilter(v);
+        }}
+        variant="scrollable"
+        scrollButtons={false}
+        sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Tab value="all" label={`All Staff (${totalCount})`} />
+        <Tab value="active" label={`Active (${activeCount})`} />
+        <Tab value="inactive" label={`Inactive (${inactiveCount})`} />
+        <Tab value="by_role" label="By Role" />
+      </Tabs>
+
       {/* Toolbar */}
       <Paper
         variant="outlined"
@@ -223,7 +271,7 @@ const NonTeachingStaffTab = ({
           </Button>
           <Button
             size="small"
-            color="primary"
+            color="warning"
             variant="contained"
             startIcon={<IconX size={14} />}
             onClick={onBulkDeactivate}
@@ -327,7 +375,30 @@ const NonTeachingStaffTab = ({
                   </TableCell>
                 </TableRow>
               ) : (
-                staff.map((staffMember, index) => {
+                (groupByRole
+                  ? roleGroups.flatMap(([role, rows], gi) => [
+                      { __header: role, __count: rows.length, key: `role-header-${gi}` },
+                      ...rows,
+                    ])
+                  : staff
+                ).map((staffMember, index) => {
+                  if (staffMember.__header) {
+                    return (
+                      <TableRow key={staffMember.key}>
+                        <TableCell
+                          colSpan={7}
+                          sx={{
+                            bgcolor: (theme) =>
+                              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#f3f4f6',
+                            fontWeight: 700,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {staffMember.__header} ({staffMember.__count})
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
                   const isRowSelected = selectedIds.has(staffMember.user_id);
                   return (
                     <TableRow

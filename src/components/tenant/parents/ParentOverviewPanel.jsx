@@ -26,13 +26,18 @@ import {
   PersonAddAlt as PersonAddAltIcon,
   AccountBalanceWallet as AccountBalanceWalletIcon,
   ToggleOn as ToggleOnIcon,
+  AccessTime as AccessTimeIcon,
 } from '@mui/icons-material';
 import { IconUser, IconTrash } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import ViewWardsContent from './ViewWardsContent';
 import ParentWalletContent from './ParentWalletContent';
 import CommunicationLogContent from './CommunicationLogContent';
 import RecentActivityContent from './RecentActivityContent';
+
+dayjs.extend(relativeTime);
 
 const relationshipLabel = (rel) => (rel ? rel.charAt(0).toUpperCase() + rel.slice(1) : '—');
 
@@ -151,6 +156,12 @@ const ParentOverviewPanel = ({
             <Typography variant="body2">{user.address}</Typography>
           </Stack>
         )}
+        <Stack direction="row" spacing={1} alignItems="center">
+          <AccessTimeIcon sx={{ fontSize: 16, color: '#D97706' }} />
+          <Typography variant="body2">
+            Last Login: {user?.last_active_at ? dayjs(user.last_active_at).fromNow() : 'Never'}
+          </Typography>
+        </Stack>
       </Stack>
 
       <Stack direction="row" spacing={0.75} sx={{ mb: 2, flexShrink: 0 }}>

@@ -820,7 +820,8 @@ const LearnerManagement = () => {
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
             variant="scrollable"
-            scrollButtons="auto"
+            scrollButtons={false}
+            allowScrollButtonsMobile={false}
             sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
           >
             {TABS.map((t) => (

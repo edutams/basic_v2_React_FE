@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Tabs, Tab, Button } from '@mui/material';
-import { SwapHoriz as MigrateIcon } from '@mui/icons-material';
+import { Box } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
@@ -26,41 +25,23 @@ const TeachingAllocations = () => {
     <PageContainer title="Teaching Allocations" description="Assign class and subject teachers">
       <Breadcrumb title="Teaching Allocations" items={BCrumb} />
 
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: 'divider',
-          mb: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={(e, newValue) => setActiveTab(newValue)}
-          sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px' } }}
-        >
-          <Tab label="Class Teacher Allocation" value="class" />
-          <Tab label="Subject Teacher Allocation" value="subject" />
-        </Tabs>
-
-        <Button
-          variant="contained"
-          size="small"
-          startIcon={<MigrateIcon />}
-          onClick={() => setMigrateModalOpen(true)}
-          sx={{ whiteSpace: 'nowrap', mb: 1 }}
-        >
-          Migrate from Previous Term
-        </Button>
-      </Box>
-
       <Box>
-        {activeTab === 'class' && <ClassTeacherAllocation key={`class-${refreshKey}`} />}
-        {activeTab === 'subject' && <SubjectTeacherAllocation key={`subject-${refreshKey}`} />}
+        {activeTab === 'class' && (
+          <ClassTeacherAllocation
+            key={`class-${refreshKey}`}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onOpenMigrate={() => setMigrateModalOpen(true)}
+          />
+        )}
+        {activeTab === 'subject' && (
+          <SubjectTeacherAllocation
+            key={`subject-${refreshKey}`}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onOpenMigrate={() => setMigrateModalOpen(true)}
+          />
+        )}
       </Box>
 
       <TermMigrationModal

@@ -39,6 +39,8 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import tenantApi from '@/api/tenant/tenant_api';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
 import aclApi from '@/api/tenant/acl/aclApi';
+import staffApi from '@/api/tenant/staffs/staffApi';
+import WorkHistoryIcon from '@mui/icons-material/WorkHistory';
 import { useNotification } from '@/hooks/useNotification';
 import { ActivityLogModal } from './non-teaching-dashboard/components/Activity-log';
 import { getSubjectColor } from '@/utils/subjectColor';
@@ -113,6 +115,9 @@ const TeacherOverviewPanel = ({
   const [schedule, setSchedule] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
+  const [statusHistory, setStatusHistory] = useState(null);
+  const [statusHistoryLoading, setStatusHistoryLoading] = useState(false);
+
   const fetchProfile = useCallback(async () => {
     if (!staffRow?.user_id) return;
     setLoading(true);
@@ -167,6 +172,20 @@ const TeacherOverviewPanel = ({
 
   useEffect(() => {
     setSchedule(null);
+  }, [staffRow?.user_id]);
+
+  useEffect(() => {
+    if (tab !== 'roles' || !staffRow?.user_id || statusHistory) return;
+    setStatusHistoryLoading(true);
+    staffApi
+      .getStatusHistory(staffRow.user_id)
+      .then((res) => setStatusHistory(res.data || []))
+      .catch(() => setStatusHistory([]))
+      .finally(() => setStatusHistoryLoading(false));
+  }, [tab, staffRow?.user_id, statusHistory]);
+
+  useEffect(() => {
+    setStatusHistory(null);
   }, [staffRow?.user_id]);
 
   if (!staffRow) return null;
@@ -360,6 +379,8 @@ const TeacherOverviewPanel = ({
         {isTeaching && <Tab value="subjects" label={`Subjects (${subjects.length})`} />}
         {isTeaching && <Tab value="classes" label={`Classes (${classes.length})`} />}
         {isTeaching && <Tab value="timetable" label="Timetable" />}
+        {!isTeaching && <Tab value="roles" label="Roles & Functions" />}
+        {!isTeaching && <Tab value="activity" label="Activity" />}
       </Tabs>
 
       {loading ? (
@@ -537,6 +558,118 @@ const TeacherOverviewPanel = ({
                 <Typography variant="body2" fontWeight={700}>
                   {c.class_name}
                 </Typography>
+              </Stack>
+            ))
+          )}
+        </Stack>
+      ) : tab === 'roles' ? (
+        <Box>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ p: 1.5, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+          >
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: 1,
+                bgcolor: '#F3E8FF',
+                color: '#7E22CE',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <BadgeIcon sx={{ fontSize: 17 }} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="caption" color="text.secondary">
+                Role
+              </Typography>
+              <Typography variant="body2" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                {profile.role || 'N/A'}
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 1 }}>
+            <WorkHistoryIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+            <Typography variant="subtitle2" fontWeight={800}>
+              Status History
+            </Typography>
+          </Stack>
+          {statusHistoryLoading ? (
+            <Stack spacing={1}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} variant="rounded" height={36} />
+              ))}
+            </Stack>
+          ) : !statusHistory || statusHistory.length === 0 ? (
+            <Alert severity="info">No status changes recorded yet.</Alert>
+          ) : (
+            <Stack spacing={1}>
+              {statusHistory.map((h) => (
+                <Stack
+                  key={h.id}
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                      {h.old_status} → {h.new_status}
+                    </Typography>
+                    {h.reason && (
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {h.reason}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Typography variant="caption" color="text.disabled">
+                    {h.created_at ? dayjs(h.created_at).fromNow() : ''}
+                  </Typography>
+                </Stack>
+              ))}
+            </Stack>
+          )}
+        </Box>
+      ) : tab === 'activity' ? (
+        <Stack spacing={1.5}>
+          {activitiesLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={36} />
+            ))
+          ) : activities.length === 0 ? (
+            <Alert severity="info">No recent activity yet.</Alert>
+          ) : (
+            activities.map((item) => (
+              <Stack key={item.id} direction="row" spacing={1.5} alignItems="flex-start">
+                <Box
+                  sx={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    bgcolor: '#F3E8FF',
+                    color: '#7C3AED',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <HistoryIcon sx={{ fontSize: 15 }} />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography variant="body2">{item.description || 'Activity logged'}</Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    {item.my_updated_at ||
+                      (item.created_at ? dayjs(item.created_at).fromNow() : 'Recently')}
+                  </Typography>
+                </Box>
               </Stack>
             ))
           )}

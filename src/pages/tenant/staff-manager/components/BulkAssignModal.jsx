@@ -35,6 +35,8 @@ const BulkAssignModal = ({ open, onClose, mode, teachers, classOptions, subjectO
   const [sharedClassArmId, setSharedClassArmId] = useState(''); // subjects mode
   const [subjectRows, setSubjectRows] = useState({}); // user_id => subject_id (subjects mode)
   const [submitting, setSubmitting] = useState(false);
+  const [classSubjects, setClassSubjects] = useState([]); // this class arm's own curriculum subjects
+  const [classSubjectsLoading, setClassSubjectsLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +65,31 @@ const BulkAssignModal = ({ open, onClose, mode, teachers, classOptions, subjectO
       }
     })();
   }, [open, notify]);
+
+  const classArmLabel = (c) => [c?.programme_class?.class?.class_code, c?.class_arm_names].filter(Boolean).join(' ') || 'N/A';
+
+  // Subjects mode only ever assigns within ONE shared class arm, so the
+  // subject picker must be scoped to that class's own curriculum — not
+  // every subject in the school — otherwise an admin could pick a subject
+  // this class never even teaches.
+  useEffect(() => {
+    if (mode !== 'subjects' || !sharedClassArmId) {
+      setClassSubjects([]);
+      return;
+    }
+    const classArm = (classOptions || []).find((c) => c.id === sharedClassArmId);
+    const programmeId = classArm?.programme_class?.programme_id;
+    if (!programmeId) {
+      setClassSubjects([]);
+      return;
+    }
+    setClassSubjectsLoading(true);
+    allocationApi
+      .getSubjectTeacherAllocations({ programme_id: programmeId, class_arm_id: sharedClassArmId })
+      .then((res) => setClassSubjects(res?.data || []))
+      .catch(() => setClassSubjects([]))
+      .finally(() => setClassSubjectsLoading(false));
+  }, [mode, sharedClassArmId, classOptions]);
 
   const teacherName = (t) => `${t.user?.fname || ''} ${t.user?.lname || ''}`.trim();
 
@@ -130,8 +157,6 @@ const BulkAssignModal = ({ open, onClose, mode, teachers, classOptions, subjectO
     }
   };
 
-  const classArmLabel = (c) => [c?.programme_class?.class?.class_code, c?.class_arm_names].filter(Boolean).join(' ') || 'N/A';
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{mode === 'classes' ? 'Bulk Assign Classes' : 'Bulk Assign Subjects'}</DialogTitle>
@@ -194,13 +219,13 @@ const BulkAssignModal = ({ open, onClose, mode, teachers, classOptions, subjectO
                       displayEmpty
                       value={subjectRows[t.user_id] || ''}
                       onChange={(e) => setSubjectRows((r) => ({ ...r, [t.user_id]: e.target.value }))}
-                      disabled={!sharedClassArmId}
+                      disabled={!sharedClassArmId || classSubjectsLoading}
                     >
                       <MenuItem value="">
-                        <em>None</em>
+                        <em>{classSubjectsLoading ? 'Loading…' : 'None'}</em>
                       </MenuItem>
-                      {(subjectOptions || []).map((s) => (
-                        <MenuItem key={s.id} value={s.id}>
+                      {classSubjects.map((s) => (
+                        <MenuItem key={s.subject_id} value={s.subject_id}>
                           {s.subject_name}
                         </MenuItem>
                       ))}

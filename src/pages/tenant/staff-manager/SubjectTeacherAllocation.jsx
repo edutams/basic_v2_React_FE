@@ -50,6 +50,7 @@ import {
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from '@/components/shared/StatCard';
+import AllocationSubTabs from '@/pages/tenant/teaching-allocations/AllocationSubTabs';
 import UploadStaffForm from './components/UploadStaffForm';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
 import { fetchProgrammes } from '@/api/tenant/curriculum/tenantCurriculumApi';
@@ -95,7 +96,7 @@ const LOAD_BUCKETS = [
   { label: '11+', min: 11, max: Infinity },
 ];
 
-const SubjectTeacherAllocation = () => {
+const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
   const notify = useNotification();
 
   const [sessions, setSessions] = useState([]);
@@ -147,6 +148,11 @@ const SubjectTeacherAllocation = () => {
   const [popoverCandidates, setPopoverCandidates] = useState([]);
   const [popoverLoading, setPopoverLoading] = useState(false);
   const [popoverExpanded, setPopoverExpanded] = useState(false);
+
+  // "Class Actions" dropdown — consolidates this arm's Auto-Allocate /
+  // Download / Upload / Copy actions into one menu button in the panel
+  // header, alongside the identical standalone toolbar buttons above.
+  const [classActionsAnchorEl, setClassActionsAnchorEl] = useState(null);
 
   // Row action menu
   const [rowMenu, setRowMenu] = useState({ anchorEl: null, subject: null });
@@ -705,6 +711,8 @@ const SubjectTeacherAllocation = () => {
         </Grid>
       </Grid>
 
+      <AllocationSubTabs activeTab={activeTab} onTabChange={onTabChange} onOpenMigrate={onOpenMigrate} />
+
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
         Select a class, pick an arm, then allocate a teacher to each of its subjects. A teacher is
         assigned per class arm — a class with several arms can have a different teacher per arm
@@ -832,11 +840,11 @@ const SubjectTeacherAllocation = () => {
               <Button
                 size="small"
                 variant="contained"
-                startIcon={<IconDownload size={16} />}
-                onClick={handleDownloadTemplate}
+                startIcon={<IconUpload size={16} />}
+                onClick={() => setUploadModalOpen(true)}
                 disabled={!selectedArmId}
               >
-                Export
+                Import
               </Button>
             </span>
           </Tooltip>
@@ -845,11 +853,11 @@ const SubjectTeacherAllocation = () => {
               <Button
                 size="small"
                 variant="contained"
-                startIcon={<IconUpload size={16} />}
-                onClick={() => setUploadModalOpen(true)}
+                startIcon={<IconDownload size={16} />}
+                onClick={handleDownloadTemplate}
                 disabled={!selectedArmId}
               >
-                Import
+                Export
               </Button>
             </span>
           </Tooltip>
@@ -1010,14 +1018,24 @@ const SubjectTeacherAllocation = () => {
                       />
                     </Tooltip>
                   </Box>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleSaveChanges}
-                    disabled={Object.keys(pendingAssignments).length === 0 || saving}
-                  >
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </Button>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      endIcon={<IconChevronDown size={14} />}
+                      onClick={(e) => setClassActionsAnchorEl(e.currentTarget)}
+                    >
+                      Class Actions
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleSaveChanges}
+                      disabled={Object.keys(pendingAssignments).length === 0 || saving}
+                    >
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </Button>
+                  </Stack>
                 </Box>
                 <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap" alignItems="center">
                   <Typography variant="body2" color="text.primary">
@@ -1273,28 +1291,61 @@ const SubjectTeacherAllocation = () => {
             </Box>
           ) : (
             <List dense disablePadding sx={{ maxHeight: 280, overflowY: 'auto' }}>
-              {filteredPopoverCandidates.map((candidate) => (
-                <ListItemButton
-                  key={candidate.user_id}
-                  onClick={() => handlePickTeacher(popover.subjectId, candidate)}
-                  sx={{ borderRadius: 1 }}
-                >
-                  <ListItemAvatar>
-                    <Avatar
-                      src={candidate.avatar}
-                      sx={{ width: 28, height: 28, fontSize: 11, bgcolor: '#16A34A' }}
-                    >
-                      {initials(candidate.name)}
-                    </Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={candidate.name}
-                    secondary={`${candidate.subject_teacher_count} assignment${candidate.subject_teacher_count !== 1 ? 's' : ''}`}
-                    primaryTypographyProps={{ variant: 'body2' }}
-                    secondaryTypographyProps={{ variant: 'caption' }}
-                  />
-                </ListItemButton>
-              ))}
+              {filteredPopoverCandidates.map((candidate) => {
+                const candidateLoadPct = Math.min(
+                  100,
+                  Math.round((candidate.subject_teacher_count / WORKLOAD_REFERENCE_MAX) * 100),
+                );
+                const isCurrent = candidate.user_id === popover.excludingUserId;
+                return (
+                  <ListItemButton
+                    key={candidate.user_id}
+                    onClick={() => handlePickTeacher(popover.subjectId, candidate)}
+                    sx={{ borderRadius: 1 }}
+                  >
+                    <ListItemAvatar>
+                      <Avatar
+                        src={candidate.avatar}
+                        sx={{ width: 28, height: 28, fontSize: 11, bgcolor: '#16A34A' }}
+                      >
+                        {initials(candidate.name)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={candidate.name}
+                      secondary={
+                        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.25 }}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={candidateLoadPct}
+                            sx={{
+                              flex: 1,
+                              height: 5,
+                              borderRadius: 3,
+                              bgcolor: '#E5E7EB',
+                              '& .MuiLinearProgress-bar': {
+                                borderRadius: 3,
+                                bgcolor:
+                                  candidateLoadPct >= 80
+                                    ? '#DC2626'
+                                    : candidateLoadPct >= 50
+                                      ? '#D97706'
+                                      : '#16A34A',
+                              },
+                            }}
+                          />
+                          <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
+                            {candidate.subject_teacher_count}/{WORKLOAD_REFERENCE_MAX} ({candidateLoadPct}%)
+                          </Typography>
+                        </Stack>
+                      }
+                      primaryTypographyProps={{ variant: 'body2' }}
+                      secondaryTypographyProps={{ component: 'div' }}
+                    />
+                    {isCurrent && <IconCircleCheck size={16} color="#2563EB" />}
+                  </ListItemButton>
+                );
+              })}
             </List>
           )}
           {!popoverExpanded && (
@@ -1304,6 +1355,55 @@ const SubjectTeacherAllocation = () => {
           )}
         </Box>
       </Popover>
+
+      {/* Class Actions menu — this arm's Auto-Allocate/Download/Upload/Copy,
+          consolidated for convenience; same handlers as the toolbar buttons. */}
+      <Menu
+        anchorEl={classActionsAnchorEl}
+        open={Boolean(classActionsAnchorEl)}
+        onClose={() => setClassActionsAnchorEl(null)}
+      >
+        <MenuItem
+          disabled={!selectedArmId || autoAllocating}
+          onClick={() => {
+            setClassActionsAnchorEl(null);
+            setAutoAllocateConfirmOpen(true);
+          }}
+        >
+          <IconWand size={16} style={{ marginRight: 8 }} />
+          Auto-Allocate This Arm
+        </MenuItem>
+        <MenuItem
+          disabled={!selectedArmId}
+          onClick={() => {
+            setClassActionsAnchorEl(null);
+            setUploadModalOpen(true);
+          }}
+        >
+          <IconUpload size={16} style={{ marginRight: 8 }} />
+          Import Template
+        </MenuItem>
+        <MenuItem
+          disabled={!selectedArmId}
+          onClick={() => {
+            setClassActionsAnchorEl(null);
+            handleDownloadTemplate();
+          }}
+        >
+          <IconDownload size={16} style={{ marginRight: 8 }} />
+          Export Template
+        </MenuItem>
+        <MenuItem
+          disabled={!selectedArmId || armFlatList.length < 2}
+          onClick={() => {
+            setClassActionsAnchorEl(null);
+            setCopyModalOpen(true);
+          }}
+        >
+          <IconCopy size={16} style={{ marginRight: 8 }} />
+          Copy from Another Arm
+        </MenuItem>
+      </Menu>
 
       {/* Row action menu */}
       <Menu

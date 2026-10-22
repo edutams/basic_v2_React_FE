@@ -650,31 +650,6 @@ const ParentManagement = () => {
             '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
           }}
         >
-          {/* ── tabs ── */}
-          <Tabs
-            value={activeTab}
-            onChange={(_, v) => setActiveTab(v)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
-          >
-            {TABS.map((t) => (
-              <Tab
-                key={t.key}
-                value={t.key}
-                label={
-                  t.key === 'needs_attention' ? (
-                    <Badge badgeContent={stats[t.countKey] ?? 0} color="error" sx={{ pr: 1 }}>
-                      {t.label}
-                    </Badge>
-                  ) : (
-                    `${t.label} (${stats[t.countKey] ?? 0})`
-                  )
-                }
-              />
-            ))}
-          </Tabs>
-
           {/* ── filters ── */}
           <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
             <TextField
@@ -761,6 +736,31 @@ const ParentManagement = () => {
               </Button>
             )}
           </Box>
+
+          {/* ── tabs ── */}
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
+          >
+            {TABS.map((t) => (
+              <Tab
+                key={t.key}
+                value={t.key}
+                label={
+                  t.key === 'needs_attention' ? (
+                    <Badge badgeContent={stats[t.countKey] ?? 0} color="error" sx={{ pr: 1 }}>
+                      {t.label}
+                    </Badge>
+                  ) : (
+                    `${t.label} (${stats[t.countKey] ?? 0})`
+                  )
+                }
+              />
+            ))}
+          </Tabs>
 
           {/* ── bulk action bar ── */}
           {selectedIds.size > 0 && (

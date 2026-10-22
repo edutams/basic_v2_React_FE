@@ -144,10 +144,9 @@ const ViewWardsContent = ({ guardian, onClose, variant = 'table' }) => {
                       {fullName}
                     </Typography>
                     <Typography variant="caption" color="text.secondary" noWrap>
-                      {ward.user_id || '—'}
+                      {classArm} | {ward.user_id || '—'}
                     </Typography>
                   </Box>
-                  <Chip label={classArm} size="small" variant="outlined" />
                 </Stack>
               );
             })

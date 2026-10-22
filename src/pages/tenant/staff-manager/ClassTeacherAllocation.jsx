@@ -39,6 +39,7 @@ import {
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from '@/components/shared/StatCard';
+import AllocationSubTabs from '@/pages/tenant/teaching-allocations/AllocationSubTabs';
 import UploadStaffForm from './components/UploadStaffForm';
 import ClassArmDetailPanel from './components/ClassArmDetailPanel';
 import staffApi from '@/api/tenant/staffs/staffApi';
@@ -71,7 +72,7 @@ const formatClassList = (names) => {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 };
 
-const ClassTeacherAllocation = () => {
+const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
   const notify = useNotification();
   const [loading, setLoading] = useState(false);
   const [allocations, setAllocations] = useState([]);
@@ -99,6 +100,7 @@ const ClassTeacherAllocation = () => {
 
   // Right-side detail panel — set to one allocation row to show it.
   const [detailArm, setDetailArm] = useState(null);
+  const [detailInitialTab, setDetailInitialTab] = useState('overview');
 
   // Auto-Allocate
   const [autoAllocateConfirmOpen, setAutoAllocateConfirmOpen] = useState(false);
@@ -474,8 +476,9 @@ const ClassTeacherAllocation = () => {
     }
   };
 
-  const handleRowOpenDetail = (allocation) => {
+  const handleRowOpenDetail = (allocation, initialTab = 'overview') => {
     setDetailArm(allocation);
+    setDetailInitialTab(initialTab);
   };
 
   // Called from the Suggested Teachers panel — saves immediately (unlike
@@ -626,6 +629,8 @@ const ClassTeacherAllocation = () => {
           </Grid>
         ))}
       </Grid>
+
+      <AllocationSubTabs activeTab={activeTab} onTabChange={onTabChange} onOpenMigrate={onOpenMigrate} />
 
       {/* Description + legend */}
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
@@ -966,6 +971,7 @@ const ClassTeacherAllocation = () => {
                       </Box>
 
                       <Collapse in={!collapsed}>
+                        <Box sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
                         <TableContainer>
                           <Table>
                             <TableHead>
@@ -995,7 +1001,18 @@ const ClassTeacherAllocation = () => {
                                   }}
                                 >
                                   <TableCell>{allocation.arm_name}</TableCell>
-                                  <TableCell>{allocation.student_count ?? 0}</TableCell>
+                                  <TableCell onClick={(e) => e.stopPropagation()}>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                      <span>{allocation.student_count ?? 0}</span>
+                                      <Button
+                                        size="small"
+                                        onClick={() => handleRowOpenDetail(allocation, 'students')}
+                                        sx={{ minWidth: 0, p: 0, fontSize: '0.7rem', textTransform: 'none' }}
+                                      >
+                                        View Students
+                                      </Button>
+                                    </Stack>
+                                  </TableCell>
                                   <TableCell onClick={(e) => e.stopPropagation()}>
                                     <Box sx={{ bgcolor: '#fcfcfcff', p: 1, borderRadius: 1 }}>
                                       <TextField
@@ -1060,6 +1077,7 @@ const ClassTeacherAllocation = () => {
                             </TableBody>
                           </Table>
                         </TableContainer>
+                        </Box>
                       </Collapse>
                     </Paper>
                   );
@@ -1075,6 +1093,7 @@ const ClassTeacherAllocation = () => {
               arm={detailArm}
               programmeId={selectedProgramme}
               sessionTermId={selectedTerm}
+              initialTab={detailInitialTab}
               onClose={() => setDetailArm(null)}
               onAssignTeacher={handleAssignFromPanel}
               onRemoved={() => {

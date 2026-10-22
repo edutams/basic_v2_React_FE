@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Paper,
@@ -79,9 +79,11 @@ const ClassArmDetailPanel = ({
   onClose,
   onAssignTeacher,
   onRemoved,
+  initialTab,
 }) => {
   const notify = useNotification();
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(initialTab || 'overview');
+  const suggestedSectionRef = useRef(null);
 
   const [suggested, setSuggested] = useState([]);
   const [suggestedLoading, setSuggestedLoading] = useState(false);
@@ -115,7 +117,7 @@ const ClassArmDetailPanel = ({
   // Fetched eagerly (not lazily on tab click) so the Students/Subjects tab
   // labels can show a real "(N)" count as soon as the panel opens.
   useEffect(() => {
-    setTab('overview');
+    setTab(initialTab || 'overview');
     fetchSuggested();
 
     setRosterLoading(true);
@@ -189,7 +191,7 @@ const ClassArmDetailPanel = ({
           </IconButton>
         </Box>
 
-        <Box sx={{ mt: 1.5 }}>
+        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           {arm.teacher_id ? (
             <Chip
               avatar={<Avatar sx={{ bgcolor: '#16A34A' }}>{initials(arm.teacher_name)}</Avatar>}
@@ -198,12 +200,28 @@ const ClassArmDetailPanel = ({
               sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600 }}
             />
           ) : (
-            <Chip
-              icon={<IconUserExclamation size={14} />}
-              label="No class teacher assigned"
-              size="small"
-              color="warning"
-            />
+            <>
+              <Chip
+                icon={<IconUserExclamation size={14} />}
+                label="Class Teacher: Not Assigned"
+                size="small"
+                color="warning"
+              />
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={<IconUserPlus size={14} />}
+                onClick={() => {
+                  setTab('overview');
+                  requestAnimationFrame(() =>
+                    suggestedSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+                  );
+                }}
+                sx={{ fontSize: '0.75rem' }}
+              >
+                Assign Teacher
+              </Button>
+            </>
           )}
         </Box>
       </Box>
@@ -295,6 +313,7 @@ const ClassArmDetailPanel = ({
             <Divider sx={{ mb: 2 }} />
 
             <Box
+              ref={suggestedSectionRef}
               sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
             >
               <Typography variant="subtitle2" fontWeight={700}>

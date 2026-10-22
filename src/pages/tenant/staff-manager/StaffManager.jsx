@@ -987,6 +987,9 @@ const StaffManager = () => {
                 setSearchQuery={setSearchQuery}
                 statusFilter={statusFilter}
                 setStatusFilter={setStatusFilter}
+                totalCount={stats.nonTeaching}
+                activeCount={stats.activeNonTeaching}
+                inactiveCount={stats.inactiveNonTeaching}
                 roleFilter={roleFilter}
                 setRoleFilter={setRoleFilter}
                 roleOptions={roleOptions}

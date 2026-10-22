@@ -64,7 +64,6 @@ import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import TeacherOverviewPanel from './TeacherOverviewPanel';
-import TeacherTimetableView from '@/pages/tenant/timetable/TeacherTimetableView';
 import BulkAssignModal from './components/BulkAssignModal';
 import UploadStaffModal from './components/UploadStaffModal';
 import StaffStatusModal from './components/StaffStatusModal';
@@ -835,35 +834,33 @@ const StaffManager = () => {
             Manage teaching and non-teaching staff, allocations and timetables.
           </Typography>
         </Box>
-        {activeTab !== 'timetable' && (
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconDownload size={16} />}
-              onClick={handleDownloadTemplate}
-            >
-              Export Report
-            </Button>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<IconUpload size={16} />}
-              onClick={handleUploadStaff}
-            >
-              {activeTab === 'non-teaching' ? 'Import Non-Teaching Staff' : 'Import Teachers'}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              color="primary"
-              startIcon={<IconPlus size={16} />}
-              onClick={handleAddStaff}
-            >
-              {activeTab === 'non-teaching' ? 'Add Non-Teaching Staff' : 'Add Teacher'}
-            </Button>
-          </Box>
-        )}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconUpload size={16} />}
+            onClick={handleUploadStaff}
+          >
+            {activeTab === 'non-teaching' ? 'Import Staff' : 'Import Teachers'}
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<IconDownload size={16} />}
+            onClick={handleDownloadTemplate}
+          >
+            Export Report
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={<IconPlus size={16} />}
+            onClick={handleAddStaff}
+          >
+            {activeTab === 'non-teaching' ? 'Add Non-Teaching Staff' : 'Add Teacher'}
+          </Button>
+        </Box>
       </Stack>
 
       {/* Stat Cards */}
@@ -902,28 +899,14 @@ const StaffManager = () => {
         >
           <Tab label={`Teaching Staff (${stats.teaching})`} value="teaching" />
           <Tab label={`Non-Teaching Staff (${stats.nonTeaching})`} value="non-teaching" />
-          <Tab label="Timetable View" value="timetable" />
         </Tabs>
       </Box>
 
       {/* Content Area */}
       <Box>
         {activeTab === 'teaching' && (
-          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
-            <Box
-              sx={
-                detailPanelStaff
-                  ? {
-                      flex: 1,
-                      minWidth: 0,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                      p: 1.5,
-                    }
-                  : { flex: 1, minWidth: 0 }
-              }
-            >
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <TeachingStaffTab
                 loading={loading}
                 staff={staff}
@@ -995,21 +978,8 @@ const StaffManager = () => {
         )}
 
         {activeTab === 'non-teaching' && (
-          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
-            <Box
-              sx={
-                detailPanelStaff
-                  ? {
-                      flex: 1,
-                      minWidth: 0,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                      p: 1.5,
-                    }
-                  : { flex: 1, minWidth: 0 }
-              }
-            >
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <NonTeachingStaffTab
                 loading={loading}
                 staff={staff}
@@ -1074,8 +1044,6 @@ const StaffManager = () => {
             )}
           </Stack>
         )}
-
-        {activeTab === 'timetable' && <TeacherTimetableView />}
       </Box>
 
       {/* Action Menu */}

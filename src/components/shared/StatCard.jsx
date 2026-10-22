@@ -151,6 +151,19 @@ const StatCard = ({
             </Typography>
           )}
 
+          {isLeft && subtitle && (
+            <Typography
+              sx={{
+                mt: 0.25,
+                fontSize: 11,
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
+
           <Typography
             sx={{
               fontSize: isLeft ? 24 : 22,
@@ -177,7 +190,7 @@ const StatCard = ({
             </Typography>
           )}
 
-          {subtitle && (
+          {!isLeft && subtitle && (
             <Typography
               sx={{
                 mt: 0.25,

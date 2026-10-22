@@ -202,7 +202,7 @@ const TeacherOverviewPanel = ({ staffRow, onClose, onEdit, onSendMessage }) => {
         </Button>
       </Stack>
 
-      <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons="auto" sx={{ mb: 1.5, minHeight: 36, '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' } }}>
+      <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons={false} allowScrollButtonsMobile={false} sx={{ mb: 1.5, minHeight: 36, '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' } }}>
         <Tab value="overview" label="Overview" />
         {isTeaching && <Tab value="subjects" label={`Subjects (${subjects.length})`} />}
         {isTeaching && <Tab value="classes" label={`Classes (${classes.length})`} />}

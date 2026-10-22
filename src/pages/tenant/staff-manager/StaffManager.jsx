@@ -3,8 +3,8 @@ import { useContext } from 'react';
 import {
   Box,
   Typography,
-  Card,
   Grid,
+  Card,
   Stack,
   Button,
   TextField,
@@ -28,6 +28,8 @@ import {
   InputAdornment,
   TablePagination,
   ButtonGroup,
+  Avatar,
+  Alert,
 } from '@mui/material';
 import {
   IconUsers,
@@ -48,6 +50,8 @@ import {
   IconSchool,
   IconBook,
   IconClipboardList,
+  IconCamera,
+  IconKey,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -139,6 +143,12 @@ const StaffManager = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [resetPasswordOpen, setResetPasswordOpen] = useState(false);
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [updatePhotoOpen, setUpdatePhotoOpen] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [updatePhotoLoading, setUpdatePhotoLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Form data - for staff modal
@@ -156,7 +166,16 @@ const StaffManager = () => {
 
   useEffect(() => {
     fetchStaff();
-  }, [activeTab, page, rowsPerPage, searchQuery, statusFilter, subjectFilter, classFilter, roleFilter]);
+  }, [
+    activeTab,
+    page,
+    rowsPerPage,
+    searchQuery,
+    statusFilter,
+    subjectFilter,
+    classFilter,
+    roleFilter,
+  ]);
 
   useEffect(() => {
     fetchStats();
@@ -370,46 +389,46 @@ const StaffManager = () => {
           staffData.classAllocations ||
           (staffData.classTeachers && staffData.classTeachers.length > 0
             ? staffData.classTeachers.map((classTeacher) => {
-              return {
-                session_term_id: classTeacher.session_term_id || '',
-                programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
-                class_id: classTeacher.classArm?.programmeClass?.class_id || '',
-                class_arm_id: classTeacher.class_arm_id || '',
-              };
-            })
+                return {
+                  session_term_id: classTeacher.session_term_id || '',
+                  programme_id: classTeacher.classArm?.programmeClass?.programme_id || '',
+                  class_id: classTeacher.classArm?.programmeClass?.class_id || '',
+                  class_arm_id: classTeacher.class_arm_id || '',
+                };
+              })
             : [
-              {
-                session_term_id: '',
-                programme_id: '',
-                class_id: '',
-                class_arm_id: '',
-              },
-            ]);
+                {
+                  session_term_id: '',
+                  programme_id: '',
+                  class_id: '',
+                  class_arm_id: '',
+                },
+              ]);
 
         // Transform subject teachers to subjectAllocations array
         const subjectAllocations =
           staffData.subjectAllocations ||
           (staffData.subjectTeachers && staffData.subjectTeachers.length > 0
             ? staffData.subjectTeachers.map((subjectTeacher) => {
-              return {
-                session_term_id: subjectTeacher.session_term_id || '',
-                programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
-                class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
-                class_arm_id: subjectTeacher.class_arm_id || '',
-                curriculum_id: subjectTeacher.subject?.curriculum_id || '',
-                subject_id: subjectTeacher.subject_id || '',
-              };
-            })
+                return {
+                  session_term_id: subjectTeacher.session_term_id || '',
+                  programme_id: subjectTeacher.classArm?.programmeClass?.programme_id || '',
+                  class_id: subjectTeacher.classArm?.programmeClass?.class_id || '',
+                  class_arm_id: subjectTeacher.class_arm_id || '',
+                  curriculum_id: subjectTeacher.subject?.curriculum_id || '',
+                  subject_id: subjectTeacher.subject_id || '',
+                };
+              })
             : [
-              {
-                session_term_id: '',
-                programme_id: '',
-                class_id: '',
-                class_arm_id: '',
-                curriculum_id: '',
-                subject_id: '',
-              },
-            ]);
+                {
+                  session_term_id: '',
+                  programme_id: '',
+                  class_id: '',
+                  class_arm_id: '',
+                  curriculum_id: '',
+                  subject_id: '',
+                },
+              ]);
 
         const formDataForEdit = {
           staff_id: staffData.staff_id || '',
@@ -468,6 +487,55 @@ const StaffManager = () => {
   const handleDeleteClick = () => {
     setDeleteModalOpen(true);
     handleMenuClose();
+  };
+
+  const handleOpenResetPassword = () => {
+    setResetPasswordOpen(true);
+    handleMenuClose();
+  };
+
+  const handleConfirmResetPassword = async () => {
+    if (!selectedStaff) return;
+    try {
+      setResetPasswordLoading(true);
+      const res = await staffApi.resetPassword(selectedStaff.user_id);
+      notify.success(`Password reset to "${res?.data?.password}"`);
+      setResetPasswordOpen(false);
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetPasswordLoading(false);
+    }
+  };
+
+  const handleOpenUpdatePhoto = () => {
+    setPhotoPreview(selectedStaff?.user?.avatar || null);
+    setPhotoFile(null);
+    setUpdatePhotoOpen(true);
+    handleMenuClose();
+  };
+
+  const handlePhotoFileSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleConfirmUpdatePhoto = async () => {
+    if (!selectedStaff || !photoFile) return;
+    try {
+      setUpdatePhotoLoading(true);
+      await staffApi.updatePhoto(selectedStaff.user_id, photoFile);
+      notify.success('Photo updated successfully');
+      setUpdatePhotoOpen(false);
+      setPhotoFile(null);
+      fetchStaff();
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update photo');
+    } finally {
+      setUpdatePhotoLoading(false);
+    }
   };
 
   const handleSaveStaff = async (values) => {
@@ -618,7 +686,9 @@ const StaffManager = () => {
     try {
       const ids = Array.from(selectedIds);
       await Promise.all(ids.map((id) => staffApi.updateStatus(id, { status })));
-      notify.success(`${ids.length} teacher(s) ${status === 'active' ? 'activated' : 'deactivated'}`);
+      notify.success(
+        `${ids.length} teacher(s) ${status === 'active' ? 'activated' : 'deactivated'}`,
+      );
       setSelectedIds(new Set());
       fetchStaff();
       fetchStats();
@@ -695,21 +765,24 @@ const StaffManager = () => {
       value: stats.inactiveTeaching,
       icon: IconUserX,
       subtitle: 'Not active / on leave',
-      tooltip: 'Teaching staff whose status is Inactive or On Leave. Retired/transferred/suspended staff aren’t counted in either this or Active.',
+      tooltip:
+        'Teaching staff whose status is Inactive or On Leave. Retired/transferred/suspended staff aren’t counted in either this or Active.',
     },
     {
       title: 'Teaching Load',
       value: stats.teachingLoad,
       icon: IconBook,
       subtitle: 'Assigned subjects/classes',
-      tooltip: 'Total active class-teacher + subject-teacher allocations this term — a sum of assignments, not a count of teachers.',
+      tooltip:
+        'Total active class-teacher + subject-teacher allocations this term — a sum of assignments, not a count of teachers.',
     },
     {
       title: 'Classes Covered',
       value: `${stats.classesCovered}/${stats.classesTotal}`,
       icon: IconSchool,
       subtitle: 'Classes with a teacher',
-      tooltip: 'Active class arms that have a class teacher assigned, out of all active class arms.',
+      tooltip:
+        'Active class arms that have a class teacher assigned, out of all active class arms.',
     },
   ];
 
@@ -740,7 +813,8 @@ const StaffManager = () => {
       value: stats.supportFunctions,
       icon: IconClipboardList,
       subtitle: 'Key non-teaching roles',
-      tooltip: 'Distinct role titles currently assigned to non-teaching staff (e.g. Librarian, Accounts Assistant) — not a headcount.',
+      tooltip:
+        'Distinct role titles currently assigned to non-teaching staff (e.g. Librarian, Accounts Assistant) — not a headcount.',
     },
   ];
 
@@ -763,6 +837,7 @@ const StaffManager = () => {
           {statCards.map((stat, i) => (
             <Grid size={{ xs: 12, sm: 6, md: 12 / statCards.length }} key={i}>
               <StatCard
+                align="left"
                 count={stat.value}
                 label={stat.title}
                 icon={stat.icon}
@@ -796,140 +871,139 @@ const StaffManager = () => {
         </Tabs>
       </Box>
 
-      {/* Main Content Card */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.08)'
-              : '1px solid #eee',
-          overflow: 'hidden',
-          p: 1.5,
-        }}
-      >
-        {/* Content Area */}
-        <Box>
-          {activeTab === 'teaching' && (
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
-              <Box
-                sx={
-                  detailPanelStaff
-                    ? { flex: 1, minWidth: 0, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }
-                    : { flex: 1, minWidth: 0 }
-                }
-              >
-                <TeachingStaffTab
-                  loading={loading}
-                  staff={staff}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  statusFilter={statusFilter}
-                  setStatusFilter={setStatusFilter}
-                  subjectFilter={subjectFilter}
-                  setSubjectFilter={setSubjectFilter}
-                  classFilter={classFilter}
-                  setClassFilter={setClassFilter}
-                  subjectOptions={subjectOptions}
-                  classOptions={classOptions}
-                  onResetFilters={handleResetFilters}
-                  page={page}
-                  rowsPerPage={rowsPerPage}
-                  total={total}
-                  handleChangePage={handleChangePage}
-                  handleChangeRowsPerPage={handleChangeRowsPerPage}
-                  handleAddStaff={handleAddStaff}
-                  handleBulkMenuOpen={handleBulkMenuOpen}
-                  handleUploadStaff={handleUploadStaff}
-                  handleMenuOpen={handleMenuOpen}
-                  getStatusColor={getStatusColor}
-                  selectedIds={selectedIds}
-                  setSelectedIds={setSelectedIds}
-                  onBulkActivate={() => setBulkActivateConfirmOpen(true)}
-                  onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
-                  onBulkAssignSubjects={() => setBulkAssignMode('subjects')}
-                  onBulkAssignClasses={() => setBulkAssignMode('classes')}
-                  onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
-                  onRowClick={handleRowClick}
-                  selectedStaffId={detailPanelStaff?.user_id}
+      {/* Content Area */}
+      <Box>
+        {activeTab === 'teaching' && (
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
+            <Box
+              sx={
+                detailPanelStaff
+                  ? {
+                      flex: 1,
+                      minWidth: 0,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: 1.5,
+                    }
+                  : { flex: 1, minWidth: 0 }
+              }
+            >
+              <TeachingStaffTab
+                loading={loading}
+                staff={staff}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                subjectFilter={subjectFilter}
+                setSubjectFilter={setSubjectFilter}
+                classFilter={classFilter}
+                setClassFilter={setClassFilter}
+                subjectOptions={subjectOptions}
+                classOptions={classOptions}
+                onResetFilters={handleResetFilters}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={total}
+                handleChangePage={handleChangePage}
+                handleChangeRowsPerPage={handleChangeRowsPerPage}
+                handleAddStaff={handleAddStaff}
+                handleBulkMenuOpen={handleBulkMenuOpen}
+                handleUploadStaff={handleUploadStaff}
+                handleMenuOpen={handleMenuOpen}
+                getStatusColor={getStatusColor}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
+                onBulkActivate={() => setBulkActivateConfirmOpen(true)}
+                onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
+                onBulkAssignSubjects={() => setBulkAssignMode('subjects')}
+                onBulkAssignClasses={() => setBulkAssignMode('classes')}
+                onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
+                onRowClick={handleRowClick}
+                selectedStaffId={detailPanelStaff?.user_id}
+              />
+            </Box>
+            {detailPanelStaff && (
+              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+                <TeacherOverviewPanel
+                  staffRow={detailPanelStaff}
+                  onClose={() => setDetailPanelStaff(null)}
+                  onEdit={(s) => {
+                    setSelectedStaff(s);
+                    handleEditStaff();
+                  }}
+                  onSendMessage={() => notify.info('Messaging from here is coming soon')}
                 />
               </Box>
-              {detailPanelStaff && (
-                <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
-                  <TeacherOverviewPanel
-                    staffRow={detailPanelStaff}
-                    onClose={() => setDetailPanelStaff(null)}
-                    onEdit={(s) => {
-                      setSelectedStaff(s);
-                      handleEditStaff();
-                    }}
-                    onSendMessage={() => notify.info('Messaging from here is coming soon')}
-                  />
-                </Box>
-              )}
-            </Stack>
-          )}
+            )}
+          </Stack>
+        )}
 
-          {activeTab === 'non-teaching' && (
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
-              <Box
-                sx={
-                  detailPanelStaff
-                    ? { flex: 1, minWidth: 0, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }
-                    : { flex: 1, minWidth: 0 }
-                }
-              >
-                <NonTeachingStaffTab
-                  loading={loading}
-                  staff={staff}
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  statusFilter={statusFilter}
-                  setStatusFilter={setStatusFilter}
-                  roleFilter={roleFilter}
-                  setRoleFilter={setRoleFilter}
-                  roleOptions={roleOptions}
-                  onResetFilters={handleResetFilters}
-                  page={page}
-                  rowsPerPage={rowsPerPage}
-                  total={total}
-                  handleChangePage={handleChangePage}
-                  handleChangeRowsPerPage={handleChangeRowsPerPage}
-                  handleAddStaff={handleAddStaff}
-                  handleBulkMenuOpen={handleBulkMenuOpen}
-                  handleUploadStaff={handleUploadStaff}
-                  handleMenuOpen={handleMenuOpen}
-                  getStatusColor={getStatusColor}
-                  selectedIds={selectedIds}
-                  setSelectedIds={setSelectedIds}
-                  onBulkActivate={() => setBulkActivateConfirmOpen(true)}
-                  onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
-                  onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
-                  onRowClick={handleRowClick}
-                  selectedStaffId={detailPanelStaff?.user_id}
+        {activeTab === 'non-teaching' && (
+          <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
+            <Box
+              sx={
+                detailPanelStaff
+                  ? {
+                      flex: 1,
+                      minWidth: 0,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: 1.5,
+                    }
+                  : { flex: 1, minWidth: 0 }
+              }
+            >
+              <NonTeachingStaffTab
+                loading={loading}
+                staff={staff}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                roleFilter={roleFilter}
+                setRoleFilter={setRoleFilter}
+                roleOptions={roleOptions}
+                onResetFilters={handleResetFilters}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                total={total}
+                handleChangePage={handleChangePage}
+                handleChangeRowsPerPage={handleChangeRowsPerPage}
+                handleAddStaff={handleAddStaff}
+                handleBulkMenuOpen={handleBulkMenuOpen}
+                handleUploadStaff={handleUploadStaff}
+                handleMenuOpen={handleMenuOpen}
+                getStatusColor={getStatusColor}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
+                onBulkActivate={() => setBulkActivateConfirmOpen(true)}
+                onBulkDeactivate={() => setBulkDeactivateConfirmOpen(true)}
+                onBulkDelete={() => setBulkDeleteConfirmOpen(true)}
+                onRowClick={handleRowClick}
+                selectedStaffId={detailPanelStaff?.user_id}
+              />
+            </Box>
+            {detailPanelStaff && (
+              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+                <TeacherOverviewPanel
+                  staffRow={detailPanelStaff}
+                  onClose={() => setDetailPanelStaff(null)}
+                  onEdit={(s) => {
+                    setSelectedStaff(s);
+                    handleEditStaff();
+                  }}
+                  onSendMessage={() => notify.info('Messaging from here is coming soon')}
                 />
               </Box>
-              {detailPanelStaff && (
-                <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
-                  <TeacherOverviewPanel
-                    staffRow={detailPanelStaff}
-                    onClose={() => setDetailPanelStaff(null)}
-                    onEdit={(s) => {
-                      setSelectedStaff(s);
-                      handleEditStaff();
-                    }}
-                    onSendMessage={() => notify.info('Messaging from here is coming soon')}
-                  />
-                </Box>
-              )}
-            </Stack>
-          )}
+            )}
+          </Stack>
+        )}
 
-          {activeTab === 'timetable' && <TeacherTimetableView />}
-
-        </Box>
-      </Card>
+        {activeTab === 'timetable' && <TeacherTimetableView />}
+      </Box>
 
       {/* Action Menu */}
       <Menu
@@ -950,6 +1024,14 @@ const StaffManager = () => {
         <MenuItem onClick={handleEditStaff}>
           <IconEdit size={18} color="#7C3AED" style={{ marginRight: 8 }} />
           Edit
+        </MenuItem>
+        <MenuItem onClick={handleOpenUpdatePhoto}>
+          <IconCamera size={18} color="#2563EB" style={{ marginRight: 8 }} />
+          Update Photo
+        </MenuItem>
+        <MenuItem onClick={handleOpenResetPassword}>
+          <IconKey size={18} color="#D97706" style={{ marginRight: 8 }} />
+          Reset Password
         </MenuItem>
         <MenuItem onClick={handleUpdateStatusClick}>
           <IconHistory size={18} color="#D97706" style={{ marginRight: 8 }} />
@@ -1186,6 +1268,92 @@ const StaffManager = () => {
         message={`Are you sure you want to delete ${selectedStaff?.user?.fname} ${selectedStaff?.user?.lname}? This action cannot be undone.`}
         severity="error"
       />
+
+      <Dialog
+        open={resetPasswordOpen}
+        onClose={() => setResetPasswordOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            Reset the password for{' '}
+            <strong>
+              {selectedStaff?.user
+                ? `${selectedStaff.user.fname} ${selectedStaff.user.lname}`
+                : 'this staff member'}
+            </strong>
+            ?
+          </Typography>
+          <Alert severity="info">
+            The password will be reset to their surname, lowercase:{' '}
+            <strong>{selectedStaff?.user?.lname?.toLowerCase() || '—'}</strong>
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setResetPasswordOpen(false)}
+            disabled={resetPasswordLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmResetPassword}
+            disabled={resetPasswordLoading}
+            autoFocus
+          >
+            {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={updatePhotoOpen}
+        onClose={() => setUpdatePhotoOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Update Photo</DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 1 }}
+          >
+            <Avatar src={photoPreview || undefined} sx={{ width: 96, height: 96 }}>
+              <IconUser size={40} />
+            </Avatar>
+            <Button component="label" variant="outlined" size="small">
+              Choose Photo
+              <input type="file" accept="image/*" hidden onChange={handlePhotoFileSelected} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setUpdatePhotoOpen(false)}
+            disabled={updatePhotoLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmUpdatePhoto}
+            disabled={updatePhotoLoading || !photoFile}
+            autoFocus
+          >
+            {updatePhotoLoading ? 'Uploading...' : 'Save Photo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Bulk Activate Confirmation */}
       <ConfirmationDialog

@@ -47,12 +47,14 @@ const StatCard = ({
   tooltip,
   tooltipPlacement = 'top',
   progress,
+  align = 'right',
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const scheme = schemeMap[colorIndex % schemeMap.length];
+  const isLeft = align === 'left';
 
   if (loading) {
     return <StatCardSkeleton isDark={isDark} theme={theme} />;
@@ -85,7 +87,14 @@ const StatCard = ({
         ...sx,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isLeft ? 'flex-start' : 'space-between',
+          gap: isLeft ? 1.25 : 0,
+        }}
+      >
         {/* Icon Badge */}
         {loading ? (
           <Skeleton
@@ -117,16 +126,17 @@ const StatCard = ({
         {/* Content */}
         <Box
           sx={{
-            flexGrow: 1,
-            pl: 1,
-            textAlign: 'right',
+            flexGrow: isLeft ? 0 : 1,
+            minWidth: 0,
+            pl: isLeft ? 0 : 1,
+            textAlign: isLeft ? 'left' : 'right',
             position: 'relative',
             zIndex: 1,
           }}
         >
           <Typography
             sx={{
-              fontSize: 22,
+              fontSize: isLeft ? 24 : 22,
               fontWeight: 800,
               lineHeight: 1,
               letterSpacing: '-0.02em',
@@ -217,6 +227,7 @@ StatCard.propTypes = {
   onClick: PropTypes.func,
   tooltip: PropTypes.node,
   tooltipPlacement: PropTypes.string,
+  align: PropTypes.oneOf(['left', 'right']),
 };
 
 export default StatCard;

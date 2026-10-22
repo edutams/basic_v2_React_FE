@@ -632,6 +632,7 @@ const SubjectTeacherAllocation = () => {
         ].map((card) => (
           <Grid key={card.label} size={{ xs: 12, sm: 6, md: 2 }}>
             <StatCard
+              align="left"
               loading={classesLoading && !hasFetched}
               label={card.label}
               count={card.count}

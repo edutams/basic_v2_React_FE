@@ -50,6 +50,20 @@ const staffApi = {
     return response.data;
   },
 
+  updatePhoto: async (id, file) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await tenantApi.post(`/school_setup/staff/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  resetPassword: async (id) => {
+    const response = await tenantApi.post(`/school_setup/staff/${id}/reset-password`);
+    return response.data;
+  },
+
   downloadTemplate: async (staffType = 'teaching') => {
     const response = await tenantApi.get('/school_setup/staff_template', {
       params: { staff_type: staffType },

@@ -157,11 +157,11 @@ const ParentOverviewPanel = ({
         <Button
           size="small"
           variant="contained"
-          startIcon={<IconUser size={14} />}
-          onClick={() => onImpersonate(guardian)}
+          startIcon={<MessageIcon sx={{ fontSize: 14 }} />}
+          onClick={() => onSendMessage(guardian)}
           sx={{ flex: 1, fontSize: '0.7rem', py: 0.4, px: 1, minWidth: 0 }}
         >
-          Login
+          Message
         </Button>
         <Button
           size="small"
@@ -182,7 +182,14 @@ const ParentOverviewPanel = ({
           More
         </Button>
         <Menu anchorEl={moreAnchorEl} open={Boolean(moreAnchorEl)} onClose={() => setMoreAnchorEl(null)}>
-          <MenuItem onClick={() => handleMoreAction(onToggleStatus)}>
+          <MenuItem onClick={() => handleMoreAction(onImpersonate)}>
+            <IconUser size={18} style={{ marginRight: 8 }} />
+            Login As Parent
+          </MenuItem>
+          <MenuItem
+            onClick={() => handleMoreAction(onToggleStatus)}
+            sx={{ color: isActive ? 'warning.main' : 'success.main' }}
+          >
             <ToggleOnIcon fontSize="small" style={{ marginRight: 8 }} />
             {isActive ? 'Deactivate' : 'Activate'}
           </MenuItem>
@@ -217,7 +224,7 @@ const ParentOverviewPanel = ({
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         {tab === 0 && (
           <Box>
-            <ViewWardsContent guardian={guardian} onClose={() => {}} />
+            <ViewWardsContent guardian={guardian} onClose={() => {}} variant="list" />
             <Button fullWidth size="small" variant="contained" sx={{ mt: 1, mb: 2 }} onClick={() => onLinkWard(guardian)}>
               + Link Another Ward
             </Button>

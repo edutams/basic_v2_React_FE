@@ -34,8 +34,21 @@ import {
   IconSchool,
   IconTrash,
   IconFilterOff,
+  IconCircleCheck,
+  IconClock,
+  IconCircleX,
+  IconInfoCircle,
+  IconHelpCircle,
 } from '@tabler/icons-react';
 import { statusLabel } from './StaffStatusModal';
+
+const STATUS_ICON = {
+  success: IconCircleCheck,
+  warning: IconClock,
+  error: IconCircleX,
+  info: IconInfoCircle,
+  default: IconHelpCircle,
+};
 
 const dedupeBy = (arr, key) => {
   const seen = new Set();
@@ -546,11 +559,18 @@ const TeachingStaffTab = ({
                       <OverflowList items={classLabels} />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={statusLabel(staffMember.staff_status)}
-                        color={getStatusColor(staffMember.staff_status)}
-                        size="small"
-                      />
+                      {(() => {
+                        const statusColor = getStatusColor(staffMember.staff_status);
+                        const StatusIcon = STATUS_ICON[statusColor] || STATUS_ICON.default;
+                        return (
+                          <Chip
+                            icon={<StatusIcon size={14} />}
+                            label={statusLabel(staffMember.staff_status)}
+                            color={statusColor}
+                            size="small"
+                          />
+                        );
+                      })()}
                     </TableCell>
                     <TableCell align="center" onClick={(e) => e.stopPropagation()}>
                       <IconButton size="small" onClick={(e) => handleMenuOpen(e, staffMember)}>

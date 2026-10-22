@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useContext, useMemo } from 'react';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import { useNotification } from '@/hooks/useNotification';
 import {
@@ -77,7 +76,6 @@ import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
 
-const BCrumb = [{ to: '/school-dashboard', title: 'Home' }, { title: 'Learner Management' }];
 
 // countKey for 'active'/'inactive' points at the enrolment-stage figures
 // (`enrolled`/`not_enrolled`) — distinct from the account-status figures
@@ -657,16 +655,34 @@ const LearnerManagement = () => {
 
   return (
     <PageContainer title="Learner Management" description="Manage learner information, track academic progress, link parents and monitor enrolment status">
-      <Breadcrumb title="Learner Management" items={BCrumb} />
+      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2} sx={{ mb: 2 }}>
+        <Box>
+          <Typography variant="h5" fontWeight={700}>Learner Management</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage learner information, track academic progress, link parents and monitor enrolment status.
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
+            Download Template
+          </Button>
+          <Button variant="outlined" size="small" startIcon={<UploadIcon />} onClick={() => setUploadLearnerOpen(true)}>
+            Import Learners
+          </Button>
+          <Button variant="contained" size="small" color="primary" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
+            + Add Learner
+          </Button>
+        </Box>
+      </Stack>
 
       {/* Stats */}
       <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <StatCard count={stats.total} label="Total Learners" icon={GroupsIcon} colorIndex={0} loading={statsLoading} subtitle="All learners in the school" tooltip="All learners in the school." />
-          <StatCard count={stats.active} label="Active Learners" icon={PeopleIcon} colorIndex={1} loading={statsLoading} subtitle="Can currently log in" tooltip="Learners whose account is active and can log in." />
-          <StatCard count={stats.inactive} label="Inactive Learners" icon={AccessTimeIcon} colorIndex={3} loading={statsLoading} subtitle="Login access revoked" tooltip="Learners whose account has been deactivated — they can no longer log in." />
-          <StatCard count={stats.new_enrolments} label="New Enrolments" icon={PersonAddAltIcon} colorIndex={2} loading={statsLoading} subtitle="This session" tooltip="Registered in the last 7 days." />
-          <StatCard count={stats.graduated} label="Graduated / Completed" icon={SchoolIcon} colorIndex={4} loading={statsLoading} subtitle="Final year completed" tooltip="Final year completed." />
+          <StatCard align="left" count={stats.total} label="Total Learners" icon={GroupsIcon} colorIndex={0} loading={statsLoading} subtitle="All learners in the school" tooltip="All learners in the school." />
+          <StatCard align="left" count={stats.active} label="Active Learners" icon={PeopleIcon} colorIndex={1} loading={statsLoading} subtitle="Can currently log in" tooltip="Learners whose account is active and can log in." />
+          <StatCard align="left" count={stats.inactive} label="Inactive Learners" icon={AccessTimeIcon} colorIndex={3} loading={statsLoading} subtitle="Login access revoked" tooltip="Learners whose account has been deactivated — they can no longer log in." />
+          <StatCard align="left" count={stats.new_enrolments} label="New Enrolments" icon={PersonAddAltIcon} colorIndex={2} loading={statsLoading} subtitle="This session" tooltip="Registered in the last 7 days." />
+          <StatCard align="left" count={stats.graduated} label="Graduated / Completed" icon={SchoolIcon} colorIndex={4} loading={statsLoading} subtitle="Final year completed" tooltip="Final year completed." />
         </Stack>
       </Box>
 
@@ -679,22 +695,6 @@ const LearnerManagement = () => {
           '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
           '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
         }}
-        title={
-          <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', md: 'center' }, flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 2 }}>
-            <Typography variant="h5">Learners</Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', width: { xs: '100%', md: 'auto' } }}>
-              <Button variant="contained" size="small" startIcon={<AddIcon />} sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={() => setAddLearnerOpen(true)}>
-                Add Learner
-              </Button>
-              <Button variant="contained" size="small" startIcon={<DownloadIcon />} sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
-                Download Template
-              </Button>
-              <Button variant="contained" size="small" startIcon={<UploadIcon />} sx={{ width: { xs: '100%', sm: 'auto' } }} onClick={() => setUploadLearnerOpen(true)}>
-                Upload Template
-              </Button>
-            </Box>
-          </Box>
-        }
       >
         <Tabs
           value={activeTab}
@@ -1036,7 +1036,7 @@ const LearnerManagement = () => {
       </ParentCard>
 
       <Slide direction="left" in={drawerOpen} mountOnEnter unmountOnExit>
-        <Box sx={{ width: { xs: '100%', lg: 420 }, flexShrink: 0 }}>
+        <Box sx={{ width: { xs: '100%', lg: 360 }, flexShrink: 0 }}>
           <LearnerOverviewPanel
             learner={drawerLearner}
             onClose={() => setDrawerOpen(false)}

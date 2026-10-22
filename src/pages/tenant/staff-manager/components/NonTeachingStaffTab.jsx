@@ -148,7 +148,7 @@ const NonTeachingStaffTab = ({
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: '100%', sm: 280 } }}
+            sx={{ width: { xs: '100%', sm: 400 } }}
           />
 
           <TextField
@@ -223,7 +223,7 @@ const NonTeachingStaffTab = ({
           </Button>
           <Button
             size="small"
-            color="warning"
+            color="primary"
             variant="contained"
             startIcon={<IconX size={14} />}
             onClick={onBulkDeactivate}

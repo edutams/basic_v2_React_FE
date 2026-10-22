@@ -76,7 +76,6 @@ import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
 
-
 // countKey for 'active'/'inactive' points at the enrolment-stage figures
 // (`enrolled`/`not_enrolled`) — distinct from the account-status figures
 // (`active`/`inactive`) the overview cards above show, so this tab's count
@@ -130,7 +129,14 @@ const LearnerManagement = () => {
 
   const [classes, setClasses] = useState([]);
 
-  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, new_enrolments: 0, graduated: 0, needs_attention: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    new_enrolments: 0,
+    graduated: 0,
+    needs_attention: 0,
+  });
   const [statsLoading, setStatsLoading] = useState(true);
 
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -244,13 +250,32 @@ const LearnerManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, debouncedSearch, classId, armId, gender, statusFilter, tabFilters, notify]);
+  }, [
+    page,
+    rowsPerPage,
+    debouncedSearch,
+    classId,
+    armId,
+    gender,
+    statusFilter,
+    tabFilters,
+    notify,
+  ]);
 
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
       const res = await learnerApi.getOverviewStats();
-      setStats(res?.data?.data ?? { total: 0, active: 0, inactive: 0, new_enrolments: 0, graduated: 0, needs_attention: 0 });
+      setStats(
+        res?.data?.data ?? {
+          total: 0,
+          active: 0,
+          inactive: 0,
+          new_enrolments: 0,
+          graduated: 0,
+          needs_attention: 0,
+        },
+      );
     } catch {
       notify.error('Failed to fetch stats');
     } finally {
@@ -323,7 +348,9 @@ const LearnerManagement = () => {
     if (!studentToImpersonate) return;
     const result = await impersonateStudent(studentToImpersonate?.user_id);
     if (result.success) {
-      notify.success(`Now logged in as ${studentToImpersonate.user?.fname} ${studentToImpersonate.user?.lname}`);
+      notify.success(
+        `Now logged in as ${studentToImpersonate.user?.fname} ${studentToImpersonate.user?.lname}`,
+      );
       navigate('/dashboard');
     } else {
       notify.error(result.error);
@@ -372,7 +399,11 @@ const LearnerManagement = () => {
         gender: values.gender,
         date_of_birth: values.date_of_birth,
       });
-      if (values.class_arm_id && values.class_arm_id !== learnerToEdit.current_registration?.class_arm_id && learnerToEdit.current_registration?.id) {
+      if (
+        values.class_arm_id &&
+        values.class_arm_id !== learnerToEdit.current_registration?.class_arm_id &&
+        learnerToEdit.current_registration?.id
+      ) {
         await learnerApi.updateRegistration(learnerToEdit.current_registration.id, {
           class_arm_id: values.class_arm_id,
         });
@@ -554,13 +585,20 @@ const LearnerManagement = () => {
   const handleConfirmGenerateReport = () => {
     const reg = reportTargetRow?.current_registration;
     if (reg?.class_arm_id && reg?.session_term_id) {
-      navigate(`/result-class_dossier?class_arm_id=${reg.class_arm_id}&session_term_id=${reg.session_term_id}`);
+      navigate(
+        `/result-class_dossier?class_arm_id=${reg.class_arm_id}&session_term_id=${reg.session_term_id}`,
+      );
     }
     setGenerateReportConfirmOpen(false);
     setReportTargetRow(null);
   };
 
-  const hasFilters = debouncedSearch !== '' || classId !== '' || armId !== '' || gender !== '' || statusFilter !== '';
+  const hasFilters =
+    debouncedSearch !== '' ||
+    classId !== '' ||
+    armId !== '' ||
+    gender !== '' ||
+    statusFilter !== '';
 
   const resetFilters = () => {
     setSearchInput('');
@@ -598,7 +636,8 @@ const LearnerManagement = () => {
     const seen = new Set();
     selectedRows.forEach((row) => {
       const reg = row.current_registration;
-      if (reg?.class_arm_id && reg?.session_term_id) seen.add(`${reg.class_arm_id}-${reg.session_term_id}`);
+      if (reg?.class_arm_id && reg?.session_term_id)
+        seen.add(`${reg.class_arm_id}-${reg.session_term_id}`);
     });
     return seen.size;
   }, [selectedRows]);
@@ -613,7 +652,9 @@ const LearnerManagement = () => {
     }
     try {
       await Promise.all(eligible.map((r) => learnerApi.toggleAccountStatus(r.user_id)));
-      notify.success(`${eligible.length} learner account(s) ${targetActive ? 'activated' : 'deactivated'}`);
+      notify.success(
+        `${eligible.length} learner account(s) ${targetActive ? 'activated' : 'deactivated'}`,
+      );
       setBulkStatusConfirm(null);
       refreshAll();
     } catch {
@@ -645,7 +686,10 @@ const LearnerManagement = () => {
       if (seen.has(key)) return;
       seen.add(key);
       opened += 1;
-      window.open(`/result-class_dossier?class_arm_id=${reg.class_arm_id}&session_term_id=${reg.session_term_id}`, '_blank');
+      window.open(
+        `/result-class_dossier?class_arm_id=${reg.class_arm_id}&session_term_id=${reg.session_term_id}`,
+        '_blank',
+      );
     });
     if (opened === 0) {
       notify.error('None of the selected learners have a current-term registration');
@@ -654,23 +698,54 @@ const LearnerManagement = () => {
   };
 
   return (
-    <PageContainer title="Learner Management" description="Manage learner information, track academic progress, link parents and monitor enrolment status">
-      <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2} sx={{ mb: 2 }}>
+    <PageContainer
+      title="Learner Management"
+      description="Manage learner information, track academic progress, link parents and monitor enrolment status"
+    >
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', md: 'center' }}
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Box>
-          <Typography variant="h5" fontWeight={700}>Learner Management</Typography>
+          <Typography variant="h5" fontWeight={700}>
+            Learner Management
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage learner information, track academic progress, link parents and monitor enrolment status.
+            Manage learner information, track academic progress, link parents and monitor enrolment
+            status.
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          <Button variant="outlined" size="small" startIcon={<DownloadIcon />} onClick={() => { setDownloadClassId(''); setDownloadDialogOpen(true); }}>
-            Download Template
-          </Button>
-          <Button variant="outlined" size="small" startIcon={<UploadIcon />} onClick={() => setUploadLearnerOpen(true)}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<UploadIcon />}
+            onClick={() => setUploadLearnerOpen(true)}
+          >
             Import Learners
           </Button>
-          <Button variant="contained" size="small" color="primary" startIcon={<AddIcon />} onClick={() => setAddLearnerOpen(true)}>
-            + Add Learner
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DownloadIcon />}
+            onClick={() => {
+              setDownloadClassId('');
+              setDownloadDialogOpen(true);
+            }}
+          >
+            Download Template
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => setAddLearnerOpen(true)}
+          >
+            Add Learner
           </Button>
         </Box>
       </Stack>
@@ -678,385 +753,597 @@ const LearnerManagement = () => {
       {/* Stats */}
       <Box sx={{ mb: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <StatCard align="left" count={stats.total} label="Total Learners" icon={GroupsIcon} colorIndex={0} loading={statsLoading} subtitle="All learners in the school" tooltip="All learners in the school." />
-          <StatCard align="left" count={stats.active} label="Active Learners" icon={PeopleIcon} colorIndex={1} loading={statsLoading} subtitle="Can currently log in" tooltip="Learners whose account is active and can log in." />
-          <StatCard align="left" count={stats.inactive} label="Inactive Learners" icon={AccessTimeIcon} colorIndex={3} loading={statsLoading} subtitle="Login access revoked" tooltip="Learners whose account has been deactivated — they can no longer log in." />
-          <StatCard align="left" count={stats.new_enrolments} label="New Enrolments" icon={PersonAddAltIcon} colorIndex={2} loading={statsLoading} subtitle="This session" tooltip="Registered in the last 7 days." />
-          <StatCard align="left" count={stats.graduated} label="Graduated / Completed" icon={SchoolIcon} colorIndex={4} loading={statsLoading} subtitle="Final year completed" tooltip="Final year completed." />
+          <StatCard
+            align="left"
+            count={stats.total}
+            label="Total Learners"
+            icon={GroupsIcon}
+            colorIndex={0}
+            loading={statsLoading}
+            subtitle="All learners in the school"
+            tooltip="All learners in the school."
+          />
+          <StatCard
+            align="left"
+            count={stats.active}
+            label="Active Learners"
+            icon={PeopleIcon}
+            colorIndex={1}
+            loading={statsLoading}
+            subtitle="Can currently log in"
+            tooltip="Learners whose account is active and can log in."
+          />
+          <StatCard
+            align="left"
+            count={stats.inactive}
+            label="Inactive Learners"
+            icon={AccessTimeIcon}
+            colorIndex={3}
+            loading={statsLoading}
+            subtitle="Login access revoked"
+            tooltip="Learners whose account has been deactivated — they can no longer log in."
+          />
+          <StatCard
+            align="left"
+            count={stats.new_enrolments}
+            label="New Enrolments"
+            icon={PersonAddAltIcon}
+            colorIndex={2}
+            loading={statsLoading}
+            subtitle="This session"
+            tooltip="Registered in the last 7 days."
+          />
+          <StatCard
+            align="left"
+            count={stats.graduated}
+            label="Graduated / Completed"
+            icon={SchoolIcon}
+            colorIndex={4}
+            loading={statsLoading}
+            subtitle="Final year completed"
+            tooltip="Final year completed."
+          />
         </Stack>
       </Box>
 
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
-      <ParentCard
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          width: '100%',
-          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
-          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
-        }}
-      >
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
+        <ParentCard
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            width: '100%',
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+            '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+          }}
         >
-          {TABS.map((t) => (
-            <Tab
-              key={t.key}
-              value={t.key}
-              label={
-                t.key === 'needs_attention' ? (
-                  <Badge badgeContent={stats[t.countKey] ?? 0} color="error" sx={{ pr: 1 }}>
-                    {t.label}
-                  </Badge>
-                ) : (
-                  `${t.label} (${stats[t.countKey] ?? 0})`
-                )
-              }
-            />
-          ))}
-        </Tabs>
-
-        {/* Filters */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
-          <TextField
-            placeholder="Search by name, admission number or parent..."
-            value={searchInput}
-            size="small"
-            onChange={(e) => setSearchInput(e.target.value)}
-            slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> } }}
-            sx={{ width: { xs: '100%', sm: 300, md: 320 } }}
-          />
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Class</InputLabel>
-            <Select value={classId} label="Class" onChange={(e) => setClassId(e.target.value)}>
-              <MenuItem value="">All Classes</MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>
-                  {cls.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 130 }} disabled={!classId}>
-            <InputLabel>Arm</InputLabel>
-            <Select value={armId} label="Arm" onChange={(e) => setArmId(e.target.value)}>
-              <MenuItem value="">All Arms</MenuItem>
-              {arms.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {Array.isArray(a.class_arm_names) ? a.class_arm_names.join(', ') : a.class_arm_names}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Gender</InputLabel>
-            <Select value={gender} label="Gender" onChange={(e) => setGender(e.target.value)}>
-              <MenuItem value="">All Genders</MenuItem>
-              <MenuItem value="male">Male</MenuItem>
-              <MenuItem value="female">Female</MenuItem>
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Enrolment Status</InputLabel>
-            <Select value={statusFilter} label="Enrolment Status" onChange={(e) => setStatusFilter(e.target.value)}>
-              <MenuItem value="">All Status</MenuItem>
-              <MenuItem value="student">Active</MenuItem>
-              <MenuItem value="graduate">Graduated</MenuItem>
-              <MenuItem value="withdrawn">Withdrawn</MenuItem>
-              <MenuItem value="transferred">Transferred</MenuItem>
-              <MenuItem value="absconded">Absconded</MenuItem>
-              <MenuItem value="suspended">Suspended</MenuItem>
-            </Select>
-          </FormControl>
-
-          {hasFilters && (
-            <Button variant="contained" color="primary" size="small" onClick={resetFilters} sx={{ height: 40 }}>
-              Reset
-            </Button>
-          )}
-        </Box>
-
-        {selectedIds.size > 0 && (
-          <Alert
-            severity="info"
-            sx={{ mb: 1.5 }}
-            action={
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                <Button variant="contained" size="small" color="success" onClick={() => setBulkStatusConfirm('active')}>
-                  Activate
-                </Button>
-                <Button variant="contained" size="small" color="error" onClick={() => setBulkStatusConfirm('inactive')}>
-                  Deactivate
-                </Button>
-                <Button variant="contained" size="small" onClick={() => { setAssignClassLearners(selectedRows); setAssignClassOpen(true); }}>
-                  Assign Class
-                </Button>
-                <Button variant="contained" size="small" onClick={() => { setLinkParentLearner(selectedRows[0]); setLinkParentOpen(true); }}>
-                  Link Parent
-                </Button>
-                <Button variant="contained" size="small" onClick={() => setBulkReportConfirmOpen(true)}>
-                  Generate Report
-                </Button>
-                <Button variant="contained" size="small" color="error" onClick={() => setBulkDeleteConfirmOpen(true)}>
-                  Delete
-                </Button>
-              </Stack>
-            }
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ mb: 1.5, borderBottom: 1, borderColor: 'divider' }}
           >
-            {selectedIds.size} selected
-          </Alert>
-        )}
+            {TABS.map((t) => (
+              <Tab
+                key={t.key}
+                value={t.key}
+                label={
+                  t.key === 'needs_attention' ? (
+                    <Badge badgeContent={stats[t.countKey] ?? 0} color="error" sx={{ pr: 1 }}>
+                      {t.label}
+                    </Badge>
+                  ) : (
+                    `${t.label} (${stats[t.countKey] ?? 0})`
+                  )
+                }
+              />
+            ))}
+          </Tabs>
 
-        <Box>
-          <TableContainer>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox size="small" indeterminate={selectedIds.size > 0 && selectedIds.size < rows.length} checked={rows.length > 0 && selectedIds.size === rows.length} onChange={handleSelectAll} />
-                  </TableCell>
-                  <TableCell>#</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Class / Arm</TableCell>
-                  <TableCell align="center">Parent</TableCell>
-                  <TableCell>Student Status</TableCell>
-                  <TableCell>Account Status</TableCell>
-                  <TableCell align="center">Action</TableCell>
-                </TableRow>
-              </TableHead>
+          {/* Filters */}
+          <Box sx={{ mb: 2, display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+            <TextField
+              placeholder="Search by name, admission number or parent..."
+              value={searchInput}
+              size="small"
+              onChange={(e) => setSearchInput(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+              sx={{ width: { xs: '100%', sm: 300, md: 320 } }}
+            />
 
-              <TableBody>
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton variant="rounded" width={18} height={18} /></TableCell>
-                      <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Skeleton variant="circular" width={36} height={36} />
-                          <Box>
-                            <Skeleton variant="text" width={140} height={20} />
-                            <Skeleton variant="text" width={90} height={16} />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell><Skeleton variant="text" width={110} height={20} /></TableCell>
-                      <TableCell align="center"><Skeleton variant="rounded" width={50} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
-                      <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                      <TableCell><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                      <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    </TableRow>
-                  ))
-                ) : rows.length > 0 ? (
-                  rows.map((row, index) => {
-                    const isHighlighted = selectedIds.has(row.user_id) || (drawerOpen && drawerLearner?.user_id === row.user_id);
-                    const statusStyle =
-                      row.status === 'student'
-                        ? { bg: 'success.light', color: 'success.dark' }
-                        : row.status === 'graduate'
-                          ? { bg: 'info.light', color: 'info.dark' }
-                          : { bg: 'error.light', color: 'error.dark' };
-                    const isMale = row.user?.sex?.toUpperCase() === 'MALE';
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Class</InputLabel>
+              <Select value={classId} label="Class" onChange={(e) => setClassId(e.target.value)}>
+                <MenuItem value="">All Classes</MenuItem>
+                {classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-                    return (
-                      <TableRow
-                        key={row.user_id}
-                        hover
-                        selected={isHighlighted}
-                        onClick={() => {
-                          setDrawerLearner(row);
-                          setDrawerOpen(true);
-                          setSelectedIds(new Set([row.user_id]));
-                        }}
-                        sx={{
-                          cursor: 'pointer',
-                          borderLeft: '3px solid transparent',
-                          '&.Mui-selected': { bgcolor: 'rgba(89, 49, 150, 0.14)', borderLeft: '3px solid #593196' },
-                          '&.Mui-selected:hover': { bgcolor: 'rgba(89, 49, 150, 0.2)' },
-                        }}
-                      >
-                        <TableCell padding="checkbox">
-                          <Checkbox size="small" checked={selectedIds.has(row.user_id)} onClick={(e) => e.stopPropagation()} onChange={() => handleSelectRow(row)} />
-                        </TableCell>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+            <FormControl size="small" sx={{ minWidth: 130 }} disabled={!classId}>
+              <InputLabel>Arm</InputLabel>
+              <Select value={armId} label="Arm" onChange={(e) => setArmId(e.target.value)}>
+                <MenuItem value="">All Arms</MenuItem>
+                {arms.map((a) => (
+                  <MenuItem key={a.id} value={a.id}>
+                    {Array.isArray(a.class_arm_names)
+                      ? a.class_arm_names.join(', ')
+                      : a.class_arm_names}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 130 }}>
+              <InputLabel>Gender</InputLabel>
+              <Select value={gender} label="Gender" onChange={(e) => setGender(e.target.value)}>
+                <MenuItem value="">All Genders</MenuItem>
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Enrolment Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Enrolment Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                <MenuItem value="student">Active</MenuItem>
+                <MenuItem value="graduate">Graduated</MenuItem>
+                <MenuItem value="withdrawn">Withdrawn</MenuItem>
+                <MenuItem value="transferred">Transferred</MenuItem>
+                <MenuItem value="absconded">Absconded</MenuItem>
+                <MenuItem value="suspended">Suspended</MenuItem>
+              </Select>
+            </FormControl>
+
+            {hasFilters && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={resetFilters}
+                sx={{ height: 40 }}
+              >
+                Reset
+              </Button>
+            )}
+          </Box>
+
+          {selectedIds.size > 0 && (
+            <Alert
+              severity="info"
+              sx={{ mb: 1.5 }}
+              action={
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="success"
+                    onClick={() => setBulkStatusConfirm('active')}
+                  >
+                    Activate
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="error"
+                    onClick={() => setBulkStatusConfirm('inactive')}
+                  >
+                    Deactivate
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      setAssignClassLearners(selectedRows);
+                      setAssignClassOpen(true);
+                    }}
+                  >
+                    Assign Class
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => {
+                      setLinkParentLearner(selectedRows[0]);
+                      setLinkParentOpen(true);
+                    }}
+                  >
+                    Link Parent
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => setBulkReportConfirmOpen(true)}
+                  >
+                    Generate Report
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    color="error"
+                    onClick={() => setBulkDeleteConfirmOpen(true)}
+                  >
+                    Delete
+                  </Button>
+                </Stack>
+              }
+            >
+              {selectedIds.size} selected
+            </Alert>
+          )}
+
+          <Box>
+            <TableContainer>
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        indeterminate={selectedIds.size > 0 && selectedIds.size < rows.length}
+                        checked={rows.length > 0 && selectedIds.size === rows.length}
+                        onChange={handleSelectAll}
+                      />
+                    </TableCell>
+                    <TableCell>#</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Class / Arm</TableCell>
+                    <TableCell align="center">Parent</TableCell>
+                    <TableCell>Student Status</TableCell>
+                    <TableCell>Account Status</TableCell>
+                    <TableCell align="center">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                            <Avatar src={row.user?.avatar || ''} alt={row.user?.fname} sx={{ width: 36, height: 36 }} />
-                            <Box sx={{ minWidth: 0 }}>
-                              <Stack direction="row" alignItems="center" spacing={0.6}>
-                                <Typography variant="body2" fontWeight={600} noWrap>
-                                  {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
-                                </Typography>
-                                <Box
-                                  sx={{
-                                    width: 18,
-                                    height: 18,
-                                    borderRadius: '5px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 800,
-                                    fontSize: '0.6rem',
-                                    flexShrink: 0,
-                                    bgcolor: isMale ? 'info.light' : 'success.light',
-                                    color: isMale ? 'info.main' : 'success.main',
-                                  }}
-                                >
-                                  {isMale ? 'M' : 'F'}
-                                </Box>
-                              </Stack>
-                              <Typography variant="caption" color="text.secondary" noWrap>
-                                {row.user?.user_id || '—'}
-                              </Typography>
+                          <Skeleton variant="rounded" width={18} height={18} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={20} />
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Skeleton variant="circular" width={36} height={36} />
+                            <Box>
+                              <Skeleton variant="text" width={140} height={20} />
+                              <Skeleton variant="text" width={90} height={16} />
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell>{classArmLabel(row.current_registration)}</TableCell>
-                        <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                          <Box
-                            sx={{
-                              bgcolor: row.guardians_count > 0 ? '#F0F9FF' : '#FEF3C7',
-                              px: 1.5,
-                              py: 0.5,
-                              borderRadius: 1,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {row.guardians_count > 0 ? (
-                              <PeopleIcon sx={{ fontSize: 15, color: '#2563EB' }} />
-                            ) : (
-                              <WarningAmberIcon sx={{ fontSize: 15, color: '#B45309' }} />
-                            )}
-                            <Typography variant="subtitle2">
-                              <Link sx={{ cursor: 'pointer' }} onClick={() => { setViewParentsLearner(row); setViewParentsOpen(true); }}>
-                                {row.guardians_count ?? 0} linked
-                              </Link>
-                            </Typography>
-                          </Box>
-                        </TableCell>
                         <TableCell>
-                          <Chip
-                            label={row.status}
-                            size="small"
-                            sx={{ bgcolor: statusStyle.bg, color: statusStyle.color, borderRadius: '8px', fontWeight: 600, textTransform: 'capitalize' }}
+                          <Skeleton variant="text" width={110} height={20} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Skeleton
+                            variant="rounded"
+                            width={50}
+                            height={22}
+                            sx={{ borderRadius: '12px', mx: 'auto' }}
                           />
                         </TableCell>
                         <TableCell>
-                          <Chip
-                            label={isLearnerActive(row) ? 'Active' : 'Inactive'}
-                            size="small"
-                            sx={{
-                              bgcolor: isLearnerActive(row) ? 'success.light' : 'error.light',
-                              color: isLearnerActive(row) ? 'success.dark' : 'error.dark',
-                              borderRadius: '8px',
-                              fontWeight: 600,
-                            }}
+                          <Skeleton
+                            variant="rounded"
+                            width={60}
+                            height={22}
+                            sx={{ borderRadius: '12px' }}
                           />
                         </TableCell>
-                        <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                          <IconButton onClick={(e) => handleMenuOpen(e, row)}>
-                            <MoreVertIcon />
-                          </IconButton>
-                          <Menu anchorEl={anchorEl} open={Boolean(anchorEl) && selectedRow?.user_id === row.user_id} onClose={handleMenuClose}>
-                            <MenuItem onClick={() => confirmImpersonateStudent(row)}>
-                              <IconUser size={18} style={{ marginRight: 8 }} />
-                              Login As Student
-                            </MenuItem>
-                            <MenuItem onClick={() => { setLinkParentLearner(row); setLinkParentOpen(true); handleMenuClose(); }}>
-                              <IconUserPlus size={18} style={{ marginRight: 8 }} />
-                              Link Parent
-                            </MenuItem>
-                            <MenuItem onClick={() => { setAssignClassLearners([row]); setAssignClassOpen(true); handleMenuClose(); }} disabled={!row.current_registration}>
-                              <IconToggleRight size={18} style={{ marginRight: 8 }} />
-                              Assign Class
-                            </MenuItem>
-                            <MenuItem onClick={() => handleGenerateReport(row)}>
-                              <IconFileDescription size={18} style={{ marginRight: 8 }} />
-                              Generate Report
-                            </MenuItem>
-                            <MenuItem onClick={() => handleToggleStatus(row)}>
-                              <IconToggleRight size={18} style={{ marginRight: 8 }} />
-                              {isLearnerActive(row) ? 'Deactivate Account' : 'Activate Account'}
-                            </MenuItem>
-                            <MenuItem onClick={() => handleOpenEdit(row)}>
-                              <IconEdit size={18} style={{ marginRight: 8 }} />
-                              Edit
-                            </MenuItem>
-                            <MenuItem onClick={() => handleOpenUpdatePhoto(row)}>
-                              <IconCamera size={18} style={{ marginRight: 8 }} />
-                              Update Photo
-                            </MenuItem>
-                            <MenuItem onClick={() => handleOpenResetPassword(row)}>
-                              <IconKey size={18} style={{ marginRight: 8 }} />
-                              Reset Password
-                            </MenuItem>
-                            <MenuItem onClick={() => handleOpenDelete(row)} sx={{ color: 'error.main' }}>
-                              <IconTrash size={18} style={{ marginRight: 8 }} />
-                              Delete
-                            </MenuItem>
-                          </Menu>
+                        <TableCell>
+                          <Skeleton
+                            variant="rounded"
+                            width={60}
+                            height={22}
+                            sx={{ borderRadius: '12px' }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
                         </TableCell>
                       </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center">
-                      <Alert severity="info" sx={{ mb: 3, justifyContent: 'center', textAlign: 'center', '& .MuiAlert-icon': { mr: 1.5 } }}>
-                        {hasFilters ? 'No learners match the current search.' : 'No learners found.'}
-                      </Alert>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    ))
+                  ) : rows.length > 0 ? (
+                    rows.map((row, index) => {
+                      const isHighlighted =
+                        selectedIds.has(row.user_id) ||
+                        (drawerOpen && drawerLearner?.user_id === row.user_id);
+                      const statusStyle =
+                        row.status === 'student'
+                          ? { bg: 'success.light', color: 'success.dark' }
+                          : row.status === 'graduate'
+                            ? { bg: 'info.light', color: 'info.dark' }
+                            : { bg: 'error.light', color: 'error.dark' };
+                      const isMale = row.user?.sex?.toUpperCase() === 'MALE';
 
-            <TablePagination
-              component="div"
-              rowsPerPageOptions={[5, 10, 25, 50, 100]}
-              count={total}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                      return (
+                        <TableRow
+                          key={row.user_id}
+                          hover
+                          selected={isHighlighted}
+                          onClick={() => {
+                            setDrawerLearner(row);
+                            setDrawerOpen(true);
+                            setSelectedIds(new Set([row.user_id]));
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            borderLeft: '3px solid transparent',
+                            '&.Mui-selected': {
+                              bgcolor: 'rgba(89, 49, 150, 0.14)',
+                              borderLeft: '3px solid #593196',
+                            },
+                            '&.Mui-selected:hover': { bgcolor: 'rgba(89, 49, 150, 0.2)' },
+                          }}
+                        >
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              size="small"
+                              checked={selectedIds.has(row.user_id)}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={() => handleSelectRow(row)}
+                            />
+                          </TableCell>
+                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                              <Avatar
+                                src={row.user?.avatar || ''}
+                                alt={row.user?.fname}
+                                sx={{ width: 36, height: 36 }}
+                              />
+                              <Box sx={{ minWidth: 0 }}>
+                                <Stack direction="row" alignItems="center" spacing={0.6}>
+                                  <Typography variant="body2" fontWeight={600} noWrap>
+                                    {row.user ? `${row.user.fname} ${row.user.lname}` : '—'}
+                                  </Typography>
+                                  <Box
+                                    sx={{
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: '5px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 800,
+                                      fontSize: '0.6rem',
+                                      flexShrink: 0,
+                                      bgcolor: isMale ? 'info.light' : 'success.light',
+                                      color: isMale ? 'info.main' : 'success.main',
+                                    }}
+                                  >
+                                    {isMale ? 'M' : 'F'}
+                                  </Box>
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {row.user?.user_id || '—'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>{classArmLabel(row.current_registration)}</TableCell>
+                          <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                            <Box
+                              sx={{
+                                bgcolor: row.guardians_count > 0 ? '#F0F9FF' : '#FEF3C7',
+                                px: 1.5,
+                                py: 0.5,
+                                borderRadius: 1,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                justifyContent: 'center',
+                              }}
+                            >
+                              {row.guardians_count > 0 ? (
+                                <PeopleIcon sx={{ fontSize: 15, color: '#2563EB' }} />
+                              ) : (
+                                <WarningAmberIcon sx={{ fontSize: 15, color: '#B45309' }} />
+                              )}
+                              <Typography variant="subtitle2">
+                                <Link
+                                  sx={{ cursor: 'pointer' }}
+                                  onClick={() => {
+                                    setViewParentsLearner(row);
+                                    setViewParentsOpen(true);
+                                  }}
+                                >
+                                  {row.guardians_count ?? 0} linked
+                                </Link>
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.status}
+                              size="small"
+                              sx={{
+                                bgcolor: statusStyle.bg,
+                                color: statusStyle.color,
+                                borderRadius: '8px',
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={isLearnerActive(row) ? 'Active' : 'Inactive'}
+                              size="small"
+                              sx={{
+                                bgcolor: isLearnerActive(row) ? 'success.light' : 'error.light',
+                                color: isLearnerActive(row) ? 'success.dark' : 'error.dark',
+                                borderRadius: '8px',
+                                fontWeight: 600,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell align="center" onClick={(e) => e.stopPropagation()}>
+                            <IconButton onClick={(e) => handleMenuOpen(e, row)}>
+                              <MoreVertIcon />
+                            </IconButton>
+                            <Menu
+                              anchorEl={anchorEl}
+                              open={Boolean(anchorEl) && selectedRow?.user_id === row.user_id}
+                              onClose={handleMenuClose}
+                            >
+                              <MenuItem onClick={() => confirmImpersonateStudent(row)}>
+                                <IconUser size={18} style={{ marginRight: 8 }} />
+                                Login As Student
+                              </MenuItem>
+                              <MenuItem
+                                onClick={() => {
+                                  setLinkParentLearner(row);
+                                  setLinkParentOpen(true);
+                                  handleMenuClose();
+                                }}
+                              >
+                                <IconUserPlus size={18} style={{ marginRight: 8 }} />
+                                Link Parent
+                              </MenuItem>
+                              <MenuItem
+                                onClick={() => {
+                                  setAssignClassLearners([row]);
+                                  setAssignClassOpen(true);
+                                  handleMenuClose();
+                                }}
+                                disabled={!row.current_registration}
+                              >
+                                <IconToggleRight size={18} style={{ marginRight: 8 }} />
+                                Assign Class
+                              </MenuItem>
+                              <MenuItem onClick={() => handleGenerateReport(row)}>
+                                <IconFileDescription size={18} style={{ marginRight: 8 }} />
+                                Generate Report
+                              </MenuItem>
+                              <MenuItem onClick={() => handleToggleStatus(row)}>
+                                <IconToggleRight size={18} style={{ marginRight: 8 }} />
+                                {isLearnerActive(row) ? 'Deactivate Account' : 'Activate Account'}
+                              </MenuItem>
+                              <MenuItem onClick={() => handleOpenEdit(row)}>
+                                <IconEdit size={18} style={{ marginRight: 8 }} />
+                                Edit
+                              </MenuItem>
+                              <MenuItem onClick={() => handleOpenUpdatePhoto(row)}>
+                                <IconCamera size={18} style={{ marginRight: 8 }} />
+                                Update Photo
+                              </MenuItem>
+                              <MenuItem onClick={() => handleOpenResetPassword(row)}>
+                                <IconKey size={18} style={{ marginRight: 8 }} />
+                                Reset Password
+                              </MenuItem>
+                              <MenuItem
+                                onClick={() => handleOpenDelete(row)}
+                                sx={{ color: 'error.main' }}
+                              >
+                                <IconTrash size={18} style={{ marginRight: 8 }} />
+                                Delete
+                              </MenuItem>
+                            </Menu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center">
+                        <Alert
+                          severity="info"
+                          sx={{
+                            mb: 3,
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            '& .MuiAlert-icon': { mr: 1.5 },
+                          }}
+                        >
+                          {hasFilters
+                            ? 'No learners match the current search.'
+                            : 'No learners found.'}
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+
+              <TablePagination
+                component="div"
+                rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                count={total}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+              />
+            </TableContainer>
+          </Box>
+        </ParentCard>
+
+        <Slide direction="left" in={drawerOpen} mountOnEnter unmountOnExit>
+          <Box sx={{ width: { xs: '100%', lg: 360 }, flexShrink: 0 }}>
+            <LearnerOverviewPanel
+              learner={drawerLearner}
+              onClose={() => setDrawerOpen(false)}
+              onEdit={handleOpenEdit}
+              onLinkParent={(l) => {
+                setLinkParentLearner(l);
+                setLinkParentOpen(true);
+              }}
+              onAssignClass={(l) => {
+                setAssignClassLearners([l]);
+                setAssignClassOpen(true);
+              }}
+              onGenerateReport={handleGenerateReport}
+              onToggleStatus={handleToggleStatus}
+              onDelete={handleOpenDelete}
+              onImpersonate={confirmImpersonateStudent}
             />
-          </TableContainer>
-        </Box>
-      </ParentCard>
-
-      <Slide direction="left" in={drawerOpen} mountOnEnter unmountOnExit>
-        <Box sx={{ width: { xs: '100%', lg: 360 }, flexShrink: 0 }}>
-          <LearnerOverviewPanel
-            learner={drawerLearner}
-            onClose={() => setDrawerOpen(false)}
-            onEdit={handleOpenEdit}
-            onLinkParent={(l) => { setLinkParentLearner(l); setLinkParentOpen(true); }}
-            onAssignClass={(l) => { setAssignClassLearners([l]); setAssignClassOpen(true); }}
-            onGenerateReport={handleGenerateReport}
-            onToggleStatus={handleToggleStatus}
-            onDelete={handleOpenDelete}
-            onImpersonate={confirmImpersonateStudent}
-          />
-        </Box>
-      </Slide>
+          </Box>
+        </Slide>
       </Stack>
 
-      <AddLearnerModal open={addLearnerOpen} onClose={() => setAddLearnerOpen(false)} onSave={handleSaveLearner} isLoading={addLearnerLoading} showLinkParents />
+      <AddLearnerModal
+        open={addLearnerOpen}
+        onClose={() => setAddLearnerOpen(false)}
+        onSave={handleSaveLearner}
+        isLoading={addLearnerLoading}
+        showLinkParents
+      />
 
-      <UploadLearnerModal open={uploadLearnerOpen} onClose={() => setUploadLearnerOpen(false)} onUpload={handleUploadLearners} />
+      <UploadLearnerModal
+        open={uploadLearnerOpen}
+        onClose={() => setUploadLearnerOpen(false)}
+        onUpload={handleUploadLearners}
+      />
 
-      <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={downloadDialogOpen}
+        onClose={() => setDownloadDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Download Learner Template</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -1064,32 +1351,81 @@ const LearnerManagement = () => {
           </Typography>
           <FormControl fullWidth>
             <InputLabel>Class</InputLabel>
-            <Select value={downloadClassId} label="Class" onChange={(e) => setDownloadClassId(e.target.value)}>
+            <Select
+              value={downloadClassId}
+              label="Class"
+              onChange={(e) => setDownloadClassId(e.target.value)}
+            >
               <MenuItem value="">Select Class</MenuItem>
-              {classes.filter((c) => c.programme_class_id).map((cls) => (
-                <MenuItem key={cls.programme_class_id} value={cls.programme_class_id}>
-                  {cls.label}
-                </MenuItem>
-              ))}
+              {classes
+                .filter((c) => c.programme_class_id)
+                .map((cls) => (
+                  <MenuItem key={cls.programme_class_id} value={cls.programme_class_id}>
+                    {cls.label}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setDownloadDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleDownloadTemplate} disabled={!downloadClassId}>Download</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setDownloadDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleDownloadTemplate}
+            disabled={!downloadClassId}
+          >
+            Download
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={impersonateStudentConfirmOpen} onClose={() => { setImpersonateStudentConfirmOpen(false); setStudentToImpersonate(null); }} maxWidth="xs" fullWidth>
+      <Dialog
+        open={impersonateStudentConfirmOpen}
+        onClose={() => {
+          setImpersonateStudentConfirmOpen(false);
+          setStudentToImpersonate(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle sx={{ fontWeight: 600 }}>Login as Student</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
-            Are you sure you want to login as <strong>{studentToImpersonate?.user?.fname} {studentToImpersonate?.user?.lname}</strong>? You can return to your account at any time.
+            Are you sure you want to login as{' '}
+            <strong>
+              {studentToImpersonate?.user?.fname} {studentToImpersonate?.user?.lname}
+            </strong>
+            ? You can return to your account at any time.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="contained" size="small" color="inherit" onClick={() => { setImpersonateStudentConfirmOpen(false); setStudentToImpersonate(null); }}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmedImpersonateStudent} sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}>Yes, Login As</Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={() => {
+              setImpersonateStudentConfirmOpen(false);
+              setStudentToImpersonate(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmedImpersonateStudent}
+            sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#fff' }}
+          >
+            Yes, Login As
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -1100,7 +1436,11 @@ const LearnerManagement = () => {
         onSaved={refreshAll}
       />
 
-      <ViewParentsModal open={viewParentsOpen} onClose={() => setViewParentsOpen(false)} learner={toLegacyLearnerShape(viewParentsLearner)} />
+      <ViewParentsModal
+        open={viewParentsOpen}
+        onClose={() => setViewParentsOpen(false)}
+        learner={toLegacyLearnerShape(viewParentsLearner)}
+      />
 
       <AssignClassModal
         open={assignClassOpen}
@@ -1112,27 +1452,61 @@ const LearnerManagement = () => {
 
       <AddLearnerModal
         open={editLearnerOpen}
-        onClose={() => { setEditLearnerOpen(false); setLearnerToEdit(null); }}
+        onClose={() => {
+          setEditLearnerOpen(false);
+          setLearnerToEdit(null);
+        }}
         onSave={handleConfirmEdit}
         isLoading={editLoading}
         isEdit
         initialValues={editValues}
       />
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Delete Learner</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete <strong>{learnerToDelete?.user ? `${learnerToDelete.user.fname} ${learnerToDelete.user.lname}` : 'this learner'}</strong>? This action cannot be undone.
+            Are you sure you want to delete{' '}
+            <strong>
+              {learnerToDelete?.user
+                ? `${learnerToDelete.user.fname} ${learnerToDelete.user.lname}`
+                : 'this learner'}
+            </strong>
+            ? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete} autoFocus>Delete</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={handleConfirmDelete}
+            autoFocus
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={resetPasswordOpen} onClose={() => setResetPasswordOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={resetPasswordOpen}
+        onClose={() => setResetPasswordOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Reset Password</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 1.5 }}>
@@ -1150,19 +1524,38 @@ const LearnerManagement = () => {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setResetPasswordOpen(false)} disabled={resetPasswordLoading}>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setResetPasswordOpen(false)}
+            disabled={resetPasswordLoading}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmResetPassword} disabled={resetPasswordLoading} autoFocus>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmResetPassword}
+            disabled={resetPasswordLoading}
+            autoFocus
+          >
             {resetPasswordLoading ? 'Resetting...' : 'Reset Password'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={updatePhotoOpen} onClose={() => setUpdatePhotoOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={updatePhotoOpen}
+        onClose={() => setUpdatePhotoOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Update Photo</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 1 }}>
+          <Box
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, py: 1 }}
+          >
             <Avatar src={photoPreview || undefined} sx={{ width: 96, height: 96 }}>
               <PersonIcon sx={{ fontSize: 40 }} />
             </Avatar>
@@ -1173,58 +1566,146 @@ const LearnerManagement = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setUpdatePhotoOpen(false)} disabled={updatePhotoLoading}>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setUpdatePhotoOpen(false)}
+            disabled={updatePhotoLoading}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" onClick={handleConfirmUpdatePhoto} disabled={updatePhotoLoading || !photoFile} autoFocus>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmUpdatePhoto}
+            disabled={updatePhotoLoading || !photoFile}
+            autoFocus
+          >
             {updatePhotoLoading ? 'Uploading...' : 'Save Photo'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={bulkDeleteConfirmOpen} onClose={() => setBulkDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={bulkDeleteConfirmOpen}
+        onClose={() => setBulkDeleteConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Delete Selected Learners</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete <strong>{selectedRows.length}</strong> selected learner(s)? This action cannot be undone.
+            Are you sure you want to delete <strong>{selectedRows.length}</strong> selected
+            learner(s)? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setBulkDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" color="error" onClick={handleBulkDelete} autoFocus>Delete</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setBulkDeleteConfirmOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={handleBulkDelete}
+            autoFocus
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={toggleStatusOpen} onClose={() => setToggleStatusOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{isLearnerActive(learnerToToggle) ? 'Deactivate Learner Account' : 'Activate Learner Account'}</DialogTitle>
+      <Dialog
+        open={toggleStatusOpen}
+        onClose={() => setToggleStatusOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          {isLearnerActive(learnerToToggle)
+            ? 'Deactivate Learner Account'
+            : 'Activate Learner Account'}
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            This will <strong>{isLearnerActive(learnerToToggle) ? 'revoke login access from' : 'restore login access for'}</strong>{' '}
-            <strong>{learnerToToggle?.user ? `${learnerToToggle.user.fname} ${learnerToToggle.user.lname}` : 'this learner'}</strong>
-            {isLearnerActive(learnerToToggle) ? ' — they will no longer be able to log in' : ', letting them log in again'}. Their enrolment
-            status (class, graduation, withdrawal, etc.) will not change.
+            This will{' '}
+            <strong>
+              {isLearnerActive(learnerToToggle)
+                ? 'revoke login access from'
+                : 'restore login access for'}
+            </strong>{' '}
+            <strong>
+              {learnerToToggle?.user
+                ? `${learnerToToggle.user.fname} ${learnerToToggle.user.lname}`
+                : 'this learner'}
+            </strong>
+            {isLearnerActive(learnerToToggle)
+              ? ' — they will no longer be able to log in'
+              : ', letting them log in again'}
+            . Their enrolment status (class, graduation, withdrawal, etc.) will not change.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setToggleStatusOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" color={isLearnerActive(learnerToToggle) ? 'error' : 'success'} onClick={handleConfirmToggle} autoFocus>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setToggleStatusOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            color={isLearnerActive(learnerToToggle) ? 'error' : 'success'}
+            onClick={handleConfirmToggle}
+            autoFocus
+          >
             {isLearnerActive(learnerToToggle) ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(bulkStatusConfirm)} onClose={() => setBulkStatusConfirm(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{bulkStatusConfirm === 'active' ? 'Activate' : 'Deactivate'} Selected Learners</DialogTitle>
+      <Dialog
+        open={Boolean(bulkStatusConfirm)}
+        onClose={() => setBulkStatusConfirm(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          {bulkStatusConfirm === 'active' ? 'Activate' : 'Deactivate'} Selected Learners
+        </DialogTitle>
         <DialogContent>
           <Typography>
-            This will {bulkStatusConfirm === 'active' ? 'restore login access for' : 'revoke login access from'}{' '}
-            <strong>{selectedRows.filter((r) => isLearnerActive(r) !== (bulkStatusConfirm === 'active')).length}</strong> of the{' '}
-            <strong>{selectedRows.length}</strong> selected learner(s) (already-{bulkStatusConfirm} ones are skipped). Their enrolment status
-            will not change.
+            This will{' '}
+            {bulkStatusConfirm === 'active'
+              ? 'restore login access for'
+              : 'revoke login access from'}{' '}
+            <strong>
+              {
+                selectedRows.filter((r) => isLearnerActive(r) !== (bulkStatusConfirm === 'active'))
+                  .length
+              }
+            </strong>{' '}
+            of the <strong>{selectedRows.length}</strong> selected learner(s) (already-
+            {bulkStatusConfirm} ones are skipped). Their enrolment status will not change.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setBulkStatusConfirm(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setBulkStatusConfirm(null)}
+          >
+            Cancel
+          </Button>
           <Button
             variant="contained"
             size="small"
@@ -1237,34 +1718,76 @@ const LearnerManagement = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={generateReportConfirmOpen} onClose={() => setGenerateReportConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={generateReportConfirmOpen}
+        onClose={() => setGenerateReportConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Generate Report</DialogTitle>
         <DialogContent>
           <Typography>
             This opens the full class report sheet for{' '}
-            <strong>{reportTargetRow ? classArmLabel(reportTargetRow.current_registration) : 'this learner\'s class'}</strong> in the current
-            term — the whole class roster, not just{' '}
-            <strong>{reportTargetRow?.user ? `${reportTargetRow.user.fname} ${reportTargetRow.user.lname}` : 'this learner'}</strong>'s own
-            record.
+            <strong>
+              {reportTargetRow
+                ? classArmLabel(reportTargetRow.current_registration)
+                : "this learner's class"}
+            </strong>{' '}
+            in the current term — the whole class roster, not just{' '}
+            <strong>
+              {reportTargetRow?.user
+                ? `${reportTargetRow.user.fname} ${reportTargetRow.user.lname}`
+                : 'this learner'}
+            </strong>
+            's own record.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setGenerateReportConfirmOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmGenerateReport} autoFocus>Open Report</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setGenerateReportConfirmOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button variant="contained" size="small" onClick={handleConfirmGenerateReport} autoFocus>
+            Open Report
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={bulkReportConfirmOpen} onClose={() => setBulkReportConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog
+        open={bulkReportConfirmOpen}
+        onClose={() => setBulkReportConfirmOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
         <DialogTitle>Generate Reports</DialogTitle>
         <DialogContent>
           <Typography>
-            This will open <strong>{distinctReportTargets}</strong> new browser tab(s) — one per distinct class/term among the selected
-            learners — each showing that class's full report roster.
+            This will open <strong>{distinctReportTargets}</strong> new browser tab(s) — one per
+            distinct class/term among the selected learners — each showing that class's full report
+            roster.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" color="inherit" size="small" onClick={() => setBulkReportConfirmOpen(false)}>Cancel</Button>
-          <Button variant="contained" size="small" onClick={handleConfirmBulkGenerateReport} autoFocus>Open Reports</Button>
+          <Button
+            variant="contained"
+            color="inherit"
+            size="small"
+            onClick={() => setBulkReportConfirmOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleConfirmBulkGenerateReport}
+            autoFocus
+          >
+            Open Reports
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

@@ -472,7 +472,18 @@ const TeachingStaffTab = ({
                       '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
                     }}
                   >
-                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      padding="checkbox"
+                      onClick={(e) => {
+                        // Stop it reaching the row's own onClick (which would
+                        // call toggleOne a second time and cancel this one
+                        // out) — but a checkbox click should open the side
+                        // drawer exactly like clicking anywhere else in the
+                        // row, so that part still needs firing here.
+                        e.stopPropagation();
+                        onRowClick?.(staffMember);
+                      }}
+                    >
                       <Checkbox
                         size="small"
                         checked={isRowSelected}

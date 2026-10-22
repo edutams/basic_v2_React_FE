@@ -61,6 +61,7 @@ import AddNonTeachingStaffModal from './AddNonTeachingStaffModal';
 import TeachingStaffTab from './components/TeachingStaffTab';
 import NonTeachingStaffTab from './components/NonTeachingStaffTab';
 import TeacherOverviewPanel from './TeacherOverviewPanel';
+import TeacherTimetableView from '@/pages/tenant/timetable/TeacherTimetableView';
 import BulkAssignModal from './components/BulkAssignModal';
 import UploadStaffModal from './components/UploadStaffModal';
 import StaffStatusModal from './components/StaffStatusModal';
@@ -791,6 +792,7 @@ const StaffManager = () => {
         >
           <Tab label={`Teaching Staff (${stats.teaching})`} value="teaching" />
           <Tab label={`Non-Teaching Staff (${stats.nonTeaching})`} value="non-teaching" />
+          <Tab label="Timetable View" value="timetable" />
         </Tabs>
       </Box>
 
@@ -810,7 +812,7 @@ const StaffManager = () => {
         {/* Content Area */}
         <Box>
           {activeTab === 'teaching' && (
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
+            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
               <Box
                 sx={
                   detailPanelStaff
@@ -870,7 +872,7 @@ const StaffManager = () => {
           )}
 
           {activeTab === 'non-teaching' && (
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={3} alignItems="flex-start">
+            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
               <Box
                 sx={
                   detailPanelStaff
@@ -923,6 +925,8 @@ const StaffManager = () => {
               )}
             </Stack>
           )}
+
+          {activeTab === 'timetable' && <TeacherTimetableView />}
 
         </Box>
       </Card>

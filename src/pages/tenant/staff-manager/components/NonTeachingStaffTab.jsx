@@ -346,7 +346,13 @@ const NonTeachingStaffTab = ({
                       '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
                     }}
                   >
-                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      padding="checkbox"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRowClick?.(staffMember);
+                      }}
+                    >
                       <Checkbox
                         size="small"
                         checked={isRowSelected}

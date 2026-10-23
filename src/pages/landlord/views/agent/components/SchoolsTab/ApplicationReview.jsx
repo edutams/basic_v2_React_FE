@@ -30,7 +30,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { IconDotsVertical, IconRefresh, IconUserPlus } from '@tabler/icons-react';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import BusinessIcon from '@mui/icons-material/Business';
-import { getSpaContact, formatDate, StatusChip } from './schoolTabHelpers';
+import { getSpaContact, formatDate, StatusChip } from './Schooltabhelpers';
 import { usePermissions } from '@/context/AgentContext/permissions';
 
 const ApplicationReview = ({

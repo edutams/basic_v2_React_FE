@@ -1,0 +1,40 @@
+app:
+  name: basic-v2-fe
+
+image:
+  repository: ghcr.io/edutams/basic_v2_fe
+  tag: sha-526c0d5
+  pullPolicy: Always
+
+imagePullSecrets:
+  - name: ghcr-pull-secret
+
+replicas: 2
+
+resources:
+  requests:
+    memory: "32Mi"
+    cpu: "20m"
+  limits:
+    memory: "128Mi"
+    cpu: "200m"
+
+backend:
+  service: basic-v2-be-service
+  paths:
+    - /tenancy/assets
+
+ingress:
+  hosts:
+    - oneskool.net
+    - "*.oneskool.net"
+  tls:
+    enabled: true
+    secretName: oneskool-net-tls
+
+certificate:
+  enabled: true
+  issuer: letsencrypt-dns-cloudflare
+  dnsNames:
+    - oneskool.net
+    - "*.oneskool.net"

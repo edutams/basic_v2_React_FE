@@ -1,0 +1,16 @@
+.git/
+.github/
+.vscode/
+.idea/
+node_modules/
+dist/
+helm/
+argocd/
+.env
+.env.*
+!.env.example
+Dockerfile
+.dockerignore
+*.md
+.DS_Store
+

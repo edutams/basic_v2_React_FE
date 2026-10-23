@@ -72,6 +72,7 @@ import ViewParentsModal from '@/components/tenant/learners/ViewParentsModal';
 import UploadLearnerModal from '@/components/tenant/learners/UploadLearnerModal';
 import AssignClassModal from '@/components/tenant/learners/AssignClassModal';
 import LearnerOverviewPanel from '@/components/tenant/learners/LearnerOverviewPanel';
+import ArrowHint from '@/components/shared/ArrowHint';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import StatCard from 'src/components/shared/StatCard';
@@ -194,6 +195,18 @@ const LearnerManagement = () => {
   // detail panel (click a row/checkbox)
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerLearner, setDrawerLearner] = useState(null);
+
+  // Onboarding tour: "click a row" -> "panel updates" -> gone for the rest
+  // of this page visit. Driven by the real drawerOpen state, not a timer —
+  // once the user actually opens the panel the first hint is retired for
+  // good, even if they close the panel and open a different learner later.
+  const [tourStep, setTourStep] = useState('row');
+  useEffect(() => {
+    if (drawerOpen && tourStep === 'row') {
+      setTourStep('panel');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerOpen]);
 
   // Auto-open Add Learner modal when navigated from Quick Actions
   useEffect(() => {
@@ -806,7 +819,28 @@ const LearnerManagement = () => {
         </Stack>
       </Box>
 
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        spacing={1}
+        alignItems="flex-start"
+        sx={{ position: 'relative' }}
+      >
+        <ArrowHint
+          show={tourStep === 'row' && rows.length > 0}
+          mode="persistent"
+          label="🚀 1. Click on a learner's row — the row is highlighted to show it is selected."
+          direction="down-right"
+          maxWidth={240}
+          position={{ position: 'absolute', top: 96, left: 56, zIndex: 10 }}
+        />
+        <ArrowHint
+          show={tourStep === 'panel'}
+          mode="timed"
+          label="🚀 2. The Learner Overview panel updates automatically with the selected learner's information."
+          direction="down-left"
+          maxWidth={260}
+          position={{ position: 'absolute', top: -72, right: { xs: 16, lg: 40 }, zIndex: 10 }}
+        />
         <ParentCard
           sx={{
             flex: 1,

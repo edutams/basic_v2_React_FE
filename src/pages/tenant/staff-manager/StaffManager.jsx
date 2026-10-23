@@ -54,6 +54,7 @@ import {
   IconKey,
 } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
+import ArrowHint from '@/components/shared/ArrowHint';
 import staffApi from '@/api/tenant/staffs/staffApi';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import timetableApi from '@/api/tenant/timetable/timetableApi';
@@ -95,6 +96,19 @@ const StaffManager = () => {
   // Teaching Staff tab: row selection + detail panel
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [detailPanelStaff, setDetailPanelStaff] = useState(null);
+
+  // One-time onboarding hint: "click a row" -> "panel updates" -> done.
+  // Never reverts to 'row' once the user has opened the panel once, even
+  // if they close it again — this is a one-shot tour for this page visit,
+  // not a nag that reappears every time the panel closes.
+  const [tourStep, setTourStep] = useState('row');
+  useEffect(() => {
+    if (detailPanelStaff && tourStep === 'row') {
+      setTourStep('panel');
+      const timer = setTimeout(() => setTourStep('done'), 5200);
+      return () => clearTimeout(timer);
+    }
+  }, [detailPanelStaff, tourStep]);
   const [bulkActivateConfirmOpen, setBulkActivateConfirmOpen] = useState(false);
   const [bulkDeactivateConfirmOpen, setBulkDeactivateConfirmOpen] = useState(false);
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
@@ -906,7 +920,16 @@ const StaffManager = () => {
       <Box>
         {activeTab === 'teaching' && (
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+              <ArrowHint
+                show={tourStep === 'row' && staff.length > 0}
+                label="🚀 1. Click on a teacher's row — the row is highlighted to show it is selected."
+                direction="down-left"
+                mode="persistent"
+                delay="0.3s"
+                maxWidth={240}
+                position={{ position: 'absolute', top: 70, right: 24, zIndex: 20 }}
+              />
               <TeachingStaffTab
                 loading={loading}
                 staff={staff}
@@ -943,7 +966,16 @@ const StaffManager = () => {
               />
             </Box>
             {detailPanelStaff && (
-              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, position: 'relative' }}>
+                <ArrowHint
+                  show={tourStep === 'panel'}
+                  label="🚀 2. The overview panel updates automatically with the selected staff member's information."
+                  direction="up-left"
+                  mode="timed"
+                  delay="0.2s"
+                  maxWidth={260}
+                  position={{ position: 'absolute', top: -56, right: 8, zIndex: 20 }}
+                />
                 <TeacherOverviewPanel
                   staffRow={detailPanelStaff}
                   onClose={() => setDetailPanelStaff(null)}

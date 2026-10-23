@@ -52,6 +52,7 @@ import {
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from '@/components/shared/StatCard';
+import ArrowHint from '@/components/shared/ArrowHint';
 import AllocationSubTabs from '@/pages/tenant/teaching-allocations/AllocationSubTabs';
 import UploadStaffForm from './components/UploadStaffForm';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
@@ -175,10 +176,26 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
   const [copying, setCopying] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
+  // Onboarding tour — "click a class row" -> "panel updates" -> done
+  // forever for this visit. Driven by the real `selectedClass` state, not a
+  // synthetic timer; once step 2's timed hint has had time to play out it
+  // moves to 'done' and never returns, even if selectedClass later goes
+  // back to null (e.g. a Fetch re-run clears it).
+  const [tourStep, setTourStep] = useState('row');
+
   useEffect(() => {
     initData();
     fetchWorkload();
   }, []);
+
+  useEffect(() => {
+    if (selectedClass && tourStep === 'row') {
+      setTourStep('panel');
+      const timer = setTimeout(() => setTourStep('done'), 5500);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedClass]);
 
   // Prefill-and-go: once the default session/term/programme resolve on
   // load, fetch the classes list automatically instead of leaving the user
@@ -925,7 +942,28 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
         </Tooltip>
       </Box>
       {/* Master-detail layout */}
-      <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
+      <Stack
+        direction={{ xs: 'column', lg: 'row' }}
+        spacing={2}
+        alignItems="flex-start"
+        sx={{ position: 'relative' }}
+      >
+        <ArrowHint
+          show={tourStep === 'row' && pagedClasses.length > 0}
+          mode="persistent"
+          label="🚀 1. Click on a class's row — the row is highlighted to show it is selected."
+          direction="down-right"
+          maxWidth={240}
+          position={{ position: 'absolute', top: 68, left: 130, zIndex: 10 }}
+        />
+        <ArrowHint
+          show={tourStep === 'panel'}
+          mode="timed"
+          label="🚀 2. The subject allocation panel updates automatically with the selected class's subjects."
+          direction="down-right"
+          maxWidth={260}
+          position={{ position: 'absolute', top: 4, left: 500, zIndex: 10 }}
+        />
         {/* Left: Classes list */}
         <Paper
           variant="outlined"

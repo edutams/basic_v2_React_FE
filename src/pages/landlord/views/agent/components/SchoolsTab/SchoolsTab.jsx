@@ -56,7 +56,7 @@ import {
   getHeadContact,
   formatDate,
   StatusChip,
-} from './schoolTabHelpers';
+} from './Schooltabhelpers';
 import ApplicationReview from './ApplicationReview';
 import SetupApprovals from './SetupApprovals';
 import ApprovedSchoolsTab from './ApprovedSchoolsTab';

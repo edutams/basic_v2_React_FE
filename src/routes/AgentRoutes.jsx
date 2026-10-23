@@ -66,7 +66,7 @@ const AuthForgotPassword = Loadable(
 );
 const ResetPassword = Loadable(lazy(() => import('@/components/landlord/auth/AuthResetPassword')));
 const VerifyOtp = Loadable(lazy(() => import('@/components/landlord/auth/AuthVerifyOtp')));
-const Error = Loadable(lazy(() => import('../utils/auth/Error')));
+const Error = Loadable(lazy(() => import('../utils/Auth/Error')));
 
 const Analytics_ = Loadable(lazy(() => import('@/pages/landlord/views/analytics_/index')));
 

@@ -42,9 +42,11 @@ import {
   IconFilterOff,
   IconUsers,
   IconBook2,
-  IconUserPlus,
+  IconStack2,
   IconChevronDown,
   IconCircleCheck,
+  IconCircleX,
+  IconAlertTriangle,
   IconInfoCircle,
 } from '@tabler/icons-react';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
@@ -73,6 +75,12 @@ const statusChipSx = (status) =>
 
 const statusLabel = (status) =>
   status === 'assigned' ? 'Complete' : status === 'partial' ? 'Partial' : 'Unassigned';
+
+const StatusIcon = ({ status }) => {
+  if (status === 'assigned') return <IconCircleCheck size={14} />;
+  if (status === 'partial') return <IconAlertTriangle size={14} />;
+  return <IconCircleX size={14} />;
+};
 
 const initials = (name) =>
   (name || '')
@@ -606,15 +614,15 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
           {
             label: 'Subject Slots',
             count: stats.totalSlots,
-            icon: IconBook2,
-            colorIndex: 2,
+            icon: IconStack2,
+            colorIndex: 1,
             subtitle: `${stats.totalClasses} classes`,
             tooltip: 'Total (class, subject) pairs across every class in this programme',
           },
           {
             label: 'Assigned',
             count: stats.assignedSlots,
-            icon: IconUserPlus,
+            icon: IconCircleCheck,
             colorIndex: 1,
             subtitle: `${stats.assignedPct}%`,
             tooltip: 'Subject slots that already have a teacher assigned',
@@ -622,8 +630,8 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
           {
             label: 'Unassigned',
             count: stats.unassignedSlots,
-            icon: IconUsers,
-            colorIndex: 4,
+            icon: IconAlertTriangle,
+            colorIndex: 3,
             subtitle: stats.totalSlots > 0 ? `${100 - stats.assignedPct}%` : '0%',
             tooltip: 'Subject slots still needing a teacher',
           },
@@ -631,7 +639,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
             label: 'Teachers Active',
             count: stats.teachersActive,
             icon: IconUsers,
-            colorIndex: 3,
+            colorIndex: 2,
             tooltip:
               'Distinct staff members currently assigned as a subject teacher in this programme',
           },
@@ -711,12 +719,16 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
         </Grid>
       </Grid>
 
-      <AllocationSubTabs activeTab={activeTab} onTabChange={onTabChange} onOpenMigrate={onOpenMigrate} />
+      <AllocationSubTabs
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onOpenMigrate={onOpenMigrate}
+      />
 
       <Alert severity="info" sx={{ color: '#000000', backgroundColor: '#FFFAE6', mb: 2 }}>
         Select a class, pick an arm, then allocate a teacher to each of its subjects. A teacher is
-        assigned per class arm — a class with several arms can have a different teacher per arm
-        for the same subject.
+        assigned per class arm — a class with several arms can have a different teacher per arm for
+        the same subject.
       </Alert>
 
       {/* Filters */}
@@ -724,7 +736,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
         variant="outlined"
         sx={{
           p: 2,
-          mb: 3,
+          mb: 1,
           bgcolor: 'background.paper',
           borderRadius: 2,
           borderTop: '3px solid',
@@ -732,7 +744,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
         }}
       >
         <Grid container spacing={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.3 }}>
             <TextField
               select
               size="small"
@@ -748,7 +760,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               select
               size="small"
@@ -765,7 +777,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               select
               size="small"
@@ -782,7 +794,28 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.8 }}>
+            <TextField
+              select
+              size="small"
+              label="Class"
+              value={selectedClass?.programme_class_id || ''}
+              onChange={(e) => {
+                const row = classes.find((c) => String(c.programme_class_id) === e.target.value);
+                if (row) handleSelectClass(row);
+              }}
+              fullWidth
+              disabled={classes.length === 0}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classes.map((c) => (
+                <MenuItem key={c.programme_class_id} value={String(c.programme_class_id)}>
+                  {c.class_name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 1.4 }}>
             <TextField
               select
               size="small"
@@ -798,7 +831,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
             <Button
               variant="contained"
               size="small"
@@ -810,79 +843,93 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
               Fetch
             </Button>
           </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <TextField
+              size="small"
+              placeholder="Search subject or teacher..."
+              value={rightSearch}
+              onChange={(e) => setRightSearch(e.target.value)}
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={16} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
         </Grid>
-
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<IconFilterOff size={16} />}
-            onClick={handleResetFilters}
-          >
-            Reset
-          </Button>
-          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
-            <span>
-              <Button
-                size="small"
-                variant="contained"
-                color="secondary"
-                startIcon={<IconWand size={16} />}
-                onClick={() => setAutoAllocateConfirmOpen(true)}
-                disabled={!selectedArmId || autoAllocating}
-              >
-                {autoAllocating ? 'Running…' : 'Auto-Allocate'}
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
-            <span>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<IconUpload size={16} />}
-                onClick={() => setUploadModalOpen(true)}
-                disabled={!selectedArmId}
-              >
-                Import
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
-            <span>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<IconDownload size={16} />}
-                onClick={handleDownloadTemplate}
-                disabled={!selectedArmId}
-              >
-                Export
-              </Button>
-            </span>
-          </Tooltip>
-          <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
-            <span>
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<IconCopy size={16} />}
-                onClick={() => setCopyModalOpen(true)}
-                disabled={!selectedArmId || armFlatList.length < 2}
-              >
-                Copy from Arm
-              </Button>
-            </span>
-          </Tooltip>
-        </Box>
       </Paper>
-
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+        <Button
+          variant="contained"
+          size="small"
+          startIcon={<IconFilterOff size={16} />}
+          onClick={handleResetFilters}
+        >
+          Reset
+        </Button>
+        <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              color="secondary"
+              startIcon={<IconWand size={16} />}
+              onClick={() => setAutoAllocateConfirmOpen(true)}
+              disabled={!selectedArmId || autoAllocating}
+            >
+              {autoAllocating ? 'Running…' : 'Auto-Allocate'}
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<IconUpload size={16} />}
+              onClick={() => setUploadModalOpen(true)}
+              disabled={!selectedArmId}
+            >
+              Import
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<IconDownload size={16} />}
+              onClick={handleDownloadTemplate}
+              disabled={!selectedArmId}
+            >
+              Export
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={selectedArmId ? '' : 'Select a class and arm first'}>
+          <span>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<IconCopy size={16} />}
+              onClick={() => setCopyModalOpen(true)}
+              disabled={!selectedArmId || armFlatList.length < 2}
+            >
+              Copy from Arm
+            </Button>
+          </span>
+        </Tooltip>
+      </Box>
       {/* Master-detail layout */}
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
         {/* Left: Classes list */}
         <Paper
           variant="outlined"
-          sx={{ borderRadius: 2, width: { xs: '100%', lg: 340 }, flexShrink: 0 }}
+          sx={{ borderRadius: 2, width: { xs: '100%', lg: 470 }, flexShrink: 0 }}
         >
           <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Typography fontWeight={700}>Classes ({filteredClasses.length})</Typography>
@@ -908,6 +955,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Subjects</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>
                     <Tooltip title="Filled (arm, subject) slots out of the total — a class with 3 arms and 9 subjects has 27 slots, not 9">
                       <span>Assigned</span>
@@ -920,14 +968,14 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                 {classesLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={4}>
+                      <TableCell colSpan={5}>
                         <Skeleton variant="rounded" height={28} />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : pagedClasses.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                       <Typography variant="body2" color="text.secondary">
                         {hasFetched ? 'No classes found' : 'Select a programme, then click Fetch'}
                       </Typography>
@@ -951,7 +999,12 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                       }}
                     >
                       <TableCell>{leftPage * leftRowsPerPage + idx + 1}</TableCell>
-                      <TableCell>{row.class_name}</TableCell>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={600}>
+                          {row.class_name}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{row.subject_count}</TableCell>
                       <TableCell>
                         {row.assigned_slots}/{row.total_slots}
                       </TableCell>
@@ -959,9 +1012,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                         <Chip
                           label={statusLabel(row.status)}
                           size="small"
-                          icon={
-                            row.status === 'assigned' ? <IconCircleCheck size={14} /> : undefined
-                          }
+                          icon={<StatusIcon status={row.status} />}
                           sx={statusChipSx(row.status)}
                         />
                       </TableCell>
@@ -1013,7 +1064,7 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                       <Chip
                         label={statusLabel(armStatus)}
                         size="small"
-                        icon={armStatus === 'assigned' ? <IconCircleCheck size={14} /> : undefined}
+                        icon={<StatusIcon status={armStatus} />}
                         sx={statusChipSx(armStatus)}
                       />
                     </Tooltip>
@@ -1037,7 +1088,13 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                     </Button>
                   </Stack>
                 </Box>
-                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap" alignItems="center">
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  sx={{ mt: 1 }}
+                  flexWrap="wrap"
+                  alignItems="center"
+                >
                   <Typography variant="body2" color="text.primary">
                     Total Students: <strong>{selectedClass.student_count}</strong>
                   </Typography>
@@ -1074,23 +1131,13 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                     </Tooltip>
                   </Stack>
                 </Stack>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.5 }}
+                >
                   A subject teacher is assigned per arm — pick an arm above before allocating.
                 </Typography>
-                <TextField
-                  size="small"
-                  placeholder="Search subject or teacher..."
-                  value={rightSearch}
-                  onChange={(e) => setRightSearch(e.target.value)}
-                  sx={{ mt: 1.5, width: { xs: '100%', sm: 320 } }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <IconSearch size={16} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
               </Box>
 
               <TableContainer>
@@ -1226,6 +1273,9 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                               <Chip
                                 label={isAssigned ? 'Assigned' : 'Unassigned'}
                                 size="small"
+                                icon={
+                                  <StatusIcon status={isAssigned ? 'assigned' : 'unassigned'} />
+                                }
                                 sx={
                                   isAssigned
                                     ? { bgcolor: '#DCFCE7', color: '#166534' }
@@ -1335,7 +1385,8 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
                             }}
                           />
                           <Typography variant="caption" sx={{ whiteSpace: 'nowrap' }}>
-                            {candidate.subject_teacher_count}/{WORKLOAD_REFERENCE_MAX} ({candidateLoadPct}%)
+                            {candidate.subject_teacher_count}/{WORKLOAD_REFERENCE_MAX} (
+                            {candidateLoadPct}%)
                           </Typography>
                         </Stack>
                       }
@@ -1480,7 +1531,11 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
         </TextField>
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
           <Button onClick={() => setCopyModalOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleCopyFromArm} disabled={!copySourceId || copying}>
+          <Button
+            variant="contained"
+            onClick={handleCopyFromArm}
+            disabled={!copySourceId || copying}
+          >
             {copying ? 'Copying…' : 'Copy'}
           </Button>
         </Box>

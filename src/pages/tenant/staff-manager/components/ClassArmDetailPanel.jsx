@@ -29,7 +29,9 @@ import {
   IconUserExclamation,
   IconId,
   IconArmchair,
+  IconCalendarEvent,
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import allocationApi from '@/api/tenant/allocations/allocationApi';
 import useNotification from '@/hooks/useNotification';
@@ -43,26 +45,34 @@ const initials = (name) =>
     .join('')
     .toUpperCase();
 
-const InfoRow = ({ icon: Icon, color, label, value }) => (
-  <Stack direction="row" spacing={1} alignItems="center">
-    <Box
-      sx={{
-        width: 26,
-        height: 26,
-        borderRadius: '8px',
-        bgcolor: `${color}1A`,
-        color,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}
-    >
-      <Icon size={14} />
-    </Box>
-    <Typography variant="body2">
-      <strong>{label}:</strong> {value}
-    </Typography>
+const InfoRow = ({ icon: Icon, color, label, value, action }) => (
+  <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+      <Box
+        sx={{
+          width: 26,
+          height: 26,
+          borderRadius: '8px',
+          bgcolor: `${color}1A`,
+          color,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon size={14} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          {label}
+        </Typography>
+        <Typography variant="body2" fontWeight={600}>
+          {value}
+        </Typography>
+      </Box>
+    </Stack>
+    {action}
   </Stack>
 );
 
@@ -82,6 +92,7 @@ const ClassArmDetailPanel = ({
   initialTab,
 }) => {
   const notify = useNotification();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(initialTab || 'overview');
   const suggestedSectionRef = useRef(null);
 
@@ -175,54 +186,22 @@ const ClassArmDetailPanel = ({
       {/* Header */}
       <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar sx={{ bgcolor: '#2563EB', width: 42, height: 42 }}>
-              <IconSchool size={22} />
-            </Avatar>
-            <Box>
-              <Typography fontWeight={700}>{arm.full_class_name}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {arm.programme_name}
-              </Typography>
-            </Box>
-          </Box>
-          <IconButton size="small" onClick={onClose}>
-            <IconX size={18} />
-          </IconButton>
-        </Box>
-
-        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          {arm.teacher_id ? (
+          <Typography fontWeight={700}>{arm.full_class_name}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Chip
-              avatar={<Avatar sx={{ bgcolor: '#16A34A' }}>{initials(arm.teacher_name)}</Avatar>}
-              label={`Class Teacher: ${arm.teacher_name}`}
+              icon={arm.teacher_id ? undefined : <IconUserExclamation size={14} />}
+              label={arm.teacher_id ? 'Assigned' : 'Unassigned'}
               size="small"
-              sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600 }}
+              sx={
+                arm.teacher_id
+                  ? { bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600 }
+                  : { bgcolor: '#FEE2E2', color: '#991B1B', fontWeight: 600 }
+              }
             />
-          ) : (
-            <>
-              <Chip
-                icon={<IconUserExclamation size={14} />}
-                label="Class Teacher: Not Assigned"
-                size="small"
-                color="warning"
-              />
-              <Button
-                size="small"
-                variant="contained"
-                startIcon={<IconUserPlus size={14} />}
-                onClick={() => {
-                  setTab('overview');
-                  requestAnimationFrame(() =>
-                    suggestedSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-                  );
-                }}
-                sx={{ fontSize: '0.75rem' }}
-              >
-                Assign Teacher
-              </Button>
-            </>
-          )}
+            <IconButton size="small" onClick={onClose}>
+              <IconX size={18} />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
 
@@ -250,17 +229,62 @@ const ClassArmDetailPanel = ({
       <Box sx={{ p: 2, maxHeight: 560, overflowY: 'auto' }}>
         {tab === 'overview' && (
           <Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
-              <InfoRow icon={IconSchool} color="#2563EB" label="Class" value={arm.class_name} />
-              <InfoRow icon={IconArmchair} color="#9333EA" label="Arm" value={arm.arm_name} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2 }}>
+              <InfoRow icon={IconSchool} color="#2563EB" label="Class" value={arm.full_class_name} />
+              <InfoRow icon={IconArmchair} color="#9333EA" label="Programme" value={arm.programme_name} />
+              <InfoRow
+                icon={IconUsers}
+                color="#2563EB"
+                label="Total Students"
+                value={rosterLoading ? '…' : roster.length}
+                action={
+                  <Button size="small" onClick={() => setTab('students')} sx={{ fontSize: '0.75rem' }}>
+                    View Students
+                  </Button>
+                }
+              />
               <InfoRow
                 icon={IconId}
                 color="#D97706"
                 label="Class Teacher"
                 value={
-                  arm.teacher_name
-                    ? `${arm.teacher_name}${arm.staff_id ? ` (${arm.staff_id})` : ''}`
-                    : 'Unassigned'
+                  arm.teacher_name ? (
+                    arm.teacher_name
+                  ) : (
+                    <Box component="span" sx={{ color: '#991B1B', fontWeight: 700 }}>
+                      Not Assigned
+                    </Box>
+                  )
+                }
+                action={
+                  arm.teacher_id ? (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => setRemoveConfirmOpen(true)}
+                      sx={{ fontSize: '0.75rem' }}
+                    >
+                      Remove
+                    </Button>
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      startIcon={<IconUserPlus size={14} />}
+                      onClick={() => {
+                        setTab('overview');
+                        requestAnimationFrame(() =>
+                          suggestedSectionRef.current?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start',
+                          }),
+                        );
+                      }}
+                      sx={{ fontSize: '0.75rem' }}
+                    >
+                      Assign Teacher
+                    </Button>
+                  )
                 }
               />
             </Box>
@@ -269,46 +293,43 @@ const ClassArmDetailPanel = ({
             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
               Quick Actions
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<IconUsers size={14} />}
-                onClick={() => setTab('students')}
-                sx={{ color: '#2563EB', borderColor: '#2563EB' }}
+                fullWidth
+                startIcon={<IconUserPlus size={14} />}
+                onClick={() => {
+                  setTab('overview');
+                  requestAnimationFrame(() =>
+                    suggestedSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+                  );
+                }}
+                sx={{ color: '#2563EB', borderColor: '#2563EB', fontSize: '0.75rem' }}
               >
-                View Students
+                Assign Teacher
               </Button>
               <Button
                 size="small"
                 variant="outlined"
+                fullWidth
                 startIcon={<IconBook2 size={14} />}
                 onClick={() => setTab('subjects')}
-                sx={{ color: '#9333EA', borderColor: '#9333EA' }}
+                sx={{ color: '#9333EA', borderColor: '#9333EA', fontSize: '0.75rem' }}
               >
                 View Subjects
               </Button>
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<IconRefresh size={14} />}
-                onClick={fetchSuggested}
-                disabled={suggestedLoading}
-                sx={{ color: '#D97706', borderColor: '#D97706' }}
+                fullWidth
+                startIcon={<IconCalendarEvent size={14} />}
+                onClick={() => navigate('/timetable/generate')}
+                sx={{ color: '#D97706', borderColor: '#D97706', fontSize: '0.75rem' }}
               >
-                Refresh Suggestions
+                View Timetable
               </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<IconUserExclamation size={14} />}
-                onClick={() => setRemoveConfirmOpen(true)}
-                disabled={!arm.teacher_id}
-              >
-                Remove Class Teacher
-              </Button>
-            </Box>
+            </Stack>
 
             <Divider sx={{ mb: 2 }} />
 
@@ -370,9 +391,17 @@ const ClassArmDetailPanel = ({
                     </ListItemAvatar>
                     <ListItemText
                       primary={candidate.name}
-                      secondary={`${candidate.total_load} active assignment${candidate.total_load !== 1 ? 's' : ''} this term`}
+                      secondary={
+                        <>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {candidate.staff_id}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            {candidate.subjects || `${candidate.total_load} active assignment${candidate.total_load !== 1 ? 's' : ''} this term`}
+                          </Typography>
+                        </>
+                      }
                       primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
-                      secondaryTypographyProps={{ variant: 'caption' }}
                     />
                   </ListItem>
                 ))}

@@ -77,6 +77,7 @@ import UploadParentModal from '@/components/tenant/parents/UploadParentModal';
 import LinkWardModal from '@/components/tenant/parents/LinkWardModal';
 import ViewWardsModal from '@/components/tenant/parents/ViewWardsModal';
 import ParentOverviewPanel from '@/components/tenant/parents/ParentOverviewPanel';
+import ArrowHint from '@/components/shared/ArrowHint';
 import SendMessageModal from '@/components/tenant/parents/SendMessageModal';
 import StatCard from 'src/components/shared/StatCard';
 import { useNavigate } from 'react-router-dom';
@@ -165,6 +166,24 @@ const ParentManagement = () => {
   // detail drawer (click a row)
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerGuardian, setDrawerGuardian] = useState(null);
+
+  // One-time, per-visit onboarding hint: "click a row" -> "panel updates".
+  // Skipped entirely if the drawer is already open on mount (e.g. a deep
+  // link); never re-armed once it reaches null, even if the drawer is
+  // later closed and reopened in the same visit.
+  const [tourStep, setTourStep] = useState(() => (drawerOpen ? null : 'row'));
+
+  useEffect(() => {
+    if (tourStep === 'row' && drawerOpen) {
+      setTourStep('panel');
+    }
+  }, [drawerOpen, tourStep]);
+
+  useEffect(() => {
+    if (tourStep !== 'panel') return undefined;
+    const timeout = setTimeout(() => setTourStep(null), 5000);
+    return () => clearTimeout(timeout);
+  }, [tourStep]);
 
   // send message modal — guardians is an array so it covers both the
   // per-row action and the bulk-selected action with the same component
@@ -810,7 +829,16 @@ const ParentManagement = () => {
             </Alert>
           )}
 
-          <Box>
+          <Box sx={{ position: 'relative' }}>
+            <ArrowHint
+              show={tourStep === 'row' && rows.length > 0}
+              mode="persistent"
+              label="🚀 1. Click on a parent's row — the row is highlighted to show it is selected."
+              direction="down-right"
+              delay="0.6s"
+              maxWidth={240}
+              position={{ position: 'absolute', top: 36, left: 220, zIndex: 5 }}
+            />
             <TableContainer>
               <Table size="small" stickyHeader>
                 <TableHead>
@@ -1070,7 +1098,9 @@ const ParentManagement = () => {
                               </MenuItem>
                               <MenuItem
                                 onClick={() => handleToggleStatus(row)}
-                                sx={{ color: isGuardianActive(row) ? 'warning.main' : 'success.main' }}
+                                sx={{
+                                  color: isGuardianActive(row) ? 'warning.main' : 'success.main',
+                                }}
                               >
                                 <IconSquareToggle size={18} style={{ marginRight: 8 }} />
                                 {isGuardianActive(row) ? 'Deactivate' : 'Activate'}
@@ -1125,7 +1155,16 @@ const ParentManagement = () => {
         </ParentCard>
 
         <Slide direction="left" in={drawerOpen} mountOnEnter unmountOnExit>
-          <Box sx={{ width: { xs: '100%', lg: 420 }, flexShrink: 0 }}>
+          <Box sx={{ width: { xs: '100%', lg: 420 }, flexShrink: 0, position: 'relative' }}>
+            <ArrowHint
+              show={tourStep === 'panel'}
+              mode="timed"
+              label="🚀 2. The Parent Overview panel updates automatically with the selected parent's information."
+              direction="down-left"
+              delay="0.3s"
+              maxWidth={260}
+              position={{ position: 'absolute', top: -56, right: 48, zIndex: 5 }}
+            />
             <ParentOverviewPanel
               guardian={drawerGuardian}
               onClose={() => setDrawerOpen(false)}

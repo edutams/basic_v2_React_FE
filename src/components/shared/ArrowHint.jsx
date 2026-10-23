@@ -12,6 +12,8 @@ import { Box, Typography, useTheme } from '@mui/material';
  *                           omit for inline flow
  *  delay       {string}   — CSS animation delay for the entrance, e.g. '0.6s'
  *  color       {string}   — override primary color (defaults to theme.palette.primary.main)
+ *  maxWidth    {number|string} — when set, the bubble wraps text to this width instead of
+ *                           staying on one line (default: nowrap, unbounded width)
  *  sx          {object}   — extra sx on the root Box
  */
 
@@ -82,6 +84,7 @@ const ArrowHint = ({
   position,
   delay = '0.6s',
   color,
+  maxWidth,
   sx = {},
 }) => {
   const theme = useTheme();
@@ -132,7 +135,8 @@ const ArrowHint = ({
         px: 2,
         py: 1.25,
         boxShadow: `0 6px 24px ${primary}22`,
-        whiteSpace: 'nowrap',
+        whiteSpace: maxWidth ? 'normal' : 'nowrap',
+        ...(maxWidth ? { maxWidth } : {}),
       }}
     >
       <Typography

@@ -27,6 +27,7 @@ backend:
 ingress:
   hosts:
     - basicv2.essential.kub.ttihub.ng
+    - metropolitan.basicv2.essential.kub.ttihub.ng
   tls:
     enabled: true
     issuer: letsencrypt-prod

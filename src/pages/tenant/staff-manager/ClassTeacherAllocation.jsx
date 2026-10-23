@@ -45,6 +45,7 @@ import {
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from '@/components/shared/StatCard';
+import ArrowHint from '@/components/shared/ArrowHint';
 import AllocationSubTabs from '@/pages/tenant/teaching-allocations/AllocationSubTabs';
 import UploadStaffForm from './components/UploadStaffForm';
 import ClassArmDetailPanel from './components/ClassArmDetailPanel';
@@ -83,7 +84,11 @@ const formatClassList = (names) => {
  * label, same pattern already used for Period Settings' time fields. */
 const FilterSelect = ({ label, children, ...props }) => (
   <Box>
-    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 500 }}>
+    <Typography
+      variant="caption"
+      color="text.secondary"
+      sx={{ display: 'block', mb: 0.5, fontWeight: 500 }}
+    >
       {label}
     </Typography>
     <TextField
@@ -137,6 +142,20 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
   // Right-side detail panel — set to one allocation row to show it.
   const [detailArm, setDetailArm] = useState(null);
   const [detailInitialTab, setDetailInitialTab] = useState('overview');
+
+  // First-visit onboarding hints — "click a row" then "the panel updates".
+  // Driven by the real detailArm state (not a synthetic timer): once the
+  // admin actually opens a row's detail panel for the first time, step 1
+  // disappears, step 2 shows itself and auto-fades, and neither comes back
+  // for the rest of this page visit — even if the panel is later closed or
+  // a different arm is opened.
+  const [tourStep, setTourStep] = useState(detailArm ? null : 'row');
+  useEffect(() => {
+    if (detailArm && tourStep === 'row') {
+      setTourStep('panel');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailArm]);
 
   // Auto-Allocate
   const [autoAllocateConfirmOpen, setAutoAllocateConfirmOpen] = useState(false);
@@ -681,7 +700,8 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
             icon: IconUserCheck,
             colorIndex: 3,
             subtitle: 'Distinct teachers assigned',
-            tooltip: 'Distinct staff members currently serving as a class teacher in this programme',
+            tooltip:
+              'Distinct staff members currently serving as a class teacher in this programme',
           },
         ].map((card) => (
           <Grid key={card.label} size={{ xs: 12, sm: 6, md: 12 / 5 }}>
@@ -756,453 +776,536 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
           reference design (no gaps or separate borders between those
           sections); the detail panel is its own separate card (right). */}
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
-        <Paper variant="outlined" sx={{ flex: 1, minWidth: 0, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
-      {/* Filters Row: Session -> Term -> Programme -> Class -> Status -> Reset */}
-      <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <FilterSelect
-              label="Session"
-              value={selectedSession}
-              onChange={(e) => handleSessionChange(e.target.value)}
-            >
-              {sessions.map((session) => (
-                <MenuItem key={session.id} value={session.id}>
-                  {session.session_name}
-                </MenuItem>
-              ))}
-            </FilterSelect>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <FilterSelect
-              label="Term"
-              value={selectedTerm}
-              onChange={(e) => setSelectedTerm(e.target.value)}
-              disabled={!selectedSession}
-            >
-              {sessionTerms.map((term) => (
-                <MenuItem key={term.id} value={term.id}>
-                  {term.term?.term_name || term.term_name}
-                </MenuItem>
-              ))}
-            </FilterSelect>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <FilterSelect
-              label="Programme"
-              value={selectedProgramme}
-              onChange={(e) => handleProgrammeChange(e.target.value)}
-            >
-              <MenuItem value="">Select Programme</MenuItem>
-              {programmes.map((prog) => (
-                <MenuItem key={prog.id} value={prog.id}>
-                  {prog.programme_name}
-                </MenuItem>
-              ))}
-            </FilterSelect>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <FilterSelect
-              label="Class"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              disabled={!selectedProgramme}
-            >
-              <MenuItem value="">All Classes</MenuItem>
-              {classes.map((cls) => (
-                <MenuItem key={cls.id} value={cls.id}>
-                  {cls.class_name}
-                </MenuItem>
-              ))}
-            </FilterSelect>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <FilterSelect
-              label="Status"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((opt) => (
-                <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </MenuItem>
-              ))}
-            </FilterSelect>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-            <Button
-              size="small"
-              startIcon={<IconFilterOff size={16} />}
-              onClick={handleResetFilters}
-              sx={{ height: 40 }}
-            >
-              Reset
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Info banner + status legend */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 1,
-          px: 2,
-          py: 1,
-          bgcolor: '#FFFAE6',
-          color: '#000',
-        }}
-      >
-        <Stack direction="row" spacing={1} alignItems="center">
-          <InfoOutlinedIcon sx={{ fontSize: 18, color: '#92400E' }} />
-          <Typography variant="body2">
-            Select teachers for each class arm. You can auto-allocate, bulk assign or assign
-            manually.
-          </Typography>
-        </Stack>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <LegendDot color="#16A34A" label="Assigned" />
-          <LegendDot color="#DC2626" label="Unassigned" />
-          <LegendDot color="#D97706" label="Partial" />
-        </Stack>
-      </Box>
-
-      <Box sx={{ p: 2 }}>
-          {loading ? (
-            <TableContainer>
-              <Table sx={{ border: '1px solid #e0e0e0' }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox" />
-                    <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Class Teacher</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Total Students</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell padding="checkbox">
-                        <Skeleton variant="rounded" width={18} height={18} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton variant="text" width={40} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton variant="rounded" width="100%" height={36} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton variant="text" width={40} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton variant="rounded" width={80} height={22} />
-                      </TableCell>
-                      <TableCell>
-                        <Skeleton variant="circular" width={24} height={24} />
-                      </TableCell>
-                    </TableRow>
+        <Paper
+          variant="outlined"
+          sx={{ flex: 1, minWidth: 0, width: '100%', borderRadius: 2, overflow: 'hidden' }}
+        >
+          {/* Filters Row: Session -> Term -> Programme -> Class -> Status -> Reset */}
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Grid container spacing={2} alignItems="flex-end">
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <FilterSelect
+                  label="Session"
+                  value={selectedSession}
+                  onChange={(e) => handleSessionChange(e.target.value)}
+                >
+                  {sessions.map((session) => (
+                    <MenuItem key={session.id} value={session.id}>
+                      {session.session_name}
+                    </MenuItem>
                   ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : allocations.length === 0 ? (
-            <Box sx={{ py: 10, textAlign: 'center' }}>
-              <Typography color="textSecondary">
-                {hasFetched
-                  ? 'No class allocations found for these filters'
-                  : 'Select a session, term, and programme to begin'}
+                </FilterSelect>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <FilterSelect
+                  label="Term"
+                  value={selectedTerm}
+                  onChange={(e) => setSelectedTerm(e.target.value)}
+                  disabled={!selectedSession}
+                >
+                  {sessionTerms.map((term) => (
+                    <MenuItem key={term.id} value={term.id}>
+                      {term.term?.term_name || term.term_name}
+                    </MenuItem>
+                  ))}
+                </FilterSelect>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <FilterSelect
+                  label="Programme"
+                  value={selectedProgramme}
+                  onChange={(e) => handleProgrammeChange(e.target.value)}
+                >
+                  <MenuItem value="">Select Programme</MenuItem>
+                  {programmes.map((prog) => (
+                    <MenuItem key={prog.id} value={prog.id}>
+                      {prog.programme_name}
+                    </MenuItem>
+                  ))}
+                </FilterSelect>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <FilterSelect
+                  label="Class"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  disabled={!selectedProgramme}
+                >
+                  <MenuItem value="">All Classes</MenuItem>
+                  {classes.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>
+                      {cls.class_name}
+                    </MenuItem>
+                  ))}
+                </FilterSelect>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <FilterSelect
+                  label="Status"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
+                  {STATUS_OPTIONS.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </FilterSelect>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <Button
+                  size="small"
+                  startIcon={<IconFilterOff size={16} />}
+                  onClick={handleResetFilters}
+                  sx={{ height: 40 }}
+                >
+                  Reset
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Info banner + status legend */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 1,
+              px: 2,
+              py: 1,
+              bgcolor: '#FFFAE6',
+              color: '#000',
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <InfoOutlinedIcon sx={{ fontSize: 18, color: '#92400E' }} />
+              <Typography variant="body2">
+                Select teachers for each class arm. You can auto-allocate, bulk assign or assign
+                manually.
               </Typography>
-            </Box>
-          ) : filteredGroupedAllocations.length === 0 ? (
-            <Box sx={{ py: 10, textAlign: 'center' }}>
-              <Typography color="textSecondary">
-                No classes match the "{STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label}"
-                status filter
-              </Typography>
-            </Box>
-          ) : (
-            <>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  alignItems: 'center',
-                  gap: 1,
-                  mb: 1.5,
-                }}
-              >
-                <Button size="small" onClick={collapseAll}>
-                  Collapse all
-                </Button>
-                <Button size="small" variant="contained" onClick={expandAll}>
-                  Expand all
-                </Button>
-                <Button variant="contained" size="small" onClick={handleSaveAll} disabled={saving}>
-                  {saving ? 'Saving...' : 'Save All'}
-                </Button>
+            </Stack>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <LegendDot color="#16A34A" label="Assigned" />
+              <LegendDot color="#DC2626" label="Unassigned" />
+              <LegendDot color="#D97706" label="Partial" />
+            </Stack>
+          </Box>
+
+          <Box sx={{ p: 2 }}>
+            {loading ? (
+              <TableContainer>
+                <Table sx={{ border: '1px solid #e0e0e0' }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox" />
+                      <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Class Teacher</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Total Students</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell padding="checkbox">
+                          <Skeleton variant="rounded" width={18} height={18} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={40} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="rounded" width="100%" height={36} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={40} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="rounded" width={80} height={22} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="circular" width={24} height={24} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : allocations.length === 0 ? (
+              <Box sx={{ py: 10, textAlign: 'center' }}>
+                <Typography color="textSecondary">
+                  {hasFetched
+                    ? 'No class allocations found for these filters'
+                    : 'Select a session, term, and programme to begin'}
+                </Typography>
               </Box>
+            ) : filteredGroupedAllocations.length === 0 ? (
+              <Box sx={{ py: 10, textAlign: 'center' }}>
+                <Typography color="textSecondary">
+                  No classes match the "
+                  {STATUS_OPTIONS.find((o) => o.value === statusFilter)?.label}" status filter
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5,
+                  }}
+                >
+                  <Button size="small" onClick={collapseAll}>
+                    Collapse all
+                  </Button>
+                  <Button size="small" variant="contained" onClick={expandAll}>
+                    Expand all
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleSaveAll}
+                    disabled={saving}
+                  >
+                    {saving ? 'Saving...' : 'Save All'}
+                  </Button>
+                </Box>
 
-              <Box>
-                {filteredGroupedAllocations.map((group, groupIndex) => {
-                  const collapsed = collapsedGroups.has(group.className);
-                  const armIds = group.rows.map((r) => r.class_arm_id);
-                  const allGroupSelected = armIds.length > 0 && armIds.every((id) => selectedArmIds.has(id));
-                  const someGroupSelected = armIds.some((id) => selectedArmIds.has(id)) && !allGroupSelected;
+                <Box>
+                  {filteredGroupedAllocations.map((group, groupIndex) => {
+                    const collapsed = collapsedGroups.has(group.className);
+                    const armIds = group.rows.map((r) => r.class_arm_id);
+                    const allGroupSelected =
+                      armIds.length > 0 && armIds.every((id) => selectedArmIds.has(id));
+                    const someGroupSelected =
+                      armIds.some((id) => selectedArmIds.has(id)) && !allGroupSelected;
 
-                  return (
-                    <Box key={group.className} sx={{ mt: groupIndex > 0 ? 2 : 0 }}>
+                    return (
                       <Box
+                        key={group.className}
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1.5,
-                          cursor: 'pointer',
-                          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                          borderLeft: '4px solid',
-                          borderLeftColor: 'primary.main',
+                          mt: groupIndex > 0 ? 2 : 0,
+                          position: groupIndex === 0 ? 'relative' : undefined,
                         }}
-                        onClick={() => toggleGroup(group.className)}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <IconButton size="small">
-                            {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-                          </IconButton>
-                          <Box>
-                            <Typography fontWeight={700}>
-                              {group.className} ({group.rows.length} arm{group.rows.length !== 1 ? 's' : ''})
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {group.rows.filter((r) => r.teacher_id).length}/{group.rows.length} assigned
-                            </Typography>
-                          </Box>
-                          <Chip
-                            icon={
-                              groupStatus(group) === 'assigned' ? (
-                                <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
-                              ) : groupStatus(group) === 'unassigned' ? (
-                                <CancelIcon sx={{ fontSize: '14px !important' }} />
-                              ) : undefined
-                            }
-                            label={
-                              groupStatus(group) === 'assigned'
-                                ? 'Assigned'
-                                : groupStatus(group) === 'partial'
-                                  ? 'Partial'
-                                  : 'Unassigned'
-                            }
-                            size="small"
-                            sx={{
-                              fontWeight: 600,
-                              ...(groupStatus(group) === 'assigned' && {
-                                bgcolor: '#DCFCE7',
-                                color: '#166534',
-                              }),
-                              ...(groupStatus(group) === 'partial' && {
-                                bgcolor: '#FEF3C7',
-                                color: '#92400E',
-                              }),
-                              ...(groupStatus(group) === 'unassigned' && {
-                                bgcolor: '#FEE2E2',
-                                color: '#991B1B',
-                              }),
-                            }}
+                        {groupIndex === 0 && (
+                          <ArrowHint
+                            show={tourStep === 'row'}
+                            mode="persistent"
+                            label="🚀 1. Click on a class arm's row — the row is highlighted to show it is selected."
+                            direction="down-right"
+                            maxWidth={240}
+                            position={{ position: 'absolute', top: 46, right: 24, zIndex: 10 }}
                           />
-                        </Box>
+                        )}
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
-                          onClick={(e) => e.stopPropagation()}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            p: 1.5,
+                            cursor: 'pointer',
+                            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                            borderLeft: '4px solid',
+                            borderLeftColor: 'primary.main',
+                          }}
+                          onClick={() => toggleGroup(group.className)}
                         >
-                          <Button size="small" onClick={() => toggleGroup(group.className)}>
-                            {collapsed ? 'Expand' : 'Collapse'}
-                          </Button>
-                          <IconButton
-                            size="small"
-                            onClick={(e) => setGroupMenu({ anchorEl: e.currentTarget, group })}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <IconButton size="small">
+                              {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                            </IconButton>
+                            <Box>
+                              <Typography fontWeight={700}>
+                                {group.className} ({group.rows.length} arm
+                                {group.rows.length !== 1 ? 's' : ''})
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {group.rows.filter((r) => r.teacher_id).length}/{group.rows.length}{' '}
+                                assigned
+                              </Typography>
+                            </Box>
+                            <Chip
+                              icon={
+                                groupStatus(group) === 'assigned' ? (
+                                  <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
+                                ) : groupStatus(group) === 'unassigned' ? (
+                                  <CancelIcon sx={{ fontSize: '14px !important' }} />
+                                ) : undefined
+                              }
+                              label={
+                                groupStatus(group) === 'assigned'
+                                  ? 'Assigned'
+                                  : groupStatus(group) === 'partial'
+                                    ? 'Partial'
+                                    : 'Unassigned'
+                              }
+                              size="small"
+                              sx={{
+                                fontWeight: 600,
+                                ...(groupStatus(group) === 'assigned' && {
+                                  bgcolor: '#DCFCE7',
+                                  color: '#166534',
+                                }),
+                                ...(groupStatus(group) === 'partial' && {
+                                  bgcolor: '#FEF3C7',
+                                  color: '#92400E',
+                                }),
+                                ...(groupStatus(group) === 'unassigned' && {
+                                  bgcolor: '#FEE2E2',
+                                  color: '#991B1B',
+                                }),
+                              }}
+                            />
+                          </Box>
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <IconDotsVertical size={18} />
-                          </IconButton>
+                            <Button size="small" onClick={() => toggleGroup(group.className)}>
+                              {collapsed ? 'Expand' : 'Collapse'}
+                            </Button>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => setGroupMenu({ anchorEl: e.currentTarget, group })}
+                            >
+                              <IconDotsVertical size={18} />
+                            </IconButton>
+                          </Box>
                         </Box>
-                      </Box>
 
-                      <Collapse in={!collapsed}>
-                        <Box sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
-                        <TableContainer>
-                          <Table>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell padding="checkbox">
-                                  <Checkbox
-                                    size="small"
-                                    checked={allGroupSelected}
-                                    indeterminate={someGroupSelected}
-                                    onChange={() => toggleGroupSelected(group)}
-                                  />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>Class Teacher</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }} align="center">
-                                  Total Students
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                                <TableCell sx={{ fontWeight: 700 }} align="center">
-                                  Action
-                                </TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {group.rows.map((allocation) => {
-                                const assignedTeacher = teachers.find(
-                                  (t) => t.user_id === allocation.teacher_id,
-                                );
-                                return (
-                                <TableRow
-                                  key={allocation.id}
-                                  hover
-                                  onClick={() => handleRowOpenDetail(allocation)}
-                                  selected={detailArm?.class_arm_id === allocation.class_arm_id}
-                                  sx={{
-                                    cursor: 'pointer',
-                                    '&.Mui-selected': {
-                                      bgcolor: 'rgba(37, 99, 235, 0.12)',
-                                      borderLeft: '3px solid',
-                                      borderLeftColor: 'primary.main',
-                                    },
-                                    '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.18)' },
-                                  }}
-                                >
-                                  <TableCell
-                                    padding="checkbox"
-                                    onClick={(e) => {
-                                      // Stop it reaching the row's own onClick (which would
-                                      // call handleRowOpenDetail a second time) — but a
-                                      // checkbox click should still open the detail panel
-                                      // exactly like clicking anywhere else in the row.
-                                      e.stopPropagation();
-                                      handleRowOpenDetail(allocation);
-                                    }}
-                                  >
-                                    <Checkbox
-                                      size="small"
-                                      checked={selectedArmIds.has(allocation.class_arm_id)}
-                                      onChange={() => toggleArmSelected(allocation.class_arm_id)}
-                                    />
-                                  </TableCell>
-                                  <TableCell>{allocation.arm_name}</TableCell>
-                                  <TableCell onClick={(e) => e.stopPropagation()}>
-                                    <Box
-                                      role="button"
-                                      onClick={(e) =>
-                                        setTeacherMenu({ anchorEl: e.currentTarget, index: allocation._index })
-                                      }
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                        p: 0.75,
-                                        borderRadius: 1.5,
-                                        border: '1px solid',
-                                        borderColor: allocation.teacher_id ? 'divider' : '#FCA5A5',
-                                        bgcolor: allocation.teacher_id ? 'background.paper' : '#FEF2F2',
-                                        cursor: 'pointer',
-                                        minHeight: 48,
-                                      }}
-                                    >
-                                      {allocation.teacher_id ? (
-                                        <Avatar
-                                          src={assignedTeacher?.user?.avatar}
-                                          sx={{ width: 30, height: 30, fontSize: 12, bgcolor: '#2563EB' }}
-                                        >
-                                          {(allocation.teacher_name || '?')[0]}
-                                        </Avatar>
-                                      ) : null}
-                                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                                        {allocation.teacher_id ? (
-                                          <>
-                                            <Typography variant="body2" fontWeight={600} noWrap>
-                                              {allocation.teacher_name}
-                                            </Typography>
-                                            <Typography variant="caption" color="text.secondary" noWrap>
-                                              {assignedTeacher?.user?.user_id || ''}
-                                            </Typography>
-                                          </>
-                                        ) : (
-                                          <Typography variant="body2" fontWeight={600} sx={{ color: '#DC2626' }}>
-                                            Not Assigned
-                                          </Typography>
-                                        )}
-                                      </Box>
-                                      <IconChevronDown
-                                        size={16}
-                                        color={allocation.teacher_id ? '#64748B' : '#DC2626'}
+                        <Collapse in={!collapsed}>
+                          <Box
+                            sx={{
+                              bgcolor: 'background.paper',
+                              borderTop: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <TableContainer>
+                              <Table>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell padding="checkbox">
+                                      <Checkbox
+                                        size="small"
+                                        checked={allGroupSelected}
+                                        indeterminate={someGroupSelected}
+                                        onChange={() => toggleGroupSelected(group)}
                                       />
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell align="center">{allocation.student_count ?? 0}</TableCell>
-                                  <TableCell>
-                                    <Chip
-                                      icon={
-                                        allocation.teacher_id ? (
-                                          <CheckCircleIcon sx={{ fontSize: '14px !important' }} />
-                                        ) : (
-                                          <CancelIcon sx={{ fontSize: '14px !important' }} />
-                                        )
-                                      }
-                                      label={allocation.teacher_id ? 'Assigned' : 'Unassigned'}
-                                      size="small"
-                                      sx={
-                                        allocation.teacher_id
-                                          ? {
-                                              bgcolor: '#DCFCE7',
-                                              color: '#166534',
-                                              fontWeight: 600,
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Arm</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Class Teacher</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }} align="center">
+                                      Total Students
+                                    </TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 700 }} align="center">
+                                      Action
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {group.rows.map((allocation) => {
+                                    const assignedTeacher = teachers.find(
+                                      (t) => t.user_id === allocation.teacher_id,
+                                    );
+                                    return (
+                                      <TableRow
+                                        key={allocation.id}
+                                        hover
+                                        onClick={() => handleRowOpenDetail(allocation)}
+                                        selected={
+                                          detailArm?.class_arm_id === allocation.class_arm_id
+                                        }
+                                        sx={{
+                                          cursor: 'pointer',
+                                          '&.Mui-selected': {
+                                            bgcolor: 'rgba(37, 99, 235, 0.12)',
+                                            borderLeft: '3px solid',
+                                            borderLeftColor: 'primary.main',
+                                          },
+                                          '&.Mui-selected:hover': {
+                                            bgcolor: 'rgba(37, 99, 235, 0.18)',
+                                          },
+                                        }}
+                                      >
+                                        <TableCell
+                                          padding="checkbox"
+                                          onClick={(e) => {
+                                            // Stop it reaching the row's own onClick (which would
+                                            // call handleRowOpenDetail a second time) — but a
+                                            // checkbox click should still open the detail panel
+                                            // exactly like clicking anywhere else in the row.
+                                            e.stopPropagation();
+                                            handleRowOpenDetail(allocation);
+                                          }}
+                                        >
+                                          <Checkbox
+                                            size="small"
+                                            checked={selectedArmIds.has(allocation.class_arm_id)}
+                                            onChange={() =>
+                                              toggleArmSelected(allocation.class_arm_id)
                                             }
-                                          : {
-                                              bgcolor: '#FEE2E2',
-                                              color: '#991B1B',
-                                              fontWeight: 600,
+                                          />
+                                        </TableCell>
+                                        <TableCell>{allocation.arm_name}</TableCell>
+                                        <TableCell onClick={(e) => e.stopPropagation()}>
+                                          <Box
+                                            role="button"
+                                            onClick={(e) =>
+                                              setTeacherMenu({
+                                                anchorEl: e.currentTarget,
+                                                index: allocation._index,
+                                              })
                                             }
-                                      }
-                                    />
-                                  </TableCell>
-                                  <TableCell align="center" onClick={(e) => e.stopPropagation()}>
-                                    <IconButton
-                                      size="small"
-                                      disabled={!allocation.teacher_id}
-                                      onClick={() => handleRemoveAllocation(allocation._index)}
-                                    >
-                                      <IconDotsVertical size={18} />
-                                    </IconButton>
-                                  </TableCell>
-                                </TableRow>
-                              );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                        </Box>
-                      </Collapse>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </>
-          )}
-        </Box>
+                                            sx={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 1,
+                                              p: 0.75,
+                                              borderRadius: 1.5,
+                                              border: '1px solid',
+                                              borderColor: allocation.teacher_id
+                                                ? 'divider'
+                                                : '#FCA5A5',
+                                              bgcolor: allocation.teacher_id
+                                                ? 'background.paper'
+                                                : '#FEF2F2',
+                                              cursor: 'pointer',
+                                              minHeight: 48,
+                                            }}
+                                          >
+                                            {allocation.teacher_id ? (
+                                              <Avatar
+                                                src={assignedTeacher?.user?.avatar}
+                                                sx={{
+                                                  width: 30,
+                                                  height: 30,
+                                                  fontSize: 12,
+                                                  bgcolor: '#2563EB',
+                                                }}
+                                              >
+                                                {(allocation.teacher_name || '?')[0]}
+                                              </Avatar>
+                                            ) : null}
+                                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                              {allocation.teacher_id ? (
+                                                <>
+                                                  <Typography
+                                                    variant="body2"
+                                                    fontWeight={600}
+                                                    noWrap
+                                                  >
+                                                    {allocation.teacher_name}
+                                                  </Typography>
+                                                  <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                    noWrap
+                                                  >
+                                                    {assignedTeacher?.user?.user_id || ''}
+                                                  </Typography>
+                                                </>
+                                              ) : (
+                                                <Typography
+                                                  variant="body2"
+                                                  fontWeight={600}
+                                                  sx={{ color: '#DC2626' }}
+                                                >
+                                                  Not Assigned
+                                                </Typography>
+                                              )}
+                                            </Box>
+                                            <IconChevronDown
+                                              size={16}
+                                              color={allocation.teacher_id ? '#64748B' : '#DC2626'}
+                                            />
+                                          </Box>
+                                        </TableCell>
+                                        <TableCell align="center">
+                                          {allocation.student_count ?? 0}
+                                        </TableCell>
+                                        <TableCell>
+                                          <Chip
+                                            icon={
+                                              allocation.teacher_id ? (
+                                                <CheckCircleIcon
+                                                  sx={{ fontSize: '14px !important' }}
+                                                />
+                                              ) : (
+                                                <CancelIcon sx={{ fontSize: '14px !important' }} />
+                                              )
+                                            }
+                                            label={
+                                              allocation.teacher_id ? 'Assigned' : 'Unassigned'
+                                            }
+                                            size="small"
+                                            sx={
+                                              allocation.teacher_id
+                                                ? {
+                                                    bgcolor: '#DCFCE7',
+                                                    color: '#166534',
+                                                    fontWeight: 600,
+                                                  }
+                                                : {
+                                                    bgcolor: '#FEE2E2',
+                                                    color: '#991B1B',
+                                                    fontWeight: 600,
+                                                  }
+                                            }
+                                          />
+                                        </TableCell>
+                                        <TableCell
+                                          align="center"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <IconButton
+                                            size="small"
+                                            disabled={!allocation.teacher_id}
+                                            onClick={() =>
+                                              handleRemoveAllocation(allocation._index)
+                                            }
+                                          >
+                                            <IconDotsVertical size={18} />
+                                          </IconButton>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </Box>
+                        </Collapse>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </>
+            )}
+          </Box>
         </Paper>
 
         {detailArm && (
-          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+          <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, position: 'relative' }}>
+            <ArrowHint
+              show={tourStep === 'panel'}
+              mode="timed"
+              label="🚀 2. The class detail panel updates automatically with the selected arm's information."
+              direction="up-left"
+              maxWidth={260}
+              position={{ position: 'absolute', top: -56, right: 8, zIndex: 10 }}
+            />
             <ClassArmDetailPanel
               arm={detailArm}
               programmeId={selectedProgramme}
@@ -1261,7 +1364,8 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
           <MenuItem
             key={teacher.user_id}
             onClick={() => {
-              if (teacherMenu.index !== null) handleTeacherChange(teacherMenu.index, teacher.user_id);
+              if (teacherMenu.index !== null)
+                handleTeacherChange(teacherMenu.index, teacher.user_id);
               setTeacherMenu({ anchorEl: null, index: null });
             }}
           >

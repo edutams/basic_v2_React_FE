@@ -29,6 +29,7 @@ import {
   TablePagination,
   Tooltip,
   Skeleton,
+  CircularProgress,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import {
@@ -52,6 +53,7 @@ import {
   deletePaymentSchedule,
   deletePaymentSchedulesByPaymentName,
   togglePaymentScheduleStatus,
+  getPaidStudentsForSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 
 const CompulsoryScheduleTab = ({
@@ -110,6 +112,11 @@ const CompulsoryScheduleTab = ({
     classData: null,
   });
   const [processingAction, setProcessingAction] = useState(false);
+  // Students who've paid against the item being deactivated — fetched only
+  // when the action is actually a deactivation, so the admin sees exactly
+  // who's affected before confirming. Deactivating never touches these
+  // payments; the school handles them manually afterward.
+  const [paidStudents, setPaidStudents] = useState({ loading: false, data: null });
 
   useEffect(() => {
     if (!sessionId || !termId) return;
@@ -250,6 +257,11 @@ const CompulsoryScheduleTab = ({
     }));
   };
 
+  const closeClassActionDialog = () => {
+    setClassActionDialog({ open: false, action: null, schedule: null, classData: null });
+    setPaidStudents({ loading: false, data: null });
+  };
+
   const handleClassActionClick = (schedule, cls, action) => {
     setClassActionDialog({
       open: true,
@@ -257,6 +269,16 @@ const CompulsoryScheduleTab = ({
       schedule,
       classData: cls,
     });
+
+    const isDeactivating = action === 'toggle' && (cls.status || 'active') === 'active';
+    if (isDeactivating && cls.schedule_id) {
+      setPaidStudents({ loading: true, data: null });
+      getPaidStudentsForSchedule(cls.schedule_id)
+        .then((res) => setPaidStudents({ loading: false, data: res.success ? res.data : null }))
+        .catch(() => setPaidStudents({ loading: false, data: null }));
+    } else {
+      setPaidStudents({ loading: false, data: null });
+    }
   };
 
   const handleConfirmClassAction = async () => {
@@ -296,7 +318,7 @@ const CompulsoryScheduleTab = ({
         }
       }
 
-      setClassActionDialog({ open: false, action: null, schedule: null, classData: null });
+      closeClassActionDialog();
     } catch (err) {
       console.error('Failed to process class action:', err);
       showSnackbar?.(err.response?.data?.message || 'Failed to process action', 'error');
@@ -918,11 +940,8 @@ const CompulsoryScheduleTab = ({
       {/* Class Action Confirmation Dialog */}
       <Dialog
         open={classActionDialog.open}
-        onClose={() =>
-          !processingAction &&
-          setClassActionDialog({ open: false, action: null, schedule: null, classData: null })
-        }
-        maxWidth="xs"
+        onClose={() => !processingAction && closeClassActionDialog()}
+        maxWidth={paidStudents.data?.students?.length ? 'sm' : 'xs'}
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
@@ -942,11 +961,56 @@ const CompulsoryScheduleTab = ({
             </>
           )}
           {classActionDialog.action === 'toggle' && (
-            <Typography variant="body2">
-              Are you sure you want to toggle the status of{' '}
-              <strong>{classActionDialog.classData?.name}</strong> in{' '}
-              <strong>{classActionDialog.schedule?.payment_name?.name}</strong>?
-            </Typography>
+            <>
+              <Typography variant="body2">
+                Are you sure you want to {(classActionDialog.classData?.status || 'active') === 'active' ? 'deactivate' : 'activate'}{' '}
+                <strong>{classActionDialog.classData?.name}</strong> in{' '}
+                <strong>{classActionDialog.schedule?.payment_name?.name}</strong>?
+              </Typography>
+
+              {paidStudents.loading && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+
+              {!paidStudents.loading && paidStudents.data?.students?.length > 0 && (
+                <>
+                  <Alert severity="warning" sx={{ mt: 2, mb: 1 }}>
+                    {paidStudents.data.students.length} student(s) have already paid a total of{' '}
+                    <strong>₦{Number(paidStudents.data.total_paid).toLocaleString()}</strong> against this item.
+                    Deactivating it will <strong>not</strong> touch their payments or refund anything — it
+                    just stops showing up as currently due. The school will need to handle these payments
+                    internally (refund, reassign, etc.).
+                  </Alert>
+                  <TableContainer sx={{ maxHeight: 220, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 600 }}>Student</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Paid</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>Method</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {paidStudents.data.students.map((s) => (
+                          <TableRow key={s.user_pk}>
+                            <TableCell>
+                              {s.full_name}
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {s.admission_no}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>₦{Number(s.total_paid).toLocaleString()}</TableCell>
+                            <TableCell>{s.payment_types}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </>
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -954,9 +1018,7 @@ const CompulsoryScheduleTab = ({
             variant="contained"
             size="small"
             color="inherit"
-            onClick={() =>
-              setClassActionDialog({ open: false, action: null, schedule: null, classData: null })
-            }
+            onClick={closeClassActionDialog}
             disabled={processingAction}
           >
             Cancel

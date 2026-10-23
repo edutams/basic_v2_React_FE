@@ -16,7 +16,13 @@ import {
   Snackbar,
   Avatar,
 } from '@mui/material';
-import { IconPrinter, IconChartBar, IconArrowLeft, IconClipboardCheck } from '@tabler/icons-react';
+import {
+  IconPrinter,
+  IconChartBar,
+  IconArrowLeft,
+  IconClipboardCheck,
+  IconLock,
+} from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { useTenantAuth } from '@/hooks/useTenantAuth';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -24,6 +30,7 @@ import { getResultTemplate } from './templates';
 import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 
 /**
  * Learner-facing Report Card.
@@ -32,8 +39,22 @@ import { getTenantInfo } from '@/api/tenant/tenant_api';
  * lets them pick the term, then renders their own report card through the
  * school's configured result template — the learner counterpart of the
  * admin Student Dossier (ReportSheetTab).
+ *
+ * Also reused, via injectable fetchers, by the guardian-facing "View
+ * Wards' Result" page (WardReportCardTab) — rather than duplicating this
+ * whole term-selector/publish-gate/template-render flow for wards, the data
+ * source is swapped out while every bit of the gating/rendering logic stays
+ * identical.
  */
-const ReportCardTab = () => {
+const ReportCardTab = ({
+  fetchRegistrations,
+  fetchReport,
+  title = 'My Report Card',
+  emptyRegistrationsMessage = 'No student registration found for your account. Please contact your school.',
+  paymentRequiredMessage = 'You must clear your outstanding fees before you can view your results for this term.',
+  skipLearnerGuard = false,
+  headerAccessory = null,
+}) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
@@ -48,6 +69,7 @@ const ReportCardTab = () => {
   const [loadingRegs, setLoadingRegs] = useState(true);
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState('');
+  const [paymentRequired, setPaymentRequired] = useState(false);
   const [schoolInfo, setSchoolInfo] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
@@ -74,7 +96,9 @@ const ReportCardTab = () => {
     setLoadingRegs(true);
     setError('');
     try {
-      const res = await resultDossierApi.getMyRegistration();
+      const res = fetchRegistrations
+        ? await fetchRegistrations()
+        : await resultDossierApi.getMyRegistration();
       const body = res?.data;
       if (body?.status) {
         const regs = body.data?.registrations || [];
@@ -85,18 +109,18 @@ const ReportCardTab = () => {
             : (body.data?.default_session_term_id ?? ''),
         );
         if (regs.length === 0) {
-          setError('No student registration found for your account. Please contact your school.');
+          setError(emptyRegistrationsMessage);
         }
       } else {
-        setError(body?.message || 'Failed to load your registration.');
+        setError(body?.message || 'Failed to load the registration.');
       }
     } catch (err) {
-      console.error('Failed to load learner registration:', err);
-      setError(err?.response?.data?.message || 'Failed to load your registration.');
+      console.error('Failed to load registration:', err);
+      setError(err?.response?.data?.message || 'Failed to load the registration.');
     } finally {
       setLoadingRegs(false);
     }
-  }, []);
+  }, [fetchRegistrations, emptyRegistrationsMessage]);
 
   useEffect(() => {
     loadRegistrations();
@@ -112,10 +136,11 @@ const ReportCardTab = () => {
     const load = async () => {
       setLoadingReport(true);
       setError('');
+      setPaymentRequired(false);
       try {
-        const res = await resultDossierApi.getMyReport({
-          session_term_id: Number(selectedSessionTerm),
-        });
+        const res = fetchReport
+          ? await fetchReport(Number(selectedSessionTerm))
+          : await resultDossierApi.getMyReport({ session_term_id: Number(selectedSessionTerm) });
         const body = res?.data;
         if (cancelled) return;
         if (body?.status) {
@@ -128,7 +153,11 @@ const ReportCardTab = () => {
         if (cancelled) return;
         console.error('Failed to load learner report card:', err);
         setReport(null);
-        setError(err?.response?.data?.message || 'Failed to load your report card.');
+        if (err?.response?.data?.reason === 'payment_required') {
+          setPaymentRequired(true);
+        } else {
+          setError(err?.response?.data?.message || 'Failed to load your report card.');
+        }
       } finally {
         if (!cancelled) setLoadingReport(false);
       }
@@ -155,6 +184,15 @@ const ReportCardTab = () => {
 
   const schoolName = schoolInfo?.tenant_name || schoolInfo?.name || '';
 
+  // ── Publish gate (basic v1  pattern) ─────────────
+  // Learners only see their report card once the School Portal Admin has
+  // approved AND the Head of School has published the results; until then
+  // the card body is replaced by a notice naming the missing stage(s).
+  const spaApproved = report?.result_publish?.spa_publish === 'yes';
+  const hosPublished = report?.result_publish?.head_of_school_publish === 'yes';
+  const fullyPublished = spaApproved && hosPublished;
+  const publishBlocked = Boolean(report) && !fullyPublished;
+
   const handlePrint = () => {
     if (!printNode(printRef.current, 'Report Card')) {
       showSnackbar('Pop-up blocked. Allow pop-ups to print your report card.', 'warning');
@@ -162,14 +200,16 @@ const ReportCardTab = () => {
   };
 
   const openCaBreakdown = () => {
-    const params = new URLSearchParams();
-    if (selectedSessionTerm) params.set('session_term_id', selectedSessionTerm);
-    if (selectedRegistration?.id) params.set('student_registration_id', selectedRegistration.id);
-    navigate(`/result-cabreakdown?${params.toString()}`);
+    const token = encodeLinkParams({
+      session_term_id: selectedSessionTerm,
+      student_registration_id: selectedRegistration?.id,
+    });
+    navigate(`/result-ca_breakdown?t=${token}`);
   };
 
   // ── Staff safety net: this page is for learners ─────────────
-  if (!isLearner && !isLearnerRole) {
+  // (skipped entirely in ward mode — a guardian is never a learner)
+  if (!skipLearnerGuard && !isLearner && !isLearnerRole) {
     return (
       <Paper
         elevation={0}
@@ -272,6 +312,7 @@ const ReportCardTab = () => {
               minWidth: 260,
             }}
           >
+            {headerAccessory}
             <FormControl size="small" sx={{ minWidth: 240 }}>
               <InputLabel>Session-Term</InputLabel>
               <Select
@@ -299,7 +340,7 @@ const ReportCardTab = () => {
                 sx={{ fontWeight: 600 }}
               />
             )}
-            {report?.summary?.overall_position && (
+            {!publishBlocked && report?.summary?.overall_position && (
               <Chip
                 size="small"
                 color="primary"
@@ -308,7 +349,7 @@ const ReportCardTab = () => {
                 sx={{ fontWeight: 700 }}
               />
             )}
-            {report?.summary?.average_score != null && (
+            {!publishBlocked && report?.summary?.average_score != null && (
               <Chip
                 size="small"
                 color="success"
@@ -329,7 +370,7 @@ const ReportCardTab = () => {
             >
               C.A Breakdown
             </Button>
-            {report && (
+            {report && !publishBlocked && (
               <Button
                 size="small"
                 variant="contained"
@@ -388,9 +429,7 @@ const ReportCardTab = () => {
             </Avatar>
             <Box>
               <Typography variant="h6" fontWeight={600}>
-                {report
-                  ? `Report Card — ${report.student?.lname} ${report.student?.fname}`
-                  : 'My Report Card'}
+                {report ? `Report Card — ${report.student?.lname} ${report.student?.fname}` : title}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {[className, sessionTermLabel, schoolName].filter(Boolean).join(' • ')}
@@ -399,34 +438,26 @@ const ReportCardTab = () => {
           </Box>
           {report && (
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`Subjects: ${report.summary?.subjects_taken ?? 0}`}
-              />
-              <Chip
-                size="small"
-                variant="outlined"
-                label={`Total: ${report.summary?.total_score ?? 0}`}
-              />
-              {report.result_publish && (
-                <Chip
-                  size="small"
-                  color={
-                    report.result_publish.spa_publish === 'yes' ||
-                    report.result_publish.head_of_school_publish === 'yes'
-                      ? 'success'
-                      : 'default'
-                  }
-                  variant="outlined"
-                  label={
-                    report.result_publish.spa_publish === 'yes' ||
-                    report.result_publish.head_of_school_publish === 'yes'
-                      ? 'Published'
-                      : 'Not published yet'
-                  }
-                />
+              {!publishBlocked && (
+                <>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`Subjects: ${report.summary?.subjects_taken ?? 0}`}
+                  />
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={`Total: ${report.summary?.total_score ?? 0}`}
+                  />
+                </>
               )}
+              <Chip
+                size="small"
+                color={fullyPublished ? 'success' : 'default'}
+                variant="outlined"
+                label={fullyPublished ? 'Published' : 'Not published yet'}
+              />
             </Box>
           )}
         </Box>
@@ -441,6 +472,54 @@ const ReportCardTab = () => {
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                 Loading your report card...
               </Typography>
+            </Box>
+          ) : paymentRequired ? (
+            <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center' }}>
+              <IconLock
+                size={48}
+                color={isDark ? '#fff' : '#94a3b8'}
+                style={{ marginBottom: 12 }}
+              />
+              <Alert severity="warning" sx={{ textAlign: 'left', mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight={900}>
+                  Payment Required
+                </Typography>
+                {paymentRequiredMessage}
+              </Alert>
+              <Button variant="contained" size="small" onClick={() => navigate('/pay-school-fees')}>
+                Go to Payments
+              </Button>
+            </Box>
+          ) : publishBlocked ? (
+            <Box sx={{ p: { xs: 2, sm: 3 }, display: 'grid', gap: 2 }}>
+              {!spaApproved && (
+                <Alert
+                  sx={{
+                    bgcolor: '#fc9d49',
+                    color: '#fff',
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={900}>
+                    SPA Approval Notification
+                  </Typography>
+                  This report card is not available at the moment because the School Portal Admin
+                  has not approved all the scores.
+                </Alert>
+              )}
+              {!hosPublished && (
+                <Alert
+                  sx={{
+                    bgcolor: '#fc9d49',
+                    color: '#fff',
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={900}>
+                    HoS Approval Notification
+                  </Typography>
+                  This report card is not available at the moment because the Head of School has not
+                  published all the scores.
+                </Alert>
+              )}
             </Box>
           ) : report ? (
             <ReportCardView
@@ -468,7 +547,7 @@ const ReportCardTab = () => {
           )}
         </Box>
 
-        {report && (
+        {report && !publishBlocked && (
           <Box
             sx={{
               p: 2,
@@ -531,6 +610,7 @@ const ReportCardView = ({ report, className, sessionTermLabel, getTemplateIndexF
       report={buildReportProp(report)}
       sessionTerm={{
         label: sessionTermLabel,
+        term_id: report.session_term?.term_id ?? null,
         closing_date: report.session_term?.end_date || '',
         resumption_date: '',
       }}

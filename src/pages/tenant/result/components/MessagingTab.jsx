@@ -56,6 +56,7 @@ import {
   fetchSessionTerms,
   fetchActiveTenantSessionTerm,
 } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import StatCard from '@/components/shared/StatCard';
 
 const CHANNELS = {
@@ -116,7 +117,13 @@ const MessagingTab = () => {
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [sendDialog, setSendDialog] = useState({ open: false, channel: '' });
-  const [form, setForm] = useState({ sessionId: '', termId: '', sessTermId: '', progId: '', classArmIds: [] });
+  const [form, setForm] = useState({
+    sessionId: '',
+    termId: '',
+    sessTermId: '',
+    progId: '',
+    classArmIds: [],
+  });
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState([]);
   const [contactEdits, setContactEdits] = useState({});
@@ -125,6 +132,7 @@ const MessagingTab = () => {
   const [stats, setStats] = useState({ Email: null, SMS: null, WhatsApp: null });
   const [statsLoading, setStatsLoading] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [modalAlert, setModalAlert] = useState(null);
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
@@ -139,16 +147,30 @@ const MessagingTab = () => {
         communicationApi.resultProgrammes(),
         fetchActiveTenantSessionTerm().catch(() => null),
       ]);
-      const sessionList = Array.isArray(sessRes?.data?.data || sessRes?.data) ? sessRes.data?.data || sessRes.data : [];
-      const termList = Array.isArray(termRes?.data?.data || termRes?.data) ? termRes.data?.data || termRes.data : [];
+      const sessionList = Array.isArray(sessRes?.data?.data || sessRes?.data)
+        ? sessRes.data?.data || sessRes.data
+        : [];
+      const termList = Array.isArray(termRes?.data?.data || termRes?.data)
+        ? termRes.data?.data || termRes.data
+        : [];
       const stRows = st?.data ?? [];
       setSessions(sessionList);
       setTerms(termList);
       setSessionTerms(stRows);
       setProgrammes(Array.isArray(progs.data) ? progs.data : []);
+
       const activeRow = (active?.data ?? active?.status) ? (active?.data ?? active) : null;
-      const activeId = activeRow?.id ?? stRows.find((s) => s.status === 'active')?.id ?? '';
-      setForm((f) => ({ ...f, sessTermId: activeId || '' }));
+      const activeSessionId =
+        activeRow?.session_id ?? stRows.find((s) => s.status === 'active')?.session_id ?? '';
+      const activeTermId =
+        activeRow?.term_id ?? stRows.find((s) => s.status === 'active')?.term_id ?? '';
+      const activeStId = activeRow?.id ?? stRows.find((s) => s.status === 'active')?.id ?? '';
+      setForm((f) => ({
+        ...f,
+        sessionId: activeSessionId || '',
+        termId: activeTermId || '',
+        sessTermId: activeStId || '',
+      }));
     } catch (err) {
       showSnackbar(err.response?.data?.error || 'Failed to load form data', 'error');
     }
@@ -167,7 +189,9 @@ const MessagingTab = () => {
     const match = sessionTerms.find(
       (st) => st.session_id === form.sessionId && st.term_id === form.termId,
     );
-    setForm((f) => (f.sessTermId !== (match?.id ?? '') ? { ...f, sessTermId: match?.id ?? '' } : f));
+    setForm((f) =>
+      f.sessTermId !== (match?.id ?? '') ? { ...f, sessTermId: match?.id ?? '' } : f,
+    );
   }, [form.sessionId, form.termId, sessionTerms]);
 
   const loadClasses = async (progId) => {
@@ -207,8 +231,14 @@ const MessagingTab = () => {
     setRows([]);
     setSelected([]);
     setContactEdits({});
+    setModalAlert(null);
     setSendDialog({ open: true, channel });
     if (form.progId) loadClasses(form.progId);
+  };
+
+  const closeDialog = () => {
+    setModalAlert(null);
+    setSendDialog({ open: false, channel: '' });
   };
 
   const populate = async () => {
@@ -218,6 +248,7 @@ const MessagingTab = () => {
       return;
     }
     setPopulating(true);
+    setModalAlert(null);
     try {
       const filter = {
         sessTermId: form.sessTermId,
@@ -262,7 +293,7 @@ const MessagingTab = () => {
 
   const saveContact = async (row) => {
     const { channel } = sendDialog;
-    const value = contactEdits[row.res_msg_id] ?? '';
+    const value = contactEdits[row.res_msg_id] ?? contactValue(row, channel);
     if (value === contactValue(row, channel)) return;
     try {
       if (channel === 'Email') {
@@ -296,37 +327,48 @@ const MessagingTab = () => {
       showSnackbar('No students selected', 'warning');
       return;
     }
-    const missing = payloadRows.filter(
-      (r) =>
-        !contactValue(r, channel) &&
-        !(CHANNELS[channel].contactField in r && r[CHANNELS[channel].contactField]),
-    );
-    if (missing.length) {
-      showSnackbar(
-        `${missing.length} selected student(s) are missing a ${CHANNELS[channel].contactLabel}`,
-        'warning',
+    if (channel === 'WhatsApp') {
+      const missingWa = payloadRows.filter((r) => !(r.res_whatsapp_phone_number ?? '').trim());
+      if (missingWa.length) {
+        showSnackbar(
+          `${missingWa.length} selected student(s) are missing a WhatsApp number`,
+          'warning',
+        );
+        return;
+      }
+    }
+
+    const recipients = payloadRows.filter((r) => (contactValue(r, channel) ?? '').trim());
+    const skipped = payloadRows.length - recipients.length;
+    if (!recipients.length) {
+      setModalAlert(
+        `None of the selected students have a ${CHANNELS[channel].contactLabel.toLowerCase()}`,
       );
       return;
     }
+
     setSending(true);
     try {
       if (channel === 'Email') {
-        await communicationApi.resultSend('email', payloadRows);
-        showSnackbar('Emails queued for sending');
+        await communicationApi.resultSend('email', recipients);
+        showSnackbar(
+          `Emails queued for ${recipients.length} student(s)${skipped ? `, ${skipped} skipped` : ''}`,
+        );
       } else if (channel === 'SMS') {
-        const phones = payloadRows.filter((r) => r.res_msg_phone_number);
         await communicationApi.resultSend('sms', {
-          data: phones,
+          data: recipients,
           remain_unit_balance: 0,
           filter: { sessTermId: form.sessTermId },
         });
-        showSnackbar(`SMS queued for ${phones.length} student(s)`);
+        showSnackbar(
+          `SMS queued for ${recipients.length} student(s)${skipped ? `, ${skipped} skipped` : ''}`,
+        );
       } else {
         const res = await communicationApi.resultSend('whatsapp', { data: payloadRows });
         showSnackbar(res.data?.message || 'WhatsApp messages queued');
       }
       loadStats();
-      setSendDialog({ open: false, channel: '' });
+      closeDialog();
       setRows([]);
       setSelected([]);
       setContactEdits({});
@@ -368,7 +410,9 @@ const MessagingTab = () => {
     return s.total_result_sms ?? 0;
   };
 
-  const filtersReady = Boolean(form.sessionId && form.termId && form.sessTermId && form.progId && form.classArmIds.length);
+  const filtersReady = Boolean(
+    form.sessionId && form.termId && form.sessTermId && form.progId && form.classArmIds.length,
+  );
   const dialogChannel = CHANNELS[sendDialog.channel];
   const allSelected = rows.length > 0 && selected.length === rows.length;
   const someSelected = selected.length > 0 && selected.length < rows.length;
@@ -452,12 +496,19 @@ const MessagingTab = () => {
                 <Select
                   value={form.sessionId}
                   label="Session"
-                  onChange={(e) => setForm((f) => ({ ...f, sessionId: e.target.value, termId: '', sessTermId: '' }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      sessionId: e.target.value,
+                      termId: '',
+                      sessTermId: '',
+                    }))
+                  }
                 >
-                  {sessionTerms.map((s) => (
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
-                      {s.term?.term_name ?? s.display_name}
+                      {s.session_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -474,7 +525,9 @@ const MessagingTab = () => {
                 >
                   <MenuItem value="">-- choose --</MenuItem>
                   {terms.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -546,7 +599,11 @@ const MessagingTab = () => {
                       textTransform: 'none',
                       fontWeight: 600,
                       borderRadius: '8px',
-                      flex: { xs: '1 1 calc(50% - 4px)', sm: '1 1 calc(33.33% - 8px)', md: '1 1 calc(100% - 8px)' },
+                      flex: {
+                        xs: '1 1 calc(50% - 4px)',
+                        sm: '1 1 calc(33.33% - 8px)',
+                        md: '1 1 calc(100% - 8px)',
+                      },
                       minWidth: { xs: 0, md: 0 },
                       px: { xs: 1, md: 1.5 },
                     }}
@@ -728,7 +785,7 @@ const MessagingTab = () => {
       {/* ── Send dialog ───────────────────────────────── */}
       <Dialog
         open={sendDialog.open}
-        onClose={() => setSendDialog({ open: false, channel: '' })}
+        onClose={closeDialog}
         maxWidth="lg"
         fullWidth
         PaperProps={{ sx: { borderRadius: '16px', maxHeight: '90vh' } }}
@@ -755,12 +812,37 @@ const MessagingTab = () => {
                 <Select
                   value={form.sessionId}
                   label="Session"
-                  onChange={(e) => setForm((f) => ({ ...f, sessionId: e.target.value, termId: '', sessTermId: '' }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      sessionId: e.target.value,
+                      termId: '',
+                      sessTermId: '',
+                    }))
+                  }
                 >
-                  {sessionTerms.map((s) => (
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {sessions.map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      {s.session?.session_name ?? s.display_name ?? s.term_name} —{' '}
-                      {s.term?.term_name ?? s.display_name}
+                      {s.session_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Term</InputLabel>
+                <Select
+                  value={form.termId}
+                  label="Term"
+                  onChange={(e) => setForm((f) => ({ ...f, termId: e.target.value }))}
+                  disabled={!form.sessionId}
+                >
+                  <MenuItem value="">-- choose --</MenuItem>
+                  {terms.map((t) => (
+                    <MenuItem key={t.id} value={t.id}>
+                      {t.term_name}
                     </MenuItem>
                   ))}
                 </Select>
@@ -856,6 +938,18 @@ const MessagingTab = () => {
               {populating && <LinearProgress sx={{ mt: 1.5, borderRadius: 1 }} />}
             </Grid>
 
+            {modalAlert && (
+              <Grid size={12}>
+                <Alert
+                  severity="success"
+                  onClose={() => setModalAlert(null)}
+                  sx={{ borderRadius: '10px' }}
+                >
+                  {modalAlert}
+                </Alert>
+              </Grid>
+            )}
+
             {rows.length > 0 && (
               <Grid size={12}>
                 <TableContainer
@@ -887,7 +981,6 @@ const MessagingTab = () => {
                         <TableCell sx={cellHeaderSx}>
                           {dialogChannel?.contactLabel ?? 'Contact'}
                         </TableCell>
-                        <TableCell sx={cellHeaderSx}>Reg. No</TableCell>
                         <TableCell sx={cellHeaderSx}>Status</TableCell>
                         <TableCell sx={cellHeaderSx} align="right">
                           Action
@@ -939,7 +1032,7 @@ const MessagingTab = () => {
                                     {name}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    {r.userid || r.user_id || '—'}
+                                    {r.user_id || '—'}
                                   </Typography>
                                 </Box>
                               </Box>
@@ -947,7 +1040,7 @@ const MessagingTab = () => {
                             <TableCell onClick={(e) => e.stopPropagation()}>
                               <TextField
                                 size="small"
-                                value={contactEdits[r.res_msg_id] ?? ''}
+                                value={contactEdits[r.res_msg_id] ?? contactValue(r, sendDialog.channel)}
                                 placeholder={dialogChannel?.contactPlaceholder}
                                 onChange={(e) =>
                                   setContactEdits((ed) => ({
@@ -956,21 +1049,10 @@ const MessagingTab = () => {
                                   }))
                                 }
                                 onBlur={() => saveContact(r)}
-                                error={!(contactEdits[r.res_msg_id] ?? '').trim()}
-                                helperText={
-                                  !(contactEdits[r.res_msg_id] ?? '').trim() ? 'Required' : ' '
-                                }
-                                sx={{
-                                  minWidth: 180,
-                                  '& .MuiFormHelperText-root': { mx: 0, mt: 0, mb: -0.5 },
-                                }}
+                                sx={{ minWidth: 180 }}
                               />
                             </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {r.reg_id || r.userid || '—'}
-                              </Typography>
-                            </TableCell>
+                           
                             <TableCell>
                               <Chip
                                 icon={
@@ -1045,7 +1127,7 @@ const MessagingTab = () => {
         <Divider />
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button
-            onClick={() => setSendDialog({ open: false, channel: '' })}
+            onClick={closeDialog}
             sx={{ textTransform: 'none' }}
           >
             Cancel

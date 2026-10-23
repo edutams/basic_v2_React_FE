@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
-  Box, Button, Typography, FormControl, InputLabel, Select, MenuItem, Alert,
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
 } from '@mui/material';
 import { IconDownload } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
@@ -16,7 +23,7 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
 
   const subjects = useMemo(
     () => (allocations || []).map((a) => ({ id: a.subject_id, subject_name: a.subject_name })),
-    [allocations]
+    [allocations],
   );
 
   // Load CA types from the marks configuration for the selected session/term,
@@ -37,9 +44,10 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
         const configData = res?.data?.data?.[0];
         let parsed = [];
         if (configData?.ca_content) {
-          const raw = typeof configData.ca_content === 'string'
-            ? JSON.parse(configData.ca_content)
-            : configData.ca_content;
+          const raw =
+            typeof configData.ca_content === 'string'
+              ? JSON.parse(configData.ca_content)
+              : configData.ca_content;
           if (Array.isArray(raw)) {
             parsed = raw;
           } else if (typeof raw === 'object' && raw !== null) {
@@ -53,7 +61,9 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
       }
     };
     loadConfig();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, filter?.session_id, filter?.term_id, filter?.programme_id]);
 
   // Reset the selection whenever the dialog opens or options change
@@ -61,13 +71,18 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
     setSelection('');
   }, [open, caOptions.length]);
 
-  // Dropdown options: one entry per configured CA type + Exam
+  // Dropdown options: "all" (every CA + exam in one file) first, then one
+  // entry per configured CA type, then Exam alone — for whichever single
+  // round trip is actually wanted.
   const options = useMemo(() => {
-    const list = caOptions.map((ca, i) => ({
-      value: `ca:${ca.display_name || `CA${i + 1}`}`,
-      label: ca.display_name || `CA${i + 1}`,
-    }));
-    list.push({ value: 'exam', label: 'Exam' });
+    const list = [{ value: 'all', label: 'All CAs + Exam (one file)' }];
+    caOptions.forEach((ca, i) => {
+      list.push({
+        value: `ca:${ca.display_name || `CA${i + 1}`}`,
+        label: `${ca.display_name || `CA${i + 1}`} only`,
+      });
+    });
+    list.push({ value: 'exam', label: 'Exam only' });
     return list;
   }, [caOptions]);
 
@@ -75,9 +90,12 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
     setError('');
     setLoading(true);
     try {
-      const [category, displayName] = selection.startsWith('ca:')
-        ? ['ca', selection.slice(3)]
-        : ['exam', undefined];
+      const [category, displayName] =
+        selection === 'all'
+          ? ['all', undefined]
+          : selection.startsWith('ca:')
+            ? ['ca', selection.slice(3)]
+            : ['exam', undefined];
 
       const res = await scoreManagerApi.downloadCombinedScoresheet({
         session_id: filter.session_id,
@@ -106,7 +124,9 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
       onClose();
     } catch (err) {
       console.error('Failed to download scoresheet:', err);
-      setError(err?.response?.data?.message || 'Failed to download the scoresheet. Please try again.');
+      setError(
+        err?.response?.data?.message || 'Failed to download the scoresheet. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -126,27 +146,33 @@ const DownloadCombinedDialog = ({ open, onClose, allocations, filter }) => {
       size="small"
     >
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Select a score category to download the combined score sheet template for all listed subjects.
+        Select a score category to download the combined score sheet template for all listed
+        subjects.
       </Typography>
 
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <InputLabel>Category</InputLabel>
-        <Select
-          value={selection}
-          label="Category"
-          onChange={(e) => setSelection(e.target.value)}
-        >
+        <Select value={selection} label="Category" onChange={(e) => setSelection(e.target.value)}>
           <MenuItem value="">--Select category--</MenuItem>
           {options.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            <MenuItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
 
       {selection && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          Click download to get the combined Excel template for <strong>{selection.startsWith('ca:') ? selection.slice(3) : 'Exam'}</strong> scores,
-          pre-filled with all registered students in {className}.
+          Click download to get the combined Excel template for{' '}
+          <strong>
+            {selection === 'all'
+              ? 'all CAs and the exam'
+              : selection.startsWith('ca:')
+                ? selection.slice(3)
+                : 'Exam'}
+          </strong>{' '}
+          scores, pre-filled with each student's existing scores for every subject in {className}.
         </Alert>
       )}
 

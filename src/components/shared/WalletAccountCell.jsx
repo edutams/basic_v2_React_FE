@@ -26,6 +26,7 @@ const WalletAccountCell = ({ row }) => {
         sx={{ cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
       >
         {row.wallet_account_no ?? 'N/A'}
+        {row.bank_name && ` (${row.bank_name})`}
       </Link>
       {row.payer_type_name && (
         <Typography
@@ -56,6 +57,7 @@ const WalletAccountCell = ({ row }) => {
 WalletAccountCell.propTypes = {
   row: PropTypes.shape({
     wallet_account_no: PropTypes.string,
+    bank_name: PropTypes.string,
     payer_name: PropTypes.string,
     payer_avatar: PropTypes.string,
     payer_email: PropTypes.string,

@@ -9,3 +9,209 @@
     border-color: #1976d2;
     outline: none;
 }
+
+/* ActionButton styles matching Vue.js files */
+.action-button {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 10px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+    min-height: 80px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(59, 130, 246, 0.1),
+            transparent);
+    transition: left 0.5s ease;
+}
+
+.action-button:hover::before {
+    left: 100%;
+}
+
+.action-button:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    border-style: solid;
+}
+
+.action-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.action-button:disabled:hover {
+    border-style: dashed;
+    border-color: #d1d5db;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.regenerate-button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    border-style: solid;
+}
+
+.regenerate-button:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.regenerate-button:disabled {
+    background: #9ca3af;
+    border-color: #9ca3af;
+}
+
+.ai-button {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    border-color: #8b5cf6;
+    border-style: solid;
+    color: white;
+}
+
+.ai-button:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    border-color: #7c3aed;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.ai-button:disabled {
+    background: #9ca3af;
+    border-color: #9ca3af;
+}
+
+/* Button content structure */
+.button-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.icon-wrapper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    transition: all 0.3s ease;
+}
+
+.action-button:hover .icon-wrapper {
+    background: rgba(59, 130, 246, 0.2);
+    transform: scale(1.1);
+}
+
+.regenerate-button .icon-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.regenerate-button:hover .icon-wrapper {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.ai-button .icon-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ai-button:hover .icon-wrapper {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.text-content {
+    flex: 1;
+}
+
+.button-title {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: #1f2937;
+}
+
+.button-subtitle {
+    color: #6b7280;
+    font-size: 13px;
+    display: block;
+}
+
+.regenerate-button .button-title,
+.regenerate-button .button-subtitle {
+    color: #ffffff;
+}
+
+.ai-button .button-title,
+.ai-button .button-subtitle {
+    color: #ffffff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    .action-button {
+        min-height: 100px;
+        padding: 15px;
+    }
+
+    .button-title {
+        font-size: 15px;
+    }
+
+    .button-subtitle {
+        font-size: 12px;
+    }
+
+    .icon-wrapper {
+        width: 45px;
+        height: 45px;
+    }
+
+    .icon-wrapper i {
+        font-size: 1.5rem !important;
+    }
+}
+
+@media (max-width: 575px) {
+    .button-content {
+        gap: 12px;
+    }
+}
+
+/* Loading state animation */
+.action-button:disabled .icon-wrapper i {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}

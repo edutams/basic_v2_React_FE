@@ -116,6 +116,7 @@ const LearnerWalletTransactionsModal = ({ open, onClose, userId }) => {
                   </Typography>
                   <Typography variant="caption" color="text.secondary" display="block">
                     {wallet.wallet_account_no}
+                    {wallet.bank_name && ` (${wallet.bank_name})`}
                   </Typography>
                 </Box>
               </Box>

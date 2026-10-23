@@ -30,6 +30,47 @@ const allocationApi = {
     return response.data;
   },
 
+  // Ranked teaching-staff candidates by lightest current load — the
+  // "Suggested Teachers" panel.
+  getSuggestedClassTeachers: async (params = {}) => {
+    const response = await tenantApi.get('/allocations/class-teacher/suggested-teachers', {
+      params,
+    });
+    return response.data;
+  },
+
+  // Fills every class-teacher gap in a programme with the least-loaded
+  // available teacher — never touches an arm that already has one.
+  autoAllocateClassTeachers: async (data) => {
+    const response = await tenantApi.post('/allocations/class-teacher/auto-allocate', data);
+    return response.data;
+  },
+
+  downloadClassTeacherTemplate: async (params) => {
+    const response = await tenantApi.get('/allocations/class-teacher/template', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  uploadClassTeacherTemplate: async (file, sessionTermId) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('session_term_id', sessionTermId);
+    const response = await tenantApi.post('/allocations/class-teacher/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  getClassArmRoster: async (classArmId, params = {}) => {
+    const response = await tenantApi.get(`/allocations/class-arm/${classArmId}/roster`, {
+      params,
+    });
+    return response.data;
+  },
+
   // Subject Teacher Allocations
   getSubjectTeacherAllocations: async (params = {}) => {
     const response = await tenantApi.get('/allocations/subject-teacher', { params });
@@ -43,6 +84,49 @@ const allocationApi = {
 
   removeSubjectTeacherAllocation: async (id) => {
     const response = await tenantApi.delete(`/allocations/subject-teacher/${id}`);
+    return response.data;
+  },
+
+  getSubjectAllocationClassesOverview: async (params = {}) => {
+    const response = await tenantApi.get('/allocations/subject-teacher/classes-overview', {
+      params,
+    });
+    return response.data;
+  },
+
+  getSuggestedSubjectTeachers: async (params = {}) => {
+    const response = await tenantApi.get('/allocations/subject-teacher/suggested-teachers', {
+      params,
+    });
+    return response.data;
+  },
+
+  autoAllocateSubjectTeachers: async (data) => {
+    const response = await tenantApi.post('/allocations/subject-teacher/auto-allocate', data);
+    return response.data;
+  },
+
+  copySubjectTeachersToArm: async (data) => {
+    const response = await tenantApi.post('/allocations/subject-teacher/copy-from-arm', data);
+    return response.data;
+  },
+
+  downloadSubjectTeacherTemplate: async (params) => {
+    const response = await tenantApi.get('/allocations/subject-teacher/template', {
+      params,
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  uploadSubjectTeacherTemplate: async (file, classArmId, sessionTermId) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('class_arm_id', classArmId);
+    formData.append('session_term_id', sessionTermId);
+    const response = await tenantApi.post('/allocations/subject-teacher/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

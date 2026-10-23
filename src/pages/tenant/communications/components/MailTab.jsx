@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
-  Box, Grid, Typography, Paper, Button, TextField, List, ListItem, ListItemText,
+  Box, Grid, Typography, Paper, Button, TextField, List, ListItem, ListItemButton, ListItemText,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions, Snackbar, Alert,
   CircularProgress, useTheme, Pagination, MenuItem, FormControl, InputLabel, Select,
   Divider, Stack, InputAdornment, Paper as PaperSurface,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { IconInbox, IconSend, IconArchive, IconPencil, IconTrash, IconEye, IconArrowLeft, IconMail, IconMailForward, IconMailOpened, IconSearch, IconUsers, IconWand } from '@tabler/icons-react';
 import communicationApi from '@/api/tenant/communication/communicationApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
@@ -32,7 +33,7 @@ const MailTab = () => {
   const [detail, setDetail] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({ all: 0, term_message: 0, received: 0 });
+  const [stats, setStats] = useState({ all: 0, term_message: 0, received: 0, sent: 0, archive: 0 });
   const [unread, setUnread] = useState(0);
   const [composeOpen, setComposeOpen] = useState(false);
   const [compose, setCompose] = useState(emptyCompose);
@@ -156,7 +157,7 @@ const MailTab = () => {
     }
     setGenerating(true);
     try {
-      const res = await communicationApi.smsUsers({ filters });
+      const res = await communicationApi.smsUsers(filters);
       const rows = Array.isArray(res.data) ? res.data : [];
       if (!rows.length) {
         showSnack('No users matched these filters', 'info');
@@ -178,7 +179,7 @@ const MailTab = () => {
     }
     setSearching(true);
     try {
-      const res = await communicationApi.smsUserSearch({ filters: { ...filters, search: q } });
+      const res = await communicationApi.smsUserSearch({ ...filters, search: q });
       const rows = Array.isArray(res.data) ? res.data : [];
       setSearchResults(rows.map(normalizeUser));
     } catch {
@@ -261,14 +262,20 @@ const MailTab = () => {
   return (
     <Box>
       <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.all ?? 0} label="Total Messages" subtitle="All mail in your mailbox" icon={IconMail} colorIndex={0} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.term_message ?? 0} label="This Term" subtitle="Messages this academic term" icon={IconMailForward} colorIndex={1} />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
           <StatCard count={stats.received ?? 0} label="Received" subtitle="Inbox messages received" icon={IconMailOpened} colorIndex={2} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard count={stats.sent ?? 0} label="Sent Mails" subtitle="Mails you have sent" icon={IconSend} colorIndex={3} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <StatCard count={stats.archive ?? 0} label="Archived Mails" subtitle="Mails in your archive" icon={IconArchive} colorIndex={4} />
         </Grid>
       </Grid>
 
@@ -287,24 +294,32 @@ const MailTab = () => {
             </Button>
             <List dense>
               {navItems.map((n) => (
-                <ListItem
+                <ListItemButton
                   key={n.key}
-                  button
-                  selected={view === n.key && !detail}
+                  selected={view === n.key}
                   onClick={() => { setView(n.key); setDetail(null); setPage(1); }}
-                  sx={{ borderRadius: '8px', cursor: 'pointer' }}
+                  sx={{
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.1) },
+                    '&.Mui-selected': {
+                      bgcolor: (t) => alpha(t.palette.primary.main, 0.2),
+                      '&:hover': { bgcolor: (t) => alpha(t.palette.primary.main, 0.3) },
+                      '& .MuiListItemText-primary': { fontWeight: 700 },
+                    },
+                  }}
                 >
                   {n.icon}
                   <ListItemText primary={n.label} sx={{ ml: 1 }} />
                   {n.badge > 0 && <Chip size="small" color="primary" label={n.badge} />}
-                </ListItem>
+                </ListItemButton>
               ))}
             </List>
           </Paper>
         </Grid>
 
         <Grid size={{ xs: 12, md: 9 }}>
-          <Paper elevation={0} sx={{ p: 2, minHeight: 360, ...border }}>
+          <Paper elevation={0} sx={{ p: 2, minHeight: 240, maxHeight: 420, overflowY: 'auto', ...border }}>
             {detail ? (
               <Box>
                 <Button startIcon={<IconArrowLeft size={16} />} onClick={() => setDetail(null)} sx={{ mb: 1.5, textTransform: 'none' }}>
@@ -511,25 +526,31 @@ const MailTab = () => {
                   </Grid>
                 )}
 
-                {(filters.recipient === 'all' || filters.recipient === 'group') && (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      size="large"
-                      startIcon={generating ? <CircularProgress size={14} color="inherit" /> : <IconWand size={16} />}
-                      onClick={generateUsers}
-                      disabled={generating}
-                      sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', minHeight: 40 }}
-                    >
-                      Generate
-                    </Button>
-                  </Grid>
-                )}
-
                 {filters.userType && (
-                  <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button size="small" onClick={resetFilters} sx={{ textTransform: 'none' }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {(filters.recipient === 'all' || filters.recipient === 'group') && (
+                      <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={generating ? <CircularProgress size={14} color="inherit" /> : <IconWand size={16} />}
+                        onClick={generateUsers}
+                        disabled={generating}
+                        sx={{
+                          textTransform: 'none', fontWeight: 700, borderRadius: '10px', minHeight: 40, flex: 1,
+                        }}
+                      >
+                        Fetch
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      onClick={resetFilters}
+                      sx={{
+                        textTransform: 'none',
+                        whiteSpace: 'nowrap',
+                        ml: (filters.recipient === 'all' || filters.recipient === 'group') ? 0 : 'auto',
+                      }}
+                    >
                       Reset filters
                     </Button>
                   </Grid>

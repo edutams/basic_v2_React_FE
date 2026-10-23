@@ -88,6 +88,13 @@ const InvoiceView = () => {
     );
   };
 
+  const handleProceedToPay = (student) => {
+    window.open(
+      `/class-ledger/${student.invoice_number}/${student?.student?.user_id}/pay-invoice`,
+      '_blank',
+    );
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
@@ -178,6 +185,16 @@ const InvoiceView = () => {
   const fmt = (val) => {
     const num = Number(val) || 0;
     return num.toLocaleString();
+  };
+
+  // Appends the student's selected option name(s) to a payment item's label,
+  // e.g. "Excursion Fee — Zoo Trip", when the schedule offers choices.
+  const withOptionLabel = (item) => {
+    const name = item.schedule_info?.payment_name?.name;
+    const optionNames = (item.invoiceOptions || [])
+      .map((io) => io.option?.option_name)
+      .filter(Boolean);
+    return optionNames.length > 0 ? `${name} — ${optionNames.join(', ')}` : name;
   };
 
   return (
@@ -348,6 +365,7 @@ const InvoiceView = () => {
                         fontSize={15}
                       >
                         Wallet No -: {student?.student?.wallet_no}
+                        {student?.student?.bank_name && ` (${student.student.bank_name})`}
                       </Typography>
                     </Box>
                   )}
@@ -380,7 +398,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">
+                <Button variant="contained" size="small" onClick={() => handleProceedToPay(student)}>
                   Proceed to Pay
                 </Button>
                 <Button
@@ -460,7 +478,7 @@ const InvoiceView = () => {
                             COMPULSORY
                           </TableCell>
                         )}
-                        <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                        <TableCell>{withOptionLabel(item)}</TableCell>
                         <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.balance)}</TableCell>
@@ -495,7 +513,7 @@ const InvoiceView = () => {
                             OPTIONAL
                           </TableCell>
                         )}
-                        <TableCell>{item.schedule_info?.payment_name?.name}</TableCell>
+                        <TableCell>{withOptionLabel(item)}</TableCell>
                         <TableCell align="center">₦{fmt(item.schedule_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.paid_amount)}</TableCell>
                         <TableCell align="center">₦{fmt(item.balance)}</TableCell>
@@ -593,7 +611,7 @@ const InvoiceView = () => {
                   borderColor: 'grey.200',
                 }}
               >
-                <Button variant="contained" size="small">
+                <Button variant="contained" size="small" onClick={() => handleProceedToPay(student)}>
                   Proceed to Pay
                 </Button>
                 <Button

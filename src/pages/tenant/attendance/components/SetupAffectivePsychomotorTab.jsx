@@ -739,7 +739,7 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
       {/* Stat Cards — each inner tab gets its own stats, since they cover two
           unrelated concerns (weekly report delivery vs. domain/skill config). */}
       <Box sx={{ mb: 2 }}>
-        {innerTab === 0 ? (
+        {innerTab === 0 && showWeeklyReports ? (
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <StatCard
               loading={summaryLoading}
@@ -816,12 +816,19 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
         )}
       </Box>
 
-      {/* Loading skeleton for the two-column setup area below, matching its real layout —
-          only relevant on the Psychomotor Setup tab, which is what actually loads it */}
+      {/* Loading skeleton for the Affective Domain / Psychomotor Domain
+          cards — shaped like the real DomainCard (colour + title intact)
+          rather than a generic grey placeholder, so each card reads as
+          "this specific card is loading" instead of an anonymous block.
+          Only relevant on the Psychomotor Setup tab, which is what
+          actually renders these two cards. */}
       {innerTab === 1 && loading && (
         <Grid container spacing={3}>
-          {[0, 1].map((col) => (
-            <Grid size={{ xs: 12, md: 6 }} key={col}>
+          {[
+            { title: 'Affective Domain', color: theme.palette.success.main },
+            { title: 'Psychomotor Domain', color: theme.palette.primary.main },
+          ].map((col) => (
+            <Grid size={{ xs: 12, md: 6 }} key={col.title}>
               <Paper
                 elevation={0}
                 sx={{
@@ -830,12 +837,20 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
                   overflow: 'hidden',
                 }}
               >
-                <Box sx={{ px: 3, py: 2 }}>
-                  <Skeleton variant="text" width="40%" height={28} />
+                <Box
+                  sx={{
+                    px: 3,
+                    py: 2,
+                    background: col.color,
+                  }}
+                >
+                  <Typography variant="subtitle1" fontWeight={700} color="#fff">
+                    {col.title}
+                  </Typography>
                 </Box>
                 <Box sx={{ p: 2 }}>
-                  {[0, 1, 2].map((row) => (
-                    <Skeleton key={row} variant="rounded" height={40} sx={{ mb: 1 }} />
+                  {[0, 1, 2, 3].map((row) => (
+                    <Skeleton key={row} variant="rounded" height={36} sx={{ mb: 1 }} />
                   ))}
                 </Box>
               </Paper>
@@ -931,159 +946,159 @@ const SetupAffectivePsychomotorTab = ({ showWeeklyReports = true }) => {
         {/* ── Weekly Reports (auto-send configuration per class arm) ── */}
         {showWeeklyReports && (
           <InnerTabPanel value={innerTab} index={0}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: '16px',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : theme.palette.grey[200]}`,
-            }}
-          >
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-              <NotificationsActiveIcon color="primary" fontSize="small" />
-              <Typography variant="h6" fontWeight={700}>
-                Weekly Report Configuration
-              </Typography>
-            </Stack>
-
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Select a class arm below to configure whether weekly attendance reports are
-              automatically sent to parents/guardians via the scheduler.
-            </Typography>
-
-            {/* Class Arm Selector */}
-            <Grid container spacing={2} sx={{ mb: 2.5 }}>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Programme</InputLabel>
-                  <Select
-                    value={selProgramme}
-                    label="Programme"
-                    onChange={(e) => setSelProgramme(e.target.value)}
-                  >
-                    {programmes.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.programme_name || p.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small" disabled={!selProgramme}>
-                  <InputLabel>Class</InputLabel>
-                  <Select
-                    value={selClass}
-                    label="Class"
-                    onChange={(e) => setSelClass(e.target.value)}
-                  >
-                    {classes.map((c) => (
-                      <MenuItem key={c.id} value={c.id}>
-                        {c.class_name || c.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <FormControl fullWidth size="small" disabled={!selClass}>
-                  <InputLabel>Class/Arm</InputLabel>
-                  <Select
-                    value={selArm}
-                    label="Class/Arm"
-                    onChange={(e) => setSelArm(e.target.value)}
-                  >
-                    {arms.map((a) => (
-                      <MenuItem key={a.id} value={a.id}>
-                        {a.class_arm_names}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-
-            {/* Weekly Report Toggle */}
-            {selArm ? (
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1,
-                  bgcolor: isDark
-                    ? 'rgba(255,255,255,0.04)'
-                    : alpha(theme.palette.primary.main, 0.04),
-                  border: '1px solid',
-                  borderColor: isDark
-                    ? 'rgba(255,255,255,0.08)'
-                    : alpha(theme.palette.primary.main, 0.12),
-                  opacity: togglingReport ? 0.6 : 1,
-                  transition: 'opacity 0.2s',
-                }}
-              >
-                <Stack direction="row" alignItems="flex-start" spacing={1}>
-                  <Checkbox
-                    checked={autoSendReport}
-                    disabled={togglingReport || weeklyReportLoading}
-                    onChange={async (e) => {
-                      const newVal = e.target.checked;
-                      const previousVal = autoSendReport;
-                      setAutoSendReport(newVal);
-                      reportCacheRef.current[selArm] = newVal;
-                      setTogglingReport(true);
-                      try {
-                        await attendanceApi.toggleWeeklyReport(selArm, newVal);
-                        setWeeklySnackbar({
-                          open: true,
-                          message: newVal
-                            ? 'Weekly report enabled. Parents will receive attendance summaries via email.'
-                            : 'Weekly report disabled.',
-                          severity: 'success',
-                        });
-                        // Keep this tab's stat cards in sync with the change,
-                        // same real-time-refresh pattern used elsewhere in the module.
-                        fetchReportSummary({
-                          programme_id: selProgramme || undefined,
-                          class_id: selClass || undefined,
-                          class_arm_id: selArm || undefined,
-                        });
-                      } catch (err) {
-                        setAutoSendReport(previousVal);
-                        reportCacheRef.current[selArm] = previousVal;
-                        setWeeklySnackbar({
-                          open: true,
-                          message: 'Failed to update weekly report setting',
-                          severity: 'error',
-                        });
-                      } finally {
-                        setTogglingReport(false);
-                      }
-                    }}
-                    size="small"
-                    sx={{ p: 0.25, mt: -0.25 }}
-                  />
-                  <Box>
-                    <Typography variant="body2" fontWeight={600} sx={{ mb: 0.25 }}>
-                      Weekly Report to Guardians
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {autoSendReport
-                        ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
-                        : 'Enable to automatically send weekly attendance reports to parents/guardians via the scheduler.'}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-            ) : (
-              <Alert severity="info" variant="outlined" sx={{ borderRadius: 1 }}>
-                <Typography variant="body2">
-                  Select a <strong>Programme</strong>, <strong>Class</strong>, and{' '}
-                  <strong>Class/Arm</strong> above to configure the weekly report setting for that
-                  class arm.
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: '16px',
+                border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : theme.palette.grey[200]}`,
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                <NotificationsActiveIcon color="primary" fontSize="small" />
+                <Typography variant="h6" fontWeight={700}>
+                  Weekly Report Configuration
                 </Typography>
-              </Alert>
-            )}
-          </Paper>
-        </InnerTabPanel>
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
+                Select a class arm below to configure whether weekly attendance reports are
+                automatically sent to parents/guardians via the scheduler.
+              </Typography>
+
+              {/* Class Arm Selector */}
+              <Grid container spacing={2} sx={{ mb: 2.5 }}>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Programme</InputLabel>
+                    <Select
+                      value={selProgramme}
+                      label="Programme"
+                      onChange={(e) => setSelProgramme(e.target.value)}
+                    >
+                      {programmes.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.programme_name || p.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControl fullWidth size="small" disabled={!selProgramme}>
+                    <InputLabel>Class</InputLabel>
+                    <Select
+                      value={selClass}
+                      label="Class"
+                      onChange={(e) => setSelClass(e.target.value)}
+                    >
+                      {classes.map((c) => (
+                        <MenuItem key={c.id} value={c.id}>
+                          {c.class_name || c.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 4 }}>
+                  <FormControl fullWidth size="small" disabled={!selClass}>
+                    <InputLabel>Class/Arm</InputLabel>
+                    <Select
+                      value={selArm}
+                      label="Class/Arm"
+                      onChange={(e) => setSelArm(e.target.value)}
+                    >
+                      {arms.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>
+                          {a.class_arm_names}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+
+              {/* Weekly Report Toggle */}
+              {selArm ? (
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1,
+                    bgcolor: isDark
+                      ? 'rgba(255,255,255,0.04)'
+                      : alpha(theme.palette.primary.main, 0.04),
+                    border: '1px solid',
+                    borderColor: isDark
+                      ? 'rgba(255,255,255,0.08)'
+                      : alpha(theme.palette.primary.main, 0.12),
+                    opacity: togglingReport ? 0.6 : 1,
+                    transition: 'opacity 0.2s',
+                  }}
+                >
+                  <Stack direction="row" alignItems="flex-start" spacing={1}>
+                    <Checkbox
+                      checked={autoSendReport}
+                      disabled={togglingReport || weeklyReportLoading}
+                      onChange={async (e) => {
+                        const newVal = e.target.checked;
+                        const previousVal = autoSendReport;
+                        setAutoSendReport(newVal);
+                        reportCacheRef.current[selArm] = newVal;
+                        setTogglingReport(true);
+                        try {
+                          await attendanceApi.toggleWeeklyReport(selArm, newVal);
+                          setWeeklySnackbar({
+                            open: true,
+                            message: newVal
+                              ? 'Weekly report enabled. Parents will receive attendance summaries via email.'
+                              : 'Weekly report disabled.',
+                            severity: 'success',
+                          });
+                          // Keep this tab's stat cards in sync with the change,
+                          // same real-time-refresh pattern used elsewhere in the module.
+                          fetchReportSummary({
+                            programme_id: selProgramme || undefined,
+                            class_id: selClass || undefined,
+                            class_arm_id: selArm || undefined,
+                          });
+                        } catch (err) {
+                          setAutoSendReport(previousVal);
+                          reportCacheRef.current[selArm] = previousVal;
+                          setWeeklySnackbar({
+                            open: true,
+                            message: 'Failed to update weekly report setting',
+                            severity: 'error',
+                          });
+                        } finally {
+                          setTogglingReport(false);
+                        }
+                      }}
+                      size="small"
+                      sx={{ p: 0.25, mt: -0.25 }}
+                    />
+                    <Box>
+                      <Typography variant="body2" fontWeight={600} sx={{ mb: 0.25 }}>
+                        Weekly Report to Guardians
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {autoSendReport
+                          ? 'A weekly attendance summary with PDF and Excel report will be automatically emailed to parents/guardians every week via the scheduler.'
+                          : 'Enable to automatically send weekly attendance reports to parents/guardians via the scheduler.'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              ) : (
+                <Alert severity="info" variant="outlined" sx={{ borderRadius: 1 }}>
+                  <Typography variant="body2">
+                    Select a <strong>Programme</strong>, <strong>Class</strong>, and{' '}
+                    <strong>Class/Arm</strong> above to configure the weekly report setting for that
+                    class arm.
+                  </Typography>
+                </Alert>
+              )}
+            </Paper>
+          </InnerTabPanel>
         )}
 
         {/* ── Psychomotor Setup (Domain Keys) ───────────── */}

@@ -1,11 +1,29 @@
-import { Box, Typography, Paper, Chip, Button, LinearProgress, Tooltip, useTheme } from '@mui/material';
-import { IconCloudUpload, IconEye, IconCheck, IconLoader, IconInfoCircle, IconUser } from '@tabler/icons-react';
+import {
+  Box,
+  Typography,
+  Paper,
+  Chip,
+  Button,
+  LinearProgress,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
+import {
+  IconCloudUpload,
+  IconEye,
+  IconCheck,
+  IconLoader,
+  IconInfoCircle,
+  IconUser,
+  IconLock,
+} from '@tabler/icons-react';
 
 const ScoreUploadCard = ({
   allocation,
   onUploadScore,
   onViewScoreSheet,
   onSubmitScore,
+  onViewLearners,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -17,11 +35,38 @@ const ScoreUploadCard = ({
   const caProgress = totalReg > 0 ? Math.round((caUploaded / totalReg) * 100) : 0;
   const examProgress = totalReg > 0 ? Math.round((examUploaded / totalReg) * 100) : 0;
 
-  const isSubmitted = allocation?.teacher_submit === 'yes' || allocation?.isSubmitted || allocation?.submissionStatus === 'Submitted';
+  const isSubmitted =
+    allocation?.teacher_submit === 'yes' ||
+    allocation?.isSubmitted ||
+    allocation?.submissionStatus === 'Submitted';
+  // Submitting is just a status flag — scores stay uploadable/editable right
+  // up until the broadsheet is actually published, matching the Score Sheet
+  // page's own rule. Gating uploads on "submitted" instead would strand a
+  // subject the moment it's submitted, with no way back in to add the exam
+  // score or a missed CA.
+  const isPublished = allocation?.is_published || false;
   const isSubmitting = allocation?.isSubmitting || false;
   // No CA and no exam scores uploaded yet → submitting makes no sense
   const hasAnyScores = caUploaded > 0 || examUploaded > 0;
-  const teacherLabel = allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
+  const teacherLabel =
+    allocation?.teacher_name || (allocation?.has_teacher === false ? 'Unassigned' : '—');
+
+  // Status accent — same meaning as the bottom "Submission Status" banner,
+  // echoed here as a left border + stronger header tint so cards in
+  // different states (and cards sitting flush against each other) are
+  // immediately tellable apart instead of all reading as the same white box.
+  const accentColor = isPublished ? '#64748B' : isSubmitted ? '#2E7D32' : '#1565C0';
+  const headerTint = isPublished
+    ? isDark
+      ? 'rgba(100,116,139,0.12)'
+      : '#ECEFF1'
+    : isSubmitted
+      ? isDark
+        ? 'rgba(46,125,50,0.14)'
+        : '#DCEFDC'
+      : isDark
+        ? 'rgba(21,101,192,0.14)'
+        : '#DCEAFB';
 
   return (
     <Paper
@@ -29,25 +74,29 @@ const ScoreUploadCard = ({
       sx={{
         borderRadius: '10px',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#E5E7EB',
+        borderLeft: '4px solid',
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#D8DEE6',
+        borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
+        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 2px 8px rgba(15,23,42,0.08)',
         transition: 'all 0.2s ease-in-out',
         '&:hover': {
-          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.06)',
+          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 6px 18px rgba(15,23,42,0.12)',
           borderColor: theme.palette.primary.main,
+          borderLeftColor: accentColor,
         },
       }}
     >
-      {/* ── Top Header Section (Light Green Tint) ─────────────── */}
+      {/* ── Top Header Section — tinted by status (blue/green/grey) ── */}
       <Box
         sx={{
           p: 1.5,
-          backgroundColor: isDark ? 'rgba(243, 247, 228, 0.06)' : '#F3F7E4',
+          backgroundColor: headerTint,
           borderBottom: '1px solid',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#E6EBCB',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
@@ -70,14 +119,40 @@ const ScoreUploadCard = ({
           variant="subtitle1"
           fontWeight={700}
           color="text.primary"
-          sx={{ mb: 1, fontSize: '0.925rem', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          sx={{
+            mb: 1,
+            fontSize: '0.925rem',
+            lineHeight: 1.25,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
           title={allocation.subject_name}
         >
           {allocation.subject_name}
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
-          <Typography variant="caption" fontWeight={500} color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 0.75,
+          }}
+        >
+          <Typography
+            variant="caption"
+            fontWeight={500}
+            color="text.secondary"
+            onClick={() => totalReg > 0 && onViewLearners && onViewLearners(allocation)}
+            sx={{
+              fontSize: '0.75rem',
+              cursor: totalReg > 0 ? 'pointer' : 'default',
+              '&:hover':
+                totalReg > 0 ? { color: 'primary.main', textDecoration: 'underline' } : undefined,
+            }}
+          >
             Registered learners: <strong>{totalReg}</strong>
           </Typography>
 
@@ -88,6 +163,14 @@ const ScoreUploadCard = ({
                 label="Processing..."
                 size="small"
                 color="secondary"
+                sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
+              />
+            ) : isPublished ? (
+              <Chip
+                icon={<IconLock size={12} />}
+                label="Published"
+                size="small"
+                color="default"
                 sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
               />
             ) : isSubmitted ? (
@@ -132,7 +215,12 @@ const ScoreUploadCard = ({
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            sx={{
+              fontSize: '0.7rem',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
             title={teacherLabel}
           >
             Teacher: <strong>{teacherLabel}</strong>
@@ -145,11 +233,23 @@ const ScoreUploadCard = ({
       <Box sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
         {/* C.A Upload Progress */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               C.A Upload Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               {caProgress}%
             </Typography>
           </Box>
@@ -166,18 +266,34 @@ const ScoreUploadCard = ({
               },
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}
+          >
             {caUploaded} out of {totalReg} learners score record
           </Typography>
         </Box>
 
         {/* Exam Upload Progress */}
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               Exam Upload Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               {examProgress}%
             </Typography>
           </Box>
@@ -194,7 +310,11 @@ const ScoreUploadCard = ({
               },
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}
+          >
             {examUploaded} out of {totalReg} learners score record
           </Typography>
         </Box>
@@ -205,23 +325,36 @@ const ScoreUploadCard = ({
             py: 0.5,
             px: 1,
             borderRadius: '4px',
-            backgroundColor: isSubmitted
-              ? (isDark ? 'rgba(76, 175, 80, 0.15)' : '#EAF4D8')
-              : (isDark ? 'rgba(33, 150, 243, 0.15)' : '#D7EEFD'),
+            backgroundColor: isPublished
+              ? isDark
+                ? 'rgba(255,255,255,0.08)'
+                : '#ECEFF1'
+              : isSubmitted
+                ? isDark
+                  ? 'rgba(76, 175, 80, 0.15)'
+                  : '#EAF4D8'
+                : isDark
+                  ? 'rgba(33, 150, 243, 0.15)'
+                  : '#D7EEFD',
             textAlign: 'center',
             mt: 'auto',
           }}
         >
-          <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.725rem' }}>
-            Submission Status:{' '}
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: '0.725rem' }}
+          >
+            {isPublished ? 'Broadsheet Status: ' : 'Submission Status: '}
             <Typography
               component="span"
               variant="caption"
               fontWeight={700}
-              color={isSubmitted ? 'success.main' : 'error.main'}
+              color={isPublished ? 'text.secondary' : isSubmitted ? 'success.main' : 'error.main'}
               sx={{ fontSize: '0.725rem' }}
             >
-              {isSubmitted ? 'Submitted' : 'Pending'}
+              {isPublished ? 'Published — locked' : isSubmitted ? 'Submitted' : 'Pending'}
             </Typography>
           </Typography>
         </Box>
@@ -229,7 +362,16 @@ const ScoreUploadCard = ({
 
       {/* ── Action Buttons Footer ────────────────────────────── */}
       {totalReg === 0 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 1, pt: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.5,
+            px: 1,
+            pt: 1,
+          }}
+        >
           <IconInfoCircle size={14} color={theme.palette.info.main} />
           <Typography variant="caption" color="info.main" sx={{ fontSize: '0.725rem' }}>
             No registered student for the subject
@@ -247,7 +389,7 @@ const ScoreUploadCard = ({
           gap: 1,
         }}
       >
-        {!isSubmitted && (
+        {!isPublished && (
           <Button
             fullWidth
             variant="contained"

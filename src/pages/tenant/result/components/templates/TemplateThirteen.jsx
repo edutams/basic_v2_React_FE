@@ -2,6 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconCheck } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine, caTotal, pctLabel , physicalValue } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #000' };
 
@@ -25,7 +26,8 @@ const responsiveCSS = `
 `;
 
 const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale }) => {
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const hosSignature = report?.signatures?.head_of_school;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -69,17 +71,17 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
         <Table size="small"><TableBody>
           <tr>
             <td style={{ ...innerCellBorder, width: '15%' }}>Beginning Of Term Weight:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>32 kg</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{physicalValue(report, 'beginning_weight_kg', 'kg')}</td>
             <td style={{ ...innerCellBorder, width: '15%' }}>End Of Term Weight:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>34 kg</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{physicalValue(report, 'end_weight_kg', 'kg')}</td>
             <td style={{ ...innerCellBorder, width: '15%' }}>Cleanliness Rating:</td>
-            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>Good</td>
+            <td style={{ ...innerCellBorder, width: '10%', fontWeight: 700 }}>{report.physical_record?.cleanliness_rating || '-'}</td>
           </tr>
           <tr>
             <td style={innerCellBorder}>Beginning Of Term Height:</td>
-            <td style={{ ...innerCellBorder, fontWeight: 700 }}>140 cm</td>
+            <td style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'beginning_height_cm', 'cm')}</td>
             <td style={innerCellBorder}>End Of Term Height:</td>
-            <td style={{ ...innerCellBorder, fontWeight: 700 }}>142 cm</td>
+            <td style={{ ...innerCellBorder, fontWeight: 700 }}>{physicalValue(report, 'end_height_cm', 'cm')}</td>
             <td style={innerCellBorder}></td>
             <td style={innerCellBorder}></td>
           </tr>
@@ -100,10 +102,11 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                 <TableHead>
                   <tr className="tpl13-inner">
                     <td style={{ ...innerCellBorder, width: '30%', verticalAlign: 'bottom', fontWeight: 700 }}>Subject</td>
-                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Test 1 (10%)</div></td>
-                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Test 2 (10%)</div></td>
-                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Average (20%)</div></td>
-                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Exam (80%)</div></td>
+                    {report.ca_columns.map((col) => (
+                      <td key={col.key} style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{pctLabel(col.name, col.max)}</div></td>
+                    ))}
+                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{pctLabel('Average', report.ca_max)}</div></td>
+                    <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</div></td>
                     <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Total(100%)</div></td>
                     <td style={{ ...innerCellBorder, textAlign: 'center', verticalAlign: 'bottom', fontWeight: 700 }}>Grade</td>
                     <td style={{ ...innerCellBorder, textAlign: 'center', verticalAlign: 'bottom', fontWeight: 700 }}>Grade Remark</td>
@@ -113,9 +116,10 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                   {report.subjects.map((s, i) => (
                     <tr key={i} className="tpl13-inner">
                       <td style={{ ...innerCellBorder, textTransform: 'uppercase' }}>{s.subject_name}</td>
-                      <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.ca1 ?? '-'}</td>
-                      <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.ca2 ?? '-'}</td>
-                      <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.ca_total ?? '-'}</td>
+                      {report.ca_columns.map((col) => (
+                        <td key={col.key} style={{ ...innerCellBorder, textAlign: 'center' }}>{s[col.key] ?? '-'}</td>
+                      ))}
+                      <td style={{ ...innerCellBorder, textAlign: 'center' }}>{caTotal(s) ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.exam ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</td>
@@ -139,12 +143,14 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                   <p style={{ margin: '4px 0' }}>{report.teacherComment}</p>
                 </td>
               </tr>
-              <tr>
-                <td style={{ padding: '4px 8px' }}>
-                  <h6 style={{ margin: '4px 0', textDecoration: 'underline' }}><strong>Promotion Status</strong></h6>
-                  <p style={{ margin: '4px 0' }}>Promoted to {className}</p>
-                </td>
-              </tr>
+              {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+                <tr>
+                  <td style={{ padding: '4px 8px' }}>
+                    <h6 style={{ margin: '4px 0', textDecoration: 'underline' }}><strong>Promotion Status</strong></h6>
+                    <p style={{ margin: '4px 0' }}>{promotionLine(report, className)}</p>
+                  </td>
+                </tr>
+              )}
               <tr>
                 <td style={{ padding: '4px 8px' }}>
                   <p style={{ margin: '4px 0', fontWeight: 700 }}>No. of times school opened: {report.attendance?.opened} times</p>
@@ -260,7 +266,7 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
           <div style={{ border: '2px solid #000', borderRadius: 8, marginTop: 10 }}>
             <Table size="small"><TableBody>
               <tr>
-                <td style={{ textAlign: 'center', borderBottom: '2px solid #000', padding: '4px 8px' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</td>
+                <td style={{ textAlign: 'center', borderBottom: '2px solid #000', padding: '4px 8px' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</td>
               </tr>
               <tr>
                 <td style={{ textAlign: 'center', padding: '4px 8px' }}><strong>Percentage</strong><br />{avg}%</td>
@@ -268,9 +274,9 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
             </TableBody></Table>
             <div style={{ padding: '4px 8px' }}>
               <div style={{ height: 60, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <img src={signatureImg} alt="Head of School's Signature" style={{ height: 60, objectFit: 'contain' }} />
+                <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 60, objectFit: 'contain' }} />
               </div>
-              <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Head of School's Signature</strong></div>
+              <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
               <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
               <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
             </div>

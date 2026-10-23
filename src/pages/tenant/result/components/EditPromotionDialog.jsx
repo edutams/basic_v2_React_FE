@@ -18,6 +18,7 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [allSubjects, setAllSubjects] = useState([]);
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [subjectsLoading, setSubjectsLoading] = useState(false);
 
   // ── Fetch existing settings and available subjects when dialog opens ──
   useEffect(() => {
@@ -31,6 +32,7 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
       setPassMark('');
       setSelectedSubjects([]);
       setAllSubjects([]);
+      setSubjectSearch('');
 
       try {
         // Fetch existing promotion settings for this subject type
@@ -51,7 +53,8 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
           }
         }
 
-        // Fetch available subjects for this programme
+        // Fetch the initial subject list for this programme (no search term
+        // yet) — the full, server-scoped search happens as the admin types.
         const subjectsRes = await resultSetupApi.searchSubjects({
           prog_id: progId,
         });
@@ -71,13 +74,32 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
     return () => { cancelled = true; };
   }, [open, progId, sessionId, subjType]);
 
-  // ── Filter subjects based on search input ──────────────────────
-  const filteredSubjects = subjectSearch
-    ? allSubjects.filter((s) =>
-        s.subject_name?.toLowerCase().includes(subjectSearch.toLowerCase()) ||
-        s.subject_code?.toLowerCase().includes(subjectSearch.toLowerCase())
-      )
-    : allSubjects;
+  // ── Search subjects server-side (scoped to this programme) as the admin
+  // types — a programme can have more subjects than the initial page fetches,
+  // so filtering the already-loaded list client-side would silently miss them.
+  useEffect(() => {
+    // Empty search just shows the initial programme-scoped list loadData()
+    // already fetched — only hit the server once there's an actual query,
+    // which also avoids re-fetching the instant the dialog opens.
+    if (!open || !progId || !subjectSearch) return;
+
+    const handle = setTimeout(async () => {
+      setSubjectsLoading(true);
+      try {
+        const res = await resultSetupApi.searchSubjects({
+          prog_id: progId,
+          qry: subjectSearch,
+        });
+        setAllSubjects(res?.data?.data ?? []);
+      } catch (err) {
+        console.error('Failed to search subjects:', err);
+      } finally {
+        setSubjectsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handle);
+  }, [subjectSearch, open, progId]);
 
   const handleSave = () => {
     if (!totalSubj || !passMark) return;
@@ -121,7 +143,11 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
             {/* Subject Autocomplete with Chips */}
             <Autocomplete
               multiple
-              options={filteredSubjects}
+              options={allSubjects}
+              // The server already scopes + filters by prog_id and qry —
+              // let its results stand instead of re-filtering them client-side.
+              filterOptions={(options) => options}
+              loading={subjectsLoading}
               getOptionLabel={(s) => s.subject_code ? `${s.subject_code} - ${s.subject_name}` : s.subject_name}
               value={selectedSubjects}
               onChange={(_, selected) => setSelectedSubjects(selected)}
@@ -133,6 +159,15 @@ const EditPromotionDialog = ({ open, onClose, onSave, subjType, progId, sessionI
                   {...params}
                   size="small"
                   placeholder="Search for subjects..."
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {subjectsLoading && <CircularProgress color="inherit" size={16} />}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
                 />
               )}
               renderTags={(selected, getTagProps) =>

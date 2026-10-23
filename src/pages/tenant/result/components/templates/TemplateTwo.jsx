@@ -2,6 +2,7 @@ import { Typography, Table, TableBody, TableCell, TableContainer, TableHead, Tab
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import signatureImg from '@/assets/images/signature_img.jpeg';
 import SchoolHeader from './SchoolHeader';
+import { promotionLine, caTotal, pctLabel } from '../reportCardUtils';
 
 const innerCellBorder = { border: '1px solid #999' };
 
@@ -55,13 +56,18 @@ const AccordionSection = ({ title, children }) => (
 );
 
 const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) => {
-  const avg = report.subjects.length ? +(Math.round((report.total_score / report.subjects.length) * 100) / 100) : 0;
+  const hosSignature = report?.signatures?.head_of_school;
+  const avg = report.average_score || 0; // backend-computed, divided by subjects_scored, not subjects.length
   const affectiveAvg = Object.values(report.affective).length
     ? Math.round(Object.values(report.affective).reduce((a, b) => a + b, 0) / Object.values(report.affective).length)
     : 0;
   const psychomotorAvg = Object.values(report.psychomotor).length
     ? Math.round(Object.values(report.psychomotor).reduce((a, b) => a + b, 0) / Object.values(report.psychomotor).length)
     : 0;
+  const gradeAvg = Math.round(avg / 20);
+  // Composite of the other three ratings — distinct from BEHAVIOUR
+  // PERFORMANCE below, which used to duplicate this exact affective value.
+  const generalAvg = Math.round((affectiveAvg + gradeAvg + psychomotorAvg) / 3);
 
   return (
     <div style={{ width: '100%', maxWidth: '100%', overflowX: 'auto' }}>
@@ -128,10 +134,13 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
                   <TableHead>
                     <TableRow>
                       <TableCell style={{ ...innerCellBorder, width: '30%', verticalAlign: 'bottom', fontWeight: 700 }}>Subject</TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Test 1 (10%)</div></TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Test 2 (10%)</div></TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Average (20%)</div></TableCell>
-                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Exam (80%)</div></TableCell>
+                      {report.ca_columns.map((col) => (
+                        <TableCell key={col.key} style={{ ...innerCellBorder, textAlign: 'center' }}>
+                          <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel(col.name, col.max)}</div>
+                        </TableCell>
+                      ))}
+                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Average', report.ca_max)}</div></TableCell>
+                      <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Total(100%)</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Highest</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Lowest</div></TableCell>
@@ -144,9 +153,10 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
                     {report.subjects.map((s, i) => (
                       <TableRow key={i}>
                         <TableCell style={innerCellBorder}>{s.subject_name}</TableCell>
-                        <TableCell style={innerCellBorder} align="center">{s.ca1 ?? '-'}</TableCell>
-                        <TableCell style={innerCellBorder} align="center">{s.ca2 ?? '-'}</TableCell>
-                        <TableCell style={innerCellBorder} align="center">{s.total ? Math.round(s.total / 2) : '-'}</TableCell>
+                        {report.ca_columns.map((col) => (
+                          <TableCell key={col.key} style={innerCellBorder} align="center">{s[col.key] ?? '-'}</TableCell>
+                        ))}
+                        <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                         <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                         <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                         <TableCell style={innerCellBorder} align="center">{s.highest ?? '-'}</TableCell>
@@ -187,7 +197,9 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
                 <AccordionSection title="STATUS">
                   <Table size="small">
                     <TableBody>
-                      <TableRow><TableCell>Promotion</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>Promoted to {className}</TableCell></TableRow>
+                      {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
+                        <TableRow><TableCell>Promotion</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{promotionLine(report, className)}</TableCell></TableRow>
+                      )}
                       <TableRow><TableCell>This Term Ends</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || '2026-07-12'}</TableCell></TableRow>
                       <TableRow><TableCell>Next Term Begins</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>
                       <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>
@@ -204,11 +216,11 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="PERFORMANCES">
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GENERAL PERFORMANCE</Typography>
-              <StarRating value={affectiveAvg} />
+              <StarRating value={generalAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>GRADE PERFORMANCE</Typography>
-              <StarRating value={Math.round(avg / 20)} />
+              <StarRating value={gradeAvg} />
             </div>
             <div style={{ textAlign: 'center', marginBottom: 4 }}>
               <Typography variant="body2" fontWeight={600}>SKILL PERFORMANCE</Typography>
@@ -223,7 +235,7 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
           <AccordionSection title="SCORE">
             <Table size="small">
               <TableBody>
-                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{report.subjects.length * 100}</TableCell></TableRow>
+                <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Total Score</strong><br />{report.total_score}/{(report.subjects_scored || 0) * ((report.ca_max || 0) + (report.exam_max || 0))}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center', borderBottom: '1px solid grey' }}><strong>Class Position</strong><br />{report.position}</TableCell></TableRow>
                 <TableRow><TableCell style={{ textAlign: 'center' }}><strong>Percentage</strong><br />{avg}%</TableCell></TableRow>
               </TableBody>
@@ -232,9 +244,9 @@ const TemplateTwo = ({ student, report, sessionTerm, className, gradeScale }) =>
 
           <div style={{ marginTop: 8 }}>
             <div style={{ height: 50, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <img src={signatureImg} alt="Head of School's Signature" style={{ height: 50, objectFit: 'contain' }} />
+              <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 50, objectFit: 'contain' }} />
             </div>
-            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Head of School's Signature</strong></div>
+            <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
             <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
           </div>

@@ -50,6 +50,15 @@ export const getOpenBatches = () =>
   api.get('/admission/open-batches');
 
 // Admission Applications
+
+// Creates a bare draft Admission the instant a parent confirms a batch —
+// before Ward Details even renders — so the application (and its id) exists
+// from the very first click and can be resumed from any device.
+export const createDraftAdmission = async (admissionBatchId) => {
+  const response = await api.post('/admission/applications/draft', { admission_batch_id: admissionBatchId });
+  return response.data;
+};
+
 export const createAdmissionApplication = async (data, isFormData = false) => {
   const config = isFormData ? {
     headers: {
@@ -104,8 +113,15 @@ export const getUserProspectiveAdmissions = async (sessionTermId = null) => {
   return response.data;
 };
 
-export const getAllMyAdmissionApplication = async (sessionTermId = null) => {
-  const params = sessionTermId ? { session_term_id: sessionTermId } : {};
+// `sessionTermId` scopes to one exact session-term; `sessionId` scopes to
+// every term within a session (used when a session is picked but the term
+// filter is left on "All Terms") — passing both is redundant, the backend
+// prefers the more specific sessionTermId when present.
+export const getAllMyAdmissionApplication = async ({ sessionTermId = null, sessionId = null } = {}) => {
+  const params = {};
+  if (sessionTermId) params.session_term_id = sessionTermId;
+  else if (sessionId) params.session_id = sessionId;
+
   const response = await api.get('/admission/all-my-applications', { params });
   return response.data;
 };
@@ -221,6 +237,11 @@ export const checkAdmissionPaymentStatus = async (admissionId) => {
 
 export const initiateAdmissionPayment = async (data) => {
   const response = await api.post('/admission/payments/initiate', data);
+  return response.data;
+};
+
+export const requeryAdmissionPayment = async (admissionId) => {
+  const response = await api.get(`/admission/payments/requery/${admissionId}`);
   return response.data;
 };
 

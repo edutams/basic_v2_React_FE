@@ -1,13 +1,17 @@
 import axios from 'axios';
 
-const getTenantBaseURL = () => {
+// API origin, no path — shared by the tenant-prefixed instance below and by
+// public endpoints that sit outside /tenant (verify-result, receipts).
+export const getApiBaseURL = () => {
   const appMode = import.meta.env.MODE;
   const apiBaseUrl =
     appMode === 'production'
       ? import.meta.env.VITE_API_BASE_URL_PROD
       : import.meta.env.VITE_API_BASE_URL_LOCAL;
-  return `${apiBaseUrl}/api/v1/tenant`;
+  return `${apiBaseUrl}/api`;
 };
+
+const getTenantBaseURL = () => `${getApiBaseURL()}/v1/tenant`;
 
 const tenantApi = axios.create({ baseURL: '/' });
 const hostname = window.location.hostname;

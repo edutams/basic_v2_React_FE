@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
-  Box, Button, Typography, FormControl, InputLabel, Select, MenuItem, Alert,
+  Box,
+  Button,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
 } from '@mui/material';
 import { IconDownload } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
@@ -31,9 +38,10 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
         const configData = res?.data?.data?.[0];
         let parsed = [];
         if (configData?.ca_content) {
-          const raw = typeof configData.ca_content === 'string'
-            ? JSON.parse(configData.ca_content)
-            : configData.ca_content;
+          const raw =
+            typeof configData.ca_content === 'string'
+              ? JSON.parse(configData.ca_content)
+              : configData.ca_content;
           if (Array.isArray(raw)) {
             parsed = raw;
           } else if (typeof raw === 'object' && raw !== null) {
@@ -47,7 +55,9 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
       }
     };
     loadConfig();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, filter?.session_id, filter?.term_id, filter?.programme_id]);
 
   // Reset selection whenever the dialog opens or options change
@@ -59,6 +69,7 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
 
   const displayName = useMemo(() => {
     if (category === 'exam') return 'Exam';
+    if (category === 'all') return 'All CAs + Exam';
     if (category === 'ca') return caOptions[selectedType]?.display_name || '';
     return '';
   }, [category, selectedType, caOptions]);
@@ -81,8 +92,9 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
       // Response is a binary Excel blob — build an object URL and trigger download
       const disposition = res?.headers?.['content-disposition'] || '';
       const match = disposition.match(/filename="?([^";]+)"?/i);
-      const fileName = match?.[1]
-        || `${allocation?.class_name ?? allocation?.className ?? 'Class'}_${allocation?.subject_name || 'Subject'}_${displayName}_result.xlsx`;
+      const fileName =
+        match?.[1] ||
+        `${allocation?.class_name ?? allocation?.className ?? 'Class'}_${allocation?.subject_name || 'Subject'}_${displayName}_result.xlsx`;
 
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
@@ -95,7 +107,9 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
       onClose();
     } catch (err) {
       console.error('Failed to download sample:', err);
-      setError(err?.response?.data?.message || 'Failed to download the template. Please try again.');
+      setError(
+        err?.response?.data?.message || 'Failed to download the template. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -124,11 +138,15 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
         <Select
           value={category}
           label="Category"
-          onChange={(e) => { setCategory(e.target.value); setSelectedType(''); }}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setSelectedType('');
+          }}
         >
           <MenuItem value="">--Select category--</MenuItem>
-          <MenuItem value="ca">CA</MenuItem>
-          <MenuItem value="exam">Exam</MenuItem>
+          <MenuItem value="all">All CAs + Exam (one file)</MenuItem>
+          <MenuItem value="ca">One CA type only</MenuItem>
+          <MenuItem value="exam">Exam only</MenuItem>
         </Select>
       </FormControl>
 
@@ -156,7 +174,7 @@ const DownloadSampleDialog = ({ open, onClose, allocation, filter }) => {
         </Alert>
       )}
 
-      {category && (category === 'exam' || selectedType !== '') && (
+      {category && (category === 'exam' || category === 'all' || selectedType !== '') && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Click download to get the Excel template for <strong>{displayName}</strong> scores.
         </Alert>

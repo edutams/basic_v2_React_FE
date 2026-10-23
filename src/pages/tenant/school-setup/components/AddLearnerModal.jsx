@@ -28,9 +28,11 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { getClassArms, getClassesWithDivisions } from '@/api/tenant/set-up/tenant-setup';
+import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import learnerApi from '@/api/tenant/learners/learnerApi';
 import { useNotification } from '@/hooks/useNotification';
 import dayjs from 'dayjs';
+import { Camera as CameraIcon } from '@mui/icons-material';
 
 const LIST_HEIGHT = 160;
 
@@ -102,11 +104,52 @@ const AddLearnerModal = ({
   const notify = useNotification();
   const [classArms, setClassArms] = useState([]);
   const [allClasses, setAllClasses] = useState([]);
+  const [paymentCategories, setPaymentCategories] = useState([]);
 
   const [parentSearch, setParentSearch] = useState('');
   const [parentResults, setParentResults] = useState([]);
   const [parentSearching, setParentSearching] = useState(false);
   const [linkedParents, setLinkedParents] = useState([]);
+
+  // Photo — edit mode only. Uploads immediately on file pick (a standalone
+  // "update photo only" action living inside the edit modal), independent
+  // of the rest of the form's Save Changes button.
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = React.useRef(null);
+
+  useEffect(() => {
+    if (open) setAvatarUrl(initialValues?.avatar ?? null);
+  }, [open, initialValues]);
+
+  // Payment category options for a new learner — admin picks one instead of
+  // every learner being silently registered under "New Student Category".
+  useEffect(() => {
+    if (!open || isEdit) return;
+    fetchActiveCategories()
+      .then((res) => setPaymentCategories(res?.data ?? []))
+      .catch(() => setPaymentCategories([]));
+  }, [open, isEdit]);
+
+  const defaultPaymentCategoryId =
+    paymentCategories.find((c) => c.code === 'new')?.id ?? paymentCategories[0]?.id ?? '';
+
+  const handlePhotoSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !initialValues?.user_id) return;
+
+    setPhotoUploading(true);
+    try {
+      const res = await learnerApi.updatePhoto(initialValues.user_id, file);
+      setAvatarUrl(res?.data?.data?.avatar || null);
+      notify.success('Photo updated successfully');
+    } catch (err) {
+      notify.error(err?.response?.data?.message || 'Failed to update photo');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
 
   // load flat class list when no programme_class_id is pre-supplied
   useEffect(() => {
@@ -172,6 +215,7 @@ const AddLearnerModal = ({
             middle_name: '',
             gender: '',
             date_of_birth: null,
+            bursary_payment_category_id: defaultPaymentCategoryId,
           },
     enableReinitialize: true,
     onSubmit: (values) => {
@@ -230,7 +274,8 @@ const AddLearnerModal = ({
     formik.values.first_name &&
     formik.values.gender &&
     formik.values.programme_class_id &&
-    formik.values.class_arm_id;
+    formik.values.class_arm_id &&
+    (isEdit || formik.values.bursary_payment_category_id);
 
   const renderTitle = () => {
     if (isEdit) return 'Edit Learner';
@@ -250,6 +295,48 @@ const AddLearnerModal = ({
     <ReusableModal open={open} onClose={onClose} title={renderTitle()} size="large">
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box component="form" onSubmit={formik.handleSubmit}>
+          {isEdit && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Box sx={{ position: 'relative' }}>
+                <Avatar src={avatarUrl || undefined} sx={{ width: 64, height: 64, bgcolor: 'primary.light' }}>
+                  <PersonIcon />
+                </Avatar>
+                <IconButton
+                  size="small"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={photoUploading}
+                  sx={{
+                    position: 'absolute',
+                    bottom: -4,
+                    right: -4,
+                    bgcolor: 'primary.main',
+                    color: '#fff',
+                    width: 26,
+                    height: 26,
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                >
+                  <CameraIcon sx={{ fontSize: 15 }} />
+                </IconButton>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handlePhotoSelected}
+                />
+              </Box>
+              <Box>
+                <Typography variant="body2" fontWeight={600}>
+                  Profile Photo
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {photoUploading ? 'Uploading…' : 'Click the camera icon to update just the photo'}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
           <Box sx={{ mb: 3 }}>
             <TextField
               label="Admission Number"
@@ -367,6 +454,25 @@ const AddLearnerModal = ({
               ))}
             </Select>
           </FormControl>
+
+          {!isEdit && (
+            <FormControl fullWidth sx={{ mt: 3 }}>
+              <InputLabel>Payment Category</InputLabel>
+              <Select
+                name="bursary_payment_category_id"
+                value={formik.values.bursary_payment_category_id}
+                onChange={formik.handleChange}
+                label="Payment Category"
+              >
+                <MenuItem value="">Select Payment Category</MenuItem>
+                {paymentCategories.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           {showLinkParents && (
             <>

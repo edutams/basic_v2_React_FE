@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -23,6 +23,7 @@ import {
 } from '@mui/icons-material';
 import ReusableGaugeChart from '@/components/shared/charts/ReusableGaugeChart';
 import AcademicOverview from './AcademicOverview';
+import AcademicPerformanceModal from './AcademicPerformanceModal';
 
 const cardSx = {
   borderRadius: '8px',
@@ -287,6 +288,7 @@ const Analytics = ({
   onCardClick,
 }) => {
   const subjects = Array.isArray(academics.subjects) ? academics.subjects : [];
+  const [detailedResultsOpen, setDetailedResultsOpen] = useState(false);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -462,6 +464,7 @@ const Analytics = ({
           <Box>
             <Divider sx={{ mt: 1.5, mb: 0.75, borderColor: '#F3F4F6' }} />
             <Typography
+              onClick={() => setDetailedResultsOpen(true)}
               sx={{
                 fontSize: '0.72rem',
                 color: '#2563EB',
@@ -488,6 +491,12 @@ const Analytics = ({
 
       {/* ─── ROW 2: Academic Overview (spans full width) ─── */}
       <AcademicOverview data={academics} onCardClick={onCardClick} />
+
+      <AcademicPerformanceModal
+        open={detailedResultsOpen}
+        onClose={() => setDetailedResultsOpen(false)}
+        sessionTermId={academicTermId}
+      />
     </Box>
   );
 };

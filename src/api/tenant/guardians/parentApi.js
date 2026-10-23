@@ -11,6 +11,7 @@ const guardianApi = {
   admissionParentSignup: (data) => tenantApi.post('/guardians/register', data),
   update: (id, data) => tenantApi.put(`/guardians/${id}`, data),
   toggleStatus: (id) => tenantApi.patch(`/guardians/${id}/toggle-status`),
+  resetPassword: (id) => tenantApi.post(`/guardians/${id}/reset-password`),
   remove: (id) => tenantApi.delete(`/guardians/${id}`),
   downloadTemplate: () =>
     tenantApi.get('/guardians/download-guardian-template', { responseType: 'blob' }),
@@ -19,6 +20,8 @@ const guardianApi = {
     formData.append('file', file);
     return tenantApi.post('/guardians/upload-guardian-template', formData);
   },
+  sendMessage: (id, data) => tenantApi.post(`/guardians/${id}/send-message`, data),
+  getCommunicationLog: (id) => tenantApi.get(`/guardians/${id}/communication`),
 };
 
 export default guardianApi;

@@ -671,7 +671,7 @@ const ProcessApplicationForm = () => {
                       fullWidth
                       size="small"
                       label="Assigned Programme"
-                      value={admission.student_info?.programme_name || admission.prog_name || '—'}
+                      value={admission.admitted_programme_name || admission.student_info?.programme_name || '—'}
                       slotProps={{ input: { readOnly: true } }}
                     />
                   ) : (
@@ -721,7 +721,7 @@ const ProcessApplicationForm = () => {
                       fullWidth
                       size="small"
                       label="Assigned Class"
-                      value={admission.student_info?.class_name || admission.class_code || '—'}
+                      value={admission.admitted_class_name || admission.student_info?.class_name || '—'}
                       slotProps={{ input: { readOnly: true } }}
                     />
                   ) : (
@@ -782,7 +782,7 @@ const ProcessApplicationForm = () => {
                       fullWidth
                       size="small"
                       label="Assigned Class Arm"
-                      value={admission.student_info?.class_arm || '—'}
+                      value={admission.admitted_class_arm_name || admission.student_info?.class_arm || '—'}
                       slotProps={{ input: { readOnly: true } }}
                     />
                   ) : (
@@ -957,46 +957,49 @@ const ProcessApplicationForm = () => {
                   />
                 )}
 
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  startIcon={<IconX size={18} />}
-                  onClick={() => setDeclineDialog({ open: true, reason: '' })}
-                  disabled={
-                    (admission.admission_status !== 'pending' &&
-                      admission.admission_status !== 'admitted') ||
-                    submitting
-                  }
-                  sx={{
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    boxShadow: 'none',
-                    '&:hover': { boxShadow: '0 2px 8px rgba(211,47,47,0.3)' },
-                  }}
-                >
-                  Decline
-                </Button>
-                <Button
-                  variant="contained"
-                  color="warning"
-                  size="small"
-                  startIcon={<IconX size={18} />}
-                  onClick={() => setRevokeDialog({ open: true, reason: '' })}
-                  disabled={
-                    (admission.admission_status !== 'admitted' &&
-                      admission.admission_status !== 'declined') ||
-                    submitting
-                  }
-                  sx={{
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    boxShadow: 'none',
-                    '&:hover': { boxShadow: '0 2px 8px rgba(237,108,2,0.3)' },
-                  }}
-                >
-                  Revoke
-                </Button>
+                {/* Decline — only makes sense while still pending; once
+                    admitted the correct reversal is Revoke, not Decline. */}
+                {admission.admission_status === 'pending' && (
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    startIcon={<IconX size={18} />}
+                    onClick={() => setDeclineDialog({ open: true, reason: '' })}
+                    disabled={submitting}
+                    sx={{
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      boxShadow: 'none',
+                      '&:hover': { boxShadow: '0 2px 8px rgba(211,47,47,0.3)' },
+                    }}
+                  >
+                    Decline
+                  </Button>
+                )}
+
+                {/* Revoke — undoes an admit (back to pending) or reopens a
+                    decline (back to pending) for reconsideration; nothing to
+                    revoke while still pending. */}
+                {(admission.admission_status === 'admitted' ||
+                  admission.admission_status === 'declined') && (
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    startIcon={<IconX size={18} />}
+                    onClick={() => setRevokeDialog({ open: true, reason: '' })}
+                    disabled={submitting}
+                    sx={{
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      boxShadow: 'none',
+                      '&:hover': { boxShadow: '0 2px 8px rgba(237,108,2,0.3)' },
+                    }}
+                  >
+                    Revoke
+                  </Button>
+                )}
               </Box>
             </Stack>
           </Box>

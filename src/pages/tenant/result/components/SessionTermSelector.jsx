@@ -5,7 +5,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { fetchTenantSessions, fetchSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 
-const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) => {
+const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading, rightSlot }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -143,7 +143,17 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) 
           </Typography>
         </Box>
       ) : (
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1,
+          }}
+        >
           <Tabs
             value={currentTab}
             onChange={handleTabChange}
@@ -166,6 +176,7 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading }) 
               />
             ))}
           </Tabs>
+          {rightSlot && <Box sx={{ flexShrink: 0, mb: 0.5 }}>{rightSlot}</Box>}
         </Box>
       )}
     </Box>

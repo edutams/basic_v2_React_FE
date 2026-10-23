@@ -11,7 +11,7 @@ import {
   Typography,
   Divider,
   InputAdornment,
-  CircularProgress,
+  Skeleton,
   Avatar,
   Chip,
   IconButton,
@@ -134,7 +134,13 @@ const ParentForm = ({
   });
 
   useEffect(() => {
-    if (isEdit) return;
+    // The fetched class list only feeds the ward-search section rendered
+    // below, which is hidden entirely when hideWardLink is set (the public
+    // parent-signup flow on /login and /admission/apply, used before the
+    // parent has authenticated). That endpoint requires auth, so fetching
+    // it here always 401s pre-login and surfaces a raw error toast for
+    // data that is never even displayed. Skip the call when it's not needed.
+    if (isEdit || hideWardLink) return;
     getClassesWithDivisions()
       .then((data) => {
         const flat = [];
@@ -503,7 +509,7 @@ const ParentForm = ({
                 disabled={wardSearching}
                 sx={{ whiteSpace: 'nowrap', minWidth: 80 }}
               >
-                {wardSearching ? <CircularProgress size={18} color="inherit" /> : 'Search'}
+                {wardSearching ? <Skeleton width={40} height={20} animation="wave" sx={{ bgcolor: 'rgba(255,255,255,0.4)' }} /> : 'Search'}
               </Button>
             </Box>
           </Box>

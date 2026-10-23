@@ -227,6 +227,17 @@ const aclApi = {
         const response = await tenantApi.get(`/activity-logs/causer/${userId}`, { params });
         return response.data;
     },
+
+    // Activities done TO this person by someone else (e.g. an admin
+    // assigning them a subject/class/timetable slot) — causer-based logs
+    // only ever show what a person did themselves, never what happened to
+    // them, so a teacher's own feed needs this merged in alongside it.
+    getUserActivityLogsAsSubject: async (userId, params = {}) => {
+        const response = await tenantApi.get(`/activity-logs/subject/${userId}`, {
+            params: { ...params, subject_type: 'App\\Models\\Tenant\\User' },
+        });
+        return response.data;
+    },
 };
 
 export default aclApi;

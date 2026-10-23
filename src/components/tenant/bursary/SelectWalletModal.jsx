@@ -114,6 +114,7 @@ const SelectWalletModal = ({
                         </Typography>
                         <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
                           {wallet.name} · Wallet No: {wallet.wallet_no}
+                          {wallet.bank_name && ` (${wallet.bank_name})`}
                         </Typography>
                       </Box>
                     </Stack>

@@ -133,8 +133,10 @@ export const deleteSubjectRecord = async (id) => {
 };
 
 // Fetch class subjects with join to programme_subject
-export const fetchClassSubjects = async (classId) => {
-  const response = await api.get(`/curriculum/class-subjects/${classId}`);
+export const fetchClassSubjects = async (classId, programmeId = null) => {
+  const response = await api.get(`/curriculum/class-subjects/${classId}`, {
+    params: programmeId ? { programme_id: programmeId } : {},
+  });
   return response.data;
 };
 
@@ -154,9 +156,32 @@ export const addOrUpdateClassSubject = async (data) => {
   return response.data;
 };
 
-// Remove a subject from a class's roster
+// Update an existing class subject's pass mark/unit/status in place — used
+// by the inline table editor. Never touches is_active (addOrUpdateClassSubject
+// always forces it back to true, which is correct for re-adding a subject via
+// the modal but would silently reactivate a deactivated one on a plain edit).
+export const updateClassSubjectFields = async (id, data) => {
+  const response = await api.put(`/curriculum/class-subjects/${id}`, data);
+  return response.data;
+};
+
+// Remove a subject from a class's roster. Blocked by the backend once it has
+// any registration, result, or teacher allocation — deactivate it instead.
 export const deleteClassSubjectRecord = async (id) => {
   const response = await api.delete(`/curriculum/class-subjects/${id}`);
+  return response.data;
+};
+
+// Registration/result/allocation usage counts for a class subject — powers
+// the delete confirmation modal's "can this actually be deleted?" check.
+export const fetchClassSubjectUsage = async (id) => {
+  const response = await api.get(`/curriculum/class-subjects/${id}/usage`);
+  return response.data;
+};
+
+// Toggle a class subject's active/inactive status.
+export const toggleClassSubjectStatus = async (id) => {
+  const response = await api.put(`/curriculum/class-subjects/${id}/toggle-status`);
   return response.data;
 };
 

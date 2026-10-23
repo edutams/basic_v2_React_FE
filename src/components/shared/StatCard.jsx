@@ -27,7 +27,12 @@ const StatCardSkeleton = ({ isDark, theme }) => (
       justifyContent: 'space-between',
     }}
   >
-    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: '12px', flexShrink: 0 }} />
+    <Skeleton
+      variant="rounded"
+      width={40}
+      height={40}
+      sx={{ borderRadius: '12px', flexShrink: 0 }}
+    />
     <Box sx={{ flexGrow: 1, pl: 1, textAlign: 'right' }}>
       <Skeleton variant="text" width="50%" height={28} sx={{ ml: 'auto' }} />
       <Skeleton variant="text" width="40%" height={16} sx={{ ml: 'auto' }} />
@@ -47,12 +52,14 @@ const StatCard = ({
   tooltip,
   tooltipPlacement = 'top',
   progress,
+  align = 'right',
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const scheme = schemeMap[colorIndex % schemeMap.length];
+  const isLeft = align === 'left';
 
   if (loading) {
     return <StatCardSkeleton isDark={isDark} theme={theme} />;
@@ -85,7 +92,14 @@ const StatCard = ({
         ...sx,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isLeft ? 'flex-start' : 'space-between',
+          gap: isLeft ? 1.25 : 0,
+        }}
+      >
         {/* Icon Badge */}
         {loading ? (
           <Skeleton
@@ -117,37 +131,66 @@ const StatCard = ({
         {/* Content */}
         <Box
           sx={{
-            flexGrow: 1,
-            pl: 1,
-            textAlign: 'right',
+            flexGrow: isLeft ? 0 : 1,
+            minWidth: 0,
+            pl: isLeft ? 0 : 1,
+            textAlign: isLeft ? 'left' : 'right',
             position: 'relative',
             zIndex: 1,
           }}
         >
+          {isLeft && (
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: isDark ? '#ffffff' : '#4B5563',
+              }}
+            >
+              {label}
+            </Typography>
+          )}
+
+          {isLeft && subtitle && (
+            <Typography
+              sx={{
+                mt: 0.25,
+                fontSize: 11,
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
+
           <Typography
             sx={{
-              fontSize: 22,
+              fontSize: isLeft ? 24 : 22,
               fontWeight: 800,
               lineHeight: 1,
               letterSpacing: '-0.02em',
+              mt: isLeft ? 0.5 : 0,
               color: isDark ? '#fff' : scheme.color,
             }}
           >
             {count}
           </Typography>
 
-          <Typography
-            sx={{
-              mt: 0.5,
-              fontSize: 13,
-              fontWeight: 600,
-              color: isDark ? '#ffffff' : '#4B5563',
-            }}
-          >
-            {label}
-          </Typography>
+          {!isLeft && (
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontSize: 13,
+                fontWeight: 600,
+                color: isDark ? '#ffffff' : '#4B5563',
+              }}
+            >
+              {label}
+            </Typography>
+          )}
 
-          {subtitle && (
+          {!isLeft && subtitle && (
             <Typography
               sx={{
                 mt: 0.25,
@@ -163,21 +206,34 @@ const StatCard = ({
       </Box>
 
       {progress !== undefined && (
-        <LinearProgress
-          variant="determinate"
-          value={Math.min(100, Math.max(0, progress))}
-          sx={{
-            height: 6,
-            borderRadius: 3,
-            position: 'relative',
-            zIndex: 1,
-            bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            '& .MuiLinearProgress-bar': {
+        <Box
+          sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative', zIndex: 1 }}
+        >
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(100, Math.max(0, progress))}
+            sx={{
+              flex: 1,
+              height: 6,
               borderRadius: 3,
-              bgcolor: isDark ? '#fff' : scheme.color,
-            },
-          }}
-        />
+              bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: 3,
+                bgcolor: isDark ? '#fff' : scheme.color,
+              },
+            }}
+          />
+          <Typography
+            sx={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: isDark ? '#ffffff' : scheme.color,
+              flexShrink: 0,
+            }}
+          >
+            {Math.round(progress)}%
+          </Typography>
+        </Box>
       )}
     </Paper>
   );
@@ -185,9 +241,7 @@ const StatCard = ({
   if (tooltip) {
     return (
       <Tooltip title={tooltip} placement={tooltipPlacement} arrow>
-        <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>
-          {cardContent}
-        </Box>
+        <Box sx={{ width: '100%', height: '100%', display: 'flex' }}>{cardContent}</Box>
       </Tooltip>
     );
   }
@@ -206,6 +260,7 @@ StatCard.propTypes = {
   onClick: PropTypes.func,
   tooltip: PropTypes.node,
   tooltipPlacement: PropTypes.string,
+  align: PropTypes.oneOf(['left', 'right']),
 };
 
 export default StatCard;

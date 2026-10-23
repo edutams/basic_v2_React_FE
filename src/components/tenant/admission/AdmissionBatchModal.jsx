@@ -23,11 +23,11 @@ import {
 import { School as SchoolIcon } from '@mui/icons-material';
 import ReusableModal from 'src/components/shared/ReusableModal';
 import { useNotification } from 'src/hooks/useNotification';
-import { getOpenBatches } from '@/api/tenant/admission/admissionApi';
+import { getOpenBatches, createDraftAdmission } from '@/api/tenant/admission/admissionApi';
 import { getFeeSummary } from '@/utils/feeSummary';
 
 // ── Confirmation dialog ───────────────────────────────────────────────────────
-const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
+const ConfirmApplyDialog = ({ batch, onConfirm, onCancel, submitting }) => {
   if (!batch) return null;
 
   const feeSummary = batch?.pre_application_payments
@@ -35,6 +35,15 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
     : [];
   const feeTotal = feeSummary.reduce((sum, f) => sum + f.amount, 0);
   const feeHasRange = feeSummary.some((f) => f.isRange);
+
+  // Acceptance (post-application) fee — only owed later, once admitted and
+  // ready to accept the offer, so it's shown separately here rather than
+  // folded into the pre-application total the applicant pays right now.
+  const acceptanceFeeSummary = batch?.post_application_payments
+    ? getFeeSummary(batch.post_application_payments)
+    : [];
+  const acceptanceFeeTotal = acceptanceFeeSummary.reduce((sum, f) => sum + f.amount, 0);
+  const acceptanceFeeHasRange = acceptanceFeeSummary.some((f) => f.isRange);
 
   return (
     <Dialog open onClose={onCancel} maxWidth="xs" fullWidth>
@@ -86,7 +95,9 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
             Batch
           </Typography>
           <Typography variant="subtitle2" fontWeight={700} mb={1.5}>
-            {batch.batch_name}
+            {batch.programme?.programme_name
+              ? `${batch.programme.programme_name} — ${batch.batch_name}`
+              : batch.batch_name}
           </Typography>
 
           <Typography
@@ -169,6 +180,54 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
                   No pre-application payments configured
                 </Typography>
               )}
+
+              {acceptanceFeeSummary.length > 0 && (
+                <>
+                  <Divider sx={{ my: 1.5 }} />
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, mb: 0.75 }}
+                  >
+                    Acceptance Fee (paid later, only if admitted)
+                  </Typography>
+                  <Stack spacing={0.75} mb={1}>
+                    {acceptanceFeeSummary.map((fee) => (
+                      <Box
+                        key={fee.name}
+                        display="flex"
+                        justifyContent="space-between"
+                        sx={{ py: 0.5, px: 1, bgcolor: 'grey.50', borderRadius: 1 }}
+                      >
+                        <Typography variant="caption" color="text.secondary">
+                          {fee.name}
+                        </Typography>
+                        <Typography variant="caption" fontWeight={700}>
+                          {fee.isRange
+                            ? `₦${fee.amount.toLocaleString()} - ₦${fee.maxAmount.toLocaleString()}`
+                            : `₦${fee.amount.toLocaleString()}`}
+                        </Typography>
+                      </Box>
+                    ))}
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      sx={{ pt: 0.75, borderTop: 1, borderColor: 'divider' }}
+                    >
+                      <Typography variant="body2" fontWeight={700}>
+                        Total Acceptance Fee
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700} color="primary.main">
+                        {acceptanceFeeHasRange ? 'from ' : ''}₦{acceptanceFeeTotal.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                    Only payable if this ward is admitted and you accept the offer — not part of
+                    this application's upfront payment.
+                  </Typography>
+                </>
+              )}
             </>
           )}
         </Paper>
@@ -185,12 +244,19 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
           size="small"
           onClick={onCancel}
           color="inherit"
+          disabled={submitting}
           sx={{ fontWeight: 600 }}
         >
           Cancel
         </Button>
-        <Button size="small" onClick={onConfirm} sx={{ fontWeight: 700, px: 3 }}>
-          Yes, Apply Now
+        <Button
+          size="small"
+          onClick={onConfirm}
+          disabled={submitting}
+          startIcon={submitting ? <CircularProgress size={14} /> : null}
+          sx={{ fontWeight: 700, px: 3 }}
+        >
+          {submitting ? 'Starting...' : 'Yes, Apply Now'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -198,12 +264,19 @@ const ConfirmApplyDialog = ({ batch, onConfirm, onCancel }) => {
 };
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-const AdmissionBatchModal = ({ open, onClose, onApply }) => {
+// createDraftOnApply: true for the "Apply Now" flow (a genuinely new
+// application, so a draft Admission row must be created). NewApplication.jsx
+// also reuses this modal for its "Change Admission Batch" action, mid-form
+// on an application that already has a draft — that flow passes false so it
+// doesn't spawn a second, orphaned draft; the batch change just updates
+// local state, and admission_batch_id gets persisted on the next step save.
+const AdmissionBatchModal = ({ open, onClose, onApply, createDraftOnApply = true }) => {
   const notify = useNotification();
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [confirmBatch, setConfirmBatch] = useState(null); // batch pending confirmation
+  const [creatingDraft, setCreatingDraft] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -228,10 +301,32 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
     }
   };
 
-  const handleConfirmed = () => {
-    onApply(confirmBatch);
-    setConfirmBatch(null);
-    onClose();
+  const handleConfirmed = async () => {
+    if (!createDraftOnApply) {
+      onApply(confirmBatch);
+      setConfirmBatch(null);
+      onClose();
+      return;
+    }
+
+    // "Apply Now" always means a brand-new application. The admission row
+    // (and its id) is created here, before the form has even rendered, so
+    // the application exists in the backend from the very first click —
+    // not just once a step is completed. That's what makes it resumable
+    // from a different device: there's no local-only state to lose.
+    setCreatingDraft(true);
+    try {
+      const res = await createDraftAdmission(confirmBatch.id);
+      const draft = res?.data;
+      onApply(confirmBatch, draft);
+      setConfirmBatch(null);
+      onClose();
+    } catch (error) {
+      console.error('Failed to start application:', error);
+      notify.error('Failed to start application. Please try again.');
+    } finally {
+      setCreatingDraft(false);
+    }
   };
 
   return (
@@ -248,11 +343,12 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
-                  <TableCell sx={{ fontWeight: 600, width: '15%' }}>Session Term</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '30%' }}>Application Batch</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '30%' }}>Closing Date</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '20%' }}>Classes</TableCell>
-                  <TableCell sx={{ fontWeight: 700, width: '25%' }}>Fee Required</TableCell>
+                  <TableCell sx={{ fontWeight: 600, width: '13%' }}>Session Term</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '20%' }}>Application Batch</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '18%' }}>Division / Programme</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '15%' }}>Closing Date</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '17%' }}>Classes</TableCell>
+                  <TableCell sx={{ fontWeight: 700, width: '17%' }}>Fee Required</TableCell>
                   <TableCell sx={{ fontWeight: 700, width: '10%' }} align="center">
                     Action
                   </TableCell>
@@ -281,6 +377,22 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                         <Typography variant="body2">{batch.batch_name}</Typography>
                       </TableCell>
                       <TableCell>
+                        {batch?.programme ? (
+                          <>
+                            <Typography variant="body2" fontWeight={600}>
+                              {batch.programme.division?.division_name || '—'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {batch.programme.programme_name}
+                            </Typography>
+                          </>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                            All divisions
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Typography variant="body2">{batch.closing_date}</Typography>
                       </TableCell>
 
@@ -304,26 +416,48 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
                       </TableCell>
                       {batch?.require_payment ? (
                         <TableCell>
-                          {batch?.pre_application_payments &&
-                          batch.pre_application_payments.length > 0 ? (
-                            (() => {
-                              const feeSummary = getFeeSummary(batch.pre_application_payments);
-                              const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
-                              const hasRange = feeSummary.some((f) => f.isRange);
-                              return (
-                                <Typography
-                                  variant="caption"
-                                  color="primary.main"
-                                  display="block"
-                                  fontWeight={600}
-                                >
-                                  Pre-Application:{' '}
-                                  <strong style={{ color: '#000', fontWeight: 600 }}>
-                                    {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
-                                  </strong>
-                                </Typography>
-                              );
-                            })()
+                          {(batch?.pre_application_payments?.length > 0) ||
+                          (batch?.post_application_payments?.length > 0) ? (
+                            <Stack spacing={0.25}>
+                              {batch?.pre_application_payments?.length > 0 &&
+                                (() => {
+                                  const feeSummary = getFeeSummary(batch.pre_application_payments);
+                                  const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+                                  const hasRange = feeSummary.some((f) => f.isRange);
+                                  return (
+                                    <Typography
+                                      variant="caption"
+                                      color="primary.main"
+                                      display="block"
+                                      fontWeight={600}
+                                    >
+                                      Pre-Application:{' '}
+                                      <strong style={{ color: '#000', fontWeight: 600 }}>
+                                        {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
+                                      </strong>
+                                    </Typography>
+                                  );
+                                })()}
+                              {batch?.post_application_payments?.length > 0 &&
+                                (() => {
+                                  const feeSummary = getFeeSummary(batch.post_application_payments);
+                                  const total = feeSummary.reduce((sum, f) => sum + f.amount, 0);
+                                  const hasRange = feeSummary.some((f) => f.isRange);
+                                  return (
+                                    <Typography
+                                      variant="caption"
+                                      color="primary.main"
+                                      display="block"
+                                      fontWeight={600}
+                                    >
+                                      Acceptance Fee:{' '}
+                                      <strong style={{ color: '#000', fontWeight: 600 }}>
+                                        {hasRange ? 'from ' : ''}₦{total.toLocaleString()}
+                                      </strong>
+                                    </Typography>
+                                  );
+                                })()}
+                            </Stack>
                           ) : (
                             <Typography
                               variant="caption"
@@ -376,6 +510,7 @@ const AdmissionBatchModal = ({ open, onClose, onApply }) => {
           batch={confirmBatch}
           onConfirm={handleConfirmed}
           onCancel={() => setConfirmBatch(null)}
+          submitting={creatingDraft}
         />
       )}
     </>

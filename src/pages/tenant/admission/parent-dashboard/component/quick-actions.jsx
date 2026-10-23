@@ -51,6 +51,13 @@ const QuickActions = ({ onApplyAdmission, hasOpenBatches }) => {
       onClick: () => navigate('/pay-school-fees'),
     },
     {
+      id: 'view_wards_result',
+      iconColor: '#0d9488',
+      iconBg: '#ccfbf1',
+      title: 'View Wards Result',
+      onClick: () => navigate('/result-wards-report'),
+    },
+    {
       id: 'attendance_overview',
       iconColor: '#e11d48',
       iconBg: '#ffe4e6',

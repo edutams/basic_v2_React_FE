@@ -13,6 +13,11 @@ const staffApi = {
     return response.data;
   },
 
+  getNonTeachingRoles: async () => {
+    const response = await tenantApi.get('/school_setup/staff/non-teaching-roles');
+    return response.data;
+  },
+
   getSingle: async (id) => {
     const response = await tenantApi.get(`/school_setup/staff/${id}`);
     return response.data;
@@ -42,6 +47,20 @@ const staffApi = {
 
   getStatusHistory: async (id) => {
     const response = await tenantApi.get(`/school_setup/staff/${id}/status-history`);
+    return response.data;
+  },
+
+  updatePhoto: async (id, file) => {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const response = await tenantApi.post(`/school_setup/staff/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  resetPassword: async (id) => {
+    const response = await tenantApi.post(`/school_setup/staff/${id}/reset-password`);
     return response.data;
   },
 

@@ -23,8 +23,8 @@ const UploadParentForm = ({ onUpload, onCancel }) => {
     try {
       setUploading(true);
       setResult(null);
-      const message = await onUpload(selectedFile);
-      setResult({ severity: 'success', message });
+      const { message, hasWarnings } = await onUpload(selectedFile);
+      setResult({ severity: hasWarnings ? 'warning' : 'success', message });
       setSelectedFile(null);
     } catch (err) {
       setResult({
@@ -72,14 +72,14 @@ const UploadParentForm = ({ onUpload, onCancel }) => {
 
       {uploading && <LinearProgress sx={{ mt: 2 }} />}
       {result && (
-        <Alert severity={result.severity} sx={{ mt: 2 }}>
+        <Alert severity={result.severity} sx={{ mt: 2, whiteSpace: 'pre-line' }}>
           {result.message}
         </Alert>
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
         <Button variant="contained" size="small" color="inherit" onClick={onCancel} disabled={uploading}>
-          {result?.severity === 'success' ? 'Close' : 'Cancel'}
+          {result && result.severity !== 'error' ? 'Close' : 'Cancel'}
         </Button>
         <Button size="small" startIcon={<IconUpload />}
           onClick={handleUpload}

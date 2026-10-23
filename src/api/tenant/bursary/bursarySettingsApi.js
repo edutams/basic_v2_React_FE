@@ -124,6 +124,11 @@ export const togglePaymentScheduleStatus = async (id, status) => {
     return res.data;
 };
 
+export const getPaidStudentsForSchedule = async (id) => {
+    const res = await api.get(`/bursary/payment_schedule/${id}/paid_students`);
+    return res.data;
+};
+
 export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory', payType = 'bursary') => {
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption, pay_type: payType }

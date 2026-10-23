@@ -22,7 +22,12 @@ const resultSetupApi = {
     tenantApi.delete(`/result-setup/psychomotor-domains/${id}`),
 
   // ── Sync ─────────────────────────────────────────────────
-  syncConfig: () => tenantApi.post('/result-setup/sync'),
+  // ── Sync ───────────────────────────────────────────────
+  // sessionTermId optional — omitted syncs the active term; given, it
+  // syncs whichever term is selected in the Session Term selector.
+  syncConfig: (sessionTermId) =>
+    tenantApi.post('/result-setup/sync',
+      sessionTermId ? { session_term_id: sessionTermId } : {}),
 
   // ── Grade & Config Settings ──────────────────────────────
   getGradeConfigStats: (sessionTermId) =>

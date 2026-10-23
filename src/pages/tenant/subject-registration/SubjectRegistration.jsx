@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -10,6 +10,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Skeleton,
   useTheme,
   Select,
   MenuItem,
@@ -24,16 +25,32 @@ import {
   TableHead,
   TableRow,
   Chip,
+  TextField,
+  InputAdornment,
+  ToggleButton,
+  ToggleButtonGroup,
+  LinearProgress,
+  Stack,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
 import {
   FilterAlt as FilterIcon,
   MenuBook as SubjectIcon,
-  CheckCircle as CompulsoryIcon,
-  Stars as OptionalIcon,
-  Build as TradeIcon,
+  Groups as LearnersIcon,
+  CheckCircle as CompleteIcon,
+  ReportProblem as ReviewIcon,
   SwapHoriz as MigrateIcon,
   Save as SaveIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
+import debounce from 'lodash/debounce';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import {
   fetchSessions,
@@ -45,9 +62,9 @@ import {
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
 import { usePermissions } from '@/context/TenantContext/permissions';
 
-import GeneralSubjectsTab from './components/GeneralSubjectsTab';
-import OptionalSubjectsTab from './components/OptionalSubjectsTab';
+import SubjectsTab from './components/SubjectsTab';
 import TradeSubjectsTab from './components/TradeSubjectsTab';
+import SubjectRegistrationSidebar from './components/SubjectRegistrationSidebar';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import { migrateCourseRegistrations } from '@/api/tenant/term-migration/termMigrationApi';
 import AnalyticsModal from '@/pages/tenant/attendance/components/AnalyticsModal';
@@ -62,7 +79,6 @@ const schemeMap = [
   { bg: '#DBEAFE', color: '#2563EB' },
   { bg: '#DCFCE7', color: '#16A34A' },
   { bg: '#F3E8FF', color: '#9333EA' },
-  { bg: '#FEF3C7', color: '#D97706' },
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
@@ -71,6 +87,7 @@ const AnalyticsStatCard = ({
   value,
   label,
   subtitle,
+  progress,
   colorIndex = 0,
   loading = false,
   onClick,
@@ -79,34 +96,53 @@ const AnalyticsStatCard = ({
   const isDark = theme.palette.mode === 'dark';
   const scheme = schemeMap[colorIndex % schemeMap.length];
 
+  const cardSx = {
+    p: '12px 14px',
+    borderRadius: '12px',
+    bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+    border: '1px solid',
+    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1.25,
+  };
+
+  if (loading) {
+    return (
+      <Paper elevation={0} sx={cardSx}>
+        <Skeleton variant="rounded" width={46} height={46} sx={{ borderRadius: '12px', flexShrink: 0 }} />
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Skeleton variant="text" width="50%" height={38} />
+          <Skeleton variant="text" width="70%" height={20} />
+          <Skeleton variant="text" width="55%" height={18} />
+        </Box>
+      </Paper>
+    );
+  }
+
   return (
     <Paper
       elevation={0}
       onClick={onClick}
       sx={{
-        p: '14px',
-        borderRadius: '14px',
-        bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-        border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
+        ...cardSx,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-        },
+        '&:hover': onClick
+          ? {
+              transform: 'translateY(-2px)',
+              borderColor: '#94a3b8',
+              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+            }
+          : {},
       }}
     >
       <Box
         sx={{
-          width: 48,
-          height: 48,
+          width: 46,
+          height: 46,
           borderRadius: '12px',
           bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
           color: isDark ? '#ffffff' : scheme.color,
@@ -118,36 +154,46 @@ const AnalyticsStatCard = ({
       >
         {Icon && <Icon sx={{ fontSize: 26, color: 'inherit' }} />}
       </Box>
-      <Box sx={{ flexGrow: 1 }}>
-        {loading ? (
-          <CircularProgress size={24} />
-        ) : (
-          <Typography variant="h4" fontWeight={700} sx={{ color: isDark ? '#fff' : scheme.color }}>
-            {value}
-          </Typography>
-        )}
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+        <Typography variant="h3" fontWeight={700} sx={{ color: isDark ? '#fff' : scheme.color, lineHeight: 1.15, fontSize: '2rem' }}>
+          {value}
+        </Typography>
         <Typography
-          variant="caption"
+          variant="body2"
           fontWeight={700}
           sx={{
             color: isDark ? 'rgba(255,255,255,0.72)' : '#4B5563',
             textTransform: 'uppercase',
             display: 'block',
+            fontSize: '0.85rem',
           }}
         >
           {label}
         </Typography>
-        {subtitle && (
-          <Typography
-            variant="caption"
-            sx={{
-              color: isDark ? 'rgba(255,255,255,0.5)' : '#9CA3AF',
-              display: 'block',
-              mt: 0.25,
-            }}
-          >
-            {subtitle}
-          </Typography>
+        {progress !== undefined ? (
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{ flex: 1, height: 7, borderRadius: 4, bgcolor: scheme.bg, '& .MuiLinearProgress-bar': { bgcolor: scheme.color } }}
+            />
+            <Typography variant="body2" fontWeight={700} sx={{ color: scheme.color, fontSize: '0.85rem', flexShrink: 0 }}>
+              {progress}%
+            </Typography>
+          </Stack>
+        ) : (
+          subtitle && (
+            <Typography
+              variant="body2"
+              sx={{
+                color: isDark ? 'rgba(255,255,255,0.65)' : '#6B7280',
+                display: 'block',
+                fontSize: '0.8rem',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )
         )}
       </Box>
     </Paper>
@@ -158,19 +204,27 @@ const AnalyticsStatCard = ({
 const SubjectRegistration = () => {
   const theme = useTheme();
   const { can } = usePermissions();
+  const canManage = can('manage.class_manager.subject_registrar.manage');
+  const canBulkRegister = can('manage.class_manager.subject_registrar.bulk_register');
 
   const [activeTab, setActiveTab] = useState(0);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
 
-  // Mirrors the Compulsory Subjects tab's own "Save Selected" button up
-  // onto the tabs row, so it's reachable without scrolling down — the
-  // bottom button stays too. generalSubjectsTabRef triggers the actual
-  // save; generalTabStatus drives this button's label/visibility.
-  const generalSubjectsTabRef = useRef(null);
-  const [generalTabStatus, setGeneralTabStatus] = useState({ pendingCount: 0, saving: false });
-  const handleGeneralStatusChange = useCallback((status) => {
-    setGeneralTabStatus(status);
-  }, []);
+  const subjectsTabRef = useRef(null);
+  const tradeSubjectsTabRef = useRef(null);
+  const tabRefs = [subjectsTabRef, tradeSubjectsTabRef];
+
+  const [subjectsTabStatus, setSubjectsTabStatus] = useState({ pendingCount: 0, saving: false });
+  const [tradeTabStatus, setTradeTabStatus] = useState({ pendingCount: 0, saving: false });
+  const tabStatuses = [subjectsTabStatus, tradeTabStatus];
+  const activeTabStatus = tabStatuses[activeTab] ?? { pendingCount: 0, saving: false };
+  const totalPendingCount = subjectsTabStatus.pendingCount + tradeTabStatus.pendingCount;
+
+  const handleSubjectsStatusChange = useCallback((status) => setSubjectsTabStatus(status), []);
+  const handleTradeStatusChange = useCallback((status) => setTradeTabStatus(status), []);
+
+  const [lastSaved, setLastSaved] = useState(null);
+  const [aiSuggestions, setAiSuggestions] = useState([]);
 
   // ── Filter States ─────────────────────────────────────────
   const [sessions, setSessions] = useState([]);
@@ -186,6 +240,17 @@ const SubjectRegistration = () => {
   const [pClass, setPClass] = useState('');
   const [pArm, setPArm] = useState('');
 
+  // ── Search + status filter (applied to whichever tab is active) ──
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const debouncedSetSearch = useMemo(() => debounce((val) => setSearch(val), 400), []);
+  useEffect(() => () => debouncedSetSearch.cancel(), [debouncedSetSearch]);
+  const handleSearchInputChange = (e) => {
+    setSearchInput(e.target.value);
+    debouncedSetSearch(e.target.value);
+  };
+
   // ── Stats ──────────────────────────────────────────────────
   const [statsLoading, setStatsLoading] = useState(false);
   const [stats, setStats] = useState({
@@ -194,18 +259,39 @@ const SubjectRegistration = () => {
     optional: { total_subjects: 0, registered_learners: 0 },
     trade: { total_subjects: 0, registered_learners: 0 },
   });
+  const [progress, setProgress] = useState({ completed_all: 0, total_learners: 0, learners: [] });
+
+  // "Primary 2 – Blue Arm" style label for the Learners stat card — resolves
+  // to real names from whatever Class/Arm the filters currently have
+  // selected, so the card always shows what the teacher is actually looking
+  // at instead of a generic "Learners" count with no context.
+  const selectedClassArmLabel = useMemo(() => {
+    const className = classes.find((c) => c.id === pClass)?.class_name;
+    const armName = arms.find((a) => a.id === pArm)?.class_arm_names;
+    if (className && armName) return `${className} – ${armName}`;
+    return className || '';
+  }, [classes, arms, pClass, pArm]);
+
+  const completionPct = progress.total_learners > 0
+    ? Math.round((progress.completed_all / progress.total_learners) * 100)
+    : 0;
+  const needsReviewCount = progress.total_learners - progress.completed_all;
+  const needsReviewPct = progress.total_learners > 0
+    ? Math.round((needsReviewCount / progress.total_learners) * 100)
+    : 0;
+
+  const statusCounts = useMemo(
+    () => ({
+      all: progress.learners.length,
+      complete: progress.completed_all,
+      incomplete: progress.learners.length - progress.completed_all,
+    }),
+    [progress],
+  );
 
   // ── Analytics Modal ────────────────────────────────────────
-  const [analyticsModal, setAnalyticsModal] = useState({
-    open: false,
-    title: '',
-    content: null,
-    loading: false,
-  });
-
-  const openCardModal = (title, content) => {
-    setAnalyticsModal({ open: true, title, content });
-  };
+  const [analyticsModal, setAnalyticsModal] = useState({ open: false, title: '', content: null, loading: false });
+  const openCardModal = (title, content) => setAnalyticsModal({ open: true, title, content });
 
   const fetchAndShowSubjects = useCallback(
     async (type, title) => {
@@ -236,15 +322,9 @@ const SubjectRegistration = () => {
           const optData = opt.data?.data || opt.data || [];
           const tradeData = trade.data?.data || trade.data || [];
           subjects = [
-            ...(Array.isArray(genData) ? genData : []).map((s) => ({
-              ...s,
-              category: 'Compulsory',
-            })),
+            ...(Array.isArray(genData) ? genData : []).map((s) => ({ ...s, category: 'Core' })),
             ...(Array.isArray(optData) ? optData : []).map((s) => ({ ...s, category: 'Optional' })),
-            ...(Array.isArray(tradeData) ? tradeData : []).map((s) => ({
-              ...s,
-              category: 'Trade',
-            })),
+            ...(Array.isArray(tradeData) ? tradeData : []).map((s) => ({ ...s, category: 'Trade' })),
           ];
         } else {
           const apiFn =
@@ -290,51 +370,31 @@ const SubjectRegistration = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>#</TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>
-                      SUBJECT NAME
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
-                      SUBJECT CODE
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }}>SUBJECT NAME</TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">SUBJECT CODE</TableCell>
                     {type === 'all' && (
-                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
-                        CATEGORY
-                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">CATEGORY</TableCell>
                     )}
-                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">
-                      REGISTERED COUNT
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700, fontSize: '0.75rem' }} align="center">REGISTERED COUNT</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {subjects.map((s, i) => (
                     <TableRow key={s.id} hover>
                       <TableCell sx={{ fontSize: '0.8rem' }}>{i + 1}</TableCell>
-                      <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
-                        {s.subject_name}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontSize: '0.8rem' }}>
-                        {s.subject_code || '—'}
-                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.8rem', fontWeight: 500 }}>{s.subject_name}</TableCell>
+                      <TableCell align="center" sx={{ fontSize: '0.8rem' }}>{s.subject_code || '—'}</TableCell>
                       {type === 'all' && (
                         <TableCell align="center">
                           <Chip
                             label={s.category}
                             size="small"
-                            color={
-                              s.category === 'Compulsory'
-                                ? 'info'
-                                : s.category === 'Optional'
-                                  ? 'warning'
-                                  : 'error'
-                            }
+                            color={s.category === 'Core' ? 'info' : s.category === 'Optional' ? 'warning' : 'error'}
                             sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
                           />
                         </TableCell>
                       )}
-                      <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                        {s.registered_count || 0}
-                      </TableCell>
+                      <TableCell align="center" sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{s.registered_count || 0}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -350,46 +410,48 @@ const SubjectRegistration = () => {
     [pClass, pProgramme, pSession, pTermId],
   );
 
-  const subjectTypeByTab = ['compulsory', 'optional', 'trade'];
-
   const fetchStats = useCallback(async () => {
     if (!pClass) {
       setStatsLoading(false);
-      setStats({
-        all: { total_subjects: 0, registered_learners: 0 },
-        compulsory: { total_subjects: 0, registered_learners: 0 },
-        optional: { total_subjects: 0, registered_learners: 0 },
-        trade: { total_subjects: 0, registered_learners: 0 },
-      });
       return;
     }
-
     setStatsLoading(true);
     try {
-      const res = await subjectRegistrationApi.getRegistrationStats({
-        class_id: pClass,
-        arm_id: pArm || undefined,
-        programme_id: pProgramme || undefined,
-        session_id: pSession || undefined,
-        term_id: pTermId || undefined,
-      });
+      const [statsRes, progressRes] = await Promise.all([
+        subjectRegistrationApi.getRegistrationStats({
+          class_id: pClass,
+          arm_id: pArm || undefined,
+          programme_id: pProgramme || undefined,
+          session_id: pSession || undefined,
+          term_id: pTermId || undefined,
+        }),
+        subjectRegistrationApi.getLearnerProgress({
+          class_id: pClass,
+          arm_id: pArm || undefined,
+          programme_id: pProgramme || undefined,
+          session_id: pSession || undefined,
+          term_id: pTermId || undefined,
+          type: 'compulsory',
+        }),
+      ]);
 
-      if (res.data?.status && res.data?.data) {
+      if (statsRes.data?.status && statsRes.data?.data) {
         setStats({
-          all: res.data.data.all ?? { total_subjects: 0, registered_learners: 0 },
-          compulsory: res.data.data.compulsory ?? { total_subjects: 0, registered_learners: 0 },
-          optional: res.data.data.optional ?? { total_subjects: 0, registered_learners: 0 },
-          trade: res.data.data.trade ?? { total_subjects: 0, registered_learners: 0 },
+          all: statsRes.data.data.all ?? { total_subjects: 0, registered_learners: 0 },
+          compulsory: statsRes.data.data.compulsory ?? { total_subjects: 0, registered_learners: 0 },
+          optional: statsRes.data.data.optional ?? { total_subjects: 0, registered_learners: 0 },
+          trade: statsRes.data.data.trade ?? { total_subjects: 0, registered_learners: 0 },
+        });
+      }
+      if (progressRes.data?.status && progressRes.data?.data) {
+        setProgress({
+          completed_all: progressRes.data.data.completed_all ?? 0,
+          total_learners: progressRes.data.data.total_learners ?? 0,
+          learners: progressRes.data.data.learners ?? [],
         });
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
-      setStats({
-        all: { total_subjects: 0, registered_learners: 0 },
-        compulsory: { total_subjects: 0, registered_learners: 0 },
-        optional: { total_subjects: 0, registered_learners: 0 },
-        trade: { total_subjects: 0, registered_learners: 0 },
-      });
     } finally {
       setStatsLoading(false);
     }
@@ -410,7 +472,11 @@ const SubjectRegistration = () => {
         ]);
         const sessionsData = sessRes.data?.data || sessRes.data || [];
         setSessions(sessionsData);
-        setProgrammes(progRes.data?.data || progRes.data || []);
+        const programmesData = progRes.data?.data || progRes.data || [];
+        setProgrammes(programmesData);
+        if (programmesData.length > 0) {
+          setPProgramme(programmesData[0].id);
+        }
 
         const activeStData = activeStRes.data?.data || activeStRes.data;
         if (activeStData?.session_id) {
@@ -436,11 +502,7 @@ const SubjectRegistration = () => {
         setTerms(termsData);
         if (Array.isArray(termsData) && termsData.length > 0) {
           const match = termsData.find((t) => String(t.id) === String(pTermId));
-          if (match) {
-            setPTerm(match.id);
-          } else {
-            setPTerm(termsData[0].id);
-          }
+          setPTerm(match ? match.id : termsData[0].id);
         }
       })
       .catch(console.error);
@@ -451,9 +513,14 @@ const SubjectRegistration = () => {
     fetchClassesByProgramme(pProgramme)
       .then((r) => {
         const d = r.data?.data || r.data || [];
-        setClasses(Array.isArray(d) ? d : []);
+        const classesData = Array.isArray(d) ? d : [];
+        setClasses(classesData);
+        if (classesData.length > 0 && !classesData.some((c) => c.id === pClass)) {
+          setPClass(classesData[0].id);
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pProgramme]);
 
   useEffect(() => {
@@ -461,264 +528,307 @@ const SubjectRegistration = () => {
     fetchClassArmsByClass(pClass, { programme_id: pProgramme || undefined })
       .then((r) => {
         const d = r.data?.data || r.data || [];
-        setArms(Array.isArray(d) ? d : []);
+        const armsData = Array.isArray(d) ? d : [];
+        setArms(armsData);
+        if (armsData.length > 0 && !armsData.some((a) => a.id === pArm)) {
+          setPArm(armsData[0].id);
+        }
       })
       .catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pClass, pProgramme]);
+
+  const handleFilter = () => {
+    fetchStats();
+    tabRefs[activeTab]?.current?.refetch();
+  };
+
+  const handleSaved = () => {
+    setLastSaved(new Date());
+    fetchStats();
+  };
+
+  // ── Copy-choices dialog ─────────────────────────────────────
+  const [copyDialog, setCopyDialog] = useState({ open: false, sourceId: '', targetIds: new Set() });
+  const openCopyDialog = () => setCopyDialog({ open: true, sourceId: '', targetIds: new Set() });
+  const closeCopyDialog = () => setCopyDialog({ open: false, sourceId: '', targetIds: new Set() });
+  const copyDialogLearners = subjectsTabRef.current?.learners || [];
+  const toggleCopyTarget = (id) =>
+    setCopyDialog((p) => {
+      const next = new Set(p.targetIds);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return { ...p, targetIds: next };
+    });
+  const confirmCopyChoices = async () => {
+    if (!copyDialog.sourceId || copyDialog.targetIds.size === 0) return;
+    const ok = await subjectsTabRef.current?.copyChoices(copyDialog.sourceId, [...copyDialog.targetIds]);
+    if (ok) closeCopyDialog();
+  };
 
   return (
     <PageContainer title="Subject Registration" description="Manage learner subject registration">
       <Breadcrumb title="Subject Registration" items={BCrumb} />
 
-      {/* ── Analytics Header ──────────────────────────────────── */}
-      <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsStatCard
-            icon={SubjectIcon}
-            value={stats.all.total_subjects}
-            label="All Subjects"
-            subtitle={`${stats.all.registered_learners} registered learners`}
-            colorIndex={1}
-            loading={statsLoading}
-            onClick={() => fetchAndShowSubjects('all', 'All Subjects')}
-          />
+      {/* ── Two-column layout: stats/filters/table on the left, the
+          Registration Insights/Quick Actions sidebar on the right
+          starting at the top, matching the Attendance/Psychomotor
+          redesign pattern. ── */}
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, lg: 9.5 }}>
+          {/* ── Stats Row ──────────────────────────────────── */}
+          <Grid container spacing={1.5} sx={{ mb: 2 }} alignItems="stretch">
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <AnalyticsStatCard
+                icon={LearnersIcon}
+                value={progress.total_learners}
+                label="Learners"
+                subtitle={selectedClassArmLabel}
+                colorIndex={1}
+                loading={statsLoading}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <AnalyticsStatCard
+                icon={SubjectIcon}
+                value={stats.all.total_subjects}
+                label="Subjects Available"
+                subtitle={`${stats.compulsory.total_subjects + stats.optional.total_subjects} Core • ${stats.trade.total_subjects} Trade`}
+                colorIndex={2}
+                loading={statsLoading}
+                onClick={() => fetchAndShowSubjects('all', 'All Subjects')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <AnalyticsStatCard
+                icon={CompleteIcon}
+                value={`${progress.completed_all}/${progress.total_learners}`}
+                label="Registration Complete"
+                progress={completionPct}
+                colorIndex={0}
+                loading={statsLoading}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <AnalyticsStatCard
+                icon={ReviewIcon}
+                value={needsReviewCount}
+                label="Needs Review"
+                subtitle={`${needsReviewPct}% incomplete`}
+                colorIndex={3}
+                loading={statsLoading}
+              />
+            </Grid>
+          </Grid>
+
+          <ParentCard
+            sx={{
+              '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
+              '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
+            }}
+          >
+            <Box>
+              {/* ── Filter Row ──────────────────────────────── */}
+              <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Session</InputLabel>
+                    <Select value={pSession} label="Session" onChange={(e) => setPSession(e.target.value)}>
+                      {sessions.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>{s.session_name || s.name || s.id}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Term</InputLabel>
+                    <Select
+                      value={pTerm}
+                      label="Term"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPTerm(val);
+                        const term = terms.find((t) => t.id === val);
+                        if (term) setPTermId(term.id);
+                      }}
+                    >
+                      {terms.map((t) => (
+                        <MenuItem key={t.id} value={t.id}>{t.term_name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Programme</InputLabel>
+                    <Select value={pProgramme} label="Programme" onChange={(e) => setPProgramme(e.target.value)}>
+                      {programmes.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>{p.programme_name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Class</InputLabel>
+                    <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
+                      {classes.map((c) => (
+                        <MenuItem key={c.id} value={c.id}>{c.class_name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Arm</InputLabel>
+                    <Select value={pArm} label="Arm" onChange={(e) => setPArm(e.target.value)}>
+                      {arms.map((a) => (
+                        <MenuItem key={a.id} value={a.id}>{a.class_arm_names}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                  <Button variant="contained" size="small" fullWidth startIcon={<FilterIcon />} onClick={handleFilter} sx={{ height: 40 }}>
+                    Filter
+                  </Button>
+                </Grid>
+              </Grid>
+
+              {/* ── Search + status filter ──────────────────── */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
+                <TextField
+                  size="small"
+                  placeholder="Search learner by name or admission no..."
+                  value={searchInput}
+                  onChange={handleSearchInputChange}
+                  sx={{ minWidth: 300 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                <ToggleButtonGroup
+                  value={statusFilter}
+                  exclusive
+                  size="small"
+                  onChange={(_, val) => val && setStatusFilter(val)}
+                  sx={{ '& .MuiToggleButton-root': { textTransform: 'none', fontSize: 12.5, px: 1.25 } }}
+                >
+                  <ToggleButton value="all">All ({statusCounts.all})</ToggleButton>
+                  <ToggleButton value="complete" color="success">Complete ({statusCounts.complete})</ToggleButton>
+                  <ToggleButton value="incomplete" color="warning">Incomplete ({statusCounts.incomplete})</ToggleButton>
+                </ToggleButtonGroup>
+              </Stack>
+
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, val) => setActiveTab(val)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '15px', py: 1.5 } }}
+                >
+                  <Tab label={`1. Core Subjects (${stats.compulsory.total_subjects + stats.optional.total_subjects})`} />
+                  <Tab label={`2. Trade Subjects (${stats.trade.total_subjects})`} />
+                </Tabs>
+                {activeTabStatus.pendingCount > 0 && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={activeTabStatus.saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                    onClick={() => tabRefs[activeTab]?.current?.save()}
+                    disabled={activeTabStatus.saving}
+                    sx={{ flexShrink: 0 }}
+                  >
+                    {activeTabStatus.saving ? 'SAVING...' : `SAVE SELECTED (${activeTabStatus.pendingCount})`}
+                  </Button>
+                )}
+              </Box>
+
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Core subjects are preselected according to school policy. You can review and adjust for
+                individual learners where allowed.
+              </Alert>
+
+              {activeTab === 0 && (
+                <SubjectsTab
+                  ref={subjectsTabRef}
+                  onStatusChange={handleSubjectsStatusChange}
+                  onSaved={handleSaved}
+                  onInsightsChange={setAiSuggestions}
+                  session={pSession}
+                  term={pTerm}
+                  termId={pTermId}
+                  programme={pProgramme}
+                  classLevel={pClass}
+                  classArm={pArm}
+                  search={search}
+                  statusFilter={statusFilter}
+                />
+              )}
+              {activeTab === 1 && (
+                <TradeSubjectsTab
+                  ref={tradeSubjectsTabRef}
+                  onStatusChange={handleTradeStatusChange}
+                  onSaved={handleSaved}
+                  session={pSession}
+                  term={pTerm}
+                  termId={pTermId}
+                  programme={pProgramme}
+                  classLevel={pClass}
+                  classArm={pArm}
+                  search={search}
+                />
+              )}
+
+              {/* ── Bottom save bar ──────────────────────────── */}
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mt: 2, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  {lastSaved
+                    ? `Last saved: ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                    : totalPendingCount > 0
+                      ? `${totalPendingCount} unsaved change(s)`
+                      : 'No unsaved changes'}
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={activeTabStatus.saving ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+                  onClick={() => tabRefs[activeTab]?.current?.save()}
+                  disabled={activeTabStatus.saving || activeTabStatus.pendingCount === 0}
+                >
+                  {activeTabStatus.saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </Stack>
+            </Box>
+          </ParentCard>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsStatCard
-            icon={CompulsoryIcon}
-            value={stats.compulsory.total_subjects}
-            label="Compulsory Subjects"
-            subtitle={`${stats.compulsory.registered_learners} registered learners`}
-            colorIndex={0}
-            loading={statsLoading}
-            onClick={() => fetchAndShowSubjects('compulsory', 'Compulsory Subjects')}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsStatCard
-            icon={OptionalIcon}
-            value={stats.optional.total_subjects}
-            label="Optional Subjects"
-            subtitle={`${stats.optional.registered_learners} registered learners`}
-            colorIndex={2}
-            loading={statsLoading}
-            onClick={() => fetchAndShowSubjects('optional', 'Optional Subjects')}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <AnalyticsStatCard
-            icon={TradeIcon}
-            value={stats.trade.total_subjects}
-            label="Trade Subjects"
-            subtitle={`${stats.trade.registered_learners} registered learners`}
-            colorIndex={3}
-            loading={statsLoading}
-            onClick={() => fetchAndShowSubjects('trade', 'Trade Subjects')}
+
+        {/* ── Right sidebar ────────────────────────────────────── */}
+        <Grid size={{ xs: 12, lg: 2.5 }}>
+          <SubjectRegistrationSidebar
+            incompleteCount={needsReviewCount}
+            pendingChangesCount={totalPendingCount}
+            aiSuggestions={activeTab === 0 ? aiSuggestions : []}
+            onReviewIncomplete={() => setStatusFilter('incomplete')}
+            onApplyCompulsoryToAll={() => subjectsTabRef.current?.applyCompulsoryToAll()}
+            onCopyChoices={openCopyDialog}
+            onMigrate={() => setMigrateModalOpen(true)}
+            canManage={canManage && activeTab === 0}
+            canBulkRegister={canBulkRegister}
           />
         </Grid>
       </Grid>
 
-      {/* ── Main Section ───────────────────────────────────────── */}
-      <ParentCard
-        sx={{
-          '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
-          '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
-        }}
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6" fontWeight={600}>
-              Learners Subject Registration
-            </Typography>
-            {can('manage.class_manager.subject_registrar.bulk_register') && (
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<MigrateIcon />}
-                onClick={() => setMigrateModalOpen(true)}
-              >
-                Migrate Subject Registrations from Previous Term
-              </Button>
-            )}
-          </Box>
-        }
-      >
-        <Box>
-          {/* ── Filter Row ────────────────────────────────────────── */}
-          <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Session</InputLabel>
-                <Select
-                  value={pSession}
-                  label="Session"
-                  onChange={(e) => setPSession(e.target.value)}
-                >
-                  {sessions.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {s.session_name || s.name || s.id}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Term</InputLabel>
-                <Select
-                  value={pTerm}
-                  label="Term"
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setPTerm(val);
-                    const term = terms.find((t) => t.id === val);
-                    if (term) setPTermId(term.id);
-                  }}
-                >
-                  {terms.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>
-                      {t.term_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Programme</InputLabel>
-                <Select
-                  value={pProgramme}
-                  label="Programme"
-                  onChange={(e) => setPProgramme(e.target.value)}
-                >
-                  {programmes.map((p) => (
-                    <MenuItem key={p.id} value={p.id}>
-                      {p.programme_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Class</InputLabel>
-                <Select value={pClass} label="Class" onChange={(e) => setPClass(e.target.value)}>
-                  {classes.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.class_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Arm</InputLabel>
-                <Select value={pArm} label="Arm" onChange={(e) => setPArm(e.target.value)}>
-                  {arms.map((a) => (
-                    <MenuItem key={a.id} value={a.id}>
-                      {a.class_arm_names}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-              <Button
-                variant="contained"
-                size="small"
-                fullWidth
-                startIcon={<FilterIcon />}
-                onClick={fetchStats}
-                sx={{ height: 40 }}
-              >
-                Filter
-              </Button>
-            </Grid>
-          </Grid>
-
-          <Box
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              mb: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Tabs
-              value={activeTab}
-              onChange={(_, val) => setActiveTab(val)}
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '15px',
-                  py: 1.5,
-                },
-              }}
-            >
-              <Tab label="1. Compulsory Subjects" />
-              <Tab label="2. Optional Subjects" />
-              <Tab label="3. Trade Subjects" />
-            </Tabs>
-            {activeTab === 0 && generalTabStatus.pendingCount > 0 && (
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={
-                  generalTabStatus.saving ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <SaveIcon />
-                  )
-                }
-                onClick={() => generalSubjectsTabRef.current?.save()}
-                disabled={generalTabStatus.saving}
-                sx={{ flexShrink: 0 }}
-              >
-                {generalTabStatus.saving
-                  ? 'SAVING...'
-                  : `SAVE SELECTED (${generalTabStatus.pendingCount})`}
-              </Button>
-            )}
-          </Box>
-          {activeTab === 0 && (
-            <GeneralSubjectsTab
-              ref={generalSubjectsTabRef}
-              onStatusChange={handleGeneralStatusChange}
-              session={pSession}
-              term={pTerm}
-              termId={pTermId}
-              programme={pProgramme}
-              classLevel={pClass}
-              classArm={pArm}
-            />
-          )}
-          {activeTab === 1 && (
-            <OptionalSubjectsTab
-              session={pSession}
-              term={pTerm}
-              termId={pTermId}
-              programme={pProgramme}
-              classLevel={pClass}
-              classArm={pArm}
-            />
-          )}
-          {activeTab === 2 && (
-            <TradeSubjectsTab
-              session={pSession}
-              term={pTerm}
-              termId={pTermId}
-              programme={pProgramme}
-              classLevel={pClass}
-              classArm={pArm}
-            />
-          )}
-        </Box>
-      </ParentCard>
       {/* ── Analytics Modal ─────────────────────────────────── */}
       <AnalyticsModal
         open={analyticsModal.open}
@@ -736,6 +846,56 @@ const SubjectRegistration = () => {
         migrateFn={migrateCourseRegistrations}
         onSuccess={fetchStats}
       />
+
+      {/* ── Copy choices from a learner ──────────────────────── */}
+      <Dialog open={copyDialog.open} onClose={closeCopyDialog} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Copy Choices From a Learner</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Pick one learner as a template, then every subject they're registered for will be applied to the
+            learners you select below (saved immediately).
+          </Typography>
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Source learner</InputLabel>
+            <Select
+              label="Source learner"
+              value={copyDialog.sourceId}
+              onChange={(e) => setCopyDialog((p) => ({ ...p, sourceId: e.target.value }))}
+            >
+              {copyDialogLearners.map((l) => (
+                <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+            Apply to:
+          </Typography>
+          <List dense sx={{ maxHeight: 240, overflowY: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            {copyDialogLearners
+              .filter((l) => l.id !== copyDialog.sourceId)
+              .map((l) => (
+                <ListItem key={l.id} disablePadding>
+                  <Checkbox
+                    size="small"
+                    checked={copyDialog.targetIds.has(l.id)}
+                    onChange={() => toggleCopyTarget(l.id)}
+                  />
+                  <ListItemText primary={l.name} secondary={l.admissionNo} />
+                </ListItem>
+              ))}
+          </List>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeCopyDialog}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={confirmCopyChoices}
+            disabled={!copyDialog.sourceId || copyDialog.targetIds.size === 0}
+          >
+            Copy Choices
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

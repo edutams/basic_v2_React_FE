@@ -1,13 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
-  Box, Button, Typography, LinearProgress, Alert, List, ListItem, ListItemIcon, ListItemText,
-  FormControl, InputLabel, Select, MenuItem,
+  Box,
+  Button,
+  Typography,
+  LinearProgress,
+  Alert,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { IconUpload, IconFileSpreadsheet, IconCheck, IconX } from '@tabler/icons-react';
 import scoreManagerApi from '@/api/tenant/score-manager/scoreManagerApi';
 
-const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }) => {
+const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded, subjectName }) => {
   const fileInputRef = useRef(null);
   const [selection, setSelection] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -36,9 +47,10 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
         const configData = res?.data?.data?.[0];
         let parsed = [];
         if (configData?.ca_content) {
-          const raw = typeof configData.ca_content === 'string'
-            ? JSON.parse(configData.ca_content)
-            : configData.ca_content;
+          const raw =
+            typeof configData.ca_content === 'string'
+              ? JSON.parse(configData.ca_content)
+              : configData.ca_content;
           if (Array.isArray(raw)) {
             parsed = raw;
           } else if (typeof raw === 'object' && raw !== null) {
@@ -52,7 +64,9 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
       }
     };
     loadConfig();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [open, filter?.session_id, filter?.term_id, filter?.programme_id]);
 
   // Reset the selection whenever the dialog opens or options change
@@ -63,13 +77,19 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
     setRowResults([]);
   }, [open, caOptions.length]);
 
-  // Dropdown options: one entry per configured CA type + Exam
+  // Dropdown options: must match whatever category the uploaded file was
+  // actually downloaded as — "all" first (every CA + exam in one file,
+  // same shape the manual Input/Edit screen already uses), then each CA
+  // type alone, then Exam alone.
   const options = useMemo(() => {
-    const list = caOptions.map((ca, i) => ({
-      value: `ca:${ca.display_name || `CA${i + 1}`}`,
-      label: ca.display_name || `CA${i + 1}`,
-    }));
-    list.push({ value: 'exam', label: 'Exam' });
+    const list = [{ value: 'all', label: 'All CAs + Exam (one file)' }];
+    caOptions.forEach((ca, i) => {
+      list.push({
+        value: `ca:${ca.display_name || `CA${i + 1}`}`,
+        label: `${ca.display_name || `CA${i + 1}`} only`,
+      });
+    });
+    list.push({ value: 'exam', label: 'Exam only' });
     return list;
   }, [caOptions]);
 
@@ -90,9 +110,12 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
       setResult(null);
       setRowResults([]);
 
-      const [category, displayName] = selection.startsWith('ca:')
-        ? ['ca', selection.slice(3)]
-        : ['exam', undefined];
+      const [category, displayName] =
+        selection === 'all'
+          ? ['all', undefined]
+          : selection.startsWith('ca:')
+            ? ['ca', selection.slice(3)]
+            : ['exam', undefined];
 
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -109,7 +132,10 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
       if (payload.status === false) {
         setResult({
           severity: 'error',
-          message: payload.message || (payload.errors || []).join(' ') || 'Upload failed. Please check the file.',
+          message:
+            payload.message ||
+            (payload.errors || []).join(' ') ||
+            'Upload failed. Please check the file.',
         });
         setRowResults([]);
       } else {
@@ -154,12 +180,16 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
     <ReusableModal
       open={open}
       onClose={handleClose}
-      title={`Upload Bulk — ${className} Combined Subjects`}
+      title={
+        subjectName
+          ? `Upload — ${subjectName} (${className})`
+          : `Upload Bulk — ${className} Combined Subjects`
+      }
       size="small"
     >
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Select a score category, then upload the scoresheet previously downloaded for this class. The file must match
-        the selected session, term, class and category.
+        Select a score category, then upload the scoresheet previously downloaded for this class.
+        The file must match the selected session, term, class and category.
       </Typography>
 
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
@@ -167,11 +197,18 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
         <Select
           value={selection}
           label="Category"
-          onChange={(e) => { setSelection(e.target.value); setResult(null); setSelectedFile(null); setRowResults([]); }}
+          onChange={(e) => {
+            setSelection(e.target.value);
+            setResult(null);
+            setSelectedFile(null);
+            setRowResults([]);
+          }}
         >
           <MenuItem value="">--Select category--</MenuItem>
           {options.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            <MenuItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
@@ -213,11 +250,24 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
         </Alert>
       )}
       {rowResults.length > 0 && (
-        <List dense sx={{ mt: 1, maxHeight: 180, overflow: 'auto', bgcolor: 'background.default', borderRadius: 1 }}>
+        <List
+          dense
+          sx={{
+            mt: 1,
+            maxHeight: 180,
+            overflow: 'auto',
+            bgcolor: 'background.default',
+            borderRadius: 1,
+          }}
+        >
           {rowResults.map((r, i) => (
             <ListItem key={i} disableGutters>
               <ListItemIcon sx={{ minWidth: 28 }}>
-                {r.success ? <IconCheck size={14} color="green" /> : <IconX size={14} color="orange" />}
+                {r.success ? (
+                  <IconCheck size={14} color="green" />
+                ) : (
+                  <IconX size={14} color="orange" />
+                )}
               </ListItemIcon>
               <ListItemText
                 primary={r.success || r.warning}
@@ -229,7 +279,13 @@ const UploadCombinedDialog = ({ open, onClose, allocations, filter, onUploaded }
       )}
 
       <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mt: 3 }}>
-        <Button variant="contained" size="small" color="inherit" onClick={handleClose} disabled={uploading}>
+        <Button
+          variant="contained"
+          size="small"
+          color="inherit"
+          onClick={handleClose}
+          disabled={uploading}
+        >
           {result?.severity === 'success' ? 'Close' : 'Cancel'}
         </Button>
         <Button

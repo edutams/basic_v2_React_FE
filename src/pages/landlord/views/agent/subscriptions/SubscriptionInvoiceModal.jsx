@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -15,6 +15,9 @@ import {
   Chip,
   Avatar,
   CircularProgress,
+  Alert,
+  Collapse,
+  Link,
 } from '@mui/material';
 import {
   Print as PrintIcon,
@@ -46,6 +49,9 @@ const fetchPdfBlobUrl = async (url) => {
   return window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
 };
 
+const formatDate = (value) =>
+  value ? new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+
 const SubscriptionInvoiceModal = ({ open, onClose, selectedRow, subscriptionCharges, onExtended }) => {
   const { can } = usePermissions();
   const notify = useNotification();
@@ -53,12 +59,42 @@ const SubscriptionInvoiceModal = ({ open, onClose, selectedRow, subscriptionChar
   const [extendModalOpen, setExtendModalOpen] = useState(false);
   const [extendDate, setExtendDate] = useState('');
   const [extendLoading, setExtendLoading] = useState(false);
+  const [termWindow, setTermWindow] = useState(null);
+  const [fetchingTermWindow, setFetchingTermWindow] = useState(false);
+  const [showWeeks, setShowWeeks] = useState(false);
 
   const tenant = selectedRow?.tenant;
   const schoolName = tenant?.tenant_name || '';
   const schoolAddress = tenant?.address || '';
   const schoolPhone = tenant?.administrator_info?.school_spa?.admin_phone || '';
   const schoolLogo = tenant?.school_logo || tenant?.image || null;
+
+  // Same due-date-vs-generated-weeks window used by Grant Grace Period —
+  // the backend enforces this for every due-date extension, not just that
+  // one flow, so this modal needs to show it too instead of letting the
+  // agent pick a date that gets silently rejected.
+  useEffect(() => {
+    if (!extendModalOpen || !tenant?.id) return;
+    setTermWindow(null);
+    setShowWeeks(false);
+
+    const loadTermWindow = async () => {
+      try {
+        setFetchingTermWindow(true);
+        const res = await axios.get(`/v1/landlord/subscriptions/schools-needing-subscription/${tenant.id}/plans`);
+        setTermWindow(res.data?.term_window || null);
+      } catch (err) {
+        console.error('Failed to fetch term window:', err);
+      } finally {
+        setFetchingTermWindow(false);
+      }
+    };
+    loadTermWindow();
+  }, [extendModalOpen, tenant?.id]);
+
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const minExtendDate = termWindow?.start_date && termWindow.start_date > tomorrow ? termWindow.start_date : tomorrow;
+  const maxExtendDate = termWindow?.end_date;
 
   const planData = useMemo(() => {
     if (!selectedRow?.plans?.data) return {};
@@ -352,6 +388,46 @@ const SubscriptionInvoiceModal = ({ open, onClose, selectedRow, subscriptionChar
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
             Select a new due date for this subscription.
           </Typography>
+
+          {fetchingTermWindow && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+              <CircularProgress size={18} />
+            </Box>
+          )}
+
+          {!fetchingTermWindow && termWindow && (
+            <Box sx={{ mb: 2, p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: '10px' }}>
+              <Typography variant="body2" fontWeight={600}>
+                {termWindow.session_name} — {termWindow.term_name}: {termWindow.weeks_count} week(s) generated,{' '}
+                {formatDate(termWindow.start_date)} to {formatDate(termWindow.end_date)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                The due date below must fall somewhere in this range.
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>
+                <Link component="button" type="button" variant="caption" onClick={() => setShowWeeks((s) => !s)}>
+                  {showWeeks ? 'Hide week-by-week breakdown' : 'Show week-by-week breakdown'}
+                </Link>
+              </Box>
+              <Collapse in={showWeeks}>
+                <Stack spacing={0.25} sx={{ mt: 1, maxHeight: 160, overflowY: 'auto' }}>
+                  {(termWindow.weeks || []).map((week) => (
+                    <Typography key={week.label} variant="caption" color="text.secondary">
+                      {week.label}: {formatDate(week.start_date)} – {formatDate(week.end_date)}
+                    </Typography>
+                  ))}
+                </Stack>
+              </Collapse>
+            </Box>
+          )}
+
+          {!fetchingTermWindow && !termWindow && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              This school hasn&apos;t generated any weeks for its active term yet, so any future date is
+              accepted below.
+            </Alert>
+          )}
+
           <TextField
             fullWidth
             type="date"
@@ -359,8 +435,12 @@ const SubscriptionInvoiceModal = ({ open, onClose, selectedRow, subscriptionChar
             value={extendDate}
             onChange={(e) => setExtendDate(e.target.value)}
             InputLabelProps={{ shrink: true }}
-            inputProps={{ min: new Date(Date.now() + 86400000).toISOString().slice(0, 10) }}
-            helperText="Must be a future date — matches the backend's own validation."
+            inputProps={{ min: minExtendDate, max: maxExtendDate }}
+            helperText={
+              termWindow
+                ? `Must be between ${formatDate(termWindow.start_date)} and ${formatDate(termWindow.end_date)}.`
+                : "Must be a future date — matches the backend's own validation."
+            }
             size="small"
             sx={{ mb: 3 }}
           />

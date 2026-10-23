@@ -26,6 +26,13 @@ const classRegisterApi = {
   getClassEnrollmentBreakdown: (params = {}) =>
     tenantApi.get('/enrollment/class-breakdown', { params }),
 
+  // Single Arm View redesign: stat cards, AI insights, needs-attention.
+  getClassArmOverview: (params = {}) => tenantApi.get('/class-arm-overview', { params }),
+
+  // Multiple Arm View redesign: same, scoped to a whole class (every arm).
+  getClassMultiArmOverview: (params = {}) => tenantApi.get('/class-multi-arm-overview', { params }),
+  autoAssignArms: (data) => tenantApi.post('/students/auto-assign-arms', data),
+
   // ── Registration / Arm Assignment ────────────────────────
   assignArm: (studentId, data) => tenantApi.patch(`/students/${studentId}/assign-arm`, data),
   unassignArm: (studentId, armId) =>
@@ -47,6 +54,9 @@ const classRegisterApi = {
 
   exportStudentList: (params = {}) =>
     tenantApi.get('/students/export', { params, responseType: 'blob' }),
+
+  exportNameTagsPdf: (params = {}) =>
+    tenantApi.get('/students/export-name-tags', { params, responseType: 'blob' }),
 };
 
 export default classRegisterApi;

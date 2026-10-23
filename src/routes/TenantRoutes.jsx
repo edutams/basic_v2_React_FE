@@ -39,20 +39,79 @@ const ForgotPassword = Loadable(lazy(() => import('@/components/tenant/auth/Forg
 const VerifyOtp = Loadable(lazy(() => import('@/components/tenant/auth/VerifyOtp')));
 const ResetPassword = Loadable(lazy(() => import('@/components/tenant/auth/ResetPassword')));
 const AdmissionApply = Loadable(lazy(() => import('@/pages/tenant/auth/admission/AdmissionApply')));
-const ImpersonateLogin = Loadable(lazy(() => import('../utils/Auth/ImpersonateLogin')));
-const Error = Loadable(lazy(() => import('../utils/Auth/Error')));
-const SchoolNotFound = Loadable(lazy(() => import('../utils/Auth/SchoolNotFound')));
+const ImpersonateLogin = Loadable(lazy(() => import('../utils/auth/ImpersonateLogin')));
+const Error = Loadable(lazy(() => import('../utils/auth/Error')));
+const SchoolNotFound = Loadable(lazy(() => import('../utils/auth/SchoolNotFound')));
+const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
+
+const EResourcesIndex = Loadable(lazy(() => import('@/pages/tenant/e-resources/Index')));
+const EResourcesVideoTutorials = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/VideoTutorials')),
+);
+const EResourcesStudentBrowse = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/EResourceStudent')),
+);
+const EResourcesStudentHub = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentEResource')),
+);
+const EResourcesStudentLessonNote = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentLessonNoteView')),
+);
+const EResourcesStudentAssessment = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentAssessment')),
+);
+const EResourcesStudentProgress = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/student/StudentProgress')),
+);
+const EResourcesStaffLessonNote = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/StaffLessonNoteIndex')),
+);
+const EResourcesLessonNoteEditor = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteEditor')),
+);
+const EResourcesLessonPlanEditor = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonPlanEditor')),
+);
+const EResourcesLessonVideoManager = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonVideoManager')),
+);
+const EResourcesLessonNoteProgress = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/teacher/LessonNoteProgress')),
+);
+const EResourcesApproval = Loadable(
+  lazy(() => import('@/pages/tenant/e-resources/approval/LessonNoteApproval')),
+);
 
 const CalendarPage = Loadable(lazy(() => import('@/pages/tenant/school-setup/CalendarPage')));
 const AccountSetting = Loadable(lazy(() => import('@/pages/tenant/profile/AccountSetting')));
 const StaffManager = Loadable(lazy(() => import('@/pages/tenant/staff-manager/StaffManager')));
+const TeachingAllocations = Loadable(
+  lazy(() => import('@/pages/tenant/teaching-allocations/TeachingAllocations')),
+);
+const GenerateTimetable = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/GenerateTimetable')),
+);
+const PeriodSettings = Loadable(lazy(() => import('@/pages/tenant/timetable/PeriodSettings')));
+const TeacherTimetableView = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/TeacherTimetableView')),
+);
+const AttendanceComplianceReport = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/AttendanceComplianceReport')),
+);
+const MyTimetable = Loadable(lazy(() => import('@/pages/tenant/timetable/MyTimetable')));
+const MyTimetableLearner = Loadable(
+  lazy(() => import('@/pages/tenant/timetable/MyTimetableLearner')),
+);
 const PageUnderDevelopment = Loadable(
   lazy(() => import('@/components/shared/PageUnderDevelopment')),
 );
 const AdmissionProcessing = Loadable(
   lazy(() => import('@/pages/tenant/admission/AdmissionProcessing')),
+);
+const AdmissionDashboard = Loadable(
+  lazy(() => import('@/pages/tenant/admission/AdmissionDashboard')),
 );
 const ParentManagement = Loadable(lazy(() => import('@/pages/tenant/parents/ParentManagement')));
 const LearnerManagement = Loadable(lazy(() => import('@/pages/tenant/learners/LearnerManagement')));
@@ -100,6 +159,9 @@ const WalletTransactions = Loadable(
   lazy(() => import('@/pages/tenant/transaction/wallet/WalletTransactions')),
 );
 const Transactions = Loadable(lazy(() => import('@/pages/tenant/transaction/TransactionManager')));
+const PaymentHistory = Loadable(
+  lazy(() => import('@/pages/tenant/finance/bursary/PaymentHistory')),
+);
 const ClassLedger = Loadable(lazy(() => import('@/pages/tenant/class-ledger/ClassLedger')));
 const SubjectRegistration = Loadable(
   lazy(() => import('@/pages/tenant/subject-registration/SubjectRegistration')),
@@ -132,25 +194,19 @@ const CaBreakdownPage = Loadable(lazy(() => import('@/pages/tenant/result/CaBrea
 const PerformanceAnalyticsPage = Loadable(
   lazy(() => import('@/pages/tenant/result/PerformanceAnalyticsPage')),
 );
+const ResultOverviewPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultOverviewPage')));
 const ResultSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ResultSheetPage')));
 const BroadsheetPage = Loadable(lazy(() => import('@/pages/tenant/result/BroadsheetPage')));
 const SummarySheetPage = Loadable(lazy(() => import('@/pages/tenant/result/SummarySheetPage')));
 const ReportSheetPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportSheetPage')));
+const ClassDossierPage = Loadable(lazy(() => import('@/pages/tenant/result/ClassDossierPage')));
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
+const WardReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/WardReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
 const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
 const CommunicationsPage = Loadable(
   lazy(() => import('@/pages/tenant/communications/CommunicationsPage')),
 );
-
-// May open the Continuous Assessment (CA breakdown) page: learners via the
-// sidebar, staff via the Student Dossier / score sheet deep links. The learner
-// permission exists under two spellings across seeded databases.
-const CA_BREAKDOWN_ACCESS = [
-  'result.client.ca_breakdown',
-  'result.view_dossier',
-  'result.admin.view_score_sheet',
-];
 
 const TenantRoutes = [
   {
@@ -201,6 +257,14 @@ const TenantRoutes = [
   {
     path: '/impersonate-login/:token',
     element: <ImpersonateLogin />,
+  },
+  // Public "Download Result" link from Result → Messaging — no session or
+  // permission guard; the backend route behind it re-applies the school's
+  // publish / result-payment gates.
+  {
+    path: '/verifyresult/:tenantId/:regId',
+    element: <BlankLayout />,
+    children: [{ index: true, element: <VerifyResult /> }],
   },
   {
     path: '/school-not-found',
@@ -358,6 +422,70 @@ const TenantRoutes = [
           </TenantProtectedRoute>
         ),
       },
+      {
+        path: 'teaching-allocations',
+        element: (
+          <TenantProtectedRoute permission="setup.academics.class_teacher.manage">
+            <TeachingAllocations />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/generate',
+        element: (
+          <TenantProtectedRoute permission="timetable.generate.manage">
+            <GenerateTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/period-settings',
+        element: (
+          <TenantProtectedRoute permission="timetable.settings.manage">
+            <PeriodSettings />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/teacher-view',
+        element: (
+          <TenantProtectedRoute permission="timetable.teacher_view.index">
+            <TeacherTimetableView />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/attendance-compliance-report',
+        element: (
+          <TenantProtectedRoute permission="timetable.compliance_report.index">
+            <AttendanceComplianceReport />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'my-timetable',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable.index">
+            <MyTimetable />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'timetable/my-timetable-learner',
+        element: (
+          <TenantProtectedRoute permission="timetable.my_timetable_learner.index">
+            <MyTimetableLearner />
+          </TenantProtectedRoute>
+        ),
+      },
 
       {
         path: 'admission-setup',
@@ -388,6 +516,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <AdmissionProcessing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'admission-dashboard',
+        element: (
+          <TenantProtectedRoute permission="admission_manager.dashboard.index">
+            <AdmissionDashboard />
           </TenantProtectedRoute>
         ),
       },
@@ -460,6 +596,17 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="walet_manager.transactions.index">
             <Transactions />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        // bursary_manager.payment_history.index is shared across staff,
+        // parent, and student roles (see FinanceModuleSeeder) — the actual
+        // "who may view whom" scoping happens in PaymentHistoryController.
+        path: 'bursary/payment-history',
+        element: (
+          <TenantProtectedRoute permission="bursary_manager.payment_history.index">
+            <PaymentHistory />
           </TenantProtectedRoute>
         ),
       },
@@ -540,7 +687,7 @@ const TenantRoutes = [
       {
         path: 'result-ca_breakdown',
         element: (
-          <TenantProtectedRoute anyOf={CA_BREAKDOWN_ACCESS}>
+          <TenantProtectedRoute permission="result.client.ca_breakdown">
             <CaBreakdownPage />
           </TenantProtectedRoute>
         ),
@@ -550,6 +697,14 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="result.admin.view_analytics">
             <PerformanceAnalyticsPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-overview',
+        element: (
+          <TenantProtectedRoute permission="result.admin.view_overview">
+            <ResultOverviewPage />
           </TenantProtectedRoute>
         ),
       },
@@ -572,7 +727,7 @@ const TenantRoutes = [
       {
         path: 'result-summary',
         element: (
-          <TenantProtectedRoute permission="result.admin.view_summary">
+          <TenantProtectedRoute permission="result.admin.view_summary_sheet">
             <SummarySheetPage />
           </TenantProtectedRoute>
         ),
@@ -586,10 +741,26 @@ const TenantRoutes = [
         ),
       },
       {
+        path: 'result-class_dossier',
+        element: (
+          <TenantProtectedRoute permission="result.view_dossier">
+            <ClassDossierPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
         path: 'result-reportcard',
         element: (
           <TenantProtectedRoute permission="result.client.view_report_sheet">
             <ReportCardPage />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'result-wards-report',
+        element: (
+          <TenantProtectedRoute permission="result.client.view_wards_report">
+            <WardReportCardPage />
           </TenantProtectedRoute>
         ),
       },
@@ -771,7 +942,7 @@ const TenantRoutes = [
       {
         path: 'class-register',
         element: (
-          <TenantProtectedRoute permission="manage.class_manager.class_register.view">
+          <TenantProtectedRoute permission="class_manager.class_register_view">
             <ClassRegister />
           </TenantProtectedRoute>
         ),
@@ -781,6 +952,111 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="manage.class_manager.attendance_psychomotor.view">
             <AttendancePsychomotor />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      {
+        path: 'e-resources',
+        element: (
+          <TenantProtectedRoute permission="e_resources.view">
+            <EResourcesIndex />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/video-tutorials',
+        element: (
+          <TenantProtectedRoute permission="e_resources.view">
+            <EResourcesVideoTutorials />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentHub />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/browse',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentBrowse />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/lesson-note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentLessonNote />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/assessment',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentAssessment />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/student/progress',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.student.view">
+            <EResourcesStudentProgress />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesStaffLessonNote />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/note',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonNoteEditor />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/plan',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonPlanEditor />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/video',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonVideoManager />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/lesson-note/progress',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.teacher.view">
+            <EResourcesLessonNoteProgress />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'e-resources/approval',
+        element: (
+          <TenantProtectedRoute permission="e_resources.lesson_note.approval.view">
+            <EResourcesApproval />
           </TenantProtectedRoute>
         ),
       },

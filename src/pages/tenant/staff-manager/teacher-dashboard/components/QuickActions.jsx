@@ -48,7 +48,7 @@ const actions = [
     icon: CalendarMonthOutlinedIcon,
     color: "#334155",
     bg: "#e2e8f0",
-    path: null,
+    path: "/my-timetable",
   },
 ];
 

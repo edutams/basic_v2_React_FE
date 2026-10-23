@@ -32,6 +32,20 @@ export const fetchApplicationStats = async (filters = null) => {
 };
 
 /**
+ * Export the current filtered view of applications as an Excel file
+ * POST /admission/process/export
+ * @param {Object} filters - same shape as fetchApplications' filters
+ */
+export const exportApplications = async (filters = null) => {
+  const response = await api.post(
+    '/admission/process/export',
+    { filters },
+    { responseType: 'blob' },
+  );
+  return response;
+};
+
+/**
  * Auto-admit applicants for a batch
  * POST /admission/process/auto-admit
  * @param {Object} data

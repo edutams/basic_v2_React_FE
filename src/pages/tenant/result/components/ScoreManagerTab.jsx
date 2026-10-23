@@ -1,35 +1,10 @@
-import { useState } from 'react';
-import { Box, Tabs, Tab, Paper, useTheme } from '@mui/material';
 import UploadScoresTab from './UploadScoresTab';
-import ScoreSheetTab from './ScoreSheetTab';
 
-const ScoreManagerTab = () => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-  const [activeTab, setActiveTab] = useState(0);
-
-  return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-      <Tabs
-        value={activeTab}
-        onChange={(_, v) => setActiveTab(v)}
-        sx={{
-          px: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
-          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none' },
-        }}
-      >
-        <Tab label="Upload Scores." />
-        <Tab label="Score Sheet." />
-      </Tabs>
-
-      <Box sx={{ p: 2 }}>
-        {activeTab === 0 && <UploadScoresTab />}
-        {activeTab === 1 && <ScoreSheetTab />}
-      </Box>
-    </Paper>
-  );
-};
+// Score Sheet used to be a second tab here, with its own full copy of every
+// filter. It's now a standalone page (/result-scoresheet) reached from each
+// subject's own "Score Sheet" button below — it already knows which
+// subject/class/term it's for, so it no longer needs to live in this tab
+// strip at all.
+const ScoreManagerTab = () => <UploadScoresTab />;
 
 export default ScoreManagerTab;

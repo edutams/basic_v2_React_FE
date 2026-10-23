@@ -3,11 +3,20 @@ import tenantApi from '@/api/tenant/tenant_api';
 const BASE = '/communication';
 
 const communicationApi = {
-  // Chats
-  chatUsers: (search = '') => tenantApi.post(`${BASE}/chats/users`, { filters: search }),
+  // Chats — filters.search matches the backend's getUsers() input shape;
+  // all=1 fetches the full directory for starting brand-new chats.
+  chatUsers: (search = '', all = false) =>
+    tenantApi.post(`${BASE}/chats/users`, {
+      filters: { search },
+      ...(all ? { all: 1 } : {}),
+    }),
   chatMessages: (receiverId) => tenantApi.get(`${BASE}/chats/get_messages`, { params: { id: receiverId } }),
-  chatCreate: (receiverId, message) => tenantApi.post(`${BASE}/chats/create`, { receiverId, message }),
-  chatFile: (fileData, receiverId) => tenantApi.post(`${BASE}/chats/file`, { fileData, receiverId }),
+  // Live read receipt — fired when the peer's message lands while the chat is open.
+  chatMarkRead: (ids, peerId) => tenantApi.post(`${BASE}/chats/mark_read`, { ids, peerId }),
+  chatCreate: (receiverId, message, replyTo = null) =>
+    tenantApi.post(`${BASE}/chats/create`, { receiverId, message, ...(replyTo ? { reply_to: replyTo } : {}) }),
+  chatFile: (fileData, receiverId, replyTo = null) =>
+    tenantApi.post(`${BASE}/chats/file`, { fileData, receiverId, ...(replyTo ? { reply_to: replyTo } : {}) }),
   chatDelete: (id) => tenantApi.post(`${BASE}/chats/delete`, { id }),
 
   // Mail

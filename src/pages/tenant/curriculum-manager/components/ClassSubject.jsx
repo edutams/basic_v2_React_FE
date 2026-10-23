@@ -40,6 +40,9 @@ import {
   IconSchool,
   IconStack2,
   IconChecklist,
+  IconDotsVertical,
+  IconPlayerPlay,
+  IconPlayerPause,
 } from '@tabler/icons-react';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -48,10 +51,12 @@ import {
   fetchClassesByProgramme,
   fetchClassSubjects,
   addOrUpdateClassSubject,
-  deleteClassSubjectRecord,
+  updateClassSubjectFields,
+  toggleClassSubjectStatus,
   fetchAvailableSubjectsForClass as fetchAvailableSubjectsForClassApi,
   fetchCurriculumSetupStats,
 } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import DeleteClassSubjectModal from './DeleteClassSubjectModal';
 
 const ClassSubject = () => {
   // ── Completeness stats (this tab's own header cards) ─────────────────
@@ -94,6 +99,9 @@ const ClassSubject = () => {
   const [openAddSubjectToClassModal, setOpenAddSubjectToClassModal] = useState(false);
   const [openDeleteClassSubjectModal, setOpenDeleteClassSubjectModal] = useState(false);
   const [selectedClassSubject, setSelectedClassSubject] = useState(null);
+  const [classSubjectMenuAnchorEl, setClassSubjectMenuAnchorEl] = useState(null);
+  const [togglingClassSubjectId, setTogglingClassSubjectId] = useState(null);
+  const [toggleConfirmSubject, setToggleConfirmSubject] = useState(null);
   const [classSubjectFormData, setClassSubjectFormData] = useState({
     subject_id: '',
     pass_mark: '',
@@ -120,12 +128,6 @@ const ClassSubject = () => {
 
   // Loading states for buttons
   const [loadingAddSubject, setLoadingAddSubject] = useState(false);
-  const [loadingDeleteClassSubject, setLoadingDeleteClassSubject] = useState(false);
-  // Shown inside the delete dialog itself, not as a separate toast — a
-  // Snackbar can end up visually behind an open Dialog depending on the
-  // browser/stacking context, so the failure reason (e.g. "students
-  // already registered") is shown right where the user is already looking.
-  const [deleteClassSubjectError, setDeleteClassSubjectError] = useState('');
 
   // Methods
   const showSnackbar = (message, severity = 'success') => {
@@ -160,10 +162,10 @@ const ClassSubject = () => {
     }
   };
 
-  const fetchClassSubjectsData = async (classId) => {
+  const fetchClassSubjectsData = async (classId, programmeId) => {
     setLoadingClassSubjects(true);
     try {
-      const response = await fetchClassSubjects(classId);
+      const response = await fetchClassSubjects(classId, programmeId);
       if (response.status) {
         setClassSubjects(response.data);
       }
@@ -245,7 +247,7 @@ const ClassSubject = () => {
       if (response.status) {
         showSnackbar('Subject added to class successfully', 'success');
         handleCloseAddSubjectToClassModal();
-        fetchClassSubjectsData(selectedClass);
+        fetchClassSubjectsData(selectedClass, program);
         fetchStats();
       } else {
         // Display the detailed error message from the backend
@@ -279,10 +281,58 @@ const ClassSubject = () => {
     }
   };
 
+  const handleOpenClassSubjectMenu = (event, subject) => {
+    setSelectedClassSubject(subject);
+    setClassSubjectMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseClassSubjectMenu = () => {
+    setClassSubjectMenuAnchorEl(null);
+  };
+
   const handleOpenDeleteModal = (subject) => {
     setSelectedClassSubject(subject);
-    setDeleteClassSubjectError('');
     setOpenDeleteClassSubjectModal(true);
+  };
+
+  const handleOpenToggleConfirm = (subject) => {
+    setToggleConfirmSubject(subject);
+    handleCloseClassSubjectMenu();
+  };
+
+  const handleCloseToggleConfirm = () => {
+    setToggleConfirmSubject(null);
+  };
+
+  const handleToggleClassSubjectStatus = async (subject) => {
+    setToggleConfirmSubject(null);
+    setTogglingClassSubjectId(subject.class_subject_id);
+    try {
+      const response = await toggleClassSubjectStatus(subject.class_subject_id);
+      if (response.status) {
+        showSnackbar(
+          `${subject.subject_name} ${response.data.is_active ? 'activated' : 'deactivated'} for this class`,
+          'success',
+        );
+        setClassSubjects((prev) =>
+          prev.map((s) =>
+            s.class_subject_id === subject.class_subject_id
+              ? { ...s, is_active: response.data.is_active }
+              : s,
+          ),
+        );
+        fetchStats();
+      } else {
+        showSnackbar(response.error || response.message || 'Failed to toggle subject status', 'error');
+      }
+    } catch (error) {
+      showSnackbar(
+        error.response?.data?.error || error.response?.data?.message || 'Failed to toggle subject status',
+        'error',
+      );
+    } finally {
+      setTogglingClassSubjectId(null);
+    }
   };
 
   const handleOpenSubjectGroupMenu = (event, group) => {
@@ -296,39 +346,6 @@ const ClassSubject = () => {
     setOpenSubjectGroupMenu(false);
   };
 
-  const handleConfirmDeleteClassSubject = async () => {
-    if (!selectedClassSubject) return;
-    setLoadingDeleteClassSubject(true);
-    setDeleteClassSubjectError('');
-    try {
-      const response = await deleteClassSubjectRecord(selectedClassSubject.class_subject_id);
-      if (response.status) {
-        showSnackbar('Subject removed from class successfully', 'success');
-        handleCloseDeleteClassSubjectModal();
-        fetchClassSubjectsData(selectedClass);
-        fetchStats();
-      } else {
-        // The specific reason (e.g. "students already registered") comes
-        // back under `error`, not `message` — `message` is always the
-        // generic fallback. Same convention as handleDeleteSubject above.
-        setDeleteClassSubjectError(
-          response.error || response.message || 'Failed to remove subject from class',
-        );
-      }
-    } catch (error) {
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        setDeleteClassSubjectError(
-          errorData.error || errorData.message || 'Failed to remove subject from class',
-        );
-      } else {
-        setDeleteClassSubjectError('Failed to remove subject from class');
-      }
-    } finally {
-      setLoadingDeleteClassSubject(false);
-    }
-  };
-
   // Inline pass mark / unit editing directly in the table — updates local
   // state as the admin types, persists on blur via the same upsert the Add/
   // Edit modals use.
@@ -340,10 +357,7 @@ const ClassSubject = () => {
 
   const handleInlineClassSubjectSave = async (subject) => {
     try {
-      const response = await addOrUpdateClassSubject({
-        class_id: selectedClass,
-        programme_id: program,
-        subject_id: subject.subject_id,
+      const response = await updateClassSubjectFields(subject.class_subject_id, {
         pass_mark: subject.pass_mark,
         unit: subject.unit,
         status: subject.status,
@@ -352,11 +366,11 @@ const ClassSubject = () => {
         fetchStats();
       } else {
         showSnackbar(response.message || 'Failed to update class subject', 'error');
-        fetchClassSubjectsData(selectedClass);
+        fetchClassSubjectsData(selectedClass, program);
       }
     } catch (error) {
       showSnackbar(error.response?.data?.message || 'Failed to update class subject', 'error');
-      fetchClassSubjectsData(selectedClass);
+      fetchClassSubjectsData(selectedClass, program);
     }
   };
 
@@ -393,15 +407,24 @@ const ClassSubject = () => {
 
   useEffect(() => {
     if (program) {
+      // The same physical class (class_id) can be shared by several
+      // programmes via the programme_class pivot — e.g. "SSS2" under both
+      // Science and Humanity — so a class selected before the switch can
+      // still be a valid entry in the new programme's list with the exact
+      // same numeric id. Clearing it forces a real re-pick instead of
+      // silently keeping stale Class Subjects data on screen under a
+      // class_id that now means a different (class, programme) pair.
+      setSelectedClass(null);
+      setClassSubjects([]);
       fetchClassesData(program);
     }
   }, [program]);
 
   useEffect(() => {
-    if (selectedClass) {
-      fetchClassSubjectsData(selectedClass);
+    if (selectedClass && program) {
+      fetchClassSubjectsData(selectedClass, program);
     }
-  }, [selectedClass]);
+  }, [selectedClass, program]);
   return (
     <>
       <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
@@ -586,7 +609,11 @@ const ClassSubject = () => {
                     ))
                   ) : classSubjects.length > 0 ? (
                     classSubjects.map((subject, i) => (
-                      <TableRow key={subject.class_subject_id} hover>
+                      <TableRow
+                        key={subject.class_subject_id}
+                        hover
+                        sx={!subject.is_active ? { opacity: 0.55 } : undefined}
+                      >
                         <TableCell>{i + 1}</TableCell>
                         <TableCell>{subject.subject_name}</TableCell>
                         <TableCell>
@@ -595,6 +622,7 @@ const ClassSubject = () => {
                             variant="standard"
                             type="number"
                             value={subject.pass_mark}
+                            disabled={!subject.is_active}
                             onChange={(e) =>
                               handleInlineClassSubjectChange(
                                 subject.class_subject_id,
@@ -612,6 +640,7 @@ const ClassSubject = () => {
                             variant="standard"
                             type="number"
                             value={subject.unit}
+                            disabled={!subject.is_active}
                             onChange={(e) =>
                               handleInlineClassSubjectChange(
                                 subject.class_subject_id,
@@ -646,14 +675,23 @@ const ClassSubject = () => {
                               },
                             }}
                           />
+                          {!subject.is_active && (
+                            <Chip
+                              label="Inactive"
+                              size="small"
+                              variant="outlined"
+                              color="default"
+                              sx={{ ml: 0.5, fontWeight: 600 }}
+                            />
+                          )}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton
                             size="small"
-                            color="error"
-                            onClick={() => handleOpenDeleteModal(subject)}
+                            disabled={togglingClassSubjectId === subject.class_subject_id}
+                            onClick={(e) => handleOpenClassSubjectMenu(e, subject)}
                           >
-                            <IconTrash size={18} />
+                            <IconDotsVertical size={18} />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -675,6 +713,35 @@ const ClassSubject = () => {
           </Paper>
         </ParentCard>
       </Box>
+
+      {/* Class Subject Action Menu */}
+      <Menu
+        id="class-subject-menu"
+        anchorEl={classSubjectMenuAnchorEl}
+        open={Boolean(classSubjectMenuAnchorEl)}
+        onClose={handleCloseClassSubjectMenu}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={() => handleOpenToggleConfirm(selectedClassSubject)}>
+          {!selectedClassSubject?.is_active ? (
+            <IconPlayerPlay size={18} style={{ marginRight: 8 }} />
+          ) : (
+            <IconPlayerPause size={18} style={{ marginRight: 8 }} />
+          )}
+          {!selectedClassSubject?.is_active ? 'Activate' : 'Deactivate'}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleOpenDeleteModal(selectedClassSubject);
+            handleCloseClassSubjectMenu();
+          }}
+          sx={{ color: 'error.main' }}
+        >
+          <IconTrash size={18} style={{ marginRight: 8 }} />
+          Delete
+        </MenuItem>
+      </Menu>
 
       {/* Subject Group Action Menu — group edit/delete isn't implemented yet
           (no dialogs wired up), so these just close the menu rather than
@@ -820,43 +887,58 @@ const ClassSubject = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Class Subject Modal */}
-      <Dialog
+      {/* Delete / Deactivate Class Subject Modal — layered confirmation flow */}
+      <DeleteClassSubjectModal
         open={openDeleteClassSubjectModal}
+        classSubject={selectedClassSubject}
         onClose={handleCloseDeleteClassSubjectModal}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Remove Subject from Class</DialogTitle>
+        onDeleted={() => {
+          showSnackbar('Subject removed from class successfully', 'success');
+          handleCloseDeleteClassSubjectModal();
+          fetchClassSubjectsData(selectedClass, program);
+          fetchStats();
+        }}
+        onDeactivated={() => {
+          showSnackbar(`${selectedClassSubject?.subject_name} deactivated for this class`, 'success');
+          handleCloseDeleteClassSubjectModal();
+          fetchClassSubjectsData(selectedClass, program);
+          fetchStats();
+        }}
+      />
+
+      {/* Activate/Deactivate confirmation — triggered from the row's 3-dot menu */}
+      <Dialog open={Boolean(toggleConfirmSubject)} onClose={handleCloseToggleConfirm} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {!toggleConfirmSubject?.is_active ? 'Activate Subject' : 'Deactivate Subject'}
+        </DialogTitle>
         <DialogContent>
-          {deleteClassSubjectError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {deleteClassSubjectError}
-            </Alert>
-          )}
-          <Typography variant="body2">
-            Are you sure you want to remove{' '}
-            <strong>{selectedClassSubject?.subject_name}</strong> from this class? This cannot be
-            undone.
+          <Typography variant="body1">
+            {!toggleConfirmSubject?.is_active ? (
+              <>
+                Activate <strong>{toggleConfirmSubject?.subject_name}</strong> for this class? It
+                will become visible again in registrations, results, and broadsheets.
+              </>
+            ) : (
+              <>
+                Deactivate <strong>{toggleConfirmSubject?.subject_name}</strong> for this class? It
+                will disappear from registrations, results, and broadsheets until it&apos;s
+                reactivated. Nothing already recorded against it is affected.
+              </>
+            )}
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={handleCloseDeleteClassSubjectModal}
-            disabled={loadingDeleteClassSubject}
-          >
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 1 }}>
+          <Button onClick={handleCloseToggleConfirm} disabled={!!togglingClassSubjectId}>
             Cancel
           </Button>
           <Button
-            size="small"
-            color="error"
-            onClick={handleConfirmDeleteClassSubject}
-            disabled={loadingDeleteClassSubject}
-            startIcon={loadingDeleteClassSubject ? <CircularProgress size={16} /> : null}
+            variant="contained"
+            color={!toggleConfirmSubject?.is_active ? 'primary' : 'warning'}
+            onClick={() => handleToggleClassSubjectStatus(toggleConfirmSubject)}
+            disabled={!!togglingClassSubjectId}
+            startIcon={togglingClassSubjectId ? <CircularProgress size={16} color="inherit" /> : null}
           >
-            {loadingDeleteClassSubject ? 'Removing...' : 'Remove'}
+            {!toggleConfirmSubject?.is_active ? 'Yes, activate' : 'Yes, deactivate'}
           </Button>
         </DialogActions>
       </Dialog>

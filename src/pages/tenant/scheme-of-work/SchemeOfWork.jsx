@@ -549,7 +549,9 @@ const SchemeOfWork = () => {
         objectiveData.instructional_resources ||
         objectiveData.teaching_note ||
         objectiveData.teacher_activity ||
-        objectiveData.learner_activity
+        objectiveData.learner_activity ||
+        objectiveData.resource_links ||
+        objectiveData.learning_material
       ) {
         await tenantSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
           previous_knowledge: objectiveData.previous_knowledge,
@@ -559,6 +561,8 @@ const SchemeOfWork = () => {
           teaching_note: objectiveData.teaching_note,
           teacher_activity: objectiveData.teacher_activity,
           learner_activity: objectiveData.learner_activity,
+          resource_links: objectiveData.resource_links,
+          learning_material: objectiveData.learning_material,
         });
       }
 
@@ -1136,6 +1140,8 @@ const SchemeOfWork = () => {
               teaching_note: formData.get('teaching_note'),
               teacher_activity: formData.get('teacher_activity'),
               learner_activity: formData.get('learner_activity'),
+              resource_links: formData.get('resource_links'),
+              learning_material: formData.get('learning_material'),
             });
           }}
           sx={{ mt: 2 }}
@@ -1202,6 +1208,26 @@ const SchemeOfWork = () => {
             multiline
             rows={2}
             defaultValue={selectedRow?.instructional_resources || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="resource_links"
+            label="Video Resource Link"
+            fullWidth
+            inputProps={{ inputMode: 'url' }}
+            placeholder="https://www.youtube.com/watch?v=…"
+            helperText="Shown on the Video Tutorials page. Paste a video URL."
+            defaultValue={selectedRow?.resource_links || ''}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="learning_material"
+            label="Lesson Material Link"
+            fullWidth
+            inputProps={{ inputMode: 'url' }}
+            placeholder="https://…"
+            helperText="Shown as Lesson material on Video Tutorials. Paste a file or page URL."
+            defaultValue={selectedRow?.learning_material || ''}
             sx={{ mb: 2 }}
           />
           <TextField

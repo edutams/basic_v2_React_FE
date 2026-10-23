@@ -89,11 +89,29 @@ const subscriptionApi = {
  
 
   /**
-   * Get all subscriptions for the current tenant (table data)
-   * @param {Object} params - query params (search, status)
+   * Get the tenant's subscriptions (table data) — every filter applied
+   * server-side.
+   * @param {Object} params - { status, session_id, term_id, plan_id, search }
    */
   getSubscriptions: async (params = {}) => {
     const response = await tenantApi.get('/subscriptions', { params });
+    return response.data;
+  },
+
+  /**
+   * Aggregate figures for the Manage Subscription overview cards —
+   * independent of the table's own filters.
+   */
+  getOverviewStats: async () => {
+    const response = await tenantApi.get('/subscriptions/overview-stats');
+    return response.data;
+  },
+
+  /**
+   * Session/term/plan dropdown options for the Manage Subscription filters.
+   */
+  getSubscriptionsFilterOptions: async () => {
+    const response = await tenantApi.get('/subscriptions/filter-options');
     return response.data;
   },
 
@@ -238,10 +256,19 @@ const subscriptionApi = {
 
   /**
    * Get subscription transaction history
-   * @param {Object} params - { status, search, per_page, page }
+   * @param {Object} params - { status, search, session_id, term_id, plan_id, date_from, date_to, per_page, page }
    */
   getHistory: async (params = {}) => {
     const response = await tenantApi.get('/subscriptions/history', { params });
+    return response.data;
+  },
+
+  /**
+   * Session/term/plan dropdown options for the Subscription History filters
+   * — scoped to what this tenant actually has transactions for.
+   */
+  getHistoryFilterOptions: async () => {
+    const response = await tenantApi.get('/subscriptions/history/filter-options');
     return response.data;
   },
 

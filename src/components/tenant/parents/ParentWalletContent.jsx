@@ -5,7 +5,7 @@ import {
   Chip,
   Avatar,
   Button,
-  CircularProgress,
+  Skeleton,
   Alert,
   Accordion,
   AccordionSummary,
@@ -32,39 +32,43 @@ const naira = (n) => `₦${(Number(n) || 0).toLocaleString()}`;
 const StatTile = ({ title, value, icon, color, bgColor, note }) => (
   <Box
     sx={{
-      p: 2,
+      p: 1.25,
       borderRadius: 2,
       display: 'flex',
       alignItems: 'center',
-      gap: 2,
+      gap: 1,
       border: '1px solid',
       borderColor: 'divider',
       flex: 1,
+      minWidth: 0,
     }}
   >
     <Box
       sx={{
         bgcolor: bgColor,
         color,
-        p: 1.5,
+        width: 32,
+        height: 32,
         borderRadius: '50%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        flexShrink: 0,
+        '& svg': { fontSize: 18 },
       }}
     >
       {icon}
     </Box>
     <Box sx={{ minWidth: 0 }}>
-      <Typography variant="body2" color="text.secondary" fontWeight={500}>
+      <Typography variant="caption" color="text.secondary" fontWeight={500} noWrap display="block">
         {title}
       </Typography>
       {value === null ? (
-        <Typography variant="caption" color="text.disabled">
+        <Typography variant="caption" color="text.disabled" noWrap display="block">
           {note}
         </Typography>
       ) : (
-        <Typography variant="h6" color={color} fontWeight={700}>
+        <Typography variant="subtitle1" color={color} fontWeight={700} noWrap>
           {naira(value)}
         </Typography>
       )}
@@ -124,12 +128,19 @@ const ParentWalletContent = ({ guardian, onClose }) => {
       )}
 
       {loading ? (
-        <Box display="flex" justifyContent="center" p={5}>
-          <CircularProgress />
+        <Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} variant="rounded" height={56} sx={{ flex: 1 }} />
+            ))}
+          </Box>
+          <Skeleton variant="text" width={220} sx={{ mb: 1 }} />
+          <Skeleton variant="rounded" height={64} sx={{ mb: 1 }} />
+          <Skeleton variant="rounded" height={64} />
         </Box>
       ) : (
         <>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
             <StatTile
               title="Wallet Balance"
               value={parent?.wallet ? parent.wallet.balance : null}
@@ -272,7 +283,7 @@ const ParentWalletContent = ({ guardian, onClose }) => {
       )}
 
       <Box display="flex" justifyContent="flex-end" sx={{ mt: 2 }}>
-        <Button variant="contained" size="small" onClick={onClose}>
+        <Button variant="contained" color="error" size="small" onClick={onClose}>
           Close
         </Button>
       </Box>

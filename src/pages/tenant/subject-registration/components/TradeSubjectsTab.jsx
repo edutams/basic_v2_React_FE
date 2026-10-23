@@ -1,11 +1,34 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, CircularProgress, Typography, Alert, Button, Stack } from '@mui/material';
+import {
+  Box,
+  Stack,
+  Typography,
+  Alert,
+  Button,
+  CircularProgress,
+  Snackbar,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { Save as SaveIcon } from '@mui/icons-material';
 import subjectRegistrationApi from '@/api/tenant/subject-registration/subjectRegistrationApi';
 import SubjectMatrixTable from './SubjectMatrixTable';
+import SubjectMatrixTableSkeleton from './SubjectMatrixTableSkeleton';
 
-const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classArm }) => {
+const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
+  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved, search = '' },
+  ref,
+) {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState([]);
   const [learners, setLearners] = useState([]);
@@ -15,6 +38,10 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
 
   const [originalRegistered, setOriginalRegistered] = useState({});
   const [pendingChanges, setPendingChanges] = useState({});
+
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const notify = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
 
   const pendingCount = useMemo(() => Object.keys(pendingChanges).length, [pendingChanges]);
 
@@ -26,6 +53,8 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       const [subjRes, learnerRes] = await Promise.all([
         subjectRegistrationApi.getTradeSubjects(classLevel, {
           programme_id: programme || undefined,
+          term_id: termId || undefined,
+          session_id: session || undefined,
         }),
         subjectRegistrationApi.getLearnerSubjectRegistration(classLevel, classArm || undefined, {
           programme_id: programme || undefined,
@@ -101,9 +130,14 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       }
       return next;
     });
+
+    notify(
+      `${newRegistered ? 'Marked for registration' : 'Marked for removal'} — click Save Selected to save to the server.`,
+      'info',
+    );
   };
 
-  const handleSaveSelected = async () => {
+  const runSave = async () => {
     const changes = Object.entries(pendingChanges).map(([key, registered]) => {
       const [learnerId, subjectId] = key.split('_');
       return { learner_id: Number(learnerId), subject_id: Number(subjectId), registered };
@@ -114,21 +148,71 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
     setSaving(true);
     setError('');
     try {
-      await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const res = await subjectRegistrationApi.bulkToggle(changes, { session_id: session, term_id: termId });
+      const protectedWithScores = res?.data?.data?.protected_with_scores ?? 0;
+
       setPendingChanges({});
-      const orig = {};
-      learners.forEach((l) => {
-        orig[l.id] = { ...l.registered };
-      });
-      setOriginalRegistered(orig);
+
+      if (protectedWithScores > 0) {
+        // The backend silently kept any registration that already has
+        // scores recorded (unregistering would have deleted the scores
+        // too) — refetch so the checkboxes reflect what's actually
+        // registered server-side, instead of showing them as removed.
+        notify(
+          `${protectedWithScores} subject registration(s) were not removed because scores have already been recorded for them.`,
+          'warning',
+        );
+        await fetchData();
+      } else {
+        const orig = {};
+        learners.forEach((l) => {
+          orig[l.id] = { ...l.registered };
+        });
+        setOriginalRegistered(orig);
+      }
+
+      notify(`${changes.length} change(s) saved successfully.`, 'success');
+      onSaved?.();
     } catch (e) {
       console.error('Save failed:', e);
       setError('Failed to save changes. Please try again.');
+      notify('Failed to save changes. Please try again.', 'error');
       fetchData();
     } finally {
       setSaving(false);
     }
   };
+
+  const handleSaveSelected = () => setConfirmSaveOpen(true);
+
+  const confirmAndSave = async () => {
+    setConfirmSaveOpen(false);
+    await runSave();
+  };
+
+  useImperativeHandle(ref, () => ({ save: handleSaveSelected, refetch: fetchData, learners }));
+
+  const filteredLearners = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return learners;
+    return learners.filter(
+      (l) => (l.name || '').toLowerCase().includes(q) || (l.admissionNo || '').toLowerCase().includes(q),
+    );
+  }, [learners, search]);
+
+  // Per-subject registered-learner counts, over the FULL roster — must not
+  // shrink when a search filter narrows which rows are visible.
+  const registeredCount = useMemo(() => {
+    const counts = {};
+    subjects.forEach((subj) => {
+      counts[subj.id] = learners.filter((l) => l.registered[subj.id]).length;
+    });
+    return counts;
+  }, [subjects, learners]);
+
+  useEffect(() => {
+    onStatusChange?.({ pendingCount, saving });
+  }, [pendingCount, saving, onStatusChange]);
 
   const registerAll = (subjectId) => {
     setLearners((prev) =>
@@ -148,6 +232,8 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       });
       return next;
     });
+
+    notify(`All learners marked registered — click Save Selected to save to the server.`, 'info');
   };
 
   const unregisterAll = (subjectId) => {
@@ -168,6 +254,41 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       });
       return next;
     });
+
+    notify(`All learners marked for removal — click Save Selected to save to the server.`, 'info');
+  };
+
+  // Registers ONE learner for every subject in this tab at once — the
+  // per-row counterpart to the per-column "All"/"None" toggle above.
+  const registerAllForLearner = (learnerId) => {
+    setLearners((prev) =>
+      prev.map((l) =>
+        l.id === learnerId
+          ? {
+              ...l,
+              registered: subjects.reduce((acc, subj) => ({ ...acc, [subj.id]: true }), {
+                ...l.registered,
+              }),
+            }
+          : l,
+      ),
+    );
+
+    setPendingChanges((prev) => {
+      const next = { ...prev };
+      subjects.forEach((subj) => {
+        const key = `${learnerId}_${subj.id}`;
+        const origState = originalRegistered[learnerId]?.[subj.id] ?? false;
+        if (!origState) {
+          next[key] = true;
+        } else {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+
+    notify(`Learner marked for every subject — click Save Selected to save to the server.`, 'info');
   };
 
   return (
@@ -179,9 +300,7 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-          <CircularProgress size={32} />
-        </Box>
+        <SubjectMatrixTableSkeleton />
       ) : subjects.length === 0 ? (
         <Alert
           severity="info"
@@ -200,13 +319,18 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
           No trade subjects have been created for this class. Please go to the Curriculum step to
           create subjects before registering learners.
         </Alert>
+      ) : filteredLearners.length === 0 ? (
+        <Alert severity="info">No learners match your search.</Alert>
       ) : (
         <SubjectMatrixTable
           subjects={subjects}
-          learners={learners}
+          learners={filteredLearners}
+          registeredCount={registeredCount}
+          requiredSubjectIds={subjects.map((s) => s.id)}
           onToggle={toggleRegistration}
           onRegisterAll={registerAll}
           onUnregisterAll={unregisterAll}
+          onRegisterAllForLearner={registerAllForLearner}
         />
       )}
 
@@ -223,8 +347,45 @@ const TradeSubjectsTab = ({ session, term, termId, programme, classLevel, classA
           </Button>
         </Stack>
       )}
+
+      <Dialog
+        open={confirmSaveOpen}
+        onClose={() => setConfirmSaveOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Save Subject Registrations?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You're about to save <strong>{pendingCount}</strong> pending change
+            {pendingCount === 1 ? '' : 's'} to the server. This will update which subjects these
+            learners are registered for.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmSaveOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={confirmAndSave}>
+            Yes, Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
-};
+});
 
 export default TradeSubjectsTab;

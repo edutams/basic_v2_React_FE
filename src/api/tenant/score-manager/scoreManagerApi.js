@@ -3,20 +3,19 @@ import tenantApi from '@/api/tenant/tenant_api';
 const scoreManagerApi = {
   // ── Score Upload Routes ────────────────────────────────────
   // Overview & Filters
-  getScoreUploadOverview: (params = {}) =>
-    tenantApi.get('/score-upload/allocations', { params }),
+  getScoreUploadOverview: (params = {}) => tenantApi.get('/score-upload/allocations', { params }),
 
-  getScoreUploadAnalytics: (data) =>
-    tenantApi.post('/score-upload/analytics', data),
+  getScoreUploadAnalytics: (data) => tenantApi.post('/score-upload/analytics', data),
 
-  fetchMarksConfiguration: (data) =>
-    tenantApi.post('/score-upload/marks-configuration', data),
+  fetchMarksConfiguration: (data) => tenantApi.post('/score-upload/marks-configuration', data),
 
-  getClassSubjects: (data) =>
-    tenantApi.post('/score-upload/class-subjects', data),
+  getClassSubjects: (data) => tenantApi.post('/score-upload/class-subjects', data),
 
-  getClassCurriculums: (data) =>
-    tenantApi.post('/score-upload/class-curriculums', data),
+  // Class arms strictly for the Score Manager's own filter — only arms the
+  // caller has an actual subject allocation in (not just class-teaches).
+  getMyClassArms: (params = {}) => tenantApi.get('/score-upload/my-class-arms', { params }),
+
+  getClassCurriculums: (data) => tenantApi.post('/score-upload/class-curriculums', data),
 
   downloadCombinedScoresheet: (data) =>
     tenantApi.post('/score-upload/download-combined-scoresheet', data, { responseType: 'blob' }),
@@ -26,23 +25,18 @@ const scoreManagerApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
-  getRegisteredStudents: (data) =>
-    tenantApi.post('/score-upload/registered-students', data),
+  getRegisteredStudents: (data) => tenantApi.post('/score-upload/registered-students', data),
 
   // Score Entry & Editing
-  manualUpload: (data) =>
-    tenantApi.post('/score-upload/manual-upload', data),
+  manualUpload: (data) => tenantApi.post('/score-upload/manual-upload', data),
 
-  editResult: (data) =>
-    tenantApi.post('/score-upload/edit-result', data),
+  editResult: (data) => tenantApi.post('/score-upload/edit-result', data),
 
-  bulkEditResults: (data) =>
-    tenantApi.post('/score-upload/bulk-edit-results', data),
+  bulkEditResults: (data) => tenantApi.post('/score-upload/bulk-edit-results', data),
 
   // Submission
   // Submission
-  submitScores: (data) =>
-    tenantApi.post('/score-upload/submit-scores', data),
+  submitScores: (data) => tenantApi.post('/score-upload/submit-scores', data),
 
   getSubmitStatus: (subjectId, classArmId, sessionTermId) =>
     tenantApi.get(`/score-upload/submit-status/${subjectId}/${classArmId}/${sessionTermId}`),
@@ -50,24 +44,29 @@ const scoreManagerApi = {
   submitAllScoresValidated: (data) =>
     tenantApi.post('/score-upload/submit-all-scores-validated', data),
 
-  submitAllScores: (data) =>
-    tenantApi.post('/score-upload/submit-all-scores', data),
+  submitAllScores: (data) => tenantApi.post('/score-upload/submit-all-scores', data),
 
-  reverseSubmission: (data) =>
-    tenantApi.post('/score-upload/reverse-submission', data),
+  reverseSubmission: (data) => tenantApi.post('/score-upload/reverse-submission', data),
 
   // Purge
-  purgeScores: (data) =>
-    tenantApi.post('/score-upload/purge-scores', data),
+  purgeScores: (data) => tenantApi.post('/score-upload/purge-scores', data),
 
   // ── Score Sheet Routes ─────────────────────────────────────
-  getScoreSheetData: (data) =>
-    tenantApi.post('/score-sheet/data', data),
+  getScoreSheetData: (data) => tenantApi.post('/score-sheet/data', data),
+
+  exportScoreSheetExcel: (data) =>
+    tenantApi.post('/score-sheet/export-excel', data, { responseType: 'blob' }),
+
+  exportScoreSheetPdf: (data) =>
+    tenantApi.post('/score-sheet/export-pdf', data, { responseType: 'blob' }),
 
   // ── CA Breakdown ──────────────────────────────────────────
   // POST /ca-breakdown { student_registration_id | user_id, session_term_id? }
-  getCaBreakdown: (data) =>
-    tenantApi.post('/ca-breakdown', data),
+  getCaBreakdown: (data) => tenantApi.post('/ca-breakdown', data),
+
+  // POST /ca-breakdown/print { ...same as above, ca_index } -> PDF blob
+  printCaBreakdown: (data) =>
+    tenantApi.post('/ca-breakdown/print', data, { responseType: 'blob' }),
 };
 
 export default scoreManagerApi;

@@ -41,7 +41,11 @@ import {
   fetchOnlineTransactionAnalytics,
   checkTransactionStatus,
 } from '@/api/tenant/bursary/transactionApi';
-import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchActiveSessionTerm,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
 import dayjs from 'dayjs';
 
@@ -97,11 +101,11 @@ const Overview = () => {
   );
 
   const loadTable = useCallback(
-    async (targetPage = page, targetPerPage = perPage) => {
+    async (targetPage = page, targetPerPage = perPage, extraFilters = {}) => {
       setLoading(true);
       try {
         const res = await fetchOnlineTransactions({
-          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage }),
+          filters: buildFilters({ page: targetPage + 1, per_page: targetPerPage, ...extraFilters }),
         });
         if (res.success) {
           setTableData(res.data);
@@ -116,12 +120,13 @@ const Overview = () => {
     [buildFilters],
   );
 
-  const loadAnalytics = useCallback(async () => {
+  const loadAnalytics = useCallback(async (overrides = {}) => {
     try {
       const payload = {
         session_id: sessionId || null,
         term_id: termId || null,
         period,
+        ...overrides,
       };
 
       if (period === 'today') {
@@ -155,7 +160,34 @@ const Overview = () => {
       .then((res) => setSessions(res.data || res || []))
       .catch(console.error);
 
+    // Default the Session/Term filters to the school's current active term
+    // rather than leaving them on "All" — reloads loadTable/loadAnalytics
+    // once the default resolves, since both already ran once above with
+    // sessionId/termId still empty.
+    fetchActiveSessionTerm()
+      .then((res) => {
+        const active = res?.data;
+        if (!active?.session_id && !active?.term_id) return;
+
+        if (active.session_id) setSessionId(active.session_id);
+        if (active.term_id) setTermId(active.term_id);
+
+        // setSessionId/setTermId above won't be reflected in this closure's
+        // sessionId/termId until next render, so the defaults are passed
+        // through explicitly here instead of relying on state.
+        loadTable(0, perPage, {
+          session_id: active.session_id || null,
+          term_id: active.term_id || null,
+        });
+        loadAnalytics({
+          session_id: active.session_id || null,
+          term_id: active.term_id || null,
+        });
+      })
+      .catch(console.error);
+
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -474,6 +506,7 @@ const Overview = () => {
                 <TableCell sx={thCell}>Description</TableCell>
                 <TableCell sx={thCell}>Amount</TableCell>
                 <TableCell sx={thCell}>Date</TableCell>
+                <TableCell sx={thCell}>Payment Mode</TableCell>
                 <TableCell sx={thCell}>Status</TableCell>
                 <TableCell sx={thCell} align="right">Action</TableCell>
               </TableRow>
@@ -498,13 +531,14 @@ const Overview = () => {
                     <TableCell sx={tdCell}><Skeleton variant="text" width={130} height={20} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={80} height={20} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}><Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                     <TableCell sx={tdCell}><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
                     <TableCell align="right" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
                   </TableRow>
                 ))
               ) : tableData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Alert severity="info" sx={{ justifyContent: 'center' }}>No transactions found.</Alert>
                   </TableCell>
                 </TableRow>
@@ -539,6 +573,22 @@ const Overview = () => {
                       <TableCell sx={tdCell}>{row.description}</TableCell>
                       <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
                       <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                      <TableCell sx={tdCell}>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={
+                            row.payment_type === 'ONLINE'
+                              ? 'Online'
+                              : row.payment_type === 'BANK_TELLER'
+                                ? 'Bank Teller'
+                                : row.payment_type === 'CASH'
+                                  ? 'Cash'
+                                  : row.payment_type || '—'
+                          }
+                          color={row.payment_type === 'ONLINE' ? 'info' : 'default'}
+                        />
+                      </TableCell>
                       <TableCell sx={tdCell}>
                         <Chip
                           size="small"

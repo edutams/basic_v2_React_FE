@@ -4,22 +4,30 @@ metadata:
   name: {{ .Values.app.name }}-ingress
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    {{- if .Values.ingress.tls.enabled }}
+    {{- if and .Values.ingress.tls.enabled .Values.ingress.tls.issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.issuer | quote }}
     {{- end }}
 spec:
   ingressClassName: nginx
   {{- if .Values.ingress.tls.enabled }}
   tls:
+    {{- if .Values.ingress.tls.secretName }}
+    - hosts:
+        {{- range .Values.ingress.hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+    {{- else }}
     {{- range .Values.ingress.hosts }}
     - hosts:
-        - {{ . }}
-      secretName: {{ . | replace "." "-" }}-tls
+        - {{ . | quote }}
+      secretName: {{ . | replace "." "-" | replace "*" "wildcard" }}-tls
+    {{- end }}
     {{- end }}
   {{- end }}
   rules:
     {{- range .Values.ingress.hosts }}
-    - host: {{ . }}
+    - host: {{ . | quote }}
       http:
         paths:
           {{- range $.Values.backend.paths }}

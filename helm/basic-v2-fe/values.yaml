@@ -26,8 +26,15 @@ backend:
 
 ingress:
   hosts:
-    - basicv2.essential.kub.ttihub.ng
-    - metropolitan.basicv2.essential.kub.ttihub.ng
+    - oneskool.net
+    - "*.oneskool.net"
   tls:
     enabled: true
-    issuer: letsencrypt-prod
+    secretName: oneskool-net-tls
+
+certificate:
+  enabled: true
+  issuer: letsencrypt-dns-cloudflare
+  dnsNames:
+    - oneskool.net
+    - "*.oneskool.net"

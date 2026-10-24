@@ -25,7 +25,6 @@ import {
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
-  Wallet as WalletIcon,
   Message as MessageIcon,
   Email as EmailIcon,
   Article as ArticleIcon,
@@ -50,7 +49,6 @@ import {
   fetchActiveCategories,
   fetchPaymentScheduleStats,
   fetchScheduleClassesOverview,
-  fetchGenerateInvoiceStats,
   fetchTermsBySessionTerm,
   importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
@@ -224,19 +222,6 @@ const PaymentShedule = () => {
   // price set for that class, for the Set Schedule step only.
   const [classesOverview, setClassesOverview] = useState([]);
   const [loadingClassesOverview, setLoadingClassesOverview] = useState(false);
-  const [invoiceStats, setInvoiceStats] = useState({
-    invoiceGenerated: 0,
-    totalAmount: 0,
-    paymentNames: [
-      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
-      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
-    ],
-    categories: [
-      { name: 'With Minimum Invoice', count: 0, amount: 0, label: 'N/A' },
-      { name: 'With Maximum Invoice', count: 0, amount: 0, label: 'N/A' },
-    ],
-  });
-  const [loadingInvoiceStats, setLoadingInvoiceStats] = useState(false);
   const [importing, setImporting] = useState(false);
   const [migrateModalOpen, setMigrateModalOpen] = useState(false);
   const [scheduleRefreshKey, setScheduleRefreshKey] = useState(0);
@@ -486,12 +471,6 @@ const PaymentShedule = () => {
     term?.displayTerm?.display_name ||
     'Term';
 
-  const handleUpdateCategory = (categoryId, sessionTermId) => {
-    setActionTab(0);
-    setSelectedCategory(String(categoryId));
-    handleSessionTermChange(sessionTermId);
-  };
-
   // Fetch stats + classes overview when session, term, or category changes.
   useEffect(() => {
     refreshStats();
@@ -500,62 +479,6 @@ const PaymentShedule = () => {
   }, [selectedSession, activeSubTermId, selectedCategory]);
 
   const stats = scheduleStats;
-
-  // Fetch invoice stats when session term changes or when Generate Invoice
-  // tab is active. GenerateInvoiceTab's own table is already hardcoded to
-  // 'compulsory' internally (unaffected by the Set Schedule merge), so this
-  // stats-only fetch matches that rather than reading a removed scheduleTab.
-  useEffect(() => {
-    if (!selectedSessionTerm || actionTab !== 1) return;
-    const payOption = 'compulsory';
-
-    const loadInvoiceStats = async () => {
-      try {
-        setLoadingInvoiceStats(true);
-        const res = await fetchGenerateInvoiceStats(selectedSessionTerm, selectedClass, payOption);
-        if (res?.success && res.data) {
-          const { invoice_generated, total_amount, payment_names, categories } = res.data;
-          setInvoiceStats({
-            invoiceGenerated: invoice_generated ?? 0,
-            totalAmount: total_amount ?? 0,
-            paymentNames: [
-              {
-                name: 'With Minimum Invoice',
-                count: payment_names?.min?.count ?? 0,
-                amount: payment_names?.min?.amount ?? 0,
-                label: payment_names?.min?.name ?? 'N/A',
-              },
-              {
-                name: 'With Maximum Invoice',
-                count: payment_names?.max?.count ?? 0,
-                amount: payment_names?.max?.amount ?? 0,
-                label: payment_names?.max?.name ?? 'N/A',
-              },
-            ],
-            categories: [
-              {
-                name: 'With Minimum Invoice',
-                count: categories?.min?.count ?? 0,
-                amount: categories?.min?.amount ?? 0,
-                label: categories?.min?.name ?? 'N/A',
-              },
-              {
-                name: 'With Maximum Invoice',
-                count: categories?.max?.count ?? 0,
-                amount: categories?.max?.amount ?? 0,
-                label: categories?.max?.name ?? 'N/A',
-              },
-            ],
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load invoice stats:', err);
-      } finally {
-        setLoadingInvoiceStats(false);
-      }
-    };
-    loadInvoiceStats();
-  }, [selectedSessionTerm, actionTab, selectedClass]);
 
   const [sendInvoiceStatsData, setSendInvoiceStatsData] = useState({
     total_sent: 0,
@@ -596,9 +519,6 @@ const PaymentShedule = () => {
     };
     loadSendInvoiceStats();
   }, [selectedSessionTerm, actionTab, selectedClass, sendInvoiceRefreshKey]);
-
-  const formatCurrency = (value) =>
-    `₦${Number(value || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const sendInvoiceStats = [
     { label: 'Total Invoice Sent', value: sendInvoiceStatsData.total_sent, icon: MessageIcon },
@@ -1053,227 +973,6 @@ const PaymentShedule = () => {
         </>
       )}
 
-      {actionTab === 1 && (
-        // Generate Invoice Stats
-        <Grid container spacing={3} mb={1}>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                    color: isDark ? '#fff' : s0.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" color="textSecondary">
-                  Invoice Generated
-                </Typography>
-              </Box>
-              <Box display="flex" alignItems="center" gap={2} mt={3}>
-                <Box
-                  sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                    borderRadius: 1,
-                    px: 3,
-                    py: 1.5,
-                    mt: 3.5,
-                    minWidth: 80,
-                    textAlign: 'center',
-                  }}
-                >
-                  {loadingInvoiceStats ? (
-                    <Skeleton width={80} height={36} />
-                  ) : (
-                    <Typography
-                      variant="h2"
-                      fontWeight={700}
-                      sx={{ color: isDark ? '#ffffff' : s0.color }}
-                    >
-                      {invoiceStats.invoiceGenerated}
-                    </Typography>
-                  )}
-                </Box>
-                <Box display="flex" ml="auto" flexDirection="column" justifyContent="end">
-                  {loadingInvoiceStats ? (
-                    <Skeleton width={100} height={32} />
-                  ) : (
-                    <Typography variant="h4" fontWeight={700}>
-                      {formatCurrency(invoiceStats.totalAmount)}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="text.secondary">
-                    Amount
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
-                    color: isDark ? '#fff' : s1.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" fontWeight={600}>
-                  Payment Name
-                </Typography>
-              </Box>
-
-              <Stack direction="row" spacing={1.5}>
-                {invoiceStats.paymentNames.map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      flex: 1,
-                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
-                      p: 1.5,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                      {item.name}
-                    </Typography>
-                    {loadingInvoiceStats ? (
-                      <Skeleton width={120} height={32} />
-                    ) : (
-                      <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {formatCurrency(item.amount)} ({item.count})
-                      </Typography>
-                    )}
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {item.label}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
-                    color: isDark ? '#fff' : s2.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <WalletIcon sx={{ fontSize: 18 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" fontWeight={600}>
-                  Category Name
-                </Typography>
-              </Box>
-
-              <Stack direction="row" spacing={1.5}>
-                {invoiceStats.categories.map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      flex: 1,
-                      bgcolor: idx === 0 ? 'rgba(139, 195, 74, 0.12)' : 'rgba(103, 58, 183, 0.12)',
-                      p: 1.5,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
-                      {item.name}
-                    </Typography>
-                    {loadingInvoiceStats ? (
-                      <Skeleton width={120} height={32} />
-                    ) : (
-                      <Typography variant="h5" fontWeight={700} mb={0.5}>
-                        {formatCurrency(item.amount)} ({item.count})
-                      </Typography>
-                    )}
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {item.label}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </Paper>
-          </Grid>
-        </Grid>
-      )}
-
       {actionTab === 2 && (
         <Grid container spacing={3} mb={1}>
           {sendInvoiceStats.map((stat, i) => (
@@ -1351,9 +1050,9 @@ const PaymentShedule = () => {
           <Paper sx={{ borderRadius: 2, p: 1.5 }}>
             <GenerateInvoiceTab
               showSnackbar={showSnackbar}
-              onUpdateCategory={handleUpdateCategory}
               selectedClass={selectedClass}
               setSelectedClass={setSelectedClass}
+              onReviewPricing={() => setActionTab(0)}
             />
           </Paper>
         )}

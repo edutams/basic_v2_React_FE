@@ -1302,7 +1302,7 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
               show={tourStep === 'panel'}
               mode="timed"
               label="🚀 2. The class detail panel updates automatically with the selected arm's information."
-              direction="up-left"
+              direction="down-left"
               maxWidth={260}
               position={{ position: 'absolute', top: -56, right: 8, zIndex: 10 }}
             />

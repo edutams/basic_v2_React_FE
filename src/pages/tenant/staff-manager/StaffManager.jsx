@@ -970,7 +970,7 @@ const StaffManager = () => {
                 <ArrowHint
                   show={tourStep === 'panel'}
                   label="🚀 2. The overview panel updates automatically with the selected staff member's information."
-                  direction="up-left"
+                  direction="down-left"
                   mode="timed"
                   delay="0.2s"
                   maxWidth={260}
@@ -1011,7 +1011,16 @@ const StaffManager = () => {
 
         {activeTab === 'non-teaching' && (
           <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1} alignItems="flex-start">
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+              <ArrowHint
+                show={tourStep === 'row' && staff.length > 0}
+                label="🚀 1. Click on a staff member's row — the row is highlighted to show it is selected."
+                direction="down-left"
+                mode="persistent"
+                delay="0.3s"
+                maxWidth={240}
+                position={{ position: 'absolute', top: 70, right: 24, zIndex: 20 }}
+              />
               <NonTeachingStaffTab
                 loading={loading}
                 staff={staff}
@@ -1046,7 +1055,16 @@ const StaffManager = () => {
               />
             </Box>
             {detailPanelStaff && (
-              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0 }}>
+              <Box sx={{ width: { xs: '100%', lg: 380 }, flexShrink: 0, position: 'relative' }}>
+                <ArrowHint
+                  show={tourStep === 'panel'}
+                  label="🚀 2. The overview panel updates automatically with the selected staff member's information."
+                  direction="down-left"
+                  mode="timed"
+                  delay="0.2s"
+                  maxWidth={260}
+                  position={{ position: 'absolute', top: -56, right: 8, zIndex: 20 }}
+                />
                 <TeacherOverviewPanel
                   staffRow={detailPanelStaff}
                   onClose={() => setDetailPanelStaff(null)}

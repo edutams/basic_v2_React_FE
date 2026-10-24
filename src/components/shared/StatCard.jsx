@@ -13,6 +13,50 @@ const schemeMap = [
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
+/** Shared colors for StatSubtitleParts counts, reused across every
+ * split-subtitle (Active/Inactive, Compulsory/Optional, Parent/School, …)
+ * so the same category always reads the same color everywhere. */
+export const STAT_SUBTITLE_COLORS = {
+  success: '#15803D',
+  muted: '#6B7280',
+  blue: '#1D4ED8',
+  amber: '#92400E',
+};
+
+/** Renders a StatCard subtitle as "{count} {label} · {count} {label}"
+ * with each count bold and colored distinctly from its label, instead of
+ * one flat muted string — makes the breakdown readable at a glance instead
+ * of all running together in the same muted gray. */
+export const StatSubtitleParts = ({ parts }) => (
+  <>
+    {parts.map((part, idx) => (
+      <Box component="span" key={part.label} sx={{ display: 'inline' }}>
+        {idx > 0 && (
+          <Box component="span" sx={{ color: 'text.disabled', mx: '6px' }}>
+            ·
+          </Box>
+        )}
+        <Box component="span" sx={{ fontWeight: 700, color: part.color }}>
+          {part.count}
+        </Box>
+        <Box component="span" sx={{ ml: '4px' }}>
+          {part.label}
+        </Box>
+      </Box>
+    ))}
+  </>
+);
+
+StatSubtitleParts.propTypes = {
+  parts: PropTypes.arrayOf(
+    PropTypes.shape({
+      count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      label: PropTypes.string.isRequired,
+      color: PropTypes.string,
+    }),
+  ).isRequired,
+};
+
 const StatCardSkeleton = ({ isDark, theme }) => (
   <Paper
     elevation={0}
@@ -270,7 +314,7 @@ const StatCard = ({
 StatCard.propTypes = {
   count: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   label: PropTypes.string.isRequired,
-  subtitle: PropTypes.string,
+  subtitle: PropTypes.node,
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string,
   colorIndex: PropTypes.number,

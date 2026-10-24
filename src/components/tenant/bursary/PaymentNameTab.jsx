@@ -398,15 +398,24 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
 
   return (
     <>
-      {/* Tabs for Bursary/Admission + Add Payment Item — sits directly on
-       * the page background, matching the reference (not inside a card). */}
+      {/* Tabs for Bursary/Admission + Add Payment Item — a white bar so the
+       * tabs read as a distinct control group instead of floating directly
+       * on the grey page background. */}
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
         flexWrap="wrap"
         gap={1.5}
-        sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}
+        sx={{
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: '#E5E7EB',
+          borderRadius: '14px',
+          px: 2,
+          pt: 0.5,
+          mb: 2,
+        }}
       >
         <Tabs
           value={currentTab}
@@ -437,8 +446,10 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                 onClose={() => setShowBanner(false)}
                 sx={{
                   mb: 2,
-                  bgcolor: '#EFF6FF',
-                  color: 'text.secondary',
+                  bgcolor: '#DBEAFE',
+                  color: 'text.primary',
+                  fontWeight: 600,
+                  '& .MuiAlert-message': { fontWeight: 600 },
                   '& .MuiAlert-icon': { color: 'primary.main' },
                 }}
               >

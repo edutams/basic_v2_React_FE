@@ -16,7 +16,7 @@ import {
 import dayjs from 'dayjs';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import StatCard from '@/components/shared/StatCard';
+import StatCard, { StatSubtitleParts, STAT_SUBTITLE_COLORS } from '@/components/shared/StatCard';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
 import { fetchTenantSessions, fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
@@ -174,38 +174,78 @@ const BursarySetup = () => {
       {currentTab === 0 ? (
         // Bursary Setup Stats — five summary cards matching the Bursary
         // Setup reference design.
-        <Grid container spacing={3} mb={1}>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        <Grid container spacing={3} mb={1} alignItems="stretch">
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} sx={{ display: 'flex' }}>
             <StatCard
               count={bursaryStats.totalCategories}
               label="Fee Categories"
-              subtitle={`${bursaryStats.activeCategories} Active · ${Math.max(0, bursaryStats.totalCategories - bursaryStats.activeCategories)} Inactive`}
+              subtitle={
+                <StatSubtitleParts
+                  parts={[
+                    { count: bursaryStats.activeCategories, label: 'Active', color: STAT_SUBTITLE_COLORS.success },
+                    {
+                      count: Math.max(0, bursaryStats.totalCategories - bursaryStats.activeCategories),
+                      label: 'Inactive',
+                      color: STAT_SUBTITLE_COLORS.muted,
+                    },
+                  ]}
+                />
+              }
               icon={IconDatabase}
               colorIndex={0}
               loading={bursaryStatsLoading}
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} sx={{ display: 'flex' }}>
             <StatCard
               count={bursaryStats.totalInstalments}
               label="Instalment Plans"
-              subtitle={`${bursaryStats.activeInstalments} Active · ${Math.max(0, bursaryStats.totalInstalments - bursaryStats.activeInstalments)} Inactive`}
+              subtitle={
+                <StatSubtitleParts
+                  parts={[
+                    { count: bursaryStats.activeInstalments, label: 'Active', color: STAT_SUBTITLE_COLORS.success },
+                    {
+                      count: Math.max(0, bursaryStats.totalInstalments - bursaryStats.activeInstalments),
+                      label: 'Inactive',
+                      color: STAT_SUBTITLE_COLORS.muted,
+                    },
+                  ]}
+                />
+              }
               icon={IconCalendarDollar}
               colorIndex={1}
               loading={bursaryStatsLoading}
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} sx={{ display: 'flex' }}>
             <StatCard
               count={sessions.length}
               label="Academic Sessions"
-              subtitle={`${sessions.filter((s) => s.status === 'active').length} Active · ${sessions.filter((s) => s.status === 'completed').length} Completed`}
+              subtitle={
+                <StatSubtitleParts
+                  parts={[
+                    {
+                      count: sessions.filter((s) => s.status === 'active').length,
+                      label: 'Active',
+                      color: STAT_SUBTITLE_COLORS.success,
+                    },
+                    {
+                      count: sessions.filter((s) => s.status === 'completed').length,
+                      label: 'Completed',
+                      color: STAT_SUBTITLE_COLORS.muted,
+                    },
+                  ]}
+                />
+              }
               icon={IconUsers}
               colorIndex={2}
               loading={sessionsLoading}
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} sx={{ display: 'flex' }}>
             <StatCard
               count={lastTermUpdate.at ? dayjs(lastTermUpdate.at).format('MMM D, YYYY') : 'Not yet updated'}
               countFontSize={16}
@@ -214,9 +254,10 @@ const BursarySetup = () => {
               icon={IconEdit}
               colorIndex={3}
               loading={sessionsLoading}
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} sx={{ display: 'flex' }}>
             <StatCard
               count={selectedSessionTerm ? 1 : 0}
               label="Active Term"
@@ -224,6 +265,7 @@ const BursarySetup = () => {
               icon={IconCalendarCheck}
               colorIndex={4}
               loading={sessionsLoading}
+              sx={{ height: '100%' }}
             />
           </Grid>
         </Grid>
@@ -233,19 +275,27 @@ const BursarySetup = () => {
         // Admission payment names (confirmed against real data: these
         // totals match the combined count of both pay_types, not just
         // whichever sub-tab is currently selected inside PaymentNameTab).
-        <Grid container spacing={3} mb={1}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid container spacing={3} mb={1} alignItems="stretch">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
             <StatCard
               count={paymentNameStats.total}
               label="Payment Items"
-              subtitle={`${paymentNameStats.compulsory} Compulsory · ${paymentNameStats.optional} Optional`}
+              subtitle={
+                <StatSubtitleParts
+                  parts={[
+                    { count: paymentNameStats.compulsory, label: 'Compulsory', color: STAT_SUBTITLE_COLORS.blue },
+                    { count: paymentNameStats.optional, label: 'Optional', color: STAT_SUBTITLE_COLORS.amber },
+                  ]}
+                />
+              }
               icon={IconStack2}
               colorIndex={0}
               loading={paymentNameStatsLoading}
               showChevron
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
             <StatCard
               count={paymentNameStats.settlement_account_total || 0}
               label="Settlement Accounts"
@@ -259,9 +309,10 @@ const BursarySetup = () => {
               colorIndex={1}
               loading={paymentNameStatsLoading}
               showChevron
+              sx={{ height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
             <StatCard
               count={paymentNameStats.top_settlement_account?.bank_name || 'None yet'}
               countFontSize={16}
@@ -275,18 +326,34 @@ const BursarySetup = () => {
               colorIndex={3}
               loading={paymentNameStatsLoading}
               showChevron
-              sx={{ bgcolor: '#FFFBEB', borderColor: '#FDE68A' }}
+              sx={{ bgcolor: '#FFFBEB', borderColor: '#FDE68A', height: '100%' }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex' }}>
             <StatCard
               count={paymentNameStats.total}
               label="Fee Bearer Distribution"
-              subtitle={`${paymentNameStats.fee_bearer?.client || 0} Parent/Student · ${paymentNameStats.fee_bearer?.merchant || 0} School`}
+              subtitle={
+                <StatSubtitleParts
+                  parts={[
+                    {
+                      count: paymentNameStats.fee_bearer?.client || 0,
+                      label: 'Parent/Student',
+                      color: STAT_SUBTITLE_COLORS.success,
+                    },
+                    {
+                      count: paymentNameStats.fee_bearer?.merchant || 0,
+                      label: 'School',
+                      color: STAT_SUBTITLE_COLORS.blue,
+                    },
+                  ]}
+                />
+              }
               icon={IconUsers}
               colorIndex={2}
               loading={paymentNameStatsLoading}
               showChevron
+              sx={{ height: '100%' }}
             />
           </Grid>
         </Grid>

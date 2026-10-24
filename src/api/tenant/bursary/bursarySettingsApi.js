@@ -60,7 +60,10 @@ export const fetchGatewayChargeBearer = async () => {
     return res.data;
 }
 
-export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption = 'compulsory', payType = 'bursary', search = '') => {
+// payOption left undefined combines Compulsory + Optional into one list,
+// sorted compulsory-first by the backend — the Set Schedule grid's unified
+// view. Pass 'compulsory'/'optional' explicitly to scope to just one.
+export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption, payType = 'bursary', search = '') => {
     const params = {
         session_id: sessionId,
         term_id: termId,
@@ -74,6 +77,13 @@ export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOp
     }
 
     const res = await api.get('/bursary/payment_schedule/fetch_payment_schedules', { params });
+    return res.data;
+};
+
+export const fetchScheduleClassesOverview = async (sessionId, termId, categoryId, payType = 'bursary') => {
+    const params = { session_id: sessionId, term_id: termId, pay_type: payType };
+    if (categoryId) params.category_id = categoryId;
+    const res = await api.get('/bursary/payment_schedule/classes_overview', { params });
     return res.data;
 };
 
@@ -129,7 +139,8 @@ export const getPaidStudentsForSchedule = async (id) => {
     return res.data;
 };
 
-export const fetchPaymentScheduleStats = async (sessionId, termId, payOption = 'compulsory', payType = 'bursary') => {
+// payOption left undefined combines Compulsory + Optional stats into one.
+export const fetchPaymentScheduleStats = async (sessionId, termId, payOption, payType = 'bursary') => {
     const res = await api.get('/bursary/payment_schedule/stats', {
         params: { session_id: sessionId, term_id: termId, pay_option: payOption, pay_type: payType }
     });

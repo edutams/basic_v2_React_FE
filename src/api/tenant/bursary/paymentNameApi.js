@@ -33,6 +33,11 @@ export const togglePaymentNameStatus = async (id) => {
     return res.data;
 };
 
+export const updatePaymentNamePayOption = async (id, payOption) => {
+    const res = await api.put(`/bursary/payment_name/update_pay_option/${id}`, { pay_option: payOption });
+    return res.data;
+};
+
 export const fetchSkoolPayBanks = async () => {
     const res = await api.get('/bursary/payment_name/fetch_skoolpay_banks');
     return res.data;

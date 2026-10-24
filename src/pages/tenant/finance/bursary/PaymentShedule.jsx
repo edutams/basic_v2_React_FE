@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
   Typography,
   Paper,
-  Tabs,
-  Tab,
   Alert,
   Snackbar,
   Portal,
@@ -13,8 +12,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Switch,
   Button,
   Stack,
   CircularProgress,
@@ -23,28 +20,29 @@ import {
   DialogContent,
   DialogActions,
   Skeleton,
+  LinearProgress,
+  Divider,
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
-  FileUpload as UploadIcon,
   Wallet as WalletIcon,
   Message as MessageIcon,
   Email as EmailIcon,
   Article as ArticleIcon,
-  SwapHoriz as MigrateIcon,
-  ArrowBack as ArrowBackIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
+import { IconStack2, IconCash, IconTag, IconUsers, IconSettings, IconCalendarEvent } from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
-import CompulsoryScheduleTab from '@/components/tenant/bursary/payment-shedule/CompulsoryScheduleTab';
-import OptionalPaymentTab from '@/components/tenant/bursary/payment-shedule/OptionalPaymentTab';
+import PaymentScheduleGrid from '@/components/tenant/bursary/payment-shedule/PaymentScheduleGrid';
 import GenerateInvoiceTab from '@/components/tenant/bursary/payment-shedule/GenerateInvoiceTab';
 import SendInvoiceTab from '@/components/tenant/bursary/payment-shedule/SendInvoiceTab';
 import {
   fetchBursarySessionTerms,
   fetchActiveCategories,
   fetchPaymentScheduleStats,
+  fetchScheduleClassesOverview,
   fetchGenerateInvoiceStats,
   fetchTermsBySessionTerm,
   importPaymentSchedule,
@@ -56,9 +54,107 @@ import { migrateBursarySchedules } from '@/api/tenant/term-migration/termMigrati
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment Schedule' }];
 
+/** Stat-card header: icon tile + title + subtitle, chevron pinned right —
+ * shared by all 3 top stat cards. */
+const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle }) => (
+  <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.25}>
+    <Box display="flex" alignItems="center" gap={1}>
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: '8px',
+          bgcolor: iconBg,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Icon size={18} />
+      </Box>
+      <Box>
+        <Typography variant="body2" fontWeight={600}>
+          {title}
+        </Typography>
+        <Typography variant="caption" color="textSecondary">
+          {subtitle}
+        </Typography>
+      </Box>
+    </Box>
+    <ChevronRightIcon sx={{ color: 'text.disabled' }} />
+  </Box>
+);
+
+/** The two figures inside a stat card, separated by a vertical divider —
+ * "Not Set" renders in red whenever the underlying value is genuinely
+ * absent (no schedule data at all yet), never a fabricated ₦0. */
+const StatFigure = ({ value, label, color, notSet }) => (
+  <Box flex={1} textAlign="center">
+    {notSet ? (
+      <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: 'error.main' }}>
+        Not Set
+      </Typography>
+    ) : (
+      <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color }}>
+        {value}
+      </Typography>
+    )}
+    <Typography variant="caption" color="textSecondary">
+      {label}
+    </Typography>
+  </Box>
+);
+
+/** Numbered 3-step stepper (Set Schedule / Generate Invoice / Send
+ * Invoice) rendered inside the Breadcrumb's right-aligned slot. */
+const ActionStepper = ({ activeTab, onChange }) => {
+  const steps = ['Set Schedule', 'Generate Invoice', 'Send Invoice'];
+  return (
+    <Stack direction="row" alignItems="center" spacing={1}>
+      {steps.map((label, idx) => (
+        <Stack key={label} direction="row" alignItems="center" spacing={1}>
+          {idx > 0 && <Box sx={{ width: 24, height: 2, bgcolor: 'divider' }} />}
+          <Box
+            onClick={() => onChange(idx)}
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }}
+          >
+            <Box
+              sx={{
+                width: 24,
+                height: 24,
+                borderRadius: '50%',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 700,
+                bgcolor: idx === activeTab ? 'primary.main' : idx < activeTab ? 'success.main' : 'grey.300',
+                color: '#fff',
+              }}
+            >
+              {idx + 1}
+            </Box>
+            <Typography
+              variant="body2"
+              noWrap
+              sx={{ fontWeight: idx === activeTab ? 700 : 500, color: idx === activeTab ? 'primary.main' : 'text.secondary' }}
+            >
+              {label}
+            </Typography>
+          </Box>
+        </Stack>
+      ))}
+    </Stack>
+  );
+};
+
 const PaymentShedule = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
+  const scheduleGridRef = useRef(null);
 
   const schemeMap = [
     { bg: '#DBEAFE', color: '#2563EB' },
@@ -70,10 +166,8 @@ const PaymentShedule = () => {
   const s0 = schemeMap[0];
   const s1 = schemeMap[1];
   const s2 = schemeMap[2];
-  const s3 = schemeMap[3];
 
   const [actionTab, setActionTab] = useState(0);
-  const [scheduleTab, setScheduleTab] = useState(0);
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -99,12 +193,18 @@ const PaymentShedule = () => {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [scheduleStats, setScheduleStats] = useState({
+    paymentItemsTotal: 0,
     schedule: { total: 0, classes: 0 },
     missingSchedules: { total: 0 },
     paymentName: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
     studentCategory: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
   });
   const [loadingStats, setLoadingStats] = useState(false);
+  // "Classes" row — real enrolled headcount + how many of the active
+  // payment items (both Compulsory and Optional combined) already have a
+  // price set for that class, for the Set Schedule step only.
+  const [classesOverview, setClassesOverview] = useState([]);
+  const [loadingClassesOverview, setLoadingClassesOverview] = useState(false);
   const [invoiceStats, setInvoiceStats] = useState({
     invoiceGenerated: 0,
     totalAmount: 0,
@@ -124,14 +224,16 @@ const PaymentShedule = () => {
 
   const refreshStats = () => {
     if (!selectedSession || !activeSubTermId) return;
-    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
     const loadStats = async () => {
       try {
         setLoadingStats(true);
-        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
+        // No pay_option — combines Compulsory + Optional, matching the
+        // merged Set Schedule grid.
+        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId);
         if (res?.success && res.data) {
-          const { schedule, missing_schedules, amount, student_category } = res.data;
+          const { payment_items_total, schedule, missing_schedules, amount, student_category } = res.data;
           setScheduleStats({
+            paymentItemsTotal: payment_items_total ?? 0,
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
             missingSchedules: { total: missing_schedules?.total ?? 0 },
             paymentName: {
@@ -155,6 +257,24 @@ const PaymentShedule = () => {
       }
     };
     loadStats();
+  };
+
+  const refreshClassesOverview = () => {
+    if (!selectedSession || !activeSubTermId) return;
+    const loadOverview = async () => {
+      try {
+        setLoadingClassesOverview(true);
+        const res = await fetchScheduleClassesOverview(selectedSession, activeSubTermId, selectedCategory || undefined);
+        if (res?.success && Array.isArray(res.data)) {
+          setClassesOverview(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to load classes overview:', err);
+      } finally {
+        setLoadingClassesOverview(false);
+      }
+    };
+    loadOverview();
   };
 
   const showSnackbar = (message, severity = 'success') =>
@@ -194,20 +314,19 @@ const PaymentShedule = () => {
     loadSessionTerms();
   }, []);
 
-  // Refetches whenever the session, term, or Compulsory/Optional tab
-  // changes so each category's `missing_count` reflects what's actually
-  // selected — a category can be fully scheduled for one term/pay_option
-  // and missing for another. Doesn't reset `selectedCategory` on refetch
-  // so switching term/tab doesn't yank the bursar's current pick away.
+  // Refetches whenever the session or term changes so each category's
+  // `missing_count` reflects what's actually selected — a category can be
+  // fully scheduled for one term and missing for another. Doesn't reset
+  // `selectedCategory` on refetch so switching term doesn't yank the
+  // bursar's current pick away. Unscoped by pay_option — counts Compulsory
+  // + Optional combined, matching the merged Set Schedule grid.
   useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoadingCategories(true);
-        const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
         const res = await fetchActiveCategories({
           sessionId: selectedSession || undefined,
           termId: activeSubTermId || undefined,
-          payOption,
           payType: 'bursary',
         });
 
@@ -227,13 +346,7 @@ const PaymentShedule = () => {
 
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSession, activeSubTermId, scheduleTab]);
-
-  const selectedSessionLabel =
-    sessions.find((s) => s.id === selectedSessionTerm)?.session?.session_name || '';
-
-  const selectedCategoryLabel =
-    categories.find((c) => String(c.id) === String(selectedCategory))?.name || '';
+  }, [selectedSession, activeSubTermId]);
 
   // Flags categories with zero prices set for the current session/term/tab
   // before the bursar even opens the dropdown — the whole point being they
@@ -251,7 +364,7 @@ const PaymentShedule = () => {
   // against yet), which would otherwise look identical to "fully done".
   const categoryCalloutMessage =
     hasPaymentItems === false
-      ? `No ${scheduleTab === 0 ? 'compulsory' : 'optional'} payment items created yet — add one to start scheduling`
+      ? 'No payment items created yet — add one to start scheduling'
       : categoriesFullyUnsetCount > 0
         ? `${categoriesFullyUnsetCount} categor${categoriesFullyUnsetCount === 1 ? 'y has' : 'ies have'} no schedule/price set for any class${
             categoriesPartiallyMissingCount > 0
@@ -265,10 +378,9 @@ const PaymentShedule = () => {
           : null;
 
   // The Set Schedule tab's own picker is session-only — which term is
-  // active gets picked via the First/Second/Third Term pills inside
-  // CompulsoryScheduleTab/OptionalPaymentTab. `sessions` is a flat list of
-  // session_term rows though (one per term), so it's deduped here to one
-  // entry per session for this dropdown's options.
+  // active gets picked via the term pills inside PaymentScheduleGrid.
+  // `sessions` is a flat list of session_term rows though (one per term),
+  // so it's deduped here to one entry per session for this dropdown's options.
   const distinctSessions = useMemo(() => {
     const bySessionId = new Map();
     sessions.forEach((item) => {
@@ -324,6 +436,17 @@ const PaymentShedule = () => {
     loadSubTerms();
   }, [selectedSession, selectedTerm]);
 
+  // Defaults the Term select to the first term once its list loads (e.g.
+  // after a session change reset it to null) — the Term select itself now
+  // owns this choice; there's no more per-tab term-pill component resolving
+  // it internally.
+  useEffect(() => {
+    if (subTerms.length > 0 && !activeSubTermId) {
+      setActiveSubTermId(subTerms[0].term_id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subTerms]);
+
   const activeSubTermIndex = subTerms.findIndex((term) => term.term_id === activeSubTermId);
   const previousSubTerm = activeSubTermIndex > 0 ? subTerms[activeSubTermIndex - 1] : null;
   const currentSubTerm = activeSubTermIndex >= 0 ? subTerms[activeSubTermIndex] : null;
@@ -334,60 +457,28 @@ const PaymentShedule = () => {
     term?.displayTerm?.display_name ||
     'Term';
 
-  const handleActionTabChange = (e, v) => setActionTab(v);
-  const handleScheduleTabChange = (e, v) => setScheduleTab(v);
-
   const handleUpdateCategory = (categoryId, sessionTermId) => {
     setActionTab(0);
     setSelectedCategory(String(categoryId));
     handleSessionTermChange(sessionTermId);
   };
 
-  // Fetch stats when session, term, schedule tab, or sub-term changes
+  // Fetch stats + classes overview when session, term, or category changes.
   useEffect(() => {
-    if (!selectedSession || !activeSubTermId) return;
-    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
-    const loadStats = async () => {
-      try {
-        setLoadingStats(true);
-        const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId, payOption);
-        if (res?.success && res.data) {
-          const { schedule, missing_schedules, amount, student_category } = res.data;
-          setScheduleStats({
-            schedule: {
-              total: schedule?.total ?? 0,
-              classes: schedule?.classes ?? 0,
-            },
-            missingSchedules: { total: missing_schedules?.total ?? 0 },
-            paymentName: {
-              withMinSchedule: amount?.min?.amount ?? 0,
-              withMaxSchedule: amount?.max?.amount ?? 0,
-              minLabel: amount?.min?.name ?? 'N/A',
-              maxLabel: amount?.max?.name ?? 'N/A',
-            },
-            studentCategory: {
-              withMinSchedule: student_category?.min?.amount ?? 0,
-              withMaxSchedule: student_category?.max?.amount ?? 0,
-              minLabel: student_category?.min?.name ?? 'N/A',
-              maxLabel: student_category?.max?.name ?? 'N/A',
-            },
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load schedule stats:', err);
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-    loadStats();
-  }, [selectedSession, activeSubTermId, scheduleTab]);
+    refreshStats();
+    refreshClassesOverview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSession, activeSubTermId, selectedCategory]);
 
   const stats = scheduleStats;
 
-  // Fetch invoice stats when session term changes or when Generate Invoice tab is active
+  // Fetch invoice stats when session term changes or when Generate Invoice
+  // tab is active. GenerateInvoiceTab's own table is already hardcoded to
+  // 'compulsory' internally (unaffected by the Set Schedule merge), so this
+  // stats-only fetch matches that rather than reading a removed scheduleTab.
   useEffect(() => {
     if (!selectedSessionTerm || actionTab !== 1) return;
-    const payOption = scheduleTab === 0 ? 'compulsory' : 'optional';
+    const payOption = 'compulsory';
 
     const loadInvoiceStats = async () => {
       try {
@@ -490,377 +581,405 @@ const PaymentShedule = () => {
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
       <Breadcrumb
-        title="Payment Schedule"
-        subtitle="Configure how fees are collected for the current term"
+        title={
+          <Box display="flex" alignItems="center" gap={1.25}>
+            <Box
+              sx={{
+                width: 34,
+                height: 34,
+                borderRadius: '10px',
+                bgcolor: 'primary.main',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <IconCalendarEvent size={18} />
+            </Box>
+            <span>Payment Schedule</span>
+          </Box>
+        }
+        subtitle="Configure payment amounts across classes for the selected term."
         items={BCrumb}
-      />
+      >
+        <ActionStepper activeTab={actionTab} onChange={setActionTab} />
+      </Breadcrumb>
 
       {actionTab === 0 && (
-        // Set Schedule Stats
-        <Grid container spacing={2} mb={1}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '10px',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
+        <>
+          {/* Set Schedule summary cards — Compulsory + Optional combined,
+           * matching the merged grid below. */}
+          <Grid container spacing={2} mb={2} alignItems="stretch">
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <StatCardHeader
+                  icon={IconStack2}
+                  iconBg={isDark ? 'rgba(255,255,255,0.08)' : s0.bg}
+                  iconColor={isDark ? '#fff' : s0.color}
+                  title="Payment Items & Categories"
+                  subtitle="Breakdown of configured items"
+                />
+                <Box display="flex" flex={1} alignItems="stretch">
+                  {loadingStats || loadingCategories ? (
+                    <Skeleton width="100%" height={48} />
+                  ) : (
+                    <>
+                      <StatFigure value={stats.paymentItemsTotal} label="Payment Items" color={s0.color} />
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <StatFigure value={categories.length} label="Payment Categories" color={s2.color} />
+                    </>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <StatCardHeader
+                  icon={IconCash}
+                  iconBg={isDark ? 'rgba(255,255,255,0.08)' : s1.bg}
+                  iconColor={isDark ? '#fff' : s1.color}
+                  title="Payment Category Amount Range"
+                  subtitle="Across all payment items and classes"
+                />
+                <Box display="flex" flex={1} alignItems="stretch">
+                  {loadingStats ? (
+                    <Skeleton width="100%" height={40} />
+                  ) : (
+                    <>
+                      <StatFigure
+                        value={`₦${stats.studentCategory.withMinSchedule?.toLocaleString()}`}
+                        label="Minimum Amount"
+                        color="success.main"
+                        notSet={stats.schedule.total === 0}
+                      />
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <StatFigure
+                        value={`₦${stats.studentCategory.withMaxSchedule?.toLocaleString()}`}
+                        label="Maximum Amount"
+                        color={s1.color}
+                        notSet={stats.schedule.total === 0}
+                      />
+                    </>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: 'flex' }}>
+              <Paper
+                elevation={0}
+                sx={{
+                  p: '14px',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: '14px',
+                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                }}
+              >
+                <StatCardHeader
+                  icon={IconTag}
+                  iconBg={isDark ? 'rgba(255,255,255,0.08)' : s2.bg}
+                  iconColor={isDark ? '#fff' : s2.color}
+                  title="Payment Name Amount Range"
+                  subtitle="Across all categories and classes"
+                />
+                <Box display="flex" flex={1} alignItems="stretch">
+                  {loadingStats ? (
+                    <Skeleton width="100%" height={40} />
+                  ) : (
+                    <>
+                      <StatFigure
+                        value={`₦${stats.paymentName.withMinSchedule?.toLocaleString()}`}
+                        label="Minimum Amount"
+                        color="success.main"
+                        notSet={stats.schedule.total === 0}
+                      />
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <StatFigure
+                        value={`₦${stats.paymentName.withMaxSchedule?.toLocaleString()}`}
+                        label="Maximum Amount"
+                        color={s2.color}
+                        notSet={stats.schedule.total === 0}
+                      />
+                    </>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* Classes row — real enrolled headcount, and how many of the
+           * active payment items (both Compulsory and Optional) already
+           * have a price set for that class. Deliberately NOT "students
+           * scheduled": prices are set per class, not per student, so that
+           * figure can't vary gradually per student the way it might look. */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              mb: 2,
+              borderRadius: '14px',
+              bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', lg: 'center' }}
+              flexDirection={{ xs: 'column', lg: 'row' }}
+              gap={2}
+              mb={2}
             >
-              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
+              <Box display="flex" alignItems="center" gap={1.25}>
                 <Box
                   sx={{
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                    color: isDark ? '#fff' : s0.color,
+                    bgcolor: s0.bg,
+                    color: s0.color,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" color="textSecondary">
-                  {scheduleTab === 0 ? 'Compulsory Schedule' : 'Optional Schedule'}
-                </Typography>
-              </Box>
-
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                gap={2}
-                flex={1}
-              >
-                <Box
-                  sx={{
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                    borderRadius: 1,
-                    px: 2,
-                    py: 1.25,
-                    minWidth: 80,
-                    textAlign: 'center',
-                  }}
-                >
-                  {loadingStats ? (
-                    <Skeleton width={70} height={40} />
-                  ) : (
-                    <Typography
-                      variant="h3"
-                      fontWeight={700}
-                      sx={{ color: isDark ? '#ffffff' : s0.color, lineHeight: 1 }}
-                    >
-                      {stats.schedule.total}
-                    </Typography>
-                  )}
+                  <IconUsers size={18} />
                 </Box>
                 <Box>
-                  {loadingStats ? (
-                    <Skeleton width={60} height={32} />
-                  ) : (
-                    <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5 }}>
-                      {stats.schedule.classes}
-                    </Typography>
-                  )}
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="subtitle1" fontWeight={700}>
                     Classes
                   </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    Configure classes to setup payment amounts.
+                  </Typography>
                 </Box>
-              </Box>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '10px',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
-                    color: isDark ? '#fff' : s3.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" color="textSecondary">
-                  Still Missing
-                </Typography>
               </Box>
 
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                gap={2}
-                flex={1}
-              >
-                <Box
-                  sx={{
-                    bgcolor: isDark
-                      ? 'rgba(255,255,255,0.08)'
-                      : stats.missingSchedules.total > 0
-                        ? s3.bg
-                        : '#ebfaf2',
-                    borderRadius: 1,
-                    px: 2,
-                    py: 1.25,
-                    minWidth: 80,
-                    textAlign: 'center',
-                  }}
-                >
-                  {loadingStats ? (
-                    <Skeleton width={70} height={40} />
-                  ) : (
-                    <Typography
-                      variant="h3"
-                      fontWeight={700}
-                      sx={{
-                        color: isDark
-                          ? '#ffffff'
-                          : stats.missingSchedules.total > 0
-                            ? s3.color
-                            : 'success.main',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {stats.missingSchedules.total}
-                    </Typography>
-                  )}
-                </Box>
-                <Typography variant="caption" color="textSecondary" sx={{ flex: 1 }}>
-                  {/* Same number you'd get adding up each row's own "X
-                      missing" count below — a class counts once per payment
-                      item it still needs a price for. */}
-                  class + payment item pairs still need a price
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
+              {/* Session / Term / Student Pay Category — the Session/Term
+               * tabs removed from Set Schedule now live here, alongside the
+               * category selector this page still needs (a schedule can't
+               * be saved without one; not shown in the reference but
+               * required for the existing data model). */}
+              <Box display="flex" flexWrap="wrap" alignItems="center" gap={1.5}>
+                <FormControl size="small" sx={{ minWidth: 160 }}>
+                  <InputLabel>Academic Session</InputLabel>
+                  <Select
+                    value={selectedSession}
+                    label="Academic Session"
+                    onChange={(e) => handleSessionOnlyChange(e.target.value)}
+                    disabled={loadingSessions}
+                  >
+                    {loadingSessions ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={16} />
+                      </MenuItem>
+                    ) : (
+                      distinctSessions.map((item) => (
+                        <MenuItem key={item.session_id} value={item.session_id}>
+                          {item.session?.session_name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '10px',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
-                    color: isDark ? '#fff' : s1.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" color="textSecondary">
-                  Payment Name
-                </Typography>
-              </Box>
-              <Box display="flex" gap={1.5}>
-                <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
-                    Has Minimum Amount
-                  </Typography>
-                  {loadingStats ? (
-                    <Skeleton width={100} height={32} />
-                  ) : (
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
-                      sx={{
-                        lineHeight: 1,
-                        mb: 0.5,
-                        color: isDark ? '#ffffff' : s1.color,
-                      }}
-                    >
-                      ₦{stats.paymentName.withMinSchedule?.toLocaleString()}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="textSecondary">
-                    {stats.paymentName.minLabel}
-                  </Typography>
-                </Box>
-                <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
-                    Has Maximum Amount
-                  </Typography>
-                  {loadingStats ? (
-                    <Skeleton width={100} height={32} />
-                  ) : (
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
-                      sx={{
-                        lineHeight: 1,
-                        mb: 0.5,
-                        color: isDark ? '#ffffff' : s1.color,
-                      }}
-                    >
-                      ₦{stats.paymentName.withMaxSchedule?.toLocaleString()}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="textSecondary">
-                    {stats.paymentName.maxLabel}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
+                <FormControl size="small" sx={{ minWidth: 140 }}>
+                  <InputLabel>Term</InputLabel>
+                  <Select
+                    value={activeSubTermId ?? ''}
+                    label="Term"
+                    onChange={(e) => setActiveSubTermId(e.target.value)}
+                    disabled={subTerms.length === 0}
+                  >
+                    {subTerms.map((term) => (
+                      <MenuItem key={term.term_id} value={term.term_id}>
+                        {getSubTermLabel(term)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
 
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '10px',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={1} mb={1.25}>
-                <Box
-                  sx={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
-                    color: isDark ? '#fff' : s2.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+                <FormControl size="small" sx={{ minWidth: 170 }}>
+                  <InputLabel>Student Pay Category</InputLabel>
+                  <Select
+                    value={selectedCategory}
+                    label="Student Pay Category"
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    disabled={loadingCategories}
+                    renderValue={(val) => categories.find((c) => String(c.id) === String(val))?.name || ''}
+                  >
+                    {loadingCategories ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
+                      </MenuItem>
+                    ) : (
+                      categories.map((category) => (
+                        <MenuItem key={category.id} value={String(category.id)}>
+                          <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" gap={1}>
+                            {category.name}
+                            {category.missing_count > 0 && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontSize: 11,
+                                  fontWeight: 800,
+                                  color: '#fff',
+                                  bgcolor: 'error.main',
+                                  borderRadius: '10px',
+                                  px: 1,
+                                  py: 0.25,
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {category.missing_count} missing
+                              </Box>
+                            )}
+                          </Box>
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconSettings size={16} />}
+                  onClick={() => navigate('/class-structure-manager')}
+                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
                 >
-                  <ReceiptIcon sx={{ fontSize: 16 }} color="currentColor" />
-                </Box>
-                <Typography variant="body2" color="textSecondary">
-                  Student Category
-                </Typography>
+                  Manage Classes
+                </Button>
               </Box>
-              <Box display="flex" gap={1.5}>
-                <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
-                    Has Minimum Amount
-                  </Typography>
-                  {loadingStats ? (
-                    <Skeleton width={100} height={32} />
-                  ) : (
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
+            </Box>
+
+            {/* Always-visible category callout, relocated here now that the
+             * category selector itself lives in this card. */}
+            {categoryCalloutMessage && (
+              <Alert severity="error" variant="outlined" sx={{ mb: 2, py: 0.25 }}>
+                {categoryCalloutMessage}
+              </Alert>
+            )}
+
+            <Grid container spacing={2}>
+              {(loadingClassesOverview ? Array.from({ length: 6 }) : classesOverview).map((cls, idx) => {
+                const scheme = schemeMap[idx % schemeMap.length];
+                const pct = cls ? Math.round((cls.priced_items / Math.max(cls.total_items, 1)) * 100) : 0;
+                const notSet = cls && cls.priced_items === 0;
+                return (
+                  <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                    <Paper
+                      variant="outlined"
+                      onClick={() => cls && scheduleGridRef.current?.scrollToClass(cls.id)}
                       sx={{
-                        lineHeight: 1,
-                        mb: 0.5,
-                        color: isDark ? '#ffffff' : s2.color,
+                        p: 1.5,
+                        borderRadius: '12px',
+                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
+                        cursor: cls ? 'pointer' : 'default',
+                        transition: 'transform 150ms ease, box-shadow 150ms ease',
+                        '&:hover': cls ? { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(15,23,42,0.08)' } : undefined,
                       }}
                     >
-                      ₦{stats.studentCategory.withMinSchedule?.toLocaleString()}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="textSecondary">
-                    {stats.studentCategory.minLabel}
-                  </Typography>
-                </Box>
-                <Box flex={1}>
-                  <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
-                    Has Maximum Amount
-                  </Typography>
-                  {loadingStats ? (
-                    <Skeleton width={100} height={32} />
-                  ) : (
-                    <Typography
-                      variant="h5"
-                      fontWeight={700}
-                      sx={{
-                        lineHeight: 1,
-                        mb: 0.5,
-                        color: isDark ? '#ffffff' : s2.color,
-                      }}
-                    >
-                      ₦{stats.studentCategory.withMaxSchedule?.toLocaleString()}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="textSecondary">
-                    {stats.studentCategory.maxLabel}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-        </Grid>
+                      {!cls ? (
+                        <Skeleton variant="rounded" height={90} />
+                      ) : (
+                        <>
+                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                            <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                              <Box
+                                sx={{
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: '8px',
+                                  bgcolor: scheme.bg,
+                                  color: scheme.color,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <IconUsers size={16} />
+                              </Box>
+                              <Typography variant="body2" fontWeight={700} noWrap>
+                                {cls.class_code || cls.class_name}
+                              </Typography>
+                            </Box>
+                            <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                          </Box>
+                          <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
+                            {cls.student_count} students
+                          </Typography>
+                          <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={pct}
+                              sx={{
+                                flex: 1,
+                                height: 6,
+                                borderRadius: 3,
+                                bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                                '& .MuiLinearProgress-bar': { bgcolor: notSet ? 'error.main' : scheme.color, borderRadius: 3 },
+                              }}
+                            />
+                            <Typography variant="caption" fontWeight={700} sx={{ color: notSet ? 'error.main' : scheme.color }}>
+                              {pct}%
+                            </Typography>
+                          </Box>
+                          {notSet ? (
+                            <Typography variant="caption" fontWeight={700} color="error.main">
+                              Not Set
+                            </Typography>
+                          ) : (
+                            <Typography variant="caption" color="textSecondary">
+                              {cls.priced_items} of {cls.total_items} items scheduled
+                            </Typography>
+                          )}
+                        </>
+                      )}
+                    </Paper>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Paper>
+        </>
       )}
 
       {actionTab === 1 && (
@@ -1139,296 +1258,40 @@ const PaymentShedule = () => {
         </Grid>
       )}
 
-      <Box sx={{ mb: 2 }}>
-        <Tabs
-          value={actionTab}
-          onChange={handleActionTabChange}
-          variant="scrollable"
-          sx={{
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-            },
-          }}
-        >
-          <Tab label="1. Set Schedule" />
-          <Tab label="2. Generate Invoice" />
-          <Tab label="3. Send Invoice" />
-        </Tabs>
-      </Box>
-
-      <Paper sx={{ borderRadius: 2 }}>
+      <Box>
         {actionTab === 0 && (
-          <>
-            <Box
-              sx={{
-                px: 1.5,
-                pt: 1.5,
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                justifyContent: 'space-between',
-                alignItems: { xs: 'stretch', sm: 'center' },
-                gap: 2,
-              }}
-            >
-              {/* Schedule Type Tabs */}
-              <Box sx={{ width: { xs: '100%', sm: 'auto' }, overflowX: 'auto' }}>
-                <Tabs
-                  value={scheduleTab}
-                  onChange={handleScheduleTabChange}
-                  sx={{
-                    minHeight: 40,
-                    '& .MuiTab-root': {
-                      minHeight: 40,
-                      textTransform: 'none',
-                      fontWeight: 600,
-                    },
-                  }}
-                >
-                  <Tab
-                    label="Compulsory"
-                    icon={
-                      <Box
-                        component="span"
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          bgcolor: scheduleTab === 0 ? 'primary.main' : 'grey.300',
-                          color: 'white',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          mr: 1,
-                        }}
-                      >
-                        1
-                      </Box>
-                    }
-                    iconPosition="start"
-                  />
-                  <Tab
-                    label="Optional Payment"
-                    icon={
-                      <Box
-                        component="span"
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          bgcolor: scheduleTab === 1 ? 'primary.main' : 'grey.300',
-                          color: 'white',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 12,
-                          fontWeight: 700,
-                          mr: 1,
-                        }}
-                      >
-                        2
-                      </Box>
-                    }
-                    iconPosition="start"
-                  />
-                </Tabs>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button
-                  variant="contained"
-                  size="small"
-                  startIcon={<MigrateIcon />}
-                  onClick={() => setMigrateModalOpen(true)}
-                  sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}
-                >
-                  Migrate Schedules from Previous Term
-                </Button>
-              </Box>
-            </Box>
-
-            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: { xs: 'column', lg: 'row' },
-                  justifyContent: 'flex-start',
-                  alignItems: { xs: 'flex-start', lg: 'center' },
-                  gap: 2,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', sm: 'row' },
-                    gap: 2,
-                    alignItems: { xs: 'stretch', sm: 'center' },
-                    width: { xs: '100%', lg: 'auto' },
-                  }}
-                >
-                  <FormControl size="small" sx={{ minWidth: 220 }}>
-                    <InputLabel>Session</InputLabel>
-                    <Select
-                      value={selectedSession}
-                      label="Session"
-                      onChange={(e) => handleSessionOnlyChange(e.target.value)}
-                      disabled={loadingSessions}
-                    >
-                      {loadingSessions ? (
-                        <MenuItem disabled>
-                          <CircularProgress size={16} />
-                        </MenuItem>
-                      ) : (
-                        distinctSessions.map((item) => (
-                          <MenuItem key={item.session_id} value={item.session_id}>
-                            {item.session?.session_name}
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl size="small" sx={{ minWidth: { sm: 200 } }}>
-                    <InputLabel>Student Pay Category</InputLabel>
-                    <Select
-                      value={selectedCategory}
-                      label="Student Pay Category"
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      disabled={loadingCategories}
-                      renderValue={(val) =>
-                        categories.find((c) => String(c.id) === String(val))?.name || ''
-                      }
-                    >
-                      {loadingCategories ? (
-                        <MenuItem disabled>
-                          <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                        </MenuItem>
-                      ) : (
-                        categories.map((category) => (
-                          <MenuItem key={category.id} value={String(category.id)}>
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              width="100%"
-                              gap={1}
-                            >
-                              {category.name}
-                              {category.missing_count > 0 && (
-                                <Box
-                                  component="span"
-                                  sx={{
-                                    fontSize: 11,
-                                    fontWeight: 800,
-                                    color: '#fff',
-                                    bgcolor: 'error.main',
-                                    borderRadius: '10px',
-                                    px: 1,
-                                    py: 0.25,
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {category.missing_count} missing
-                                </Box>
-                              )}
-                            </Box>
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                  </FormControl>
-
-                  {/* Always-visible, not hover-only — a bursar needs to see
-                      this without discovering a tooltip first. */}
-                  {categoryCalloutMessage && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        animation: 'pointAtCategoryPicker 1.4s ease-in-out infinite',
-                        '@keyframes pointAtCategoryPicker': {
-                          '0%, 100%': { opacity: 1, transform: 'translateX(0)' },
-                          '50%': { opacity: 0.65, transform: 'translateX(-3px)' },
-                        },
-                      }}
-                    >
-                      <ArrowBackIcon sx={{ fontSize: 18, color: 'error.main' }} />
-                      <Box
-                        sx={{
-                          bgcolor: 'error.main',
-                          color: '#fff',
-                          borderRadius: '6px',
-                          px: 1,
-                          py: 0.4,
-                          boxShadow: '0 2px 6px rgba(211,47,47,0.45)',
-                        }}
-                      >
-                        <Typography
-                          variant="caption"
-                          sx={{ color: '#fff', fontWeight: 800, lineHeight: 1.2, whiteSpace: 'nowrap' }}
-                        >
-                          {categoryCalloutMessage}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-          </>
+          <PaymentScheduleGrid
+            ref={scheduleGridRef}
+            showSnackbar={showSnackbar}
+            sessionId={selectedSession}
+            activeTermId={activeSubTermId}
+            categoryId={selectedCategory}
+            payType="bursary"
+            classesOverview={classesOverview}
+            onOpenMigrate={() => setMigrateModalOpen(true)}
+            refreshStats={() => {
+              refreshStats();
+              refreshClassesOverview();
+            }}
+            scheduleRefreshKey={scheduleRefreshKey}
+          />
         )}
-
-        {/* Tab Content */}
-        <Box sx={{ p: 1.5 }}>
-          {actionTab === 0 && (
-            <>
-              {scheduleTab === 0 && (
-                <CompulsoryScheduleTab
-                  showSnackbar={showSnackbar}
-                  sessionId={selectedSession}
-                  termId={selectedTerm}
-                  categoryId={selectedCategory}
-                  sessionLabel={selectedSessionLabel}
-                  categoryLabel={selectedCategoryLabel}
-                  payOption="compulsory"
-                  payType="bursary"
-                  onTermChange={setActiveSubTermId}
-                  refreshStats={refreshStats}
-                  scheduleRefreshKey={scheduleRefreshKey}
-                />
-              )}
-              {scheduleTab === 1 && (
-                <OptionalPaymentTab
-                  showSnackbar={showSnackbar}
-                  sessionId={selectedSession}
-                  termId={selectedTerm}
-                  categoryId={selectedCategory}
-                  sessionLabel={selectedSessionLabel}
-                  categoryLabel={selectedCategoryLabel}
-                  payOption="optional"
-                  payType="bursary"
-                  onTermChange={setActiveSubTermId}
-                  refreshStats={refreshStats}
-                  scheduleRefreshKey={scheduleRefreshKey}
-                />
-              )}
-            </>
-          )}
-          {actionTab === 1 && (
+        {actionTab === 1 && (
+          <Paper sx={{ borderRadius: 2, p: 1.5 }}>
             <GenerateInvoiceTab
               showSnackbar={showSnackbar}
               onUpdateCategory={handleUpdateCategory}
               selectedClass={selectedClass}
               setSelectedClass={setSelectedClass}
             />
-          )}
-          {actionTab === 2 && (
+          </Paper>
+        )}
+        {actionTab === 2 && (
+          <Paper sx={{ borderRadius: 2, p: 1.5 }}>
             <SendInvoiceTab showSnackbar={showSnackbar} refreshStats={refreshSendInvoiceStats} />
-          )}
-        </Box>
-      </Paper>
+          </Paper>
+        )}
+      </Box>
 
       <TermMigrationModal
         open={migrateModalOpen}

@@ -22,7 +22,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
   Chip,
   Alert,
   LinearProgress,
@@ -31,6 +30,7 @@ import {
   Menu,
   Tooltip,
   Divider,
+  Skeleton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -47,6 +47,7 @@ import {
   FileDownloadOutlined as ExportIcon,
   MoreVert as MoreVertIcon,
   ChevronRight as ChevronRightIcon,
+  InfoOutlined as InfoOutlinedIcon,
   DescriptionOutlined as DocIconGreen,
   PersonOutline as PersonIcon,
   BarChartOutlined as BarChartIcon,
@@ -94,8 +95,9 @@ const categoryIconFor = (name) =>
   CATEGORY_ICON_RULES.find((rule) => rule.test.test(name || ''))?.icon || CategoryIcon;
 
 /** Icon tile + title + subtitle + chevron — the same header shape every
- * stat card on the Payment Schedule page uses (Set Schedule step included). */
-const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle }) => (
+ * stat card on the Payment Schedule page uses (Set Schedule step included).
+ * An optional `tooltip` explains what the figure means and how it's scoped. */
+const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle, tooltip }) => (
   <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5}>
     <Box display="flex" alignItems="center" gap={1}>
       <Box
@@ -122,7 +124,14 @@ const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle }) => (
         </Typography>
       </Box>
     </Box>
-    <ChevronRightIcon sx={{ color: 'text.disabled' }} />
+    <Stack direction="row" spacing={0.25} alignItems="center">
+      {tooltip && (
+        <Tooltip title={tooltip} arrow placement="top">
+          <InfoOutlinedIcon sx={{ fontSize: 16, color: 'text.disabled', cursor: 'help' }} />
+        </Tooltip>
+      )}
+      <ChevronRightIcon sx={{ color: 'text.disabled' }} />
+    </Stack>
   </Box>
 );
 
@@ -151,39 +160,52 @@ const MiniIconTile = ({ icon: Icon, bg, color, size = 28 }) => (
 const CellVisual = ({ cell }) => {
   if (!cell || cell.status === 'not_applicable') {
     return (
-      <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
-        <RemoveCircleOutlineIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
-        <Typography variant="body2" color="text.disabled">
-          —
-        </Typography>
-      </Stack>
+      <Tooltip title="No eligible students of this category exist in the current class scope — this item isn't applicable here.">
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          justifyContent="center"
+          sx={{ cursor: 'help' }}
+        >
+          <RemoveCircleOutlineIcon sx={{ fontSize: 16, color: 'text.disabled' }} />
+          <Typography variant="body2" color="text.disabled">
+            —
+          </Typography>
+        </Stack>
+      </Tooltip>
     );
   }
 
   const needsReview = cell.status === 'unpriced' || cell.status === 'partial';
+  const tooltip = needsReview
+    ? `Only ${cell.priced_students} of ${cell.total_students} eligible students are priced for this item — the rest are in a class with no price set. Fix it in Set Schedule.`
+    : `Priced for all ${cell.total_students} eligible student${cell.total_students === 1 ? '' : 's'} in this category.`;
 
   return (
-    <Box textAlign="center">
-      <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
-        {needsReview ? (
-          <ErrorOutlineIcon sx={{ fontSize: 16, color: 'error.main' }} />
-        ) : (
-          <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'success.main' }} />
-        )}
-        <Typography
-          variant="body2"
-          fontWeight={700}
-          color={needsReview ? 'error.main' : 'text.primary'}
-        >
-          {CURRENCY(cell.amount)}
+    <Tooltip title={tooltip}>
+      <Box textAlign="center" sx={{ cursor: 'help' }}>
+        <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+          {needsReview ? (
+            <ErrorOutlineIcon sx={{ fontSize: 16, color: 'error.main' }} />
+          ) : (
+            <CheckCircleOutlineIcon sx={{ fontSize: 16, color: 'success.main' }} />
+          )}
+          <Typography
+            variant="body2"
+            fontWeight={700}
+            color={needsReview ? 'error.main' : 'text.primary'}
+          >
+            {CURRENCY(cell.amount)}
+          </Typography>
+        </Stack>
+        <Typography variant="caption" color="text.secondary">
+          {needsReview
+            ? `${cell.priced_students}/${cell.total_students} priced`
+            : `${cell.total_students} student${cell.total_students === 1 ? '' : 's'}`}
         </Typography>
-      </Stack>
-      <Typography variant="caption" color="text.secondary">
-        {needsReview
-          ? `${cell.priced_students}/${cell.total_students} priced`
-          : `${cell.total_students} student${cell.total_students === 1 ? '' : 's'}`}
-      </Typography>
-    </Box>
+      </Box>
+    </Tooltip>
   );
 };
 
@@ -287,7 +309,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
       }
     } catch (err) {
       console.error('Failed to load generate invoice overview', err);
-      setErrorOverview(err?.response?.data?.message || err.message || 'Failed to load invoice overview');
+      setErrorOverview(
+        err?.response?.data?.message || err.message || 'Failed to load invoice overview',
+      );
       if (typeof showSnackbar === 'function') {
         showSnackbar('Failed to load invoice overview', 'error');
       }
@@ -305,6 +329,11 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
   const categories = overview?.categories || [];
   const items = overview?.items || [];
   const footer = overview?.footer || { categories: {}, grand_total: 0 };
+  // While loading, the table reuses the last real column/row count as its
+  // skeleton shape so nothing jumps once fresh data lands; a true first
+  // load (nothing fetched yet) falls back to a generic 3x5 placeholder.
+  const tableCategories = categories.length > 0 ? categories : [{ id: 'sk-c1' }, { id: 'sk-c2' }, { id: 'sk-c3' }];
+  const tableItems = items.length > 0 ? items : [{ id: 'sk-i1' }, { id: 'sk-i2' }, { id: 'sk-i3' }, { id: 'sk-i4' }, { id: 'sk-i5' }];
   const stats = overview?.stats || {
     students_in_scope: 0,
     classes_in_scope: 0,
@@ -365,6 +394,10 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
     setMenuAnchor(null);
   };
 
+  // A hair darker than the theme's own divider so the stat/summary cards
+  // read as distinct surfaces rather than blending into the page background.
+  const cardBorderColor = isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.15)';
+
   const reviewPillSx = {
     bgcolor: isDark ? 'rgba(220,38,38,0.15)' : '#FEF2F2',
     color: 'error.main',
@@ -383,103 +416,157 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
           stat-card row (not grouped with the filters below). */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+          >
             <StatCardHeader
               icon={StudentsIcon}
               iconBg={isDark ? 'rgba(79,70,229,0.18)' : '#EEF2FF'}
               iconColor={isDark ? '#fff' : '#4F46E5'}
               title="Students in Scope"
               subtitle="Eligible for invoicing"
+              tooltip="Real headcount of students across the selected class scope, based on each student's assigned payment category. Not affected by the Category or search filters below."
             />
-            <Typography variant="h4" fontWeight={700} color="#4F46E5" sx={{ lineHeight: 1 }}>
-              {loadingOverview ? <CircularProgress size={22} /> : stats.students_in_scope}
-            </Typography>
-            <Chip
-              size="small"
-              label={`${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}`}
-              sx={{
-                mt: 1,
-                bgcolor: isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7',
-                color: '#16A34A',
-                fontWeight: 700,
-                height: 22,
-              }}
-            />
+            {loadingOverview ? (
+              <Skeleton variant="text" width={70} height={44} sx={{ transform: 'none' }} />
+            ) : (
+              <Typography variant="h4" fontWeight={700} color="#4F46E5" sx={{ lineHeight: 1 }}>
+                {stats.students_in_scope}
+              </Typography>
+            )}
+            {loadingOverview ? (
+              <Skeleton variant="rounded" width={72} height={22} sx={{ mt: 1, borderRadius: '999px' }} />
+            ) : (
+              <Chip
+                size="small"
+                label={`${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}`}
+                sx={{
+                  mt: 1,
+                  bgcolor: isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7',
+                  color: '#16A34A',
+                  fontWeight: 700,
+                  height: 22,
+                }}
+              />
+            )}
           </Paper>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+          >
             <StatCardHeader
               icon={MoneyIcon}
               iconBg={isDark ? 'rgba(22,163,74,0.18)' : '#ECFDF5'}
               iconColor="success.main"
               title="Projected Invoice Value"
               subtitle="Total amount to be invoiced"
+              tooltip="Sum of every priced payment item × category combination in the current scope. A combination with no price set contributes nothing here — it shows up under Items Needing Review instead."
             />
-            <Typography variant="h4" fontWeight={700} color="success.main" sx={{ lineHeight: 1 }}>
-              {loadingOverview ? <CircularProgress size={22} /> : CURRENCY(stats.projected_value)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Across {stats.items_in_scope} payment item{stats.items_in_scope === 1 ? '' : 's'}
-            </Typography>
+            {loadingOverview ? (
+              <Skeleton variant="text" width={150} height={44} sx={{ transform: 'none' }} />
+            ) : (
+              <Typography variant="h4" fontWeight={700} color="success.main" sx={{ lineHeight: 1 }}>
+                {CURRENCY(stats.projected_value)}
+              </Typography>
+            )}
+            {loadingOverview ? (
+              <Skeleton variant="text" width={160} height={20} sx={{ mt: 1 }} />
+            ) : (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Across {stats.items_in_scope} payment item{stats.items_in_scope === 1 ? '' : 's'}
+              </Typography>
+            )}
           </Paper>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+          >
             <StatCardHeader
               icon={CoverageIcon}
               iconBg={isDark ? 'rgba(147,51,234,0.18)' : '#F3E8FF'}
               iconColor="#9333EA"
               title="Invoice Coverage"
               subtitle="Generated / Eligible students"
+              tooltip="Share of eligible students in this class scope who already have at least one invoice generated this term. Deliberately not affected by the Category or search filters, so it stays a stable fact about the class."
             />
             <Box display="flex" alignItems="center" gap={1.5}>
-              <Typography variant="h5" fontWeight={700} color="#9333EA" sx={{ lineHeight: 1, whiteSpace: 'nowrap' }}>
-                {loadingOverview ? (
-                  <CircularProgress size={22} />
-                ) : (
-                  `${stats.generated_students} / ${stats.students_in_scope}`
-                )}
-              </Typography>
+              {loadingOverview ? (
+                <Skeleton variant="text" width={90} height={36} sx={{ transform: 'none', flexShrink: 0 }} />
+              ) : (
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#9333EA"
+                  sx={{ lineHeight: 1, whiteSpace: 'nowrap' }}
+                >
+                  {`${stats.generated_students} / ${stats.students_in_scope}`}
+                </Typography>
+              )}
               <Box flex={1} minWidth={40}>
-                <LinearProgress
-                  variant="determinate"
-                  value={stats.coverage_pct}
-                  color="success"
-                  sx={{ height: 7, borderRadius: 4 }}
-                />
+                {loadingOverview ? (
+                  <Skeleton variant="rounded" height={7} sx={{ borderRadius: 4 }} />
+                ) : (
+                  <LinearProgress
+                    variant="determinate"
+                    value={stats.coverage_pct}
+                    color="success"
+                    sx={{ height: 7, borderRadius: 4 }}
+                  />
+                )}
               </Box>
-              <Typography variant="caption" fontWeight={700} color="text.secondary">
-                {stats.coverage_pct}%
-              </Typography>
+              {loadingOverview ? (
+                <Skeleton variant="text" width={32} height={20} sx={{ transform: 'none', flexShrink: 0 }} />
+              ) : (
+                <Typography variant="caption" fontWeight={700} color="text.secondary">
+                  {stats.coverage_pct}%
+                </Typography>
+              )}
             </Box>
           </Paper>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+          >
             <StatCardHeader
               icon={ReviewIcon}
               iconBg={isDark ? 'rgba(217,119,6,0.18)' : '#FEF3C7'}
               iconColor="#D97706"
               title="Items Needing Review"
               subtitle="Unpriced combinations"
+              tooltip="A payment item × category combination is flagged when at least one eligible student of that category is in a class with no price set for that item — within the current class/category filter."
             />
             <Box display="flex" alignItems="center" justifyContent="space-between">
-              <Typography
-                variant="h4"
-                fontWeight={700}
-                color={stats.needs_review_count > 0 ? 'error.main' : 'success.main'}
-                sx={{ lineHeight: 1 }}
-              >
-                {loadingOverview ? <CircularProgress size={22} /> : stats.needs_review_count}
-              </Typography>
-              {stats.needs_review_count > 0 && typeof onReviewPricing === 'function' && (
-                <Button size="small" onClick={onReviewPricing} sx={reviewPillSx}>
-                  Review now
-                </Button>
+              {loadingOverview ? (
+                <Skeleton variant="text" width={40} height={44} sx={{ transform: 'none' }} />
+              ) : (
+                <Typography
+                  variant="h4"
+                  fontWeight={700}
+                  color={stats.needs_review_count > 0 ? 'error.main' : 'success.main'}
+                  sx={{ lineHeight: 1 }}
+                >
+                  {stats.needs_review_count}
+                </Typography>
+              )}
+              {loadingOverview ? (
+                <Skeleton variant="rounded" width={92} height={28} sx={{ borderRadius: '999px' }} />
+              ) : (
+                stats.needs_review_count > 0 &&
+                typeof onReviewPricing === 'function' && (
+                  <Button size="small" onClick={onReviewPricing} sx={reviewPillSx}>
+                    Review now
+                  </Button>
+                )
               )}
             </Box>
           </Paper>
@@ -643,13 +730,25 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                   key={cls.id}
                   label={`${cls.class_name} (${cls.student_count})`}
                   onClick={() => setSelectedClass(String(cls.id))}
-                  icon={cls.has_invoice_generated ? <CheckCircleIcon sx={{ fontSize: 18 }} /> : undefined}
+                  icon={
+                    cls.has_invoice_generated ? (
+                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                    ) : undefined
+                  }
                   sx={{
                     bgcolor: isSelected ? 'primary.main' : isDark ? 'background.paper' : '#fff',
-                    color: isSelected ? '#fff' : cls.has_invoice_generated ? 'primary.main' : 'text.primary',
+                    color: isSelected
+                      ? '#fff'
+                      : cls.has_invoice_generated
+                        ? 'primary.main'
+                        : 'text.primary',
                     fontWeight: 700,
                     border: '1px solid',
-                    borderColor: isSelected ? 'primary.main' : cls.has_invoice_generated ? 'primary.main' : 'divider',
+                    borderColor: isSelected
+                      ? 'primary.main'
+                      : cls.has_invoice_generated
+                        ? 'primary.main'
+                        : 'divider',
                     '& .MuiChip-icon': { color: isSelected ? '#fff' : 'success.dark' },
                   }}
                 />
@@ -659,21 +758,32 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
         </Box>
       </Paper>
 
-      {/* Summary panel */}
-      {hasData && (
+      {/* Summary panel — two separate cards with space between them. */}
+      {(hasData || loadingOverview) && (
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+            >
               <Typography variant="body2" fontWeight={700} mb={1.5}>
                 Invoice Progress
               </Typography>
               <Stack direction="row" spacing={3} mb={1.5}>
                 <Stack direction="row" spacing={1} alignItems="center">
-                  <MiniIconTile icon={PersonIcon} bg={isDark ? 'rgba(255,255,255,0.08)' : 'grey.100'} color="text.secondary" />
+                  <MiniIconTile
+                    icon={PersonIcon}
+                    bg={isDark ? 'rgba(255,255,255,0.08)' : 'grey.100'}
+                    color="text.secondary"
+                  />
                   <Box>
-                    <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.1 }}>
-                      {summary.eligible}
-                    </Typography>
+                    {loadingOverview ? (
+                      <Skeleton variant="text" width={40} height={32} sx={{ transform: 'none' }} />
+                    ) : (
+                      <Typography variant="h5" fontWeight={700} sx={{ lineHeight: 1.1 }}>
+                        {summary.eligible}
+                      </Typography>
+                    )}
                     <Typography variant="caption" color="text.secondary">
                       Eligible students
                     </Typography>
@@ -686,9 +796,18 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     color="success.main"
                   />
                   <Box>
-                    <Typography variant="h6" fontWeight={700} color="success.main" sx={{ lineHeight: 1.1 }}>
-                      {summary.generated}
-                    </Typography>
+                    {loadingOverview ? (
+                      <Skeleton variant="text" width={40} height={32} sx={{ transform: 'none' }} />
+                    ) : (
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        color="success.main"
+                        sx={{ lineHeight: 1.1 }}
+                      >
+                        {summary.generated}
+                      </Typography>
+                    )}
                     <Typography variant="caption" color="text.secondary">
                       Invoices generated
                     </Typography>
@@ -697,118 +816,299 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 <Stack direction="row" spacing={1} alignItems="center">
                   <MiniIconTile
                     icon={DocIconGreen}
-                    bg={summary.pending > 0 ? (isDark ? 'rgba(217,119,6,0.18)' : '#FEF3C7') : (isDark ? 'rgba(22,163,74,0.18)' : '#ECFDF5')}
-                    color={summary.pending > 0 ? 'warning.main' : 'success.main'}
+                    bg={
+                      summary.pending > 0
+                        ? isDark
+                          ? 'rgba(217,119,6,0.18)'
+                          : '#FEF3C7'
+                        : isDark
+                          ? 'rgba(22,163,74,0.18)'
+                          : '#ECFDF5'
+                    }
+                    color={summary.pending > 0 ? '#D97706' : 'success.main'}
                   />
                   <Box>
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color={summary.pending > 0 ? 'warning.main' : 'success.main'}
-                      sx={{ lineHeight: 1.1 }}
-                    >
-                      {summary.pending}
-                    </Typography>
+                    {loadingOverview ? (
+                      <Skeleton variant="text" width={40} height={32} sx={{ transform: 'none' }} />
+                    ) : (
+                      <Typography
+                        variant="h5"
+                        fontWeight={700}
+                        sx={{
+                          lineHeight: 1.1,
+                          color: summary.pending > 0 ? '#D97706' : theme.palette.success.main,
+                        }}
+                      >
+                        {summary.pending}
+                      </Typography>
+                    )}
                     <Typography variant="caption" color="text.secondary">
                       Pending
                     </Typography>
                   </Box>
                 </Stack>
               </Stack>
-              <LinearProgress
-                variant="determinate"
-                value={summary.coverage_pct}
-                color={summary.pending === 0 ? 'success' : 'warning'}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: 'block' }}>
-                {summary.pending === 0
-                  ? `Invoices have been generated for all ${summary.eligible} eligible students across ${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}.`
-                  : `Invoices have been generated for ${summary.generated} of ${summary.eligible} eligible students across ${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}.`}
-              </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Box flex={1}>
+                  {loadingOverview ? (
+                    <Skeleton variant="rounded" height={8} sx={{ borderRadius: 4 }} />
+                  ) : (
+                    <LinearProgress
+                      variant="determinate"
+                      value={summary.coverage_pct}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        bgcolor: isDark ? 'rgba(217,119,6,0.15)' : '#FEF3C7',
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: summary.pending === 0 ? 'success.main' : '#D97706',
+                        },
+                      }}
+                    />
+                  )}
+                </Box>
+                {!loadingOverview && (
+                  <Typography
+                    variant="caption"
+                    fontWeight={700}
+                    sx={{
+                      color: summary.pending === 0 ? theme.palette.success.main : '#D97706',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {summary.coverage_pct}%
+                  </Typography>
+                )}
+              </Stack>
+              {loadingOverview ? (
+                <Skeleton variant="text" width="80%" height={20} sx={{ mt: 0.75 }} />
+              ) : (
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.75, display: 'block' }}
+                >
+                  {summary.pending === 0
+                    ? `Invoices have been generated for all ${summary.eligible} eligible students across ${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}.`
+                    : `Invoices have been generated for ${summary.generated} of ${summary.eligible} eligible students across ${stats.classes_in_scope} class${stats.classes_in_scope === 1 ? '' : 'es'}.`}
+                </Typography>
+              )}
             </Paper>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: '14px', height: '100%' }}>
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, borderRadius: '14px', height: '100%', borderColor: cardBorderColor }}
+            >
               <Typography variant="body2" fontWeight={700} mb={1.5}>
                 Insights
               </Typography>
-              <Stack spacing={1.5}>
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <MiniIconTile icon={BarChartIcon} bg={isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7'} color="#16A34A" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Largest projected category
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700}>
-                      {summary.largest_category ? summary.largest_category.name : 'N/A'}
-                    </Typography>
-                    {summary.largest_category && (
-                      <Typography variant="body2" fontWeight={700} color="success.main">
-                        {CURRENCY(summary.largest_category.amount)}
+              <Stack
+                direction={{ xs: 'column', lg: 'row' }}
+                divider={
+                  <Divider
+                    orientation="vertical"
+                    flexItem
+                    sx={{ display: { xs: 'none', lg: 'block' } }}
+                  />
+                }
+                sx={{ borderRadius: 2, overflow: 'hidden' }}
+              >
+                <Tooltip title="The student payment category with the highest total projected amount across all payment items in the current scope.">
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      bgcolor: isDark ? 'rgba(22,163,74,0.22)' : '#DCFCE7',
+                      p: 1.5,
+                      cursor: 'default',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        bgcolor: '#16A34A',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <BarChartIcon sx={{ fontSize: 22 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Largest projected category
                       </Typography>
-                    )}
+                      {loadingOverview ? (
+                        <>
+                          <Skeleton variant="text" width={110} height={22} />
+                          <Skeleton variant="text" width={90} height={28} />
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: 'primary.dark' }}>
+                            {summary.largest_category ? summary.largest_category.name : 'N/A'}
+                          </Typography>
+                          {summary.largest_category && (
+                            <Typography
+                              variant="h5"
+                              fontWeight={800}
+                              color="success.main"
+                              sx={{ lineHeight: 1.3 }}
+                            >
+                              {CURRENCY(summary.largest_category.amount)}
+                            </Typography>
+                          )}
+                        </>
+                      )}
+                    </Box>
                   </Box>
-                </Stack>
-                <Divider />
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <MiniIconTile icon={StarIcon} bg={isDark ? 'rgba(147,51,234,0.18)' : '#F3E8FF'} color="#9333EA" />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      Highest-value payment item
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700}>
-                      {summary.highest_item ? summary.highest_item.name : 'N/A'}
-                    </Typography>
-                    {summary.highest_item && (
-                      <Typography variant="body2" fontWeight={700} sx={{ color: '#9333EA' }}>
-                        {CURRENCY(summary.highest_item.amount)}
+                </Tooltip>
+
+                <Tooltip title="The payment item with the highest total projected amount across every category in the current scope.">
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      bgcolor: isDark ? 'rgba(147,51,234,0.22)' : '#F3E8FF',
+                      p: 1.5,
+                      cursor: 'default',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        bgcolor: '#9333EA',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <StarIcon sx={{ fontSize: 22 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        Highest-value payment item
                       </Typography>
-                    )}
+                      {loadingOverview ? (
+                        <>
+                          <Skeleton variant="text" width={110} height={22} />
+                          <Skeleton variant="text" width={90} height={28} />
+                        </>
+                      ) : (
+                        <>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: 'primary.dark' }}>
+                            {summary.highest_item ? summary.highest_item.name : 'N/A'}
+                          </Typography>
+                          {summary.highest_item && (
+                            <Typography
+                              variant="h5"
+                              fontWeight={800}
+                              sx={{ color: '#9333EA', lineHeight: 1.3 }}
+                            >
+                              {CURRENCY(summary.highest_item.amount)}
+                            </Typography>
+                          )}
+                        </>
+                      )}
+                    </Box>
                   </Box>
-                </Stack>
-                <Divider />
-                <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <MiniIconTile icon={ReviewIcon} bg={isDark ? 'rgba(217,119,6,0.18)' : '#FEF3C7'} color="#D97706" />
-                    <Box>
+                </Tooltip>
+
+                <Tooltip title="A payment item × category combination is flagged here when at least one eligible student of that category is in a class with no price set for that item. Click View details to price it in Set Schedule.">
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                      bgcolor: isDark ? 'rgba(217,119,6,0.25)' : '#FFEDD5',
+                      p: 1.5,
+                      cursor: 'default',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: '12px',
+                        bgcolor: '#F59E0B',
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ReviewIcon sx={{ fontSize: 22 }} />
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography variant="caption" color="text.secondary" display="block">
                         Unpriced combinations
                       </Typography>
-                      <Typography
-                        variant="body2"
-                        fontWeight={700}
-                        color={summary.unpriced_count > 0 ? 'error.main' : 'success.main'}
-                      >
-                        {summary.unpriced_count}
-                      </Typography>
+                      {loadingOverview ? (
+                        <Skeleton variant="text" width={40} height={28} />
+                      ) : (
+                        <>
+                          <Typography
+                            variant="h5"
+                            fontWeight={800}
+                            color={summary.unpriced_count > 0 ? 'error.main' : 'success.main'}
+                            sx={{ lineHeight: 1.2 }}
+                          >
+                            {summary.unpriced_count}
+                          </Typography>
+                          {summary.unpriced_count > 0 && typeof onReviewPricing === 'function' && (
+                            <Typography
+                              component="button"
+                              onClick={onReviewPricing}
+                              variant="body2"
+                              sx={{
+                                display: 'block',
+                                mt: 0.25,
+                                border: 0,
+                                background: 'none',
+                                p: 0,
+                                cursor: 'pointer',
+                                fontWeight: 700,
+                                color: 'primary.main',
+                                textDecoration: 'underline',
+                              }}
+                            >
+                              View details →
+                            </Typography>
+                          )}
+                        </>
+                      )}
                     </Box>
-                  </Stack>
-                  {summary.unpriced_count > 0 && typeof onReviewPricing === 'function' && (
-                    <Button size="small" onClick={onReviewPricing} sx={reviewPillSx}>
-                      View details →
-                    </Button>
-                  )}
-                </Stack>
+                  </Box>
+                </Tooltip>
               </Stack>
             </Paper>
           </Grid>
         </Grid>
       )}
 
-      {loadingOverview && !overview && (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress size={28} />
-        </Box>
-      )}
-
-      {errorOverview && (
-        <Alert severity="error">{errorOverview}</Alert>
-      )}
+      {errorOverview && <Alert severity="error">{errorOverview}</Alert>}
 
       {!loadingOverview && !errorOverview && overview && !hasData && (
-        <Alert severity="info" sx={{ justifyContent: 'center', '& .MuiAlert-message': { width: '100%' } }}>
+        <Alert
+          severity="info"
+          sx={{ justifyContent: 'center', '& .MuiAlert-message': { width: '100%' } }}
+        >
           <Typography variant="body2" fontWeight={600}>
             No payment schedules found for{' '}
             {selectedClass ? selectedClassName : 'the selected classes'} in this session term
@@ -821,8 +1121,11 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
         </Alert>
       )}
 
-      {/* Projected invoice table */}
-      {hasData && (
+      {/* Projected invoice table — while loading, the same real column/row
+          count from the last fetch is reused for the skeleton shape (or a
+          generic 3x5 placeholder on a true first load), so the layout
+          doesn't jump once real data arrives. */}
+      {(hasData || loadingOverview) && (
         <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
           <Table size="small" sx={{ minWidth: 700 }}>
             <TableHead>
@@ -851,40 +1154,65 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 >
                   PAYMENT ITEM
                 </TableCell>
-                {categories.map((cat, idx) => {
+                {tableCategories.map((cat, idx) => {
                   const scheme = SCHEME_CYCLE[idx % SCHEME_CYCLE.length];
                   const CatIcon = categoryIconFor(cat.name);
                   return (
-                    <TableCell key={cat.id} align="center" sx={{ minWidth: 160 }}>
-                      <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
-                        <Box
-                          sx={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: '8px',
-                            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
-                            color: scheme.color,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                        >
-                          <CatIcon sx={{ fontSize: 15 }} />
-                        </Box>
+                    <TableCell
+                      key={cat.id}
+                      align="center"
+                      sx={{ minWidth: 160, bgcolor: isDark ? 'background.default' : 'grey.50' }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        {loadingOverview ? (
+                          <Skeleton variant="rounded" width={26} height={26} sx={{ borderRadius: '8px' }} />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              borderRadius: '8px',
+                              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
+                              color: scheme.color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <CatIcon sx={{ fontSize: 15 }} />
+                          </Box>
+                        )}
                         <Box textAlign="left">
-                          <Typography variant="caption" fontWeight={700} display="block">
-                            {cat.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {cat.student_count} student{cat.student_count === 1 ? '' : 's'}
-                          </Typography>
+                          {loadingOverview ? (
+                            <>
+                              <Skeleton variant="text" width={95} height={16} />
+                              <Skeleton variant="text" width={55} height={14} />
+                            </>
+                          ) : (
+                            <>
+                              <Typography variant="caption" fontWeight={700} display="block">
+                                {cat.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {cat.student_count} student{cat.student_count === 1 ? '' : 's'}
+                              </Typography>
+                            </>
+                          )}
                         </Box>
                       </Stack>
                     </TableCell>
                   );
                 })}
-                <TableCell align="right" sx={{ minWidth: 130 }}>
+                <TableCell
+                  align="right"
+                  sx={{ minWidth: 130, bgcolor: isDark ? 'background.default' : 'grey.50' }}
+                >
                   <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
                     <Box
                       sx={{
@@ -909,66 +1237,126 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               </TableRow>
             </TableHead>
             <TableBody>
-              {items.map((row, idx) => (
-                <TableRow key={row.id} hover>
+              {tableItems.map((row, idx) => (
+                <TableRow key={row.id ?? idx} hover>
                   <TableCell
-                    sx={{ position: 'sticky', left: 0, bgcolor: isDark ? 'background.paper' : '#fff', zIndex: 1 }}
+                    sx={{
+                      position: 'sticky',
+                      left: 0,
+                      bgcolor: isDark ? 'background.paper' : '#fff',
+                      zIndex: 1,
+                    }}
                   >
-                    {idx + 1}
+                    {loadingOverview ? <Skeleton variant="text" width={14} /> : idx + 1}
                   </TableCell>
                   <TableCell
-                    sx={{ position: 'sticky', left: 50, bgcolor: isDark ? 'background.paper' : '#fff', zIndex: 1 }}
+                    sx={{
+                      position: 'sticky',
+                      left: 50,
+                      bgcolor: isDark ? 'background.paper' : '#fff',
+                      zIndex: 1,
+                    }}
                   >
-                    <Typography variant="body2" fontWeight={700}>
-                      {row.payment_name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'capitalize' }}>
-                      {row.pay_option}
-                    </Typography>
+                    {loadingOverview ? (
+                      <>
+                        <Skeleton variant="text" width={130} height={20} />
+                        <Skeleton variant="text" width={70} height={16} />
+                      </>
+                    ) : (
+                      <>
+                        <Typography variant="body2" fontWeight={700}>
+                          {row.payment_name}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ textTransform: 'capitalize' }}
+                        >
+                          {row.pay_option}
+                        </Typography>
+                      </>
+                    )}
                   </TableCell>
-                  {categories.map((cat) => (
+                  {tableCategories.map((cat) => (
                     <TableCell key={cat.id} align="center">
-                      <CellVisual cell={row.cells[cat.id]} />
+                      {loadingOverview ? (
+                        <Stack alignItems="center" spacing={0.5}>
+                          <Skeleton variant="text" width={65} height={18} />
+                          <Skeleton variant="text" width={50} height={14} />
+                        </Stack>
+                      ) : (
+                        <CellVisual cell={row.cells[cat.id]} />
+                      )}
                     </TableCell>
                   ))}
-                  <TableCell align="right">
-                    <Typography variant="body2" fontWeight={700}>
-                      {CURRENCY(row.row_total)}
-                    </Typography>
+                  <TableCell
+                    align="right"
+                    sx={{ bgcolor: isDark ? 'rgba(37,99,235,0.08)' : '#EFF6FF' }}
+                  >
+                    {loadingOverview ? (
+                      <Skeleton variant="text" width={70} height={24} sx={{ ml: 'auto' }} />
+                    ) : (
+                      <Typography variant="body1" fontWeight={800} sx={{ color: 'primary.dark' }}>
+                        {CURRENCY(row.row_total)}
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
-              <TableRow sx={{ bgcolor: isDark ? 'background.default' : 'grey.50' }}>
+              <TableRow sx={{ bgcolor: isDark ? 'rgba(37,99,235,0.08)' : '#EFF6FF' }}>
                 <TableCell
                   colSpan={2}
-                  sx={{ position: 'sticky', left: 0, bgcolor: isDark ? 'background.default' : 'grey.50', zIndex: 1 }}
+                  sx={{
+                    position: 'sticky',
+                    left: 0,
+                    bgcolor: isDark ? 'rgba(37,99,235,0.08)' : '#EFF6FF',
+                    zIndex: 1,
+                  }}
                 >
-                  <Typography variant="body2" fontWeight={700}>
+                  <Typography variant="body1" fontWeight={800} sx={{ color: 'primary.dark' }}>
                     Total (Projected)
                   </Typography>
                 </TableCell>
-                {categories.map((cat) => (
+                {tableCategories.map((cat) => (
                   <TableCell key={cat.id} align="center">
-                    <Typography variant="body2" fontWeight={700}>
-                      {CURRENCY(footer.categories?.[cat.id] ?? 0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {cat.student_count} student{cat.student_count === 1 ? '' : 's'}
-                    </Typography>
+                    {loadingOverview ? (
+                      <Stack alignItems="center" spacing={0.5}>
+                        <Skeleton variant="text" width={65} height={22} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={50} height={14} sx={{ mx: 'auto' }} />
+                      </Stack>
+                    ) : (
+                      <>
+                        <Typography variant="body1" fontWeight={800} sx={{ color: 'primary.dark' }}>
+                          {CURRENCY(footer.categories?.[cat.id] ?? 0)}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'primary.dark', opacity: 0.75 }}>
+                          {cat.student_count} student{cat.student_count === 1 ? '' : 's'}
+                        </Typography>
+                      </>
+                    )}
                   </TableCell>
                 ))}
-                <TableCell align="right">
-                  <Typography variant="body2" fontWeight={700}>
-                    {CURRENCY(footer.grand_total)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {/* Sum of the categories actually shown in this table —
-                        not the page-level (category-filter-stable) stat
-                        card figure — so the Total column always agrees with
-                        the columns to its left. */}
-                    {categories.reduce((sum, c) => sum + c.student_count, 0)} student
-                    {categories.reduce((sum, c) => sum + c.student_count, 0) === 1 ? '' : 's'}
-                  </Typography>
+                <TableCell
+                  align="right"
+                  sx={{ bgcolor: isDark ? 'rgba(37,99,235,0.14)' : '#DBEAFE' }}
+                >
+                  {loadingOverview ? (
+                    <Skeleton variant="text" width={75} height={26} sx={{ ml: 'auto' }} />
+                  ) : (
+                    <>
+                      <Typography variant="body1" fontWeight={800} sx={{ color: 'primary.dark' }}>
+                        {CURRENCY(footer.grand_total)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'primary.dark', opacity: 0.75 }}>
+                        {/* Sum of the categories actually shown in this table —
+                            not the page-level (category-filter-stable) stat
+                            card figure — so the Total column always agrees
+                            with the columns to its left. */}
+                        {categories.reduce((sum, c) => sum + c.student_count, 0)} student
+                        {categories.reduce((sum, c) => sum + c.student_count, 0) === 1 ? '' : 's'}
+                      </Typography>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -989,13 +1377,21 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               Showing {items.length} of {items.length} payment item{items.length === 1 ? '' : 's'}
             </Typography>
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <Button size="small" startIcon={<ExportIcon fontSize="small" />} onClick={handleExportCsv}>
+              <Button
+                size="small"
+                startIcon={<ExportIcon fontSize="small" />}
+                onClick={handleExportCsv}
+              >
                 Export
               </Button>
               <IconButton size="small" onClick={(e) => setMenuAnchor(e.currentTarget)}>
                 <MoreVertIcon fontSize="small" />
               </IconButton>
-              <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
+              <Menu
+                anchorEl={menuAnchor}
+                open={Boolean(menuAnchor)}
+                onClose={() => setMenuAnchor(null)}
+              >
                 <MenuItem onClick={handleExportCsv}>Download CSV</MenuItem>
                 <MenuItem
                   onClick={() => {

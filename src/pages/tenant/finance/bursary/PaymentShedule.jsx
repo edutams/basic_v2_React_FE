@@ -126,40 +126,54 @@ const ActionStepper = ({ activeTab, onChange }) => {
           {idx > 0 && <Box sx={{ width: 24, height: 2, bgcolor: 'divider' }} />}
           <Box
             onClick={() => onChange(idx)}
-            sx={{ display: 'flex', alignItems: 'center', gap: 0.75, cursor: 'pointer' }}
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
           >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Box
+                sx={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  bgcolor:
+                    idx === activeTab
+                      ? 'primary.main'
+                      : idx < activeTab
+                        ? 'success.main'
+                        : 'grey.300',
+                  color: '#fff',
+                }}
+              >
+                {idx + 1}
+              </Box>
+              <Typography
+                variant="body2"
+                noWrap
+                sx={{
+                  fontWeight: idx === activeTab ? 700 : 500,
+                  color: idx === activeTab ? 'primary.main' : 'text.secondary',
+                }}
+              >
+                {label}
+              </Typography>
+            </Box>
+            {/* Underline on the active step only, so it's unmistakable which
+                of the 3 stages (Set Schedule / Generate Invoice / Send
+                Invoice) is currently open. */}
             <Box
               sx={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-                fontWeight: 700,
-                bgcolor:
-                  idx === activeTab
-                    ? 'primary.main'
-                    : idx < activeTab
-                      ? 'success.main'
-                      : 'grey.300',
-                color: '#fff',
+                mt: 0.5,
+                width: '100%',
+                height: 2,
+                borderRadius: 1,
+                bgcolor: idx === activeTab ? 'primary.main' : 'transparent',
               }}
-            >
-              {idx + 1}
-            </Box>
-            <Typography
-              variant="body2"
-              noWrap
-              sx={{
-                fontWeight: idx === activeTab ? 700 : 500,
-                color: idx === activeTab ? 'primary.main' : 'text.secondary',
-              }}
-            >
-              {label}
-            </Typography>
+            />
           </Box>
         </Stack>
       ))}

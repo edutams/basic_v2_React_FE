@@ -81,6 +81,7 @@ import {
   saveResultPaymentSettings,
 } from '@/api/tenant/bursary/bursaryResultSettingsApi';
 import { fetchTenantSessions, fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchTermDateRange } from '@/api/tenant/term-weeks/weekApi';
 import useNotification from '@/hooks/useNotification';
 
 /** Small reusable section header: icon badge + title + supporting text,
@@ -122,6 +123,29 @@ const SectionHeader = ({ icon: Icon, iconBg = '#DBEAFE', iconColor = 'primary.ma
 /** Compact All/Active/Inactive filter tabs + search box, matching the
  * reference design's dense table toolbars (Fee Categories / Instalment
  * Plans sections). */
+/** Small colored pill used for the Active/Inactive tab counts, matching
+ * the reference design's colored count badges. */
+const TabCountBadge = ({ count, color }) => (
+  <Box
+    component="span"
+    sx={{
+      ml: 0.75,
+      px: 0.75,
+      minWidth: 18,
+      textAlign: 'center',
+      borderRadius: 10,
+      fontSize: 10,
+      fontWeight: 700,
+      lineHeight: '16px',
+      display: 'inline-block',
+      bgcolor: color === 'success' ? 'success.light' : 'grey.200',
+      color: color === 'success' ? 'success.dark' : 'text.secondary',
+    }}
+  >
+    {count}
+  </Box>
+);
+
 const TableFilterBar = ({ tab, onTabChange, activeCount, inactiveCount, search, onSearchChange, searchPlaceholder }) => (
   <Box display="flex" justifyContent="space-between" alignItems="center" gap={1.5} flexWrap="wrap" mb={1.5}>
     <Tabs
@@ -130,23 +154,52 @@ const TableFilterBar = ({ tab, onTabChange, activeCount, inactiveCount, search, 
       sx={{ minHeight: 32, '& .MuiTab-root': { minHeight: 32, py: 0.5, textTransform: 'none', fontSize: 12, fontWeight: 600 } }}
     >
       <Tab value="all" label="All" />
-      <Tab value="active" label={`Active (${activeCount})`} />
-      <Tab value="inactive" label={`Inactive (${inactiveCount})`} />
+      <Tab
+        value="active"
+        label={
+          <Box display="flex" alignItems="center">
+            Active
+            <TabCountBadge count={activeCount} color="success" />
+          </Box>
+        }
+      />
+      <Tab
+        value="inactive"
+        label={
+          <Box display="flex" alignItems="center">
+            Inactive
+            <TabCountBadge count={inactiveCount} color="default" />
+          </Box>
+        }
+      />
     </Tabs>
-    <TextField
-      size="small"
-      placeholder={searchPlaceholder}
-      value={search}
-      onChange={(e) => onSearchChange(e.target.value)}
-      sx={{ width: 200 }}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start">
-            <IconSearch size={14} />
-          </InputAdornment>
-        ),
-      }}
-    />
+    <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+      <TextField
+        select
+        size="small"
+        value={tab}
+        onChange={(e) => onTabChange(e.target.value)}
+        sx={{ width: 140 }}
+      >
+        <MenuItem value="all">All Statuses</MenuItem>
+        <MenuItem value="active">Active</MenuItem>
+        <MenuItem value="inactive">Inactive</MenuItem>
+      </TextField>
+      <TextField
+        size="small"
+        placeholder={searchPlaceholder}
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        sx={{ width: 200 }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconSearch size={14} />
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Stack>
   </Box>
 );
 
@@ -170,10 +223,24 @@ const StatusChip = ({ status, activeLabel = 'Active', inactiveLabel = 'Inactive'
   );
 };
 
+/** Compact density override for TablePagination, matching the reference
+ * design's minimal "Rows per page" footer across all 3 cards. */
+const COMPACT_PAGINATION_SX = {
+  minHeight: 36,
+  '& .MuiTablePagination-toolbar': { minHeight: 36, pl: 0, pr: 0 },
+  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+    fontSize: 12,
+    mb: 0,
+  },
+  '& .MuiTablePagination-select': { fontSize: 12 },
+  '& .MuiTablePagination-actions': { ml: 1 },
+};
+
 const BursarySetupTab = ({
   sessionTerms,
   selectedSessionTerm,
   setSelectedSessionTerm,
+  lastTermUpdate,
   onStatsChange,
   onLoadingChange,
   showSnackbar,
@@ -248,6 +315,7 @@ const BursarySetupTab = ({
   const [sessionRowsPerPage, setSessionRowsPerPage] = useState(5);
   const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
   const [sessionMenuRow, setSessionMenuRow] = useState(null);
+  const [termDateRanges, setTermDateRanges] = useState({}); // sessionTermId -> {start_date, end_date} | null
 
   // Collection Rules settings auto-save on every change (unchanged, proven
   // behaviour) — this snapshot just lets the bottom bar honestly reflect
@@ -386,7 +454,8 @@ const BursarySetupTab = ({
   // keep settings and result settings load separate
   useEffect(() => {
     loadSettings();
-    loadResultSettings();
+    // loadResultSettings(); — "Result viewing" card commented out below
+    // (see that section for why); no need to fetch its settings anymore.
     loadSessionsAndTerms();
   }, []);
 
@@ -433,6 +502,22 @@ const BursarySetupTab = ({
     sessionPage * sessionRowsPerPage + sessionRowsPerPage,
   );
   const viewSession = groupedSessions.find((g) => g.session_id === viewSessionId) || null;
+
+  // Real term date ranges, derived from each term's generated weeks (the
+  // same `fetchTermDateRange` helper already used elsewhere in this app) —
+  // fetched lazily per term the first time it's shown, then cached.
+  useEffect(() => {
+    const termIds = (viewSession?.terms || [])
+      .map((t) => t.id)
+      .filter((id) => !(id in termDateRanges));
+    if (termIds.length === 0) return;
+    termIds.forEach((id) => {
+      fetchTermDateRange(id)
+        .then((range) => setTermDateRanges((prev) => ({ ...prev, [id]: range })))
+        .catch(() => setTermDateRanges((prev) => ({ ...prev, [id]: null })));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewSession]);
 
   const handleActivateTerm = async (sessionTermId) => {
     setActivatingTermId(sessionTermId);
@@ -623,14 +708,22 @@ const BursarySetupTab = ({
         {/* Academic Sessions & Terms + Activate Term panel */}
         <Grid container spacing={2} alignItems="stretch">
           <Grid size={{ xs: 12, lg: 8 }} sx={{ display: 'flex' }}>
-            <ParentCard sx={{ width: '100%', '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } } }}>
+            <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardContent-root': { flexGrow: 1, display: 'flex', flexDirection: 'column', p: 1.5, '&:last-child': { pb: 1.5 } },
+              }}
+            >
               <SectionHeader
                 icon={CalendarMonthIcon}
                 title="Academic Sessions & Terms"
                 subtitle="Select a session to view or configure settings. You can access all previous sessions and terms."
               />
 
-              <TableContainer>
+              <TableContainer sx={{ flexGrow: 1 }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -681,29 +774,30 @@ const BursarySetupTab = ({
                           <TableCell align="center">{row.termCount}</TableCell>
                           <TableCell>{row.activeTermName}</TableCell>
                           <TableCell>
-                            {row.updated_at ? dayjs(row.updated_at).format('MMM D, YYYY') : '—'}
+                            {(row.terms || []).some((t) => t.id === selectedSessionTerm) &&
+                            lastTermUpdate?.at ? (
+                              <Tooltip
+                                title={lastTermUpdate.by ? `Activated by ${lastTermUpdate.by}` : ''}
+                                arrow
+                              >
+                                <Typography variant="body2">
+                                  {dayjs(lastTermUpdate.at).format('MMM D, YYYY')}
+                                </Typography>
+                              </Tooltip>
+                            ) : (
+                              '—'
+                            )}
                           </TableCell>
                           <TableCell align="center">
-                            <Stack direction="row" spacing={0.5} justifyContent="center">
-                              <Button
-                                size="small"
-                                variant="contained"
-                                startIcon={<IconEye size={14} />}
-                                onClick={() => setViewSessionId(row.session_id)}
-                                sx={{ fontSize: '0.7rem', px: 1.25 }}
-                              >
-                                View
-                              </Button>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => {
-                                  setSessionMenuAnchor(e.currentTarget);
-                                  setSessionMenuRow(row);
-                                }}
-                              >
-                                <IconDotsVertical size={16} />
-                              </IconButton>
-                            </Stack>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setSessionMenuAnchor(e.currentTarget);
+                                setSessionMenuRow(row);
+                              }}
+                            >
+                              <IconDotsVertical size={16} />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
                       ))
@@ -723,12 +817,21 @@ const BursarySetupTab = ({
                   setSessionRowsPerPage(parseInt(e.target.value, 10));
                   setSessionPage(0);
                 }}
+                sx={COMPACT_PAGINATION_SX}
               />
             </ParentCard>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex' }}>
-            <ParentCard sx={{ width: '100%', '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } } }}>
+            <ParentCard
+              sx={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                '& .MuiCardContent-root': { flexGrow: 1, display: 'flex', flexDirection: 'column', p: 1.5, '&:last-child': { pb: 1.5 } },
+              }}
+            >
               <SectionHeader
                 icon={CalendarMonthIcon}
                 title={`Activate Term for ${viewSession?.session_name || '—'}`}
@@ -742,42 +845,55 @@ const BursarySetupTab = ({
                   ))}
                 </Stack>
               ) : (
-                <Stack spacing={1.5} sx={{ mb: 2 }}>
+                <Stack direction="row" spacing={1} sx={{ mb: 2, flexGrow: 1 }}>
                   {(viewSession?.terms || []).map((t) => {
                     const isActive = t.id === selectedSessionTerm;
+                    const range = termDateRanges[t.id];
                     return (
                       <Box
                         key={t.id}
                         sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 1,
-                          p: 1.5,
+                          flex: 1,
+                          minWidth: 0,
+                          p: 1,
                           border: '1px solid',
                           borderColor: isActive ? 'success.main' : 'divider',
                           bgcolor: isActive ? 'success.light' : 'background.paper',
                           borderRadius: 2,
                         }}
                       >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <CalendarMonthIcon sx={{ fontSize: 18, color: isActive ? 'success.dark' : 'text.secondary' }} />
-                          <Typography variant="body2" fontWeight={700}>
-                            {t.term?.term_name}
-                          </Typography>
+                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                          <CalendarMonthIcon sx={{ fontSize: 16, color: isActive ? 'success.dark' : 'text.secondary' }} />
+                          <StatusChip status={isActive ? 'active' : 'inactive'} activeLabel="Active" inactiveLabel="Inactive" />
                         </Stack>
+                        <Typography variant="caption" fontWeight={700} display="block" noWrap>
+                          {t.term?.term_name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1, fontSize: 10, lineHeight: 1.3 }}>
+                          {range === undefined
+                            ? 'Loading…'
+                            : range
+                              ? `${dayjs(range.start_date).format('MMM D')} – ${dayjs(range.end_date).format('MMM D, YYYY')}`
+                              : 'No dates set'}
+                        </Typography>
                         {isActive ? (
-                          <StatusChip status="active" activeLabel="Currently Active" />
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Radio size="small" checked readOnly sx={{ p: 0 }} />
+                            <StatusChip status="active" activeLabel="Currently Active" />
+                          </Stack>
                         ) : (
-                          <Button
-                            size="small"
-                            variant="contained"
-                            disabled={activatingTermId === t.id}
-                            onClick={() => handleActivateTerm(t.id)}
-                            sx={{ fontSize: '0.7rem', px: 1.25 }}
-                          >
-                            {activatingTermId === t.id ? 'Activating…' : 'Activate'}
-                          </Button>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Radio size="small" checked={false} readOnly sx={{ p: 0 }} />
+                            <Button
+                              size="small"
+                              variant="contained"
+                              disabled={activatingTermId === t.id}
+                              onClick={() => handleActivateTerm(t.id)}
+                              sx={{ fontSize: '0.65rem', px: 1, minWidth: 0 }}
+                            >
+                              {activatingTermId === t.id ? '…' : 'Activate'}
+                            </Button>
+                          </Stack>
                         )}
                       </Box>
                     );
@@ -827,13 +943,13 @@ const BursarySetupTab = ({
               ))}
             </Grid>
           ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="flex-start">
             {/* Collection Method */}
-            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%' }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <PaymentsIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="subtitle2" fontWeight={700}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <PaymentsIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="caption" fontWeight={700} sx={{ fontSize: 13 }}>
                     {settings.fee_collection_method?.name || 'Collection Method'}
                   </Typography>
                 </Stack>
@@ -842,7 +958,7 @@ const BursarySetupTab = ({
                     value={collectionMethod}
                     onChange={(e) => handleSettingChange('fee_collection_method', e.target.value)}
                   >
-                    <Stack spacing={1.5}>
+                    <Stack spacing={0.75}>
                       {(settings.fee_collection_method?.options || []).map((opt) => {
                         const isSelected = opt.value === collectionMethod;
                         return (
@@ -850,24 +966,25 @@ const BursarySetupTab = ({
                             key={opt.value}
                             value={opt.value}
                             disabled={savingCode === 'fee_collection_method'}
-                            control={<Radio />}
+                            control={<Radio size="small" sx={{ py: 0.25 }} />}
                             label={
                               <Box>
-                                <Typography variant="body2" fontWeight={600}>
+                                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
                                   {opt.value === 'single_payment' ? 'Single payment' : 'Pay per fee'}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3 }}>
                                   {opt.text}
                                 </Typography>
                               </Box>
                             }
                             sx={{
                               m: 0,
-                              p: 1.5,
+                              py: 0.5,
+                              px: 1,
                               border: '1px solid',
                               borderColor: isSelected ? 'primary.main' : 'divider',
-                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
-                              borderRadius: 2,
+                              bgcolor: isSelected ? 'rgba(37, 99, 235, 0.08)' : 'background.paper',
+                              borderRadius: 1.5,
                               alignItems: 'flex-start',
                             }}
                           />
@@ -880,11 +997,11 @@ const BursarySetupTab = ({
             </Grid>
 
             {/* Instalment Style */}
-            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <TaskAltIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="subtitle2" fontWeight={700}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <TaskAltIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="caption" fontWeight={700} sx={{ fontSize: 13 }}>
                     {settings.installment_style?.name || 'Default Instalment Style'}
                   </Typography>
                 </Stack>
@@ -893,7 +1010,7 @@ const BursarySetupTab = ({
                     value={instalmentStyle}
                     onChange={(e) => handleSettingChange('installment_style', e.target.value)}
                   >
-                    <Stack spacing={1.5}>
+                    <Stack spacing={0.75}>
                       {(settings.installment_style?.options || []).map((opt) => {
                         const isSelected = opt.value === instalmentStyle;
                         return (
@@ -901,24 +1018,25 @@ const BursarySetupTab = ({
                             key={opt.value}
                             value={opt.value}
                             disabled={savingCode === 'installment_style'}
-                            control={<Radio />}
+                            control={<Radio size="small" sx={{ py: 0.25 }} />}
                             label={
                               <Box>
-                                <Typography variant="body2" fontWeight={600}>
+                                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
                                   {opt.value === 'percentage' ? 'By percentage' : 'By amount'}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3 }}>
                                   {opt.text}
                                 </Typography>
                               </Box>
                             }
                             sx={{
                               m: 0,
-                              p: 1.5,
+                              py: 0.5,
+                              px: 1,
                               border: '1px solid',
                               borderColor: isSelected ? 'primary.main' : 'divider',
-                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
-                              borderRadius: 2,
+                              bgcolor: isSelected ? 'rgba(37, 99, 235, 0.08)' : 'background.paper',
+                              borderRadius: 1.5,
                               alignItems: 'flex-start',
                             }}
                           />
@@ -930,7 +1048,7 @@ const BursarySetupTab = ({
                 <Alert
                   severity="info"
                   icon={<InfoOutlinedIcon fontSize="small" />}
-                  sx={{ mt: 1.5, bgcolor: '#EFF6FF', color: 'text.secondary', fontSize: 12 }}
+                  sx={{ mt: 1, bgcolor: '#EFF6FF', color: 'text.secondary', fontSize: 11, py: 0.25 }}
                 >
                   Instalment plans are configured below and can be selected when setting fee schedules.
                 </Alert>
@@ -938,11 +1056,11 @@ const BursarySetupTab = ({
             </Grid>
 
             {/* Gateway Payer */}
-            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
-              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                  <PaymentsIcon sx={{ fontSize: 18, color: 'primary.main' }} />
-                  <Typography variant="subtitle2" fontWeight={700}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 1.5 }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <PaymentsIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                  <Typography variant="caption" fontWeight={700} sx={{ fontSize: 13 }}>
                     {settings.gateway_charge_bearer?.name || 'Gateway Charges Bearer'}
                   </Typography>
                 </Stack>
@@ -951,7 +1069,7 @@ const BursarySetupTab = ({
                     value={gatewayPayer}
                     onChange={(e) => handleSettingChange('gateway_charge_bearer', e.target.value)}
                   >
-                    <Stack spacing={1.5}>
+                    <Stack spacing={0.75}>
                       {(settings.gateway_charge_bearer?.options || []).map((opt) => {
                         const isSelected = opt.value === gatewayPayer;
                         return (
@@ -959,24 +1077,25 @@ const BursarySetupTab = ({
                             key={opt.value}
                             value={opt.value}
                             disabled={savingCode === 'gateway_charge_bearer'}
-                            control={<Radio />}
+                            control={<Radio size="small" sx={{ py: 0.25 }} />}
                             label={
                               <Box>
-                                <Typography variant="body2" fontWeight={600}>
+                                <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.3 }}>
                                   {opt.value === 'client' ? 'Parent / Student' : 'School'}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.3 }}>
                                   {opt.text}
                                 </Typography>
                               </Box>
                             }
                             sx={{
                               m: 0,
-                              p: 1.5,
+                              py: 0.5,
+                              px: 1,
                               border: '1px solid',
                               borderColor: isSelected ? 'primary.main' : 'divider',
-                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
-                              borderRadius: 2,
+                              bgcolor: isSelected ? 'rgba(37, 99, 235, 0.08)' : 'background.paper',
+                              borderRadius: 1.5,
                               alignItems: 'flex-start',
                             }}
                           />
@@ -987,23 +1106,23 @@ const BursarySetupTab = ({
                 </FormControl>
 
                 {gatewayPayer === 'client' && (
-                  <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#F0FDF4', borderRadius: 2 }}>
-                    <Typography variant="caption" fontWeight={700} color="success.dark" display="block" sx={{ mb: 0.5 }}>
+                  <Box sx={{ mt: 1, p: 1, bgcolor: '#F0FDF4', borderRadius: 1.5 }}>
+                    <Typography variant="caption" fontWeight={700} color="success.dark" display="block" sx={{ mb: 0.5, fontSize: 11 }}>
                       Example (Parent pays gateway fee)
                     </Typography>
                     <Stack spacing={0.25}>
                       <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="caption" color="text.secondary">School fee (sample)</Typography>
-                        <Typography variant="caption" fontWeight={600}>₦10,000</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>School fee (sample)</Typography>
+                        <Typography variant="caption" fontWeight={600} sx={{ fontSize: 11 }}>₦10,000</Typography>
                       </Stack>
                       <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="caption" color="text.secondary">Gateway charge (1%)</Typography>
-                        <Typography variant="caption" fontWeight={600}>₦100</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: 11 }}>Gateway charge (1%)</Typography>
+                        <Typography variant="caption" fontWeight={600} sx={{ fontSize: 11 }}>₦100</Typography>
                       </Stack>
-                      <Divider sx={{ my: 0.5 }} />
+                      <Divider sx={{ my: 0.25 }} />
                       <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="caption" fontWeight={700}>Total payable by parent</Typography>
-                        <Typography variant="caption" fontWeight={700}>₦10,100</Typography>
+                        <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>Total payable by parent</Typography>
+                        <Typography variant="caption" fontWeight={700} sx={{ fontSize: 11 }}>₦10,100</Typography>
                       </Stack>
                     </Stack>
                   </Box>
@@ -1162,6 +1281,7 @@ const BursarySetupTab = ({
                   setCategoryPage(nextPage);
                   loadCategories(nextPage);
                 }}
+                sx={COMPACT_PAGINATION_SX}
               />
             </ParentCard>
           </Grid>
@@ -1323,11 +1443,23 @@ const BursarySetupTab = ({
                   setInstalmentPage(nextPage);
                   loadInstalments(nextPage);
                 }}
+                sx={COMPACT_PAGINATION_SX}
               />
             </ParentCard>
           </Grid>
         </Grid>
 
+        {/* "Result viewing" card — commented out per instruction. The
+            compulsory/optional/full/part-payment configuration here is
+            being replaced by a much simpler rule: a student can view their
+            result if they don't currently owe any money for the relevant
+            session/term, with no admin-configurable payment-type/method
+            branching at all. The enforcement side of that (wherever a
+            result/broadsheet controller actually gates on these settings)
+            is a separate backend change — this just removes the now-dead
+            configuration UI. Left in place (not deleted) in case any of
+            this needs to be restored. */}
+        {false && (
         <ParentCard
           sx={{
             '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
@@ -1514,6 +1646,7 @@ const BursarySetupTab = ({
             </Stack>
           )}
         </ParentCard>
+        )}
 
         {/* Bottom save bar — every Collection Rules change above already
             auto-saves the instant it's made (unchanged, proven behaviour),

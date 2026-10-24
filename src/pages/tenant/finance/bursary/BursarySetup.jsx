@@ -225,9 +225,9 @@ const BursarySetup = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={sessionTerms.find((st) => st.id === selectedSessionTerm)?.label || 'Not set'}
-              countFontSize={16}
+              count={selectedSessionTerm ? 1 : 0}
               label="Active Term"
+              subtitle={sessionTerms.find((st) => st.id === selectedSessionTerm)?.label || 'Not set'}
               icon={IconCalendarCheck}
               colorIndex={4}
               loading={sessionsLoading}
@@ -595,6 +595,7 @@ const BursarySetup = () => {
           sessionTerms={sessionTerms}
           selectedSessionTerm={selectedSessionTerm}
           setSelectedSessionTerm={setSelectedSessionTerm}
+          lastTermUpdate={lastTermUpdate}
           onStatsChange={setBursaryStats}
           onLoadingChange={setBursaryStatsLoading}
           showSnackbar={showSnackbar}

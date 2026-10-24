@@ -129,6 +129,21 @@ export const fetchGenerateInvoiceData = async ({ sessionTermId, classId, categor
     return res.data;
 };
 
+export const fetchGenerateInvoiceOverview = async ({
+    sessionTermId,
+    classId,
+    categoryId,
+    search,
+} = {}) => {
+    const params = {};
+    if (sessionTermId) params.session_term_id = sessionTermId;
+    if (classId) params.class_id = classId;
+    if (categoryId) params.category_id = categoryId;
+    if (search) params.search = search;
+    const res = await api.get('/bursary/payment_schedule/generate_invoice_overview', { params });
+    return res.data;
+};
+
 export const togglePaymentScheduleStatus = async (id, status) => {
     const res = await api.put(`/bursary/payment_schedule/toggle_payment_schedule_status/${id}`, { status });
     return res.data;

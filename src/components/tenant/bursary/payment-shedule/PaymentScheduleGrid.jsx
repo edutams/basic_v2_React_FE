@@ -45,13 +45,13 @@ import {
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
   fetchPaymentSchedules,
-  fetchInstallments,
   deletePaymentSchedule,
   deletePaymentSchedulesByPaymentName,
   togglePaymentScheduleStatus,
   getPaidStudentsForSchedule,
   batchUpsertPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchInstallments } from '@/api/tenant/bursary/installmentApi';
 import { updatePaymentNamePayOption } from '@/api/tenant/bursary/paymentNameApi';
 
 const SCHEME_MAP = [
@@ -92,6 +92,7 @@ const ScheduleCell = ({
   cls,
   pending,
   installments,
+  defaultInstallmentIds,
   onAmountChange,
   onInstallmentChange,
   onToggle,
@@ -102,12 +103,15 @@ const ScheduleCell = ({
   const isInactive = hasSchedule && cls.status === 'inactive';
   const locked = cls.invoices_count > 0;
   const amountValue = pending?.amount !== undefined ? pending.amount : cls.amount || '';
-  const installmentValue =
-    pending?.installmentId !== undefined ? pending.installmentId : cls.bursary_installment_id || '';
+  // The system-default (100%, pay-in-full) installment reads as "Default
+  // installment" here, same as if none were set at all — it's the same
+  // thing, so there's no need to call it out as its own selected value.
+  const currentInstallmentId = cls.bursary_installment_id || '';
+  const normalizedInstallmentId = defaultInstallmentIds.has(currentInstallmentId) ? '' : currentInstallmentId;
+  const installmentValue = pending?.installmentId !== undefined ? pending.installmentId : normalizedInstallmentId;
   const isDirty =
     (pending?.amount !== undefined && String(pending.amount) !== String(cls.amount || '')) ||
-    (pending?.installmentId !== undefined &&
-      String(pending.installmentId) !== String(cls.bursary_installment_id || ''));
+    (pending?.installmentId !== undefined && String(pending.installmentId) !== String(normalizedInstallmentId));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 210, py: 0.5 }}>
@@ -149,7 +153,7 @@ const ScheduleCell = ({
                 '50%': { boxShadow: '0 0 0 4px rgba(237,108,2,0)' },
               },
               animation: isDirty ? 'pulseDirty 1.3s ease-in-out infinite' : 'none',
-              '& input::placeholder': { color: 'error.main', opacity: 1, fontWeight: 700 },
+              '& input::placeholder': { color: 'error.main', opacity: 1, fontWeight: 600, fontSize: '0.78rem' },
               '& .MuiOutlinedInput-root': {
                 bgcolor: isInactive
                   ? 'rgba(220,38,38,0.06)'
@@ -159,15 +163,31 @@ const ScheduleCell = ({
                 '& input': isInactive
                   ? { textDecoration: 'line-through', color: 'text.disabled' }
                   : undefined,
+                // Visible by default, not just on :hover — the border
+                // color/width here is the resting state, and the explicit
+                // :hover rule below just repeats it so nothing changes
+                // (and nothing "appears") on hover.
                 '& fieldset': {
+                  borderWidth: '1.5px',
                   borderStyle: hasSchedule ? 'solid' : 'dashed',
                   borderColor: isDirty
                     ? 'warning.main'
                     : isInactive
                       ? 'error.main'
                       : hasSchedule
-                        ? 'divider'
-                        : 'error.light',
+                        ? 'grey.400'
+                        : 'error.main',
+                },
+                '&:hover fieldset': {
+                  borderWidth: '1.5px',
+                  borderStyle: hasSchedule ? 'solid' : 'dashed',
+                  borderColor: isDirty
+                    ? 'warning.main'
+                    : isInactive
+                      ? 'error.main'
+                      : hasSchedule
+                        ? 'grey.400'
+                        : 'error.main',
                 },
               },
             }}
@@ -218,11 +238,25 @@ const ScheduleCell = ({
           <MenuOption value="" sx={{ fontSize: 12 }}>
             Default installment
           </MenuOption>
-          {installments.map((inst) => (
-            <MenuOption key={inst.id} value={inst.id} sx={{ fontSize: 12 }}>
-              {inst.code || `${inst.inst1}/${inst.inst2}`}
-            </MenuOption>
-          ))}
+          {installments.map((inst) => {
+            const isInactiveInstallment = inst.status !== 'active';
+            const label = inst.code ? `${inst.code} — ${inst.inst1}% / ${inst.inst2}%` : `${inst.inst1}% / ${inst.inst2}%`;
+            return (
+              <MenuOption
+                key={inst.id}
+                value={inst.id}
+                // Disabled so it can't be picked for a NEW assignment, but
+                // still rendered so a class already using it (since
+                // deactivated in Bursary Setup) still shows correctly here
+                // instead of going blank.
+                disabled={isInactiveInstallment}
+                sx={{ fontSize: 12, fontStyle: isInactiveInstallment ? 'italic' : 'normal' }}
+              >
+                {label}
+                {isInactiveInstallment ? ' (Inactive)' : ''}
+              </MenuOption>
+            );
+          })}
         </Select>
       </FormControl>
     </Box>
@@ -282,6 +316,10 @@ const PaymentScheduleGrid = forwardRef(
     const [searchQuery, setSearchQuery] = useState('');
     const [scheduleData, setScheduleData] = useState([]);
     const [installments, setInstallments] = useState([]);
+    // ids of the system-default (100%, pay-in-full) installment(s) — a
+    // class using one of these is displayed as "Default installment", not
+    // as its own selected option, since they mean the same thing.
+    const [defaultInstallmentIds, setDefaultInstallmentIds] = useState(new Set());
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -325,12 +363,20 @@ const PaymentScheduleGrid = forwardRef(
     }));
 
     useEffect(() => {
-      fetchInstallments()
-        .then((res) =>
-          setInstallments(
-            Array.isArray(res?.data) ? res.data.filter((i) => i.status === 'active') : [],
-          ),
-        )
+      // The real Bursary Setup CRUD endpoint — includes `status`, unlike
+      // the settings one, so a class whose schedule already uses an
+      // installment that's since been deactivated still displays
+      // correctly (just not selectable for a new assignment).
+      fetchInstallments(1, 100)
+        .then((res) => {
+          const list = Array.isArray(res?.data?.data) ? res.data.data : [];
+          // The system default (is_sys, 100% in one go) is never offered
+          // as its own menu option — it's exactly what "Default
+          // installment" already means, so listing it again would just be
+          // the same thing twice with two different labels.
+          setInstallments(list.filter((i) => i.is_sys !== 'YES'));
+          setDefaultInstallmentIds(new Set(list.filter((i) => i.is_sys === 'YES').map((i) => i.id)));
+        })
         .catch(() => {});
     }, []);
 
@@ -990,6 +1036,7 @@ const PaymentScheduleGrid = forwardRef(
                             cls={cls}
                             pending={pendingEdits[schedule.payment_name.id]?.[cls.id]}
                             installments={installments}
+                            defaultInstallmentIds={defaultInstallmentIds}
                             onAmountChange={(val) =>
                               handleAmountChange(schedule.payment_name.id, cls.id, val)
                             }

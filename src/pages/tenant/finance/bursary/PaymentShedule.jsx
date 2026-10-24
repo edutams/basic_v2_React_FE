@@ -31,7 +31,14 @@ import {
   Article as ArticleIcon,
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
-import { IconStack2, IconCash, IconTag, IconUsers, IconSettings, IconCalendarEvent } from '@tabler/icons-react';
+import {
+  IconStack2,
+  IconCash,
+  IconTag,
+  IconUsers,
+  IconSettings,
+  IconCalendarEvent,
+} from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -92,7 +99,11 @@ const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle }) => (
 const StatFigure = ({ value, label, color, notSet }) => (
   <Box flex={1} textAlign="center">
     {notSet ? (
-      <Typography variant="h4" fontWeight={700} sx={{ lineHeight: 1, mb: 0.5, color: 'error.main' }}>
+      <Typography
+        variant="h4"
+        fontWeight={700}
+        sx={{ lineHeight: 1, mb: 0.5, color: 'error.main' }}
+      >
         Not Set
       </Typography>
     ) : (
@@ -130,7 +141,12 @@ const ActionStepper = ({ activeTab, onChange }) => {
                 justifyContent: 'center',
                 fontSize: 12,
                 fontWeight: 700,
-                bgcolor: idx === activeTab ? 'primary.main' : idx < activeTab ? 'success.main' : 'grey.300',
+                bgcolor:
+                  idx === activeTab
+                    ? 'primary.main'
+                    : idx < activeTab
+                      ? 'success.main'
+                      : 'grey.300',
                 color: '#fff',
               }}
             >
@@ -139,7 +155,10 @@ const ActionStepper = ({ activeTab, onChange }) => {
             <Typography
               variant="body2"
               noWrap
-              sx={{ fontWeight: idx === activeTab ? 700 : 500, color: idx === activeTab ? 'primary.main' : 'text.secondary' }}
+              sx={{
+                fontWeight: idx === activeTab ? 700 : 500,
+                color: idx === activeTab ? 'primary.main' : 'text.secondary',
+              }}
             >
               {label}
             </Typography>
@@ -231,7 +250,8 @@ const PaymentShedule = () => {
         // merged Set Schedule grid.
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId);
         if (res?.success && res.data) {
-          const { payment_items_total, schedule, missing_schedules, amount, student_category } = res.data;
+          const { payment_items_total, schedule, missing_schedules, amount, student_category } =
+            res.data;
           setScheduleStats({
             paymentItemsTotal: payment_items_total ?? 0,
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
@@ -264,7 +284,11 @@ const PaymentShedule = () => {
     const loadOverview = async () => {
       try {
         setLoadingClassesOverview(true);
-        const res = await fetchScheduleClassesOverview(selectedSession, activeSubTermId, selectedCategory || undefined);
+        const res = await fetchScheduleClassesOverview(
+          selectedSession,
+          activeSubTermId,
+          selectedCategory || undefined,
+        );
         if (res?.success && Array.isArray(res.data)) {
           setClassesOverview(res.data);
         }
@@ -352,7 +376,10 @@ const PaymentShedule = () => {
   // before the bursar even opens the dropdown — the whole point being they
   // shouldn't have to click through each one just to find the gaps.
   const categoriesMissingCount = categories.filter((c) => (c.missing_count ?? 0) > 0).length;
-  const totalMissingAcrossCategories = categories.reduce((sum, c) => sum + (c.missing_count ?? 0), 0);
+  const totalMissingAcrossCategories = categories.reduce(
+    (sum, c) => sum + (c.missing_count ?? 0),
+    0,
+  );
   // Categories with literally nothing priced yet vs. ones that are only
   // partially done — same missing_count > 0 either way, but a bursar
   // needs to know which is which.
@@ -373,7 +400,9 @@ const PaymentShedule = () => {
           }`
         : categoriesMissingCount > 0
           ? `${categoriesMissingCount} categor${categoriesMissingCount === 1 ? 'y' : 'ies'} missing schedules${
-              totalMissingAcrossCategories > 0 ? ` — ${totalMissingAcrossCategories} class/item pairs` : ''
+              totalMissingAcrossCategories > 0
+                ? ` — ${totalMissingAcrossCategories} class/item pairs`
+                : ''
             }`
           : null;
 
@@ -639,9 +668,17 @@ const PaymentShedule = () => {
                     <Skeleton width="100%" height={48} />
                   ) : (
                     <>
-                      <StatFigure value={stats.paymentItemsTotal} label="Payment Items" color={s0.color} />
+                      <StatFigure
+                        value={stats.paymentItemsTotal}
+                        label="Payment Items"
+                        color={s0.color}
+                      />
                       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-                      <StatFigure value={categories.length} label="Payment Categories" color={s2.color} />
+                      <StatFigure
+                        value={categories.length}
+                        label="Payment Categories"
+                        color={s2.color}
+                      />
                     </>
                   )}
                 </Box>
@@ -842,7 +879,9 @@ const PaymentShedule = () => {
                     label="Student Pay Category"
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     disabled={loadingCategories}
-                    renderValue={(val) => categories.find((c) => String(c.id) === String(val))?.name || ''}
+                    renderValue={(val) =>
+                      categories.find((c) => String(c.id) === String(val))?.name || ''
+                    }
                   >
                     {loadingCategories ? (
                       <MenuItem disabled>
@@ -851,7 +890,13 @@ const PaymentShedule = () => {
                     ) : (
                       categories.map((category) => (
                         <MenuItem key={category.id} value={String(category.id)}>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" gap={1}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            width="100%"
+                            gap={1}
+                          >
                             {category.name}
                             {category.missing_count > 0 && (
                               <Box
@@ -891,92 +936,118 @@ const PaymentShedule = () => {
 
             {/* Always-visible category callout, relocated here now that the
              * category selector itself lives in this card. */}
-            {categoryCalloutMessage && (
+            {/* {categoryCalloutMessage && (
               <Alert severity="error" variant="outlined" sx={{ mb: 2, py: 0.25 }}>
                 {categoryCalloutMessage}
               </Alert>
-            )}
+            )} */}
 
             <Grid container spacing={2}>
-              {(loadingClassesOverview ? Array.from({ length: 6 }) : classesOverview).map((cls, idx) => {
-                const scheme = schemeMap[idx % schemeMap.length];
-                const pct = cls ? Math.round((cls.priced_items / Math.max(cls.total_items, 1)) * 100) : 0;
-                const notSet = cls && cls.priced_items === 0;
-                return (
-                  <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-                    <Paper
-                      variant="outlined"
-                      onClick={() => cls && scheduleGridRef.current?.scrollToClass(cls.id)}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: '12px',
-                        bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
-                        cursor: cls ? 'pointer' : 'default',
-                        transition: 'transform 150ms ease, box-shadow 150ms ease',
-                        '&:hover': cls ? { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(15,23,42,0.08)' } : undefined,
-                      }}
-                    >
-                      {!cls ? (
-                        <Skeleton variant="rounded" height={90} />
-                      ) : (
-                        <>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Box display="flex" alignItems="center" gap={1} minWidth={0}>
-                              <Box
-                                sx={{
-                                  width: 28,
-                                  height: 28,
-                                  borderRadius: '8px',
-                                  bgcolor: scheme.bg,
-                                  color: scheme.color,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  flexShrink: 0,
-                                }}
-                              >
-                                <IconUsers size={16} />
+              {(loadingClassesOverview ? Array.from({ length: 6 }) : classesOverview).map(
+                (cls, idx) => {
+                  const scheme = schemeMap[idx % schemeMap.length];
+                  const pct = cls
+                    ? Math.round((cls.priced_items / Math.max(cls.total_items, 1)) * 100)
+                    : 0;
+                  const notSet = cls && cls.priced_items === 0;
+                  return (
+                    <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                      <Paper
+                        variant="outlined"
+                        onClick={() => cls && scheduleGridRef.current?.scrollToClass(cls.id)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: '12px',
+                          bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
+                          cursor: cls ? 'pointer' : 'default',
+                          transition: 'transform 150ms ease, box-shadow 150ms ease',
+                          '&:hover': cls
+                            ? {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
+                              }
+                            : undefined,
+                        }}
+                      >
+                        {!cls ? (
+                          <Skeleton variant="rounded" height={90} />
+                        ) : (
+                          <>
+                            <Box
+                              display="flex"
+                              alignItems="center"
+                              justifyContent="space-between"
+                              mb={1}
+                            >
+                              <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                                <Box
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: '8px',
+                                    bgcolor: scheme.bg,
+                                    color: scheme.color,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <IconUsers size={16} />
+                                </Box>
+                                <Typography variant="body2" fontWeight={700} noWrap>
+                                  {cls.class_code || cls.class_name}
+                                </Typography>
                               </Box>
-                              <Typography variant="body2" fontWeight={700} noWrap>
-                                {cls.class_code || cls.class_name}
+                              <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              color="textSecondary"
+                              display="block"
+                              mb={0.5}
+                            >
+                              {cls.student_count} students
+                            </Typography>
+                            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                              <LinearProgress
+                                variant="determinate"
+                                value={pct}
+                                sx={{
+                                  flex: 1,
+                                  height: 6,
+                                  borderRadius: 3,
+                                  bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                                  '& .MuiLinearProgress-bar': {
+                                    bgcolor: notSet ? 'error.main' : scheme.color,
+                                    borderRadius: 3,
+                                  },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                fontWeight={700}
+                                sx={{ color: notSet ? 'error.main' : scheme.color }}
+                              >
+                                {pct}%
                               </Typography>
                             </Box>
-                            <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
-                          </Box>
-                          <Typography variant="caption" color="textSecondary" display="block" mb={0.5}>
-                            {cls.student_count} students
-                          </Typography>
-                          <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={pct}
-                              sx={{
-                                flex: 1,
-                                height: 6,
-                                borderRadius: 3,
-                                bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                                '& .MuiLinearProgress-bar': { bgcolor: notSet ? 'error.main' : scheme.color, borderRadius: 3 },
-                              }}
-                            />
-                            <Typography variant="caption" fontWeight={700} sx={{ color: notSet ? 'error.main' : scheme.color }}>
-                              {pct}%
-                            </Typography>
-                          </Box>
-                          {notSet ? (
-                            <Typography variant="caption" fontWeight={700} color="error.main">
-                              Not Set
-                            </Typography>
-                          ) : (
-                            <Typography variant="caption" color="textSecondary">
-                              {cls.priced_items} of {cls.total_items} items scheduled
-                            </Typography>
-                          )}
-                        </>
-                      )}
-                    </Paper>
-                  </Grid>
-                );
-              })}
+                            {notSet ? (
+                              <Typography variant="caption" fontWeight={700} color="error.main">
+                                Not Set
+                              </Typography>
+                            ) : (
+                              <Typography variant="caption" color="textSecondary">
+                                {cls.priced_items} of {cls.total_items} items scheduled
+                              </Typography>
+                            )}
+                          </>
+                        )}
+                      </Paper>
+                    </Grid>
+                  );
+                },
+              )}
             </Grid>
           </Paper>
         </>

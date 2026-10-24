@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { Box, Paper, Typography, Skeleton, Tooltip, LinearProgress } from '@mui/material';
+import { ChevronRight as ChevronRightIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import PropTypes from 'prop-types';
@@ -54,6 +55,7 @@ const StatCard = ({
   progress,
   align = 'right',
   countFontSize,
+  showChevron = false,
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -73,6 +75,7 @@ const StatCard = ({
       sx={{
         borderRadius: '14px',
         p: '14px',
+        pr: showChevron ? '26px' : '14px',
         width: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
@@ -206,6 +209,20 @@ const StatCard = ({
         </Box>
       </Box>
 
+      {showChevron && (
+        <ChevronRightIcon
+          fontSize="small"
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: isDark ? 'rgba(255,255,255,0.4)' : 'text.disabled',
+            zIndex: 1,
+          }}
+        />
+      )}
+
       {progress !== undefined && (
         <Box
           sx={{ display: 'flex', alignItems: 'center', gap: 1, position: 'relative', zIndex: 1 }}
@@ -263,6 +280,7 @@ StatCard.propTypes = {
   tooltipPlacement: PropTypes.string,
   align: PropTypes.oneOf(['left', 'right']),
   countFontSize: PropTypes.number,
+  showChevron: PropTypes.bool,
 };
 
 export default StatCard;

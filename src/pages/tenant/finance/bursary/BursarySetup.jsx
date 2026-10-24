@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar, Skeleton } from '@mui/material';
+import { Box, Grid, Tabs, Tab, Alert, Snackbar } from '@mui/material';
 import {
   IconSettings,
   IconFileText,
-  IconChartBar,
   IconDatabase,
   IconCalendarDollar,
   IconUsers,
   IconEdit,
   IconCalendarCheck,
+  IconStack2,
+  IconBuildingBank,
+  IconTrophy,
 } from '@tabler/icons-react';
-import { useTheme } from '@mui/material/styles';
 import dayjs from 'dayjs';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
@@ -25,21 +26,6 @@ import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Bursary Setup' }];
 
 const BursarySetup = () => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  const schemeMap = [
-    { bg: '#DBEAFE', color: '#2563EB' },
-    { bg: '#DCFCE7', color: '#16A34A' },
-    { bg: '#F3E8FF', color: '#9333EA' },
-    { bg: '#FEF3C7', color: '#D97706' },
-    { bg: '#FEE2E2', color: '#DC2626' },
-  ];
-
-  const s0 = schemeMap[0];
-  const s1 = schemeMap[1];
-  const s2 = schemeMap[2];
-
   const [searchParams] = useSearchParams();
   // Lets a link from elsewhere (e.g. "no optional payments yet, set one up")
   // land directly on the Payment Name tab instead of just the page root.
@@ -78,7 +64,12 @@ const BursarySetup = () => {
     active: 0,
     inactive: 0,
     settlement_accounts: {},
+    settlement_account_list: [],
+    settlement_account_total: 0,
+    settlement_account_verified: 0,
+    top_settlement_account: null,
     fee_bearer: {},
+    recent_update: null,
   });
 
   const [bursaryStatsLoading, setBursaryStatsLoading] = useState(true);
@@ -167,14 +158,16 @@ const BursarySetup = () => {
     setCurrentTab(newValue);
   };
 
-  const bankCount = Object.keys(paymentNameStats.settlement_accounts || {}).length;
-
   return (
     <PageContainer title="Bursary Setup" description="Configure fees and payment settings">
       <Breadcrumb
         title="Bursary Setup"
-        subtitle="Configure how fees are collected for the current term"
-        items={BCrumb}
+        subtitle={
+          currentTab === 1
+            ? 'Configure payment items that parents can pay for and manage their settlement destinations.'
+            : 'Configure how fees are collected for the current term'
+        }
+        items={currentTab === 1 ? [...BCrumb, { title: 'Payment Items' }] : BCrumb}
       />
 
       {/* Stats Cards - Dynamic based on active tab */}
@@ -235,331 +228,66 @@ const BursarySetup = () => {
           </Grid>
         </Grid>
       ) : (
-        // Payment Name Stats
+        // Payment Items Stats — four summary cards matching the Payment
+        // Items reference design. Unscoped across both Bursary and
+        // Admission payment names (confirmed against real data: these
+        // totals match the combined count of both pay_types, not just
+        // whichever sub-tab is currently selected inside PaymentNameTab).
         <Grid container spacing={3} mb={1}>
-          {/* Total Payment Items Card */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              {paymentNameStatsLoading ? (
-                <>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="text" width={140} height={24} />
-                  </Box>
-                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
-                  <Grid container spacing={2} mb={2}>
-                    {[0, 1, 2, 3].map((i) => (
-                      <Grid key={i} size={{ xs: 3 }}>
-                        <Skeleton variant="text" width="80%" height={14} />
-                        <Skeleton variant="text" width="50%" height={18} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                  <Skeleton variant="text" width="70%" height={16} />
-                </>
-              ) : (
-              <>
-              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                    color: isDark ? '#fff' : s0.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <IconChartBar size={18} color="currentColor" />
-                </Box>
-                <Typography variant="h6" fontWeight={600}>
-                  Total Payment Items
-                </Typography>
-              </Box>
-              <Typography
-                variant="h2"
-                fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : s0.color }}
-                mb={2}
-              >
-                {paymentNameStats.total}
-              </Typography>
-              <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 3 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Compulsory
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.compulsory}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 3 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Optional
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.optional}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 3 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Active
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.active}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 3 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Inactive
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.inactive}
-                  </Typography>
-                </Grid>
-              </Grid>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: paymentNameStats.inactive > 0 ? 'warning.main' : 'success.main',
-                  }}
-                />
-                <Typography variant="caption" color="textSecondary">
-                  {paymentNameStats.inactive > 0
-                    ? `${paymentNameStats.inactive} item(s) currently inactive`
-                    : 'All payment items are currently active'}
-                </Typography>
-              </Box>
-              </>
-              )}
-            </Paper>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={paymentNameStats.total}
+              label="Payment Items"
+              subtitle={`${paymentNameStats.compulsory} Compulsory · ${paymentNameStats.optional} Optional`}
+              icon={IconStack2}
+              colorIndex={0}
+              loading={paymentNameStatsLoading}
+              showChevron
+            />
           </Grid>
-
-          {/* Settlement Accounts Card */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              {paymentNameStatsLoading ? (
-                <>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="text" width={140} height={24} />
-                  </Box>
-                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
-                  <Grid container spacing={2} mb={2}>
-                    {[0, 1].map((i) => (
-                      <Grid key={i} size={{ xs: 6 }}>
-                        <Skeleton variant="text" width="80%" height={14} />
-                        <Skeleton variant="text" width="50%" height={18} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                  <Skeleton variant="text" width="70%" height={16} />
-                </>
-              ) : (
-              <>
-              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
-                    color: isDark ? '#fff' : s1.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <IconChartBar size={18} color="currentColor" />
-                </Box>
-                <Typography variant="h6" fontWeight={600}>
-                  Settlement Accounts
-                </Typography>
-              </Box>
-
-              <Typography
-                variant="h2"
-                fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : s1.color }}
-                mb={2}
-              >
-                {bankCount}
-              </Typography>
-
-              <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Banks Configured
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {bankCount}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Status
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {bankCount > 0 ? 'Configured' : 'Not Configured'}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    bgcolor: bankCount > 0 ? 'success.main' : 'warning.main',
-                  }}
-                />
-                <Typography variant="caption" color="textSecondary">
-                  {bankCount > 0
-                    ? `${bankCount} bank(s) configured`
-                    : 'No settlement accounts configured'}
-                </Typography>
-              </Box>
-              </>
-              )}
-            </Paper>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={paymentNameStats.settlement_account_total || 0}
+              label="Settlement Accounts"
+              subtitle={
+                paymentNameStats.settlement_account_total > 0 &&
+                paymentNameStats.settlement_account_verified === paymentNameStats.settlement_account_total
+                  ? 'All Verified'
+                  : `${paymentNameStats.settlement_account_verified || 0} Verified`
+              }
+              icon={IconBuildingBank}
+              colorIndex={1}
+              loading={paymentNameStatsLoading}
+              showChevron
+            />
           </Grid>
-
-          {/* Fee Bearer Distribution Card */}
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: '14px',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              {paymentNameStatsLoading ? (
-                <>
-                  <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="text" width={160} height={24} />
-                  </Box>
-                  <Skeleton variant="text" width={60} height={48} sx={{ mb: 2 }} />
-                  <Grid container spacing={2} mb={2}>
-                    {[0, 1].map((i) => (
-                      <Grid key={i} size={{ xs: 6 }}>
-                        <Skeleton variant="text" width="80%" height={14} />
-                        <Skeleton variant="text" width="50%" height={18} />
-                      </Grid>
-                    ))}
-                  </Grid>
-                  <Skeleton variant="text" width="70%" height={16} />
-                </>
-              ) : (
-              <>
-              <Box display="flex" alignItems="center" gap={1.5} mb={2}>
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s2.bg,
-                    color: isDark ? '#fff' : s2.color,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <IconChartBar size={18} color="currentColor" />
-                </Box>
-                <Typography variant="h6" fontWeight={600}>
-                  Fee Bearer Distribution
-                </Typography>
-              </Box>
-              <Typography
-                variant="h2"
-                fontWeight={700}
-                sx={{ color: isDark ? '#ffffff' : s2.color }}
-                mb={2}
-              >
-                {paymentNameStats.total}
-              </Typography>
-              <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    Parent
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.fee_bearer?.client || 0}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 6 }}>
-                  <Typography variant="caption" color="textSecondary">
-                    School
-                  </Typography>
-                  <Typography variant="body2" fontWeight={600}>
-                    {paymentNameStats.fee_bearer?.merchant || 0}
-                  </Typography>
-                </Grid>
-              </Grid>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-                <Typography variant="caption" color="textSecondary">
-                  {paymentNameStats.fee_bearer?.merchant > 0
-                    ? 'School absorbs some gateway charges'
-                    : 'All charges currently borne by parent'}
-                </Typography>
-              </Box>
-              </>
-              )}
-            </Paper>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={paymentNameStats.top_settlement_account?.bank_name || 'None yet'}
+              countFontSize={16}
+              label="Top Settlement Account"
+              subtitle={
+                paymentNameStats.top_settlement_account
+                  ? `${paymentNameStats.top_settlement_account.item_count} Payment Items`
+                  : undefined
+              }
+              icon={IconTrophy}
+              colorIndex={3}
+              loading={paymentNameStatsLoading}
+              showChevron
+              sx={{ bgcolor: '#FFFBEB', borderColor: '#FDE68A' }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <StatCard
+              count={paymentNameStats.total}
+              label="Fee Bearer Distribution"
+              subtitle={`${paymentNameStats.fee_bearer?.client || 0} Parent/Student · ${paymentNameStats.fee_bearer?.merchant || 0} School`}
+              icon={IconUsers}
+              colorIndex={2}
+              loading={paymentNameStatsLoading}
+              showChevron
+            />
           </Grid>
         </Grid>
       )}
@@ -608,6 +336,7 @@ const BursarySetup = () => {
           onStatsRefresh={loadPaymentNameStats}
           autoOpenAdd={Boolean(searchParams.get('new'))}
           defaultPayOption={searchParams.get('new') || undefined}
+          stats={paymentNameStats}
         />
       )}
 

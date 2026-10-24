@@ -1,9 +1,19 @@
 import api from '@/api/tenant/tenant_api';
 
 export const fetchPaymentNames = async (params = {}) => {
-    const { page = 1, search = '', per_page = 10, pay_type, application_stage } = params;
-    const res = await api.get('/bursary/payment_name/fetch_payment_names', { 
-        params: { page, search, per_page, pay_type, application_stage } 
+    const {
+        page = 1,
+        search = '',
+        per_page = 10,
+        pay_type,
+        application_stage,
+        pay_option,
+        fee_bearer,
+        status,
+        settlement_account,
+    } = params;
+    const res = await api.get('/bursary/payment_name/fetch_payment_names', {
+        params: { page, search, per_page, pay_type, application_stage, pay_option, fee_bearer, status, settlement_account },
     });
     return res.data;
 };

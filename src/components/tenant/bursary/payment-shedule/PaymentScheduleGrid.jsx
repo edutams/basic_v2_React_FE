@@ -112,6 +112,12 @@ const ScheduleCell = ({
   const isDirty =
     (pending?.amount !== undefined && String(pending.amount) !== String(cls.amount || '')) ||
     (pending?.installmentId !== undefined && String(pending.installmentId) !== String(normalizedInstallmentId));
+  // Hide the picker entirely when there's genuinely nothing else to pick —
+  // only the 100% default in play, everywhere. It still shows for a class
+  // that's already pinned to a plan since deactivated, so that honestly
+  // stays visible instead of silently disappearing.
+  const hasActiveAlternative = installments.some((i) => i.status === 'active');
+  const showInstallmentPicker = hasActiveAlternative || normalizedInstallmentId !== '';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 210, py: 0.5 }}>
@@ -222,43 +228,52 @@ const ScheduleCell = ({
           </Tooltip>
         )}
       </Box>
-      <FormControl size="small" variant="standard" sx={{ pl: '38px' }}>
-        <Select
-          value={installmentValue}
-          onChange={(e) => onInstallmentChange(e.target.value)}
-          disabled={disabled || locked}
-          displayEmpty
-          disableUnderline
-          sx={{
-            fontSize: 11,
-            color: 'text.secondary',
-            '& .MuiSelect-select': { py: '2px !important' },
-          }}
-        >
-          <MenuOption value="" sx={{ fontSize: 12 }}>
-            Default installment
-          </MenuOption>
-          {installments.map((inst) => {
-            const isInactiveInstallment = inst.status !== 'active';
-            const label = inst.code ? `${inst.code} — ${inst.inst1}% / ${inst.inst2}%` : `${inst.inst1}% / ${inst.inst2}%`;
-            return (
-              <MenuOption
-                key={inst.id}
-                value={inst.id}
-                // Disabled so it can't be picked for a NEW assignment, but
-                // still rendered so a class already using it (since
-                // deactivated in Bursary Setup) still shows correctly here
-                // instead of going blank.
-                disabled={isInactiveInstallment}
-                sx={{ fontSize: 12, fontStyle: isInactiveInstallment ? 'italic' : 'normal' }}
-              >
-                {label}
-                {isInactiveInstallment ? ' (Inactive)' : ''}
-              </MenuOption>
-            );
-          })}
-        </Select>
-      </FormControl>
+      {/* Only shown once an alternative installment plan actually exists —
+       * with nothing but the 100% default in play, every class is the
+       * default anyway, so a selector with one meaningless option is just
+       * noise. It appears automatically for every cell the moment a real
+       * plan is created in Bursary Setup. */}
+      {showInstallmentPicker && (
+        <FormControl size="small" variant="standard" sx={{ pl: '38px' }}>
+          <Select
+            value={installmentValue}
+            onChange={(e) => onInstallmentChange(e.target.value)}
+            disabled={disabled || locked}
+            displayEmpty
+            disableUnderline
+            sx={{
+              fontSize: 11,
+              color: 'text.secondary',
+              '& .MuiSelect-select': { py: '2px !important' },
+            }}
+          >
+            <MenuOption value="" sx={{ fontSize: 12 }}>
+              Default installment
+            </MenuOption>
+            {installments.map((inst) => {
+              const isInactiveInstallment = inst.status !== 'active';
+              const label = inst.code
+                ? `${inst.code} — ${inst.inst1}% / ${inst.inst2}%`
+                : `${inst.inst1}% / ${inst.inst2}%`;
+              return (
+                <MenuOption
+                  key={inst.id}
+                  value={inst.id}
+                  // Disabled so it can't be picked for a NEW assignment, but
+                  // still rendered so a class already using it (since
+                  // deactivated in Bursary Setup) still shows correctly here
+                  // instead of going blank.
+                  disabled={isInactiveInstallment}
+                  sx={{ fontSize: 12, fontStyle: isInactiveInstallment ? 'italic' : 'normal' }}
+                >
+                  {label}
+                  {isInactiveInstallment ? ' (Inactive)' : ''}
+                </MenuOption>
+              );
+            })}
+          </Select>
+        </FormControl>
+      )}
     </Box>
   );
 };

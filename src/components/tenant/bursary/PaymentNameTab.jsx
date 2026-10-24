@@ -208,7 +208,20 @@ const SettlementAccountRow = ({ account, index, onClick }) => (
     <TableCell>{index + 1}</TableCell>
     <TableCell>
       <Box display="flex" alignItems="center" gap={1}>
-        <IconBuildingBank size={14} />
+        <Box
+          sx={{
+            width: 32,
+            height: 32,
+            borderRadius: '8px',
+            bgcolor: '#DBEAFE',
+            color: '#2563EB',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <IconBuildingBank size={16} />
+        </Box>
         <Box minWidth={0}>
           <Typography variant="caption" fontWeight={700} display="block" noWrap>
             {account.bank_name}
@@ -356,7 +369,16 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
   useEffect(() => {
     loadPaymentNames(page + 1, searchQuery, rowsPerPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, searchQuery, rowsPerPage, currentTab, payOptionFilter, feeBearerFilter, statusFilter, settlementAccountFilter]);
+  }, [
+    page,
+    searchQuery,
+    rowsPerPage,
+    currentTab,
+    payOptionFilter,
+    feeBearerFilter,
+    statusFilter,
+    settlementAccountFilter,
+  ]);
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
@@ -420,7 +442,14 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
         <Tabs
           value={currentTab}
           onChange={handleTabChange}
-          sx={{ '& .MuiTab-root': { minHeight: 44, textTransform: 'none', fontWeight: 600, fontSize: 14 } }}
+          sx={{
+            '& .MuiTab-root': {
+              minHeight: 44,
+              textTransform: 'none',
+              fontWeight: 600,
+              fontSize: 14,
+            },
+          }}
         >
           <Tab label="Bursary Payments" value="bursary" />
           <Tab label="Admission Payments" value="admission" />
@@ -453,8 +482,8 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                   '& .MuiAlert-icon': { color: 'primary.main' },
                 }}
               >
-                Each payment item is linked to a specific settlement account. All payments for
-                that item will be routed to the assigned account.
+                Each payment item is linked to a specific settlement account. All payments for that
+                item will be routed to the assigned account.
               </Alert>
             )}
 
@@ -483,6 +512,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                     setPage(0);
                   }}
                   sx={{ width: 110 }}
+                  SelectProps={{ displayEmpty: true }}
                 >
                   <MenuItem value="">All</MenuItem>
                   <MenuItem value="compulsory">Compulsory</MenuItem>
@@ -499,6 +529,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                     setPage(0);
                   }}
                   sx={{ width: 150 }}
+                  SelectProps={{ displayEmpty: true }}
                 >
                   <MenuItem value="">All Accounts</MenuItem>
                   {settlementAccountList.map((acc) => (
@@ -518,6 +549,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                     setPage(0);
                   }}
                   sx={{ width: 100 }}
+                  SelectProps={{ displayEmpty: true }}
                 >
                   <MenuItem value="">All</MenuItem>
                   <MenuItem value="client">Parent</MenuItem>
@@ -534,6 +566,7 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                     setPage(0);
                   }}
                   sx={{ width: 100 }}
+                  SelectProps={{ displayEmpty: true }}
                 >
                   <MenuItem value="">All</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -568,13 +601,37 @@ const PaymentNameTab = ({ showSnackbar, onStatsRefresh, autoOpenAdd, defaultPayO
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton variant="text" width={20} /></TableCell>
-                        <TableCell><Skeleton variant="text" width={140} height={20} /></TableCell>
-                        <TableCell><Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                        <TableCell><Skeleton variant="text" width={140} height={36} /></TableCell>
-                        <TableCell><Skeleton variant="text" width={90} height={20} /></TableCell>
-                        <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ borderRadius: '12px', mx: 'auto' }} /></TableCell>
-                        <TableCell align="center"><Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} /></TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={20} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={140} height={20} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton
+                            variant="rounded"
+                            width={70}
+                            height={22}
+                            sx={{ borderRadius: '12px' }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={140} height={36} />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton variant="text" width={90} height={20} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Skeleton
+                            variant="rounded"
+                            width={60}
+                            height={22}
+                            sx={{ borderRadius: '12px', mx: 'auto' }}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
+                        </TableCell>
                       </TableRow>
                     ))
                   ) : paymentNames.length === 0 ? (

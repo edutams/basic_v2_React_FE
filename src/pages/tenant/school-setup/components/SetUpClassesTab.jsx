@@ -29,8 +29,8 @@ import {
   Edit as EditIcon,
   SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
-import { alpha } from '@mui/material/styles';
 import { IconSchool, IconListCheck, IconLayoutGrid, IconTrendingUp } from '@tabler/icons-react';
+import { alpha } from '@mui/material/styles';
 import StatCard from '@/components/shared/StatCard';
 import {
   getClassesWithDivisions,
@@ -38,7 +38,6 @@ import {
   updateProgramme,
 } from '@/api/tenant/set-up/tenant-setup';
 
-// A brand-tinted band for every section header — no color cycling, so the
 // page stays calm and consistent regardless of how many groups render, but
 // tinted with the primary brand color instead of a flat neutral gray.
 const SECTION_HEADER_BG = (theme) => alpha(theme.palette.primary.main, 0.1);
@@ -814,339 +813,373 @@ const SetUpClassesTab = forwardRef(
           </Grid>
         </Grid>
 
-        {/* ── Header actions ── */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button size="small" onClick={collapseAll}>
-            Collapse all
-          </Button>
-          <Button size="small" variant="outlined" onClick={expandAll}>
-            Expand all
-          </Button>
-        </Box>
+        {/* ── Grouped class list — one shared white card for every section,
+             not a separate card per group with page-grey gaps between
+             them. Each group is a plain Box with its own bottom divider
+             instead of its own Paper. ── */}
+        <Paper
+          variant="outlined"
+          sx={{
+            padding: 1,
+            borderRadius: 3,
+            overflow: 'hidden',
+            bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff'),
+          }}
+        >
+          {/* ── Header actions ── */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+            <Button size="small" onClick={collapseAll}>
+              Collapse all
+            </Button>
+            <Button size="small" variant="outlined" onClick={expandAll}>
+              Expand all
+            </Button>
+          </Box>
 
-        {/* ── Grouped class list ── */}
-        {groups.map((group) => {
-          const collapsed = collapsedGroups.has(group.key);
-          const armsInGroup = group.items.reduce(
-            (sum, c) => sum + (c.class_arm_names?.length || 0),
-            0,
-          );
-          const dirty = groupHasChanges(group);
-          const groupSaving = savingGroupKey === group.key;
+          {groups.map((group) => {
+            const collapsed = collapsedGroups.has(group.key);
+            const armsInGroup = group.items.reduce(
+              (sum, c) => sum + (c.class_arm_names?.length || 0),
+              0,
+            );
+            const dirty = groupHasChanges(group);
+            const groupSaving = savingGroupKey === group.key;
 
-          return (
-            <Paper
-              key={group.key}
-              variant="outlined"
-              sx={{ borderRadius: 3, overflow: 'hidden', bgcolor: 'background.paper' }}
-            >
+            return (
               <Box
+                key={group.key}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  gap: 2,
-                  flexWrap: 'wrap',
-                  cursor: 'pointer',
+                  margin: 2,
                   bgcolor: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? alpha(theme.palette.primary.main, 0.16)
-                      : SECTION_HEADER_BG(theme),
+                    theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff',
                   borderBottom: '1px solid',
-                  borderColor: (theme) => (theme.palette.mode === 'dark' ? 'divider' : '#aab1b9'),
-                  borderLeft: '4px solid',
-                  borderLeftColor: 'primary.main',
+                  borderColor: 'divider',
+                  '&:last-of-type': { borderBottom: 'none' },
                 }}
-                onClick={() => toggleGroup(group.key)}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconButton size="small">
-                    {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
-                  </IconButton>
-                  <Box>
-                    <Typography fontWeight={700}>{group.label}</Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    gap: 2,
+                    flexWrap: 'wrap',
+                    cursor: 'pointer',
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? alpha(theme.palette.primary.main, 0.16)
+                        : SECTION_HEADER_BG(theme),
+                    borderBottom: '1px solid',
+                    borderColor: (theme) => (theme.palette.mode === 'dark' ? 'divider' : '#aab1b9'),
+                    borderLeft: '4px solid',
+                    borderLeftColor: 'primary.main',
+                  }}
+                  onClick={() => toggleGroup(group.key)}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <IconButton size="small">
+                      {collapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                    </IconButton>
+                    <Box>
+                      <Typography fontWeight={700}>{group.label}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {group.items.length} class{group.items.length !== 1 ? 'es' : ''} ·{' '}
+                        {armsInGroup} arms
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box
+                    sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Typography variant="caption" color="text.secondary">
-                      {group.items.length} class{group.items.length !== 1 ? 'es' : ''} ·{' '}
-                      {armsInGroup} arms
+                      Apply to all
                     </Typography>
+                    {/* Same +/- stepper as each row below, for consistency */}
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setApplyAllValues((prev) => ({
+                          ...prev,
+                          [group.key]: Math.max(0, (parseInt(prev[group.key], 10) || 0) - 1),
+                        }))
+                      }
+                      sx={{ bgcolor: 'background.paper' }}
+                    >
+                      <RemoveIcon fontSize="small" />
+                    </IconButton>
+                    <Typography sx={{ width: 24, textAlign: 'center' }}>
+                      {parseInt(applyAllValues[group.key], 10) || 0}
+                    </Typography>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        setApplyAllValues((prev) => ({
+                          ...prev,
+                          [group.key]: (parseInt(prev[group.key], 10) || 0) + 1,
+                        }))
+                      }
+                      sx={{ bgcolor: 'background.paper' }}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => handleApplyToAll(group)}
+                    >
+                      Apply
+                    </Button>
+
+                    {/* This section's own Save — no need to scroll to a
+                      page-level save button. */}
+                    <Button
+                      size="small"
+                      variant={dirty ? 'contained' : 'outlined'}
+                      color={dirty ? 'primary' : 'inherit'}
+                      disabled={!dirty || groupSaving}
+                      onClick={() => handleSaveGroup(group)}
+                      startIcon={
+                        groupSaving ? <CircularProgress size={14} color="inherit" /> : null
+                      }
+                    >
+                      {groupSaving ? 'Saving...' : dirty ? 'Save changes' : 'Saved'}
+                    </Button>
                   </Box>
                 </Box>
 
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Typography variant="caption" color="text.secondary">
-                    Apply to all
-                  </Typography>
-                  {/* Same +/- stepper as each row below, for consistency */}
-                  <IconButton
-                    size="small"
-                    onClick={() =>
-                      setApplyAllValues((prev) => ({
-                        ...prev,
-                        [group.key]: Math.max(0, (parseInt(prev[group.key], 10) || 0) - 1),
-                      }))
-                    }
-                    sx={{ bgcolor: 'background.paper' }}
-                  >
-                    <RemoveIcon fontSize="small" />
-                  </IconButton>
-                  <Typography sx={{ width: 24, textAlign: 'center' }}>
-                    {parseInt(applyAllValues[group.key], 10) || 0}
-                  </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() =>
-                      setApplyAllValues((prev) => ({
-                        ...prev,
-                        [group.key]: (parseInt(prev[group.key], 10) || 0) + 1,
-                      }))
-                    }
-                    sx={{ bgcolor: 'background.paper' }}
-                  >
-                    <AddIcon fontSize="small" />
-                  </IconButton>
-                  <Button size="small" variant="contained" onClick={() => handleApplyToAll(group)}>
-                    Apply
-                  </Button>
-
-                  {/* This section's own Save — no need to scroll to a
-                      page-level save button. */}
-                  <Button
-                    size="small"
-                    variant={dirty ? 'contained' : 'outlined'}
-                    color={dirty ? 'primary' : 'inherit'}
-                    disabled={!dirty || groupSaving}
-                    onClick={() => handleSaveGroup(group)}
-                    startIcon={groupSaving ? <CircularProgress size={14} color="inherit" /> : null}
-                  >
-                    {groupSaving ? 'Saving...' : dirty ? 'Save changes' : 'Saved'}
-                  </Button>
-                </Box>
-              </Box>
-
-              <Collapse in={!collapsed}>
-                <Box sx={{ p: 2 }}>
-                  <Grid
-                    container
+                <Collapse in={!collapsed}>
+                  <Box
                     sx={{
-                      px: 1.5,
-                      py: 1,
-                      mb: 1,
-                      borderRadius: 2,
+                      p: 2,
                       bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? alpha(theme.palette.primary.main, 0.16)
-                          : SECTION_HEADER_BG(theme),
+                        theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff',
                     }}
                   >
-                    <Grid size={4}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
-                        sx={{ textTransform: 'uppercase' }}
-                      >
-                        Class
-                      </Typography>
-                    </Grid>
-                    <Grid size={3}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
-                        sx={{ textTransform: 'uppercase' }}
-                      >
-                        Arms
-                      </Typography>
-                    </Grid>
-                    <Grid size={5}>
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
-                        sx={{ textTransform: 'uppercase' }}
-                      >
-                        Arm Names
-                      </Typography>
-                    </Grid>
-                  </Grid>
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {group.items.map((cls) => {
-                      const isInactive = cls.status === 'inactive';
-                      return (
-                        <Box
-                          key={cls.unique_key}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            py: 1,
-                            px: 1.5,
-                            borderRadius: 2,
-                            bgcolor: (theme) =>
-                              isInactive
-                                ? theme.palette.mode === 'dark'
-                                  ? 'action.disabledBackground'
-                                  : '#e0e3e6'
-                                : theme.palette.mode === 'dark'
-                                  ? 'action.hover'
-                                  : '#eef0f2',
-                            opacity: isInactive ? 0.6 : 1,
-                          }}
+                    <Grid
+                      container
+                      sx={{
+                        px: 1.5,
+                        py: 1,
+                        mb: 1,
+                        borderRadius: 2,
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? alpha(theme.palette.primary.main, 0.16)
+                            : SECTION_HEADER_BG(theme),
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Grid size={4}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ textTransform: 'uppercase' }}
                         >
-                          <Grid container alignItems="center" sx={{ flex: 1 }}>
-                            <Grid size={4}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <Box
-                                  sx={{
-                                    width: 36,
-                                    height: 36,
-                                    borderRadius: '10px',
-                                    bgcolor: 'primary.light',
-                                    color: 'primary.main',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontWeight: 700,
-                                    fontSize: 12,
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {abbreviateProgramme(cls)}
-                                </Box>
-                                <Box sx={{ minWidth: 0, flex: 1 }}>
-                                  <ClassNameField
-                                    value={cls.class_name}
-                                    disabled={isInactive}
-                                    onEditClick={() => startRenamingClass(cls)}
-                                  />
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-                                    <Typography variant="caption" color="text.secondary" noWrap>
-                                      {cls.programme_name} – {cls.class_name}
-                                      {/* {cls.programme_code} – {cls.class_code} */}
-                                    </Typography>
-                                    {!isInactive && (
-                                      <Tooltip title={`Rename programme "${cls.programme_name}"`}>
-                                        <IconButton
-                                          size="small"
-                                          onClick={() =>
-                                            startRenamingProgramme(
-                                              cls.programme_id,
-                                              cls.programme_name,
-                                            )
-                                          }
-                                          sx={{ p: 0.25 }}
-                                        >
-                                          <EditIcon sx={{ fontSize: 14 }} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )}
-                                    {(programmesByDivisionId[cls.division_id]?.length || 0) > 1 && (
-                                      <Tooltip title="Move to a different programme">
-                                        <IconButton
-                                          size="small"
-                                          disabled={isInactive}
-                                          onClick={() => startReassigningProgramme(cls)}
-                                          sx={{ p: 0.25 }}
-                                        >
-                                          <SwapHorizIcon sx={{ fontSize: 14 }} />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )}
+                          Class
+                        </Typography>
+                      </Grid>
+                      <Grid size={3}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ textTransform: 'uppercase' }}
+                        >
+                          Arms
+                        </Typography>
+                      </Grid>
+                      <Grid size={5}>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ textTransform: 'uppercase' }}
+                        >
+                          Arm Names
+                        </Typography>
+                      </Grid>
+                    </Grid>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {group.items.map((cls) => {
+                        const isInactive = cls.status === 'inactive';
+                        return (
+                          <Box
+                            key={cls.unique_key}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              py: 1,
+                              px: 1.5,
+                              borderRadius: 2,
+                              bgcolor: (theme) =>
+                                isInactive
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'action.disabledBackground'
+                                    : '#e0e3e6'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'action.hover'
+                                    : '#eef0f2',
+                              opacity: isInactive ? 0.6 : 1,
+                            }}
+                          >
+                            <Grid container alignItems="center" sx={{ flex: 1 }}>
+                              <Grid size={4}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                  <Box
+                                    sx={{
+                                      width: 36,
+                                      height: 36,
+                                      borderRadius: '10px',
+                                      bgcolor: 'primary.light',
+                                      color: 'primary.main',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 700,
+                                      fontSize: 12,
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    {abbreviateProgramme(cls)}
+                                  </Box>
+                                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                                    <ClassNameField
+                                      value={cls.class_name}
+                                      disabled={isInactive}
+                                      onEditClick={() => startRenamingClass(cls)}
+                                    />
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                      <Typography variant="caption" color="text.secondary" noWrap>
+                                        {cls.programme_name} – {cls.class_name}
+                                        {/* {cls.programme_code} – {cls.class_code} */}
+                                      </Typography>
+                                      {!isInactive && (
+                                        <Tooltip title={`Rename programme "${cls.programme_name}"`}>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              startRenamingProgramme(
+                                                cls.programme_id,
+                                                cls.programme_name,
+                                              )
+                                            }
+                                            sx={{ p: 0.25 }}
+                                          >
+                                            <EditIcon sx={{ fontSize: 14 }} />
+                                          </IconButton>
+                                        </Tooltip>
+                                      )}
+                                      {(programmesByDivisionId[cls.division_id]?.length || 0) >
+                                        1 && (
+                                        <Tooltip title="Move to a different programme">
+                                          <IconButton
+                                            size="small"
+                                            disabled={isInactive}
+                                            onClick={() => startReassigningProgramme(cls)}
+                                            sx={{ p: 0.25 }}
+                                          >
+                                            <SwapHorizIcon sx={{ fontSize: 14 }} />
+                                          </IconButton>
+                                        </Tooltip>
+                                      )}
+                                    </Box>
                                   </Box>
                                 </Box>
-                              </Box>
-                            </Grid>
+                              </Grid>
 
-                            <Grid size={3}>
-                              {(() => {
-                                const lastArm =
-                                  cls.class_arm_names?.[cls.class_arm_names.length - 1];
-                                const removalBlocked = !isInactive && lastArm?.studentCount > 0;
-                                const decrementBtn = (
-                                  <IconButton
-                                    size="small"
-                                    disabled={isInactive || !cls.no_of_arms || removalBlocked}
-                                    onClick={() => adjustArmCount(cls.unique_key, -1)}
-                                    sx={{ bgcolor: 'background.paper' }}
-                                  >
-                                    <RemoveIcon fontSize="small" />
-                                  </IconButton>
-                                );
-                                return (
-                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                    {removalBlocked ? (
-                                      <Tooltip
-                                        title={`"${lastArm.name}" has ${lastArm.studentCount} learner(s) enrolled — remove or move them first.`}
-                                      >
-                                        <span>{decrementBtn}</span>
-                                      </Tooltip>
-                                    ) : (
-                                      decrementBtn
-                                    )}
-                                    <Typography sx={{ width: 24, textAlign: 'center' }}>
-                                      {cls.no_of_arms || 0}
-                                    </Typography>
+                              <Grid size={3}>
+                                {(() => {
+                                  const lastArm =
+                                    cls.class_arm_names?.[cls.class_arm_names.length - 1];
+                                  const removalBlocked = !isInactive && lastArm?.studentCount > 0;
+                                  const decrementBtn = (
                                     <IconButton
                                       size="small"
-                                      disabled={isInactive}
-                                      onClick={() => adjustArmCount(cls.unique_key, 1)}
+                                      disabled={isInactive || !cls.no_of_arms || removalBlocked}
+                                      onClick={() => adjustArmCount(cls.unique_key, -1)}
                                       sx={{ bgcolor: 'background.paper' }}
                                     >
-                                      <AddIcon fontSize="small" />
+                                      <RemoveIcon fontSize="small" />
                                     </IconButton>
-                                  </Box>
-                                );
-                              })()}
-                            </Grid>
+                                  );
+                                  return (
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                      {removalBlocked ? (
+                                        <Tooltip
+                                          title={`"${lastArm.name}" has ${lastArm.studentCount} learner(s) enrolled — remove or move them first.`}
+                                        >
+                                          <span>{decrementBtn}</span>
+                                        </Tooltip>
+                                      ) : (
+                                        decrementBtn
+                                      )}
+                                      <Typography sx={{ width: 24, textAlign: 'center' }}>
+                                        {cls.no_of_arms || 0}
+                                      </Typography>
+                                      <IconButton
+                                        size="small"
+                                        disabled={isInactive}
+                                        onClick={() => adjustArmCount(cls.unique_key, 1)}
+                                        sx={{ bgcolor: 'background.paper' }}
+                                      >
+                                        <AddIcon fontSize="small" />
+                                      </IconButton>
+                                    </Box>
+                                  );
+                                })()}
+                              </Grid>
 
-                            <Grid size={5}>
-                              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                                {cls.class_arm_names?.length > 0 ? (
-                                  cls.class_arm_names.map((arm, i) => (
-                                    <ArmChip
-                                      key={i}
-                                      value={arm.name}
-                                      studentCount={arm.studentCount}
-                                      disabled={isInactive}
-                                      onRename={(v) => renameArm(cls.unique_key, i, v)}
-                                      onRemove={() => removeArm(cls.unique_key, i)}
+                              <Grid size={5}>
+                                <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                                  {cls.class_arm_names?.length > 0 ? (
+                                    cls.class_arm_names.map((arm, i) => (
+                                      <ArmChip
+                                        key={i}
+                                        value={arm.name}
+                                        studentCount={arm.studentCount}
+                                        disabled={isInactive}
+                                        onRename={(v) => renameArm(cls.unique_key, i, v)}
+                                        onRemove={() => removeArm(cls.unique_key, i)}
+                                      />
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                      No arms yet
+                                    </Typography>
+                                  )}
+                                  {!isInactive && (
+                                    <Chip
+                                      label="+ Add"
+                                      size="small"
+                                      variant="outlined"
+                                      onClick={() => adjustArmCount(cls.unique_key, 1)}
+                                      sx={{
+                                        borderStyle: 'dashed',
+                                        cursor: 'pointer',
+                                        bgcolor: 'background.paper',
+                                      }}
                                     />
-                                  ))
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    No arms yet
-                                  </Typography>
-                                )}
-                                {!isInactive && (
-                                  <Chip
-                                    label="+ Add"
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => adjustArmCount(cls.unique_key, 1)}
-                                    sx={{
-                                      borderStyle: 'dashed',
-                                      cursor: 'pointer',
-                                      bgcolor: 'background.paper',
-                                    }}
-                                  />
-                                )}
-                              </Box>
+                                  )}
+                                </Box>
+                              </Grid>
                             </Grid>
-                          </Grid>
-                        </Box>
-                      );
-                    })}
+                          </Box>
+                        );
+                      })}
+                    </Box>
                   </Box>
-                </Box>
-              </Collapse>
-            </Paper>
-          );
-        })}
+                </Collapse>
+              </Box>
+            );
+          })}
+        </Paper>
 
         <Dialog
           open={renamingClassKey !== null}

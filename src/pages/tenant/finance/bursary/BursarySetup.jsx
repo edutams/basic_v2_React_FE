@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Box, Grid, Typography, Paper, Tabs, Tab, Alert, Snackbar, Skeleton } from '@mui/material';
-import { IconSettings, IconFileText, IconChartBar } from '@tabler/icons-react';
 import {
-  Settings as SettingsIcon,
-  CreditCard as CreditCardIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+  IconSettings,
+  IconFileText,
+  IconChartBar,
+  IconDatabase,
+  IconCalendarDollar,
+  IconUsers,
+  IconEdit,
+  IconCalendarCheck,
+} from '@tabler/icons-react';
 import { useTheme } from '@mui/material/styles';
+import dayjs from 'dayjs';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import StatCard from '@/components/shared/StatCard';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
-import { fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
+import { fetchTenantSessions, fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
 
@@ -44,6 +49,19 @@ const BursarySetup = () => {
   // Session & Term
   const [sessionTerms, setSessionTerms] = useState([]);
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
+
+  // Academic Sessions summary card — a flat list of sessions (not terms),
+  // fetched independently of sessionTerms since the "Academic Sessions"
+  // stat card counts distinct sessions, not session-term combinations.
+  const [sessions, setSessions] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+
+  // "Last Term Update" stat card — who last changed the bursary active
+  // session term, and when. Backed by `fetchActiveSessionTerm()`'s
+  // `last_activated_at`/`last_activated_by` fields; both are treated as
+  // possibly absent (e.g. never changed, or not yet exposed by the API)
+  // rather than assumed present.
+  const [lastTermUpdate, setLastTermUpdate] = useState({ at: null, by: null });
 
   // Stats data for different tabs
   const [bursaryStats, setBursaryStats] = useState({
@@ -91,17 +109,23 @@ const BursarySetup = () => {
     // case for a fresh setup) — that must not stop the session-terms list
     // itself from loading, so these are settled independently rather than
     // via Promise.all (which fails the whole call on the first rejection).
-    const [termsResult, activeTermResult] = await Promise.allSettled([
+    setSessionsLoading(true);
+    const [termsResult, activeTermResult, sessionsResult] = await Promise.allSettled([
       fetchTenantSessionTerms({ per_page: 100 }),
       fetchActiveSessionTerm(),
+      fetchTenantSessions({ pagination: false }),
     ]);
 
     if (termsResult.status === 'rejected') {
       console.error('Failed to fetch session terms:', termsResult.reason);
     }
+    if (sessionsResult.status === 'rejected') {
+      console.error('Failed to fetch sessions:', sessionsResult.reason);
+    }
 
     const termsRes = termsResult.status === 'fulfilled' ? termsResult.value : null;
     const activeTermRes = activeTermResult.status === 'fulfilled' ? activeTermResult.value : null;
+    const sessionsRes = sessionsResult.status === 'fulfilled' ? sessionsResult.value : null;
 
     if (termsRes?.status) {
       // List every session term (not just the active one) — this dropdown
@@ -116,9 +140,18 @@ const BursarySetup = () => {
       setSessionTerms(sess_terms);
     }
 
+    if (sessionsRes?.status) {
+      setSessions(sessionsRes.data || []);
+    }
+    setSessionsLoading(false);
+
     if (activeTermRes?.status && activeTermRes.data) {
       // Bursary has its own explicitly-configured active session term.
       setSelectedSessionTerm(activeTermRes.data.session_term_id);
+      setLastTermUpdate({
+        at: activeTermRes.data.last_activated_at || null,
+        by: activeTermRes.data.last_activated_by || null,
+      });
     } else if (termsRes?.status) {
       // Not configured yet — default to whichever session term is
       // currently active tenant-wide, so the dropdown isn't left blank.
@@ -146,42 +179,58 @@ const BursarySetup = () => {
 
       {/* Stats Cards - Dynamic based on active tab */}
       {currentTab === 0 ? (
-        // Bursary Setup Stats
+        // Bursary Setup Stats — five summary cards matching the Bursary
+        // Setup reference design.
         <Grid container spacing={3} mb={1}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
               count={bursaryStats.totalCategories}
-              label="Total Categories"
-              icon={SettingsIcon}
+              label="Fee Categories"
+              subtitle={`${bursaryStats.activeCategories} Active · ${Math.max(0, bursaryStats.totalCategories - bursaryStats.activeCategories)} Inactive`}
+              icon={IconDatabase}
               colorIndex={0}
               loading={bursaryStatsLoading}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={bursaryStats.activeCategories}
-              label="Active Categories"
-              icon={CheckCircleIcon}
+              count={bursaryStats.totalInstalments}
+              label="Instalment Plans"
+              subtitle={`${bursaryStats.activeInstalments} Active · ${Math.max(0, bursaryStats.totalInstalments - bursaryStats.activeInstalments)} Inactive`}
+              icon={IconCalendarDollar}
               colorIndex={1}
               loading={bursaryStatsLoading}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={bursaryStats.totalInstalments}
-              label="Instalment Plans"
-              icon={CreditCardIcon}
+              count={sessions.length}
+              label="Academic Sessions"
+              subtitle={`${sessions.filter((s) => s.status === 'active').length} Active · ${sessions.filter((s) => s.status === 'completed').length} Completed`}
+              icon={IconUsers}
               colorIndex={2}
-              loading={bursaryStatsLoading}
+              loading={sessionsLoading}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
             <StatCard
-              count={bursaryStats.activeInstalments}
-              label="Active Plans"
-              icon={CheckCircleIcon}
+              count={lastTermUpdate.at ? dayjs(lastTermUpdate.at).format('MMM D, YYYY') : 'Not yet updated'}
+              countFontSize={16}
+              label="Last Term Update"
+              subtitle={lastTermUpdate.at && lastTermUpdate.by ? `by ${lastTermUpdate.by}` : undefined}
+              icon={IconEdit}
               colorIndex={3}
-              loading={bursaryStatsLoading}
+              loading={sessionsLoading}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              count={sessionTerms.find((st) => st.id === selectedSessionTerm)?.label || 'Not set'}
+              countFontSize={16}
+              label="Active Term"
+              icon={IconCalendarCheck}
+              colorIndex={4}
+              loading={sessionsLoading}
             />
           </Grid>
         </Grid>

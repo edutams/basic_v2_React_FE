@@ -26,18 +26,39 @@ import {
   ListItemText,
   Alert,
   Divider,
-  CircularProgress,
   TablePagination,
   Skeleton,
+  Tabs,
+  Tab,
+  InputAdornment,
+  Tooltip,
 } from '@mui/material';
-import { IconPlus, IconEdit, IconDotsVertical, IconCheck, IconX } from '@tabler/icons-react';
-import { Payments as PaymentsIcon, TaskAlt as TaskAltIcon } from '@mui/icons-material';
+import {
+  IconPlus,
+  IconEdit,
+  IconDotsVertical,
+  IconCheck,
+  IconX,
+  IconEye,
+  IconSearch,
+  IconClockHour4,
+  IconDeviceFloppy,
+  IconRotateClockwise2,
+} from '@tabler/icons-react';
+import {
+  Payments as PaymentsIcon,
+  TaskAlt as TaskAltIcon,
+  CalendarMonth as CalendarMonthIcon,
+  Settings as SettingsIcon,
+  InfoOutlined as InfoOutlinedIcon,
+} from '@mui/icons-material';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableModal from '@/components/shared/ReusableModal';
 import CategoryModal from '@/components/tenant/bursary/CategoryModal';
 import InstalmentModal from '@/components/tenant/bursary/InstalmentModal';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import dayjs from 'dayjs';
 import {
   fetchPaymentCategories,
   createPaymentCategory,
@@ -59,9 +80,77 @@ import {
   fetchResultPaymentSettings,
   saveResultPaymentSettings,
 } from '@/api/tenant/bursary/bursaryResultSettingsApi';
+import { fetchTenantSessions, fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import useNotification from '@/hooks/useNotification';
 
-const StatusChip = ({ status }) => {
+/** Small reusable section header: icon badge + title + supporting text,
+ * matching the reference design's section-card headers throughout this
+ * page (Academic Sessions, Collection Rules, Fee Categories, etc). */
+const SectionHeader = ({ icon: Icon, iconBg = '#DBEAFE', iconColor = 'primary.main', title, subtitle, action }) => (
+  <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={2} mb={2}>
+    <Box display="flex" alignItems="flex-start" gap={1.5}>
+      <Box
+        sx={{
+          width: 40,
+          height: 40,
+          borderRadius: 2,
+          bgcolor: iconBg,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 20 }} />
+      </Box>
+      <Box>
+        <Typography variant="h6" fontWeight={700}>
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+    {action}
+  </Box>
+);
+
+/** Compact All/Active/Inactive filter tabs + search box, matching the
+ * reference design's dense table toolbars (Fee Categories / Instalment
+ * Plans sections). */
+const TableFilterBar = ({ tab, onTabChange, activeCount, inactiveCount, search, onSearchChange, searchPlaceholder }) => (
+  <Box display="flex" justifyContent="space-between" alignItems="center" gap={1.5} flexWrap="wrap" mb={1.5}>
+    <Tabs
+      value={tab}
+      onChange={(_, v) => onTabChange(v)}
+      sx={{ minHeight: 32, '& .MuiTab-root': { minHeight: 32, py: 0.5, textTransform: 'none', fontSize: 12, fontWeight: 600 } }}
+    >
+      <Tab value="all" label="All" />
+      <Tab value="active" label={`Active (${activeCount})`} />
+      <Tab value="inactive" label={`Inactive (${inactiveCount})`} />
+    </Tabs>
+    <TextField
+      size="small"
+      placeholder={searchPlaceholder}
+      value={search}
+      onChange={(e) => onSearchChange(e.target.value)}
+      sx={{ width: 200 }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <IconSearch size={14} />
+          </InputAdornment>
+        ),
+      }}
+    />
+  </Box>
+);
+
+const StatusChip = ({ status, activeLabel = 'Active', inactiveLabel = 'Inactive' }) => {
   const isActive = status === 'active';
   return (
     <Box
@@ -72,11 +161,11 @@ const StatusChip = ({ status }) => {
         borderRadius: 1,
         fontSize: 11,
         fontWeight: 600,
-        bgcolor: isActive ? 'success.light' : 'error.light',
-        color: isActive ? 'success.dark' : 'error.dark',
+        bgcolor: isActive ? 'success.light' : 'grey.200',
+        color: isActive ? 'success.dark' : 'text.secondary',
       }}
     >
-      {isActive ? 'Active' : 'Inactive'}
+      {isActive ? activeLabel : inactiveLabel}
     </Box>
   );
 };
@@ -135,9 +224,36 @@ const BursarySetupTab = ({
 
   const [categoryPage, setCategoryPage] = useState(1);
   const [categoryMeta, setCategoryMeta] = useState(null);
+  const [categoryTab, setCategoryTab] = useState('all');
+  const [categorySearch, setCategorySearch] = useState('');
 
   const [instalmentPage, setInstalmentPage] = useState(1);
   const [instalmentMeta, setInstalmentMeta] = useState(null);
+  const [instalmentTab, setInstalmentTab] = useState('all');
+  const [instalmentSearch, setInstalmentSearch] = useState('');
+
+  // Academic Sessions & Terms — a session-level list (fetchTenantSessions)
+  // joined client-side with the flat session-term mappings
+  // (fetchTenantSessionTerms), grouped by session for the table + the
+  // "Activate Term" panel. Independent of the `sessionTerms`/
+  // `selectedSessionTerm` props (which the parent still owns for its own
+  // purposes) — this tab fetches its own richer, ungrouped copy since the
+  // props only carry a flattened {id, label, status} shape.
+  const [rawSessions, setRawSessions] = useState([]);
+  const [rawSessionTerms, setRawSessionTerms] = useState([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+  const [viewSessionId, setViewSessionId] = useState(null);
+  const [activatingTermId, setActivatingTermId] = useState(null);
+  const [sessionPage, setSessionPage] = useState(0);
+  const [sessionRowsPerPage, setSessionRowsPerPage] = useState(5);
+  const [sessionMenuAnchor, setSessionMenuAnchor] = useState(null);
+  const [sessionMenuRow, setSessionMenuRow] = useState(null);
+
+  // Collection Rules settings auto-save on every change (unchanged, proven
+  // behaviour) — this snapshot just lets the bottom bar honestly reflect
+  // "everything is already saved" rather than faking a dirty/pending state
+  // that doesn't exist under an auto-save model.
+  const [settingsSavedAt, setSettingsSavedAt] = useState(null);
 
   const loadResultSettings = async () => {
     setResultSettingsLoading(true);
@@ -209,10 +325,38 @@ const BursarySetupTab = ({
       if (map.fee_collection_method) setCollectionMethod(map.fee_collection_method.value);
       if (map.installment_style) setInstalmentStyle(map.installment_style.value);
       if (map.gateway_charge_bearer) setGatewayPayer(map.gateway_charge_bearer.value);
+
+      // "Last saved" for the bottom bar — the most recent of the three
+      // settings' own updated_at, since each already auto-saves the
+      // instant it changes.
+      const timestamps = [
+        map.fee_collection_method?.updated_at,
+        map.installment_style?.updated_at,
+        map.gateway_charge_bearer?.updated_at,
+      ].filter(Boolean);
+      if (timestamps.length > 0) {
+        setSettingsSavedAt(timestamps.sort().at(-1));
+      }
     } catch (err) {
       showSnackbar(err?.response?.data?.message || 'Failed to load settings', 'error');
     } finally {
       setSettingsLoading(false);
+    }
+  };
+
+  const loadSessionsAndTerms = async () => {
+    setSessionsLoading(true);
+    try {
+      const [sessRes, termsRes] = await Promise.all([
+        fetchTenantSessions({ pagination: false }),
+        fetchTenantSessionTerms({ per_page: 200 }),
+      ]);
+      setRawSessions(sessRes.data || []);
+      setRawSessionTerms(termsRes.data || []);
+    } catch (err) {
+      showSnackbar('Failed to load academic sessions', 'error');
+    } finally {
+      setSessionsLoading(false);
     }
   };
 
@@ -243,7 +387,89 @@ const BursarySetupTab = ({
   useEffect(() => {
     loadSettings();
     loadResultSettings();
+    loadSessionsAndTerms();
   }, []);
+
+  // Grouped-by-session view for the Academic Sessions & Terms table — each
+  // session's own record (status, updated_at) merged with its session-term
+  // rows (for term count + which term is the bursary's active one).
+  const groupedSessions = useMemo(() => {
+    const bySession = new Map();
+    rawSessionTerms.forEach((st) => {
+      const sid = st.session_id ?? st.session?.id;
+      if (sid == null) return;
+      if (!bySession.has(sid)) bySession.set(sid, []);
+      bySession.get(sid).push(st);
+    });
+
+    return rawSessions.map((s) => {
+      const terms = bySession.get(s.id) || [];
+      const activeBursaryTerm = terms.find((t) => t.id === selectedSessionTerm);
+      return {
+        session_id: s.id,
+        session_name: s.session_name,
+        status: s.status,
+        updated_at: s.updated_at,
+        terms,
+        termCount: terms.length,
+        activeTermName: activeBursaryTerm?.term?.term_name || '—',
+      };
+    });
+  }, [rawSessions, rawSessionTerms, selectedSessionTerm]);
+
+  // Default the "Activate Term" panel to whichever session currently holds
+  // the bursary's active term; fall back to the session marked active.
+  useEffect(() => {
+    if (viewSessionId != null || groupedSessions.length === 0) return;
+    const withActiveTerm = groupedSessions.find((g) =>
+      g.terms.some((t) => t.id === selectedSessionTerm),
+    );
+    const fallback = groupedSessions.find((g) => g.status === 'active');
+    setViewSessionId((withActiveTerm || fallback || groupedSessions[0]).session_id);
+  }, [groupedSessions, selectedSessionTerm, viewSessionId]);
+
+  const pagedSessions = groupedSessions.slice(
+    sessionPage * sessionRowsPerPage,
+    sessionPage * sessionRowsPerPage + sessionRowsPerPage,
+  );
+  const viewSession = groupedSessions.find((g) => g.session_id === viewSessionId) || null;
+
+  const handleActivateTerm = async (sessionTermId) => {
+    setActivatingTermId(sessionTermId);
+    try {
+      const res = await setActiveSessionTerm(sessionTermId);
+      setSelectedSessionTerm(sessionTermId);
+      showSnackbar(res.message || 'Bursary active term updated successfully');
+    } catch {
+      showSnackbar('Failed to update bursary active term', 'error');
+    } finally {
+      setActivatingTermId(null);
+    }
+  };
+
+  // Client-side filter over the already-fetched page — consistent with how
+  // every other table on this page filters (the full set for a given page
+  // is small enough that this doesn't need a server round-trip).
+  const filteredCategories = useMemo(() => {
+    return categories.filter((c) => {
+      if (categoryTab !== 'all' && c.status !== categoryTab) return false;
+      if (categorySearch && !c.name?.toLowerCase().includes(categorySearch.toLowerCase())) return false;
+      return true;
+    });
+  }, [categories, categoryTab, categorySearch]);
+
+  const filteredInstalments = useMemo(() => {
+    return instalments.filter((i) => {
+      if (instalmentTab !== 'all' && i.status !== instalmentTab) return false;
+      if (instalmentSearch && !i.options?.toLowerCase().includes(instalmentSearch.toLowerCase())) return false;
+      return true;
+    });
+  }, [instalments, instalmentTab, instalmentSearch]);
+
+  const categoryActiveCount = categories.filter((c) => c.status === 'active').length;
+  const categoryInactiveCount = categories.filter((c) => c.status !== 'active').length;
+  const instalmentActiveCount = instalments.filter((i) => i.status === 'active').length;
+  const instalmentInactiveCount = instalments.filter((i) => i.status !== 'active').length;
 
   const handleAddCategory = () => {
     setEditingCategory(null);
@@ -266,6 +492,7 @@ const BursarySetupTab = ({
     try {
       const res = await changeBursarySetting(code, value);
       setSettings((prev) => ({ ...prev, [code]: { ...prev[code], value } }));
+      setSettingsSavedAt(new Date().toISOString());
       showSnackbar(res.message || 'Setting saved successfully');
     } catch {
       // revert on failure
@@ -274,19 +501,6 @@ const BursarySetupTab = ({
       if (code === 'installment_style') setInstalmentStyle(settings.installment_style?.value);
       if (code === 'gateway_charge_bearer') setGatewayPayer(settings.gateway_charge_bearer?.value);
       showSnackbar('Failed to save setting', 'error');
-    } finally {
-      setSavingCode(null);
-    }
-  };
-
-  const handleSetActiveSessionTerm = async () => {
-    if (!selectedSessionTerm) return;
-    setSavingCode('active_ses_term');
-    try {
-      const res = await setActiveSessionTerm(selectedSessionTerm);
-      showSnackbar(res.message || 'Bursary session term updated successfully');
-    } catch {
-      showSnackbar('Failed to update bursary session term', 'error');
     } finally {
       setSavingCode(null);
     }
@@ -406,89 +620,195 @@ const BursarySetupTab = ({
   return (
     <>
       <Stack spacing={2}>
+        {/* Academic Sessions & Terms + Activate Term panel */}
+        <Grid container spacing={2} alignItems="stretch">
+          <Grid size={{ xs: 12, lg: 8 }} sx={{ display: 'flex' }}>
+            <ParentCard sx={{ width: '100%', '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } } }}>
+              <SectionHeader
+                icon={CalendarMonthIcon}
+                title="Academic Sessions & Terms"
+                subtitle="Select a session to view or configure settings. You can access all previous sessions and terms."
+              />
+
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Academic Session</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Terms</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Active Term</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Last Activated</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sessionsLoading ? (
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={`sess-skel-${i}`}>
+                          <TableCell colSpan={7}><Skeleton variant="rounded" height={28} /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : pagedSessions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                            No academic sessions found
+                          </Alert>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      pagedSessions.map((row, idx) => (
+                        <TableRow
+                          key={row.session_id}
+                          hover
+                          selected={row.session_id === viewSessionId}
+                          sx={{
+                            '&.Mui-selected': { bgcolor: 'rgba(37, 99, 235, 0.08)' },
+                            '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.14)' },
+                          }}
+                        >
+                          <TableCell>{sessionPage * sessionRowsPerPage + idx + 1}</TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="primary.main" fontWeight={700}>
+                              {row.session_name}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={row.status} activeLabel="Active" inactiveLabel="Completed" />
+                          </TableCell>
+                          <TableCell align="center">{row.termCount}</TableCell>
+                          <TableCell>{row.activeTermName}</TableCell>
+                          <TableCell>
+                            {row.updated_at ? dayjs(row.updated_at).format('MMM D, YYYY') : '—'}
+                          </TableCell>
+                          <TableCell align="center">
+                            <Stack direction="row" spacing={0.5} justifyContent="center">
+                              <Button
+                                size="small"
+                                variant="contained"
+                                startIcon={<IconEye size={14} />}
+                                onClick={() => setViewSessionId(row.session_id)}
+                                sx={{ fontSize: '0.7rem', px: 1.25 }}
+                              >
+                                View
+                              </Button>
+                              <IconButton
+                                size="small"
+                                onClick={(e) => {
+                                  setSessionMenuAnchor(e.currentTarget);
+                                  setSessionMenuRow(row);
+                                }}
+                              >
+                                <IconDotsVertical size={16} />
+                              </IconButton>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={groupedSessions.length}
+                rowsPerPage={sessionRowsPerPage}
+                page={sessionPage}
+                onPageChange={(_, newPage) => setSessionPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                  setSessionRowsPerPage(parseInt(e.target.value, 10));
+                  setSessionPage(0);
+                }}
+              />
+            </ParentCard>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 4 }} sx={{ display: 'flex' }}>
+            <ParentCard sx={{ width: '100%', '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } } }}>
+              <SectionHeader
+                icon={CalendarMonthIcon}
+                title={`Activate Term for ${viewSession?.session_name || '—'}`}
+                subtitle="Select and activate the term for fee collection."
+              />
+
+              {sessionsLoading ? (
+                <Stack spacing={1.5}>
+                  {[0, 1, 2].map((i) => (
+                    <Skeleton key={i} variant="rounded" height={64} />
+                  ))}
+                </Stack>
+              ) : (
+                <Stack spacing={1.5} sx={{ mb: 2 }}>
+                  {(viewSession?.terms || []).map((t) => {
+                    const isActive = t.id === selectedSessionTerm;
+                    return (
+                      <Box
+                        key={t.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 1,
+                          p: 1.5,
+                          border: '1px solid',
+                          borderColor: isActive ? 'success.main' : 'divider',
+                          bgcolor: isActive ? 'success.light' : 'background.paper',
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <CalendarMonthIcon sx={{ fontSize: 18, color: isActive ? 'success.dark' : 'text.secondary' }} />
+                          <Typography variant="body2" fontWeight={700}>
+                            {t.term?.term_name}
+                          </Typography>
+                        </Stack>
+                        {isActive ? (
+                          <StatusChip status="active" activeLabel="Currently Active" />
+                        ) : (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            disabled={activatingTermId === t.id}
+                            onClick={() => handleActivateTerm(t.id)}
+                            sx={{ fontSize: '0.7rem', px: 1.25 }}
+                          >
+                            {activatingTermId === t.id ? 'Activating…' : 'Activate'}
+                          </Button>
+                        )}
+                      </Box>
+                    );
+                  })}
+                  {(viewSession?.terms || []).length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      No terms configured for this session yet.
+                    </Typography>
+                  )}
+                </Stack>
+              )}
+
+              <Alert severity="info" icon={<InfoOutlinedIcon fontSize="small" />} sx={{ bgcolor: '#EFF6FF', color: 'text.primary' }}>
+                Only one term can be active at a time for fee collection. You can view and switch to
+                previous sessions and terms from the session list.
+              </Alert>
+            </ParentCard>
+          </Grid>
+        </Grid>
+
+        {/* Collection Rules */}
         <ParentCard
           sx={{
             '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
           }}
         >
-          <Box
-            mb={3}
-            display="flex"
-            flexDirection={{ xs: 'column', md: 'row' }}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', md: 'center' }}
-            gap={2}
-          >
-            <Box>
-              <Typography variant="subtitle2" fontWeight={600} mb={0.5}>
-                Set Bursary Active Session Term
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                This determines which session term bursary fees are being collected for.
-              </Typography>
-            </Box>
-
-            <Box display="flex" alignItems="center" gap={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
-              <TextField
-                select
-                label="Select Session Term"
-                value={selectedSessionTerm}
-                onChange={(e) => setSelectedSessionTerm(e.target.value)}
-                size="small"
-                disabled={savingCode === 'active_ses_term'}
-                sx={{ minWidth: 280, width: { xs: '100%', sm: 280 } }}
-              >
-                {sessionTerms.map((term) => (
-                  <MenuItem key={term.id} value={term.id}>
-                    {term.label}
-                    {term.status === 'active' ? ' (Active)' : ''}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={
-                  savingCode === 'active_ses_term' ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <IconCheck size={16} />
-                  )
-                }
-                onClick={handleSetActiveSessionTerm}
-                disabled={savingCode === 'active_ses_term' || !selectedSessionTerm}
-              >
-                Set
-              </Button>
-            </Box>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          <Box display="flex" alignItems="flex-start" gap={2} mb={3}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                bgcolor: 'primary.light',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <PaymentsIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-            </Box>
-            <Box>
-              <Typography variant="h6" fontWeight={600}>
-                How should fees be collected?
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                Choose how parents pay and who covers the gateway charges.
-              </Typography>
-            </Box>
-          </Box>
+          <SectionHeader
+            icon={SettingsIcon}
+            title="Collection Rules"
+            subtitle={`Define how fees are collected, how instalments are structured and who bears the gateway charges for the selected term.`}
+          />
 
           {settingsLoading ? (
             <Grid container spacing={2}>
@@ -509,50 +829,50 @@ const BursarySetupTab = ({
           ) : (
           <Grid container spacing={2}>
             {/* Collection Method */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box
-                sx={{
-                  border: "2px solid #c7c9cbff",
-                  borderRadius: 3,
-                  p: 2,
-                  height: '100%',
-                }}
-              >
+            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%' }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <PaymentsIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {settings.fee_collection_method?.name || 'Collection Method'}
+                  </Typography>
+                </Stack>
                 <FormControl fullWidth>
-                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    {settings.fee_collection_method?.name || 'Collection method'}
-                  </FormLabel>
                   <RadioGroup
                     value={collectionMethod}
                     onChange={(e) => handleSettingChange('fee_collection_method', e.target.value)}
                   >
-                    <Stack spacing={2}>
-                      {(settings.fee_collection_method?.options || []).map((opt) => (
-                        <FormControlLabel
-                          key={opt.value}
-                          value={opt.value}
-                          disabled={savingCode === 'fee_collection_method'}
-                          control={<Radio />}
-                          label={
-                            <Box>
-                              <Typography variant="body2" fontWeight={600}>
-                                {opt.value === 'single_payment' ? 'Single payment' : 'Pay per fee'}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {opt.text}
-                              </Typography>
-                            </Box>
-                          }
-                          sx={{
-                            m: 0,
-                            p: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            alignItems: 'flex-start',
-                          }}
-                        />
-                      ))}
+                    <Stack spacing={1.5}>
+                      {(settings.fee_collection_method?.options || []).map((opt) => {
+                        const isSelected = opt.value === collectionMethod;
+                        return (
+                          <FormControlLabel
+                            key={opt.value}
+                            value={opt.value}
+                            disabled={savingCode === 'fee_collection_method'}
+                            control={<Radio />}
+                            label={
+                              <Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {opt.value === 'single_payment' ? 'Single payment' : 'Pay per fee'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {opt.text}
+                                </Typography>
+                              </Box>
+                            }
+                            sx={{
+                              m: 0,
+                              p: 1.5,
+                              border: '1px solid',
+                              borderColor: isSelected ? 'primary.main' : 'divider',
+                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
+                              borderRadius: 2,
+                              alignItems: 'flex-start',
+                            }}
+                          />
+                        );
+                      })}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
@@ -560,104 +880,134 @@ const BursarySetupTab = ({
             </Grid>
 
             {/* Instalment Style */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box
-                sx={{
-                  border: "2px solid #c7c9cbff",
-                  borderRadius: 3,
-                  p: 2,
-                  height: '100%',
-                }}
-              >
+            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <TaskAltIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {settings.installment_style?.name || 'Default Instalment Style'}
+                  </Typography>
+                </Stack>
                 <FormControl fullWidth>
-                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    {settings.installment_style?.name || 'Installment style'}
-                  </FormLabel>
                   <RadioGroup
                     value={instalmentStyle}
                     onChange={(e) => handleSettingChange('installment_style', e.target.value)}
                   >
-                    <Stack spacing={2}>
-                      {(settings.installment_style?.options || []).map((opt) => (
-                        <FormControlLabel
-                          key={opt.value}
-                          value={opt.value}
-                          disabled={savingCode === 'installment_style'}
-                          control={<Radio />}
-                          label={
-                            <Box>
-                              <Typography variant="body2" fontWeight={600}>
-                                {opt.value === 'percentage' ? 'By percentage' : 'By amount'}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {opt.text}
-                              </Typography>
-                            </Box>
-                          }
-                          sx={{
-                            m: 0,
-                            p: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            alignItems: 'flex-start',
-                          }}
-                        />
-                      ))}
+                    <Stack spacing={1.5}>
+                      {(settings.installment_style?.options || []).map((opt) => {
+                        const isSelected = opt.value === instalmentStyle;
+                        return (
+                          <FormControlLabel
+                            key={opt.value}
+                            value={opt.value}
+                            disabled={savingCode === 'installment_style'}
+                            control={<Radio />}
+                            label={
+                              <Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {opt.value === 'percentage' ? 'By percentage' : 'By amount'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {opt.text}
+                                </Typography>
+                              </Box>
+                            }
+                            sx={{
+                              m: 0,
+                              p: 1.5,
+                              border: '1px solid',
+                              borderColor: isSelected ? 'primary.main' : 'divider',
+                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
+                              borderRadius: 2,
+                              alignItems: 'flex-start',
+                            }}
+                          />
+                        );
+                      })}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
+                <Alert
+                  severity="info"
+                  icon={<InfoOutlinedIcon fontSize="small" />}
+                  sx={{ mt: 1.5, bgcolor: '#EFF6FF', color: 'text.secondary', fontSize: 12 }}
+                >
+                  Instalment plans are configured below and can be selected when setting fee schedules.
+                </Alert>
               </Box>
             </Grid>
 
             {/* Gateway Payer */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box
-                sx={{
-                  border: "2px solid #c7c9cbff",
-                  borderRadius: 3,
-                  p: 2,
-                  height: '100%',
-                }}
-              >
+            <Grid size={{ xs: 12, md: 4 }} sx={{ display: 'flex' }}>
+              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, p: 2, width: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                  <PaymentsIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {settings.gateway_charge_bearer?.name || 'Gateway Charges Bearer'}
+                  </Typography>
+                </Stack>
                 <FormControl fullWidth>
-                  <FormLabel sx={{ fontWeight: 600, color: 'text.primary', mb: 2 }}>
-                    {settings.gateway_charge_bearer?.name || 'Who pays gateway charges?'}
-                  </FormLabel>
                   <RadioGroup
                     value={gatewayPayer}
                     onChange={(e) => handleSettingChange('gateway_charge_bearer', e.target.value)}
                   >
-                    <Stack spacing={2}>
-                      {(settings.gateway_charge_bearer?.options || []).map((opt) => (
-                        <FormControlLabel
-                          key={opt.value}
-                          value={opt.value}
-                          disabled={savingCode === 'gateway_charge_bearer'}
-                          control={<Radio />}
-                          label={
-                            <Box>
-                              <Typography variant="body2" fontWeight={600}>
-                                {opt.value === 'client' ? 'Parent / Student' : 'School'}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {opt.text}
-                              </Typography>
-                            </Box>
-                          }
-                          sx={{
-                            m: 0,
-                            p: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 2,
-                            alignItems: 'flex-start',
-                          }}
-                        />
-                      ))}
+                    <Stack spacing={1.5}>
+                      {(settings.gateway_charge_bearer?.options || []).map((opt) => {
+                        const isSelected = opt.value === gatewayPayer;
+                        return (
+                          <FormControlLabel
+                            key={opt.value}
+                            value={opt.value}
+                            disabled={savingCode === 'gateway_charge_bearer'}
+                            control={<Radio />}
+                            label={
+                              <Box>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {opt.value === 'client' ? 'Parent / Student' : 'School'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {opt.text}
+                                </Typography>
+                              </Box>
+                            }
+                            sx={{
+                              m: 0,
+                              p: 1.5,
+                              border: '1px solid',
+                              borderColor: isSelected ? 'primary.main' : 'divider',
+                              bgcolor: isSelected ? 'primary.lighter' : 'background.paper',
+                              borderRadius: 2,
+                              alignItems: 'flex-start',
+                            }}
+                          />
+                        );
+                      })}
                     </Stack>
                   </RadioGroup>
                 </FormControl>
+
+                {gatewayPayer === 'client' && (
+                  <Box sx={{ mt: 1.5, p: 1.5, bgcolor: '#F0FDF4', borderRadius: 2 }}>
+                    <Typography variant="caption" fontWeight={700} color="success.dark" display="block" sx={{ mb: 0.5 }}>
+                      Example (Parent pays gateway fee)
+                    </Typography>
+                    <Stack spacing={0.25}>
+                      <Stack direction="row" justifyContent="space-between">
+                        <Typography variant="caption" color="text.secondary">School fee (sample)</Typography>
+                        <Typography variant="caption" fontWeight={600}>₦10,000</Typography>
+                      </Stack>
+                      <Stack direction="row" justifyContent="space-between">
+                        <Typography variant="caption" color="text.secondary">Gateway charge (1%)</Typography>
+                        <Typography variant="caption" fontWeight={600}>₦100</Typography>
+                      </Stack>
+                      <Divider sx={{ my: 0.5 }} />
+                      <Stack direction="row" justifyContent="space-between">
+                        <Typography variant="caption" fontWeight={700}>Total payable by parent</Typography>
+                        <Typography variant="caption" fontWeight={700}>₦10,100</Typography>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                )}
               </Box>
             </Grid>
           </Grid>
@@ -700,9 +1050,9 @@ const BursarySetupTab = ({
                       <PaymentsIcon size={20} />
                     </Box>
                     <Box>
-                      <Typography variant="h6">Payment categories</Typography>
+                      <Typography variant="h6">Fee Categories</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Target students for waivers, etc.
+                        Create and manage fee categories. Categories are not connected to classes here.
                       </Typography>
                     </Box>
                   </Box>
@@ -710,17 +1060,26 @@ const BursarySetupTab = ({
                     onClick={handleAddCategory}
                     sx={{ fontWeight: 600 }}
                   >
-                    Add New
+                    Add Category
                   </Button>
                 </Box>
               }
             >
+              <TableFilterBar
+                tab={categoryTab}
+                onTabChange={setCategoryTab}
+                activeCount={categoryActiveCount}
+                inactiveCount={categoryInactiveCount}
+                search={categorySearch}
+                onSearchChange={setCategorySearch}
+                searchPlaceholder="Search categories..."
+              />
               <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Category Name</TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>Description</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
                         Status
@@ -743,7 +1102,7 @@ const BursarySetupTab = ({
                       ))
                     ) : (
                     <>
-                    {categories.map((category, index) => (
+                    {filteredCategories.map((category, index) => (
                       <TableRow key={category.id} hover>
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>{category.name}</TableCell>
@@ -765,7 +1124,7 @@ const BursarySetupTab = ({
                       </TableRow>
                     ))}
 
-                    {categories.length === 0 && (
+                    {filteredCategories.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={100} align="center">
                           <Alert
@@ -842,9 +1201,9 @@ const BursarySetupTab = ({
                       <TaskAltIcon size={20} />
                     </Box>
                     <Box>
-                      <Typography variant="h6">Installment plans</Typography>
+                      <Typography variant="h6">Instalment Plans</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Split options parents can pick from.
+                        Create multiple instalment plans for use in fee schedules.
                       </Typography>
                     </Box>
                   </Box>
@@ -852,20 +1211,33 @@ const BursarySetupTab = ({
                     onClick={handleAddInstalment}
                     sx={{ fontWeight: 600 }}
                   >
-                    Add New
+                    Add Plan
                   </Button>
                 </Box>
               }
             >
+              <TableFilterBar
+                tab={instalmentTab}
+                onTabChange={setInstalmentTab}
+                activeCount={instalmentActiveCount}
+                inactiveCount={instalmentInactiveCount}
+                search={instalmentSearch}
+                onSearchChange={setInstalmentSearch}
+                searchPlaceholder="Search plans..."
+              />
               <TableContainer variant="outlined" sx={{ maxHeight: 220, minHeight: 180, overflowY: 'auto' }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 700, width: 60 }}>#</TableCell>
-                      <TableCell sx={{ fontWeight: 700 }}>Installment Options (%)</TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 700, width: 100 }}>
+                      <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Plan Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Instalments</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Schedule / Details</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700, width: 90 }}>
                         Status
                       </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Usage</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 700, width: 60 }}>
                         Actions
                       </TableCell>
@@ -875,20 +1247,29 @@ const BursarySetupTab = ({
                     {instalmentsLoading ? (
                       [...Array(3)].map((_, index) => (
                         <TableRow key={`inst-skel-${index}`}>
-                          <TableCell><Skeleton variant="text" width={16} /></TableCell>
-                          <TableCell><Skeleton variant="text" width="60%" /></TableCell>
-                          <TableCell align="center"><Skeleton variant="rounded" width={60} height={22} sx={{ mx: 'auto' }} /></TableCell>
-                          <TableCell align="center"><Skeleton variant="circular" width={24} height={24} sx={{ mx: 'auto' }} /></TableCell>
+                          <TableCell colSpan={8}><Skeleton variant="rounded" height={24} /></TableCell>
                         </TableRow>
                       ))
                     ) : (
                     <>
-                    {instalments.map((instalment, index) => (
+                    {filteredInstalments.map((instalment, index) => (
                       <TableRow key={instalment.id} hover>
                         <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600}>
+                            {instalment.code || `${instalment.inst1}/${instalment.inst2} Split`}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>Percentage</TableCell>
+                        <TableCell align="center">2</TableCell>
                         <TableCell>{instalment.options}</TableCell>
                         <TableCell align="center">
                           <StatusChip status={instalment.status} />
+                        </TableCell>
+                        <TableCell>
+                          {instalment.usage_count != null
+                            ? `${instalment.usage_count} schedule${instalment.usage_count === 1 ? '' : 's'}`
+                            : '—'}
                         </TableCell>
                         <TableCell align="center">
                           <IconButton
@@ -904,7 +1285,7 @@ const BursarySetupTab = ({
                       </TableRow>
                     ))}
 
-                    {instalments.length === 0 && (
+                    {filteredInstalments.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={100} align="center">
                           <Alert
@@ -1133,7 +1514,90 @@ const BursarySetupTab = ({
             </Stack>
           )}
         </ParentCard>
+
+        {/* Bottom save bar — every Collection Rules change above already
+            auto-saves the instant it's made (unchanged, proven behaviour),
+            so there's never a genuinely unsaved/pending state to stage.
+            This bar honestly reflects that instead of faking a dirty-state
+            workflow: it shows when the settings were last (auto-)saved, and
+            both buttons are disabled since nothing is ever left pending. */}
+        <Paper
+          variant="outlined"
+          sx={{
+            position: 'sticky',
+            bottom: 0,
+            zIndex: 1,
+            p: 1.5,
+            borderRadius: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 1,
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Stack direction="row" spacing={1} alignItems="center">
+            <IconClockHour4 size={16} color="#6B7280" />
+            <Typography variant="body2" color="text.secondary">
+              {settingsSavedAt
+                ? `Last saved: ${dayjs(settingsSavedAt).format('MMM D, YYYY [at] h:mm A')}`
+                : 'All changes save automatically'}
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Every change above saves automatically — there's nothing pending to discard">
+              <span>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<IconRotateClockwise2 size={16} />}
+                  disabled
+                >
+                  Discard Changes
+                </Button>
+              </span>
+            </Tooltip>
+            <Tooltip title="Every change above already saved automatically">
+              <span>
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<IconDeviceFloppy size={16} />}
+                  disabled
+                >
+                  Save Configuration
+                </Button>
+              </span>
+            </Tooltip>
+          </Stack>
+        </Paper>
       </Stack>
+
+      {/* Session row menu */}
+      <Menu
+        anchorEl={sessionMenuAnchor}
+        open={Boolean(sessionMenuAnchor)}
+        onClose={() => {
+          setSessionMenuAnchor(null);
+          setSessionMenuRow(null);
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (sessionMenuRow) setViewSessionId(sessionMenuRow.session_id);
+            setSessionMenuAnchor(null);
+            setSessionMenuRow(null);
+          }}
+        >
+          <ListItemIcon>
+            <IconEye size={16} />
+          </ListItemIcon>
+          <ListItemText>View Terms</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Category Menu */}
       <Menu

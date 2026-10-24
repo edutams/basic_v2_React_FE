@@ -53,6 +53,7 @@ const StatCard = ({
   tooltipPlacement = 'top',
   progress,
   align = 'right',
+  countFontSize,
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -166,7 +167,7 @@ const StatCard = ({
 
           <Typography
             sx={{
-              fontSize: isLeft ? 24 : 22,
+              fontSize: countFontSize ?? (isLeft ? 24 : 22),
               fontWeight: 800,
               lineHeight: 1,
               letterSpacing: '-0.02em',
@@ -261,6 +262,7 @@ StatCard.propTypes = {
   tooltip: PropTypes.node,
   tooltipPlacement: PropTypes.string,
   align: PropTypes.oneOf(['left', 'right']),
+  countFontSize: PropTypes.number,
 };
 
 export default StatCard;

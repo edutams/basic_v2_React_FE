@@ -16,12 +16,17 @@ export const fetchClassesByProgramme = async (programmeId) => {
 export const fetchParentsForInvoice = async ({
     sessionTermId,
     classId,
+    classIds,
     programmeId,
     search = '',
 } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
-    if (classId) params.class_id = classId;
+    if (Array.isArray(classIds) && classIds.length > 0) {
+        params.class_ids = classIds.join(',');
+    } else if (classId) {
+        params.class_id = classId;
+    }
     if (programmeId) params.programme_id = programmeId;
     if (search) params.search = search;
 
@@ -33,11 +38,16 @@ export const fetchParentsForInvoice = async ({
 export const fetchSendInvoiceStats = async ({
     sessionTermId,
     classId,
+    classIds,
     programmeId,
 } = {}) => {
     const params = {};
     if (sessionTermId) params.session_term_id = sessionTermId;
-    if (classId) params.class_id = classId;
+    if (Array.isArray(classIds) && classIds.length > 0) {
+        params.class_ids = classIds.join(',');
+    } else if (classId) {
+        params.class_id = classId;
+    }
     if (programmeId) params.programme_id = programmeId;
 
     const res = await api.get('/bursary/send_invoice/stats', { params });
@@ -74,11 +84,12 @@ export const sendInvoiceSms = async ({ parentIds, sessionTermId, customMessage }
 };
 
 
-export const sendInvoiceEmail = async ({ parentIds, sessionTermId, customMessage } = {}) => {
+export const sendInvoiceEmail = async ({ parentIds, sessionTermId, customMessage, subject } = {}) => {
     const res = await api.post('/bursary/send_invoice/send_email', {
         parent_ids: parentIds,
         session_term_id: sessionTermId,
         custom_message: customMessage,
+        subject,
     });
     return res.data;
 };

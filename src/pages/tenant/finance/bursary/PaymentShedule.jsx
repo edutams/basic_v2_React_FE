@@ -25,10 +25,6 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
-  Receipt as ReceiptIcon,
-  Message as MessageIcon,
-  Email as EmailIcon,
-  Article as ArticleIcon,
   ChevronRight as ChevronRightIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
@@ -54,7 +50,6 @@ import {
   fetchTermsBySessionTerm,
   importPaymentSchedule,
 } from '@/api/tenant/bursary/bursarySettingsApi';
-import { fetchSendInvoiceStats } from '@/api/tenant/bursary/sendInvoiceApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import TermMigrationModal from '@/components/shared/term-migration/TermMigrationModal';
 import { migrateBursarySchedules } from '@/api/tenant/term-migration/termMigrationApi';
@@ -498,52 +493,6 @@ const PaymentShedule = () => {
 
   const stats = scheduleStats;
 
-  const [sendInvoiceStatsData, setSendInvoiceStatsData] = useState({
-    total_sent: 0,
-    sent_by_mail: 0,
-    sent_by_sms: 0,
-    excel_generated: 0,
-  });
-  const [loadingSendInvoiceStats, setLoadingSendInvoiceStats] = useState(false);
-  const [sendInvoiceRefreshKey, setSendInvoiceRefreshKey] = useState(0);
-
-  const refreshSendInvoiceStats = () => {
-    setSendInvoiceRefreshKey((prev) => prev + 1);
-  };
-
-  // Fetch send invoice stats
-  useEffect(() => {
-    if (!selectedSessionTerm || actionTab !== 2) return;
-    const loadSendInvoiceStats = async () => {
-      try {
-        setLoadingSendInvoiceStats(true);
-        const res = await fetchSendInvoiceStats({
-          sessionTermId: selectedSessionTerm,
-          classId: selectedClass || undefined,
-        });
-        if (res?.success && res.data) {
-          setSendInvoiceStatsData({
-            total_sent: res.data.total_sent || 0,
-            sent_by_mail: res.data.sent_by_mail || 0,
-            sent_by_sms: res.data.sent_by_sms || 0,
-            excel_generated: res.data.excel_generated || 0,
-          });
-        }
-      } catch (err) {
-        console.error('Failed to load send invoice stats:', err);
-      } finally {
-        setLoadingSendInvoiceStats(false);
-      }
-    };
-    loadSendInvoiceStats();
-  }, [selectedSessionTerm, actionTab, selectedClass, sendInvoiceRefreshKey]);
-
-  const sendInvoiceStats = [
-    { label: 'Total Invoice Sent', value: sendInvoiceStatsData.total_sent, icon: MessageIcon },
-    { label: 'Invoice Sent by Mail', value: sendInvoiceStatsData.sent_by_mail, icon: EmailIcon },
-    { label: 'Invoice Sent by SMS', value: sendInvoiceStatsData.sent_by_sms, icon: EmailIcon },
-    { label: 'Excel Generated', value: sendInvoiceStatsData.excel_generated, icon: ArticleIcon },
-  ];
 
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
@@ -1056,60 +1005,6 @@ const PaymentShedule = () => {
         </>
       )}
 
-      {actionTab === 2 && (
-        <Grid container spacing={3} mb={1}>
-          {sendInvoiceStats.map((stat, i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: '14px',
-                  borderRadius: '14px',
-                  bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                  border: '1px solid',
-                  borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition:
-                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    borderColor: '#94a3b8',
-                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                  },
-                }}
-              >
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '8px',
-                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : schemeMap[i].bg,
-                      color: isDark ? '#fff' : schemeMap[i].color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon sx={{ fontSize: 18 }} color="currentColor" />
-                  </Box>
-                  <Typography variant="body2" color="textSecondary">
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant="h3"
-                  fontWeight={700}
-                  sx={{ color: isDark ? '#ffffff' : schemeMap[i].color }}
-                >
-                  {stat.value}
-                </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      )}
 
       <Box>
         {actionTab === 0 && (
@@ -1145,9 +1040,7 @@ const PaymentShedule = () => {
           </Paper>
         )}
         {actionTab === 2 && (
-          <Paper sx={{ borderRadius: 2, p: 1.5 }}>
-            <SendInvoiceTab showSnackbar={showSnackbar} refreshStats={refreshSendInvoiceStats} />
-          </Paper>
+          <SendInvoiceTab showSnackbar={showSnackbar} />
         )}
       </Box>
 

@@ -33,6 +33,14 @@ export const assignCategory = async ({ userId, sessionTermId, categoryId }) => {
     return res.data;
 };
 
+export const clearCategory = async ({ userId, sessionTermId }) => {
+    const res = await api.post('/bursary/payment_category/clear', {
+        user_id: userId,
+        session_term_id: sessionTermId,
+    });
+    return res.data;
+};
+
 export const fetchMigratePreview = async ({ classArmId, sessionTermId }) => {
     const res = await api.get('/bursary/payment_category/migrate_preview', {
         params: { class_arm_id: classArmId, session_term_id: sessionTermId },

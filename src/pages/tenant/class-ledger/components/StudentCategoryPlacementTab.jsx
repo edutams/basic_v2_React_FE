@@ -61,6 +61,7 @@ import { fetchActiveCategories } from '@/api/tenant/bursary/bursarySettingsApi';
 import {
   fetchStudentsForClass,
   assignCategory,
+  clearCategory,
   fetchMigratePreview,
   exportStudentsCsv,
   importStudentsCsv,
@@ -166,8 +167,8 @@ const getCategoryStyle = (category) => {
   return FALLBACK_PALETTE[(category.id || 0) % FALLBACK_PALETTE.length];
 };
 
-const CurrentPlacementBadge = ({ student, defaultCategoryId, category }) => {
-  if (student.bursary_payment_category_id === defaultCategoryId) {
+const CurrentPlacementBadge = ({ student, category }) => {
+  if (student.bursary_payment_category_id == null) {
     return (
       <Box
         sx={{
@@ -232,7 +233,6 @@ const StudentCategoryPlacementTab = () => {
     total: 0,
     placed: 0,
     not_placed: 0,
-    default_category_id: null,
     new_students: 0,
     returning_students: 0,
     placed_new_students: 0,
@@ -513,48 +513,37 @@ const StudentCategoryPlacementTab = () => {
     });
   };
 
-  // "Clear placement" reverts selected rows back to the default category —
-  // same has_payments skip rule as every other bulk path here.
+  // "Clear placement" reverts selected rows back to genuinely having no
+  // category — same has_payments skip rule as every other bulk path here.
   const handleOpenClearPlacement = () => {
-    const defaultCategory = categories.find((c) => c.id === stats.default_category_id);
-    if (!defaultCategory) return;
-
     const scope = students.filter((s) => selectedRows.has(s.user_id));
-    const eligible = scope.filter(
-      (s) => s.bursary_payment_category_id !== defaultCategory.id && !s.has_payments,
-    );
-    const skipped = scope.filter(
-      (s) => s.bursary_payment_category_id !== defaultCategory.id && s.has_payments,
-    );
+    const eligible = scope.filter((s) => s.bursary_payment_category_id != null && !s.has_payments);
+    const skipped = scope.filter((s) => s.bursary_payment_category_id != null && s.has_payments);
 
     if (eligible.length === 0 && skipped.length === 0) {
-      notify.warning('Every selected student is already Not Placed');
+      notify.warning('Every selected student already needs placement');
       return;
     }
 
-    setClearConfirm({ category: defaultCategory, eligible, skipped });
+    setClearConfirm({ eligible, skipped });
   };
 
   const handleConfirmClearPlacement = async () => {
     if (!clearConfirm) return;
-    const { category, eligible, skipped } = clearConfirm;
+    const { eligible, skipped } = clearConfirm;
     setClearConfirm(null);
     setClearing(true);
 
     try {
       const results = await Promise.all(
         eligible.map((student) =>
-          assignCategory({ userId: student.user_id, sessionTermId, categoryId: category.id }).catch(
-            () => ({
-              status: false,
-            }),
-          ),
+          clearCategory({ userId: student.user_id, sessionTermId }).catch(() => ({ status: false })),
         ),
       );
       const succeeded = results.filter((r) => r?.status).length;
       const failed = eligible.length - succeeded;
 
-      let message = `${succeeded} student(s) reverted to Not Placed`;
+      let message = `${succeeded} student(s) reverted to Needs Placement`;
       if (failed > 0) message += ` — ${failed} failed`;
       if (skipped.length > 0) message += ` — ${skipped.length} skipped (already have payments)`;
 
@@ -676,9 +665,9 @@ const StudentCategoryPlacementTab = () => {
   const filteredStudents = useMemo(() => {
     let list = students;
     if (filterStatus === 'placed') {
-      list = list.filter((s) => s.bursary_payment_category_id !== stats.default_category_id);
+      list = list.filter((s) => s.bursary_payment_category_id != null);
     } else if (filterStatus === 'not_placed') {
-      list = list.filter((s) => s.bursary_payment_category_id === stats.default_category_id);
+      list = list.filter((s) => s.bursary_payment_category_id == null);
     }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -688,7 +677,7 @@ const StudentCategoryPlacementTab = () => {
     }
 
     return list;
-  }, [students, filterStatus, stats.default_category_id, search]);
+  }, [students, filterStatus, search]);
 
   const paginatedStudents = filteredStudents.slice(
     page * rowsPerPage,
@@ -944,8 +933,6 @@ const StudentCategoryPlacementTab = () => {
           </Grid>
         </Grid>
 
-        <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center"></Grid>
-
         <Box
           sx={{
             display: 'flex',
@@ -957,15 +944,30 @@ const StudentCategoryPlacementTab = () => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={migrateLoading ? <CircularProgress size={16} /> : <RestoreOutlinedIcon />}
-              onClick={handleOpenMigrate}
-              disabled={!hasFetched || migrateLoading || migrating || !lastTermReference.available}
-            >
-              {migrating ? 'Migrating...' : 'Migrate from Last Term'}
-            </Button>
+            {(() => {
+              const migrateDisabled = !hasFetched || migrateLoading || migrating || !lastTermReference.available;
+              const migrateDisabledReason = !hasFetched
+                ? 'Select a programme, class and term, then click Fetch first.'
+                : !lastTermReference.available
+                  ? "There's no earlier term on record to migrate placements from."
+                  : '';
+
+              return (
+                <Tooltip title={migrateDisabled && migrateDisabledReason ? migrateDisabledReason : ''}>
+                  <span>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={migrateLoading ? <CircularProgress size={16} /> : <RestoreOutlinedIcon />}
+                      onClick={handleOpenMigrate}
+                      disabled={migrateDisabled}
+                    >
+                      {migrating ? 'Migrating...' : 'Migrate from Last Term'}
+                    </Button>
+                  </span>
+                </Tooltip>
+              );
+            })()}
             {lastTermReference.available && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: 480 }}>
                 <InfoOutlinedIcon sx={{ fontSize: 16, color: 'text.secondary', flexShrink: 0 }} />
@@ -1286,7 +1288,6 @@ const StudentCategoryPlacementTab = () => {
                         <TableCell align="center">
                           <CurrentPlacementBadge
                             student={student}
-                            defaultCategoryId={stats.default_category_id}
                             category={categories.find(
                               (c) => c.id === student.bursary_payment_category_id,
                             )}
@@ -1546,7 +1547,7 @@ const StudentCategoryPlacementTab = () => {
         <DialogTitle>Clear Placement?</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Revert <strong>{clearConfirm?.eligible.length}</strong> student(s) back to Not Placed?
+            Revert <strong>{clearConfirm?.eligible.length}</strong> student(s) back to Needs Placement?
           </Typography>
           {clearConfirm?.skipped.length > 0 && (
             <Box
@@ -1562,23 +1563,23 @@ const StudentCategoryPlacementTab = () => {
                 {clearConfirm.skipped.length} student(s) will be SKIPPED — already have approved
                 payments
               </Typography>
+              <Typography variant="body2" sx={{ color: isDark ? '#ffb74d' : '#7a3e00' }}>
+                A student with approved payments can&apos;t be cleared automatically — reassign their
+                payments first if their category needs to change.
+              </Typography>
               <List
                 dense
                 disablePadding
-                sx={{ bgcolor: isDark ? 'rgba(0,0,0,0.2)' : '#fff', borderRadius: 1 }}
+                sx={{ mt: 1, bgcolor: isDark ? 'rgba(0,0,0,0.2)' : '#fff', borderRadius: 1 }}
               >
                 {clearConfirm.skipped.map((student) => (
-                  <ListItemButton
+                  <ListItemText
                     key={student.user_id}
-                    onClick={() => handleRemapFromBulkSkip(student, clearConfirm.category)}
-                    sx={{ borderRadius: 1 }}
-                  >
-                    <ListItemText
-                      primary={student.full_name}
-                      secondary={student.admission_no}
-                      primaryTypographyProps={{ fontWeight: 600 }}
-                    />
-                  </ListItemButton>
+                    sx={{ px: 1.5, py: 0.5 }}
+                    primary={student.full_name}
+                    secondary={student.admission_no}
+                    primaryTypographyProps={{ fontWeight: 600 }}
+                  />
                 ))}
               </List>
             </Box>

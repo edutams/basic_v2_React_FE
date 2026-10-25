@@ -345,8 +345,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   // ---- Per-channel status helpers — the same 3-way split (Ready / Sent /
   // Missing contact) drives the top stat cards, the mini-badges and the
   // table's own Status column, so none of them can disagree. ----
-  const statusField = channelTab === 0 ? 'email_status' : channelTab === 1 ? 'sms_status' : 'excel_status';
-  const contactField = channelTab === 2 ? 'guardian_email' : channelTab === 0 ? 'guardian_email' : 'guardian_phone';
+  const statusField =
+    channelTab === 0 ? 'email_status' : channelTab === 1 ? 'sms_status' : 'excel_status';
+  const contactField =
+    channelTab === 2 ? 'guardian_email' : channelTab === 0 ? 'guardian_email' : 'guardian_phone';
   const sentValue = channelTab === 2 ? 'generated' : 'sent';
 
   const rowState = (p) => {
@@ -395,7 +397,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   };
 
   const handleBulkSelectReady = () => {
-    setSelectedParents(parentsList.filter((p) => rowState(p) === 'ready').map((p) => p.guardian_user_id));
+    setSelectedParents(
+      parentsList.filter((p) => rowState(p) === 'ready').map((p) => p.guardian_user_id),
+    );
     setBulkMenuAnchor(null);
   };
   const handleBulkDeselectAll = () => {
@@ -405,7 +409,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const handleBulkSelectPage = () => {
     setSelectedParents((prev) => {
       const next = new Set(prev);
-      paginatedParentsList.filter((p) => rowState(p) !== 'missing').forEach((p) => next.add(p.guardian_user_id));
+      paginatedParentsList
+        .filter((p) => rowState(p) !== 'missing')
+        .forEach((p) => next.add(p.guardian_user_id));
       return [...next];
     });
     setBulkMenuAnchor(null);
@@ -425,7 +431,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     if (!menuParent) return;
     setEditParent(menuParent);
     setEditField(field);
-    setEditValue(field === 'phone' ? menuParent.guardian_phone || '' : menuParent.guardian_email || '');
+    setEditValue(
+      field === 'phone' ? menuParent.guardian_phone || '' : menuParent.guardian_email || '',
+    );
     setEditError('');
     setEditDialogOpen(true);
   };
@@ -448,9 +456,16 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     }
     try {
       setSavingEdit(true);
-      const res = await updateParentPhoneNumberOrEmail(editParent.guardian_user_id, editField, editValue.trim());
+      const res = await updateParentPhoneNumberOrEmail(
+        editParent.guardian_user_id,
+        editField,
+        editValue.trim(),
+      );
       if (res?.success) {
-        showSnackbar?.(`${editField === 'phone' ? 'Phone' : 'Email'} updated successfully`, 'success');
+        showSnackbar?.(
+          `${editField === 'phone' ? 'Phone' : 'Email'} updated successfully`,
+          'success',
+        );
         handleCloseEditDialog();
         loadParents();
       } else {
@@ -487,7 +502,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   }, []);
 
   const resolvePreview = (template) => {
-    const sample = parentsList.find((p) => selectedParents.includes(p.guardian_user_id)) || parentsList[0];
+    const sample =
+      parentsList.find((p) => selectedParents.includes(p.guardian_user_id)) || parentsList[0];
     if (!sample) return template;
     const [sfname, ...rest] = (sample.student_name || '').split(' ');
     const [gfname, ...grest] = (sample.guardian_name || '').split(' ');
@@ -598,7 +614,14 @@ const SendInvoiceTab = ({ showSnackbar }) => {
     },
     {
       icon: MissingContactIcon,
-      iconBg: missingCount > 0 ? (isDark ? 'rgba(220,38,38,0.18)' : '#FEF2F2') : isDark ? 'rgba(22,163,74,0.18)' : '#ECFDF5',
+      iconBg:
+        missingCount > 0
+          ? isDark
+            ? 'rgba(220,38,38,0.18)'
+            : '#FEF2F2'
+          : isDark
+            ? 'rgba(22,163,74,0.18)'
+            : '#ECFDF5',
       iconColor: missingCount > 0 ? 'error.main' : 'success.main',
       title: 'Missing Contact',
       subtitle: `Students without a ${channelTab === 1 ? 'phone number' : 'parent email'} on file`,
@@ -609,7 +632,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const renderStatusChip = (p) => {
     const state = rowState(p);
     if (state === 'sent') {
-      return <Chip label={channelTab === 2 ? 'Generated' : 'Sent'} size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }} />;
+      return (
+        <Chip
+          label={channelTab === 2 ? 'Generated' : 'Sent'}
+          size="small"
+          sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }}
+        />
+      );
     }
     if (state === 'missing') {
       return (
@@ -620,7 +649,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         />
       );
     }
-    return <Chip label="Ready" size="small" sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }} />;
+    return (
+      <Chip
+        label="Ready"
+        size="small"
+        sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }}
+      />
+    );
   };
 
   const renderRecipientsAndMessage = () => (
@@ -632,8 +667,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               Recipients ({parentsList.length} parents)
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Select the parents to send invoice {channelTab === 0 ? 'emails' : 'SMS messages'}. Each
-              selected parent will receive one invoice for their child.
+              Select the parents to send invoice {channelTab === 0 ? 'emails' : 'SMS messages'}.
+              Each selected parent will receive one invoice for their child.
             </Typography>
           </Box>
 
@@ -656,9 +691,21 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           />
 
           <Stack direction="row" spacing={1.5} mb={1.5} flexWrap="wrap" useFlexGap>
-            <Chip label={`${readyCount} Ready to Send`} size="small" sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }} />
-            <Chip label={`${sentCount} Already Sent`} size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }} />
-            <Chip label={`${missingCount} Missing Contact`} size="small" sx={{ bgcolor: '#FFEDD5', color: '#C2410C', fontWeight: 700 }} />
+            <Chip
+              label={`${readyCount} Ready to Send`}
+              size="small"
+              sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }}
+            />
+            <Chip
+              label={`${sentCount} Already Sent`}
+              size="small"
+              sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }}
+            />
+            <Chip
+              label={`${missingCount} Missing Contact`}
+              size="small"
+              sx={{ bgcolor: '#FFEDD5', color: '#C2410C', fontWeight: 700 }}
+            />
           </Stack>
 
           <TableContainer sx={{ maxHeight: 420, overflowY: 'auto' }}>
@@ -668,14 +715,20 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   <TableCell padding="checkbox">
                     <Checkbox
                       size="small"
-                      indeterminate={selectedParents.length > 0 && selectedParents.length < parentsList.length}
-                      checked={parentsList.length > 0 && selectedParents.length === parentsList.length}
+                      indeterminate={
+                        selectedParents.length > 0 && selectedParents.length < parentsList.length
+                      }
+                      checked={
+                        parentsList.length > 0 && selectedParents.length === parentsList.length
+                      }
                       onChange={handleSelectAll}
                     />
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Student Name (Admission No.)</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Class / Arm</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Parent Name ({channelTab === 1 ? 'Phone' : 'Email'})</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>
+                    Parent Name ({channelTab === 1 ? 'Phone' : 'Email'})
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 700 }} align="right">
                     Invoice Amount
                   </TableCell>
@@ -730,8 +783,14 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                           <Typography variant="body2" fontWeight={600}>
                             {row.guardian_name}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
-                            {channelTab === 1 ? row.guardian_phone || '—' : row.guardian_email || '—'}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ wordBreak: 'break-all' }}
+                          >
+                            {channelTab === 1
+                              ? row.guardian_phone || '—'
+                              : row.guardian_email || '—'}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
@@ -770,7 +829,14 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </MenuItem>
           </Menu>
 
-          <Box display="flex" alignItems="center" justifyContent="space-between" mt={1.5} flexWrap="wrap" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mt={1.5}
+            flexWrap="wrap"
+            gap={1}
+          >
             <Stack direction="row" spacing={1} alignItems="center">
               <Button
                 size="small"
@@ -781,8 +847,14 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               >
                 Bulk Actions ({selectedParents.length} selected)
               </Button>
-              <Menu anchorEl={bulkMenuAnchor} open={Boolean(bulkMenuAnchor)} onClose={() => setBulkMenuAnchor(null)}>
-                <MenuItem onClick={handleBulkSelectReady}>Select all ready to send ({readyCount})</MenuItem>
+              <Menu
+                anchorEl={bulkMenuAnchor}
+                open={Boolean(bulkMenuAnchor)}
+                onClose={() => setBulkMenuAnchor(null)}
+              >
+                <MenuItem onClick={handleBulkSelectReady}>
+                  Select all ready to send ({readyCount})
+                </MenuItem>
                 <MenuItem onClick={handleBulkSelectPage}>Select all on this page</MenuItem>
                 <MenuItem onClick={handleBulkDeselectAll}>Deselect all</MenuItem>
               </Menu>
@@ -798,7 +870,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               variant="outlined"
               sx={{ mt: 1.5, py: 0.5 }}
               action={
-                <Button size="small" onClick={() => setTableSearch('') || setPreviewRecipientsOpen(true)}>
+                <Button
+                  size="small"
+                  onClick={() => setTableSearch('') || setPreviewRecipientsOpen(true)}
+                >
                   View details →
                 </Button>
               }
@@ -815,7 +890,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
-            '& .MuiCardContent-root': { p: 2, display: 'flex', flexDirection: 'column', flex: 1, '&:last-child': { pb: 2 } },
+            '& .MuiCardContent-root': {
+              p: 2,
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              '&:last-child': { pb: 2 },
+            },
           }}
         >
           <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={1}>
@@ -832,16 +913,31 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 Sending to
               </Typography>
               <Typography variant="body2" fontWeight={700} color="primary.main">
-                {(selectedParents.length || readyCount)} parents
+                {selectedParents.length || readyCount} parents
               </Typography>
             </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1.5} flexWrap="wrap" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={1.5}
+            flexWrap="wrap"
+            gap={1}
+          >
             <Tabs
               value={composeView}
               onChange={(e, v) => setComposeView(v)}
-              sx={{ minHeight: 32, '& .MuiTab-root': { minHeight: 32, py: 0.5, textTransform: 'none', fontWeight: 600 } }}
+              sx={{
+                minHeight: 32,
+                '& .MuiTab-root': {
+                  minHeight: 32,
+                  py: 0.5,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                },
+              }}
             >
               <Tab value="compose" label="Compose" />
               <Tab value="preview" label="Preview" />
@@ -849,7 +945,12 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             <Stack direction="row" spacing={1}>
               <Tooltip title="AI rewriting isn't connected yet — coming soon">
                 <span>
-                  <Button size="small" startIcon={<AiIcon fontSize="small" />} disabled sx={{ textTransform: 'none' }}>
+                  <Button
+                    size="small"
+                    startIcon={<AiIcon fontSize="small" />}
+                    disabled
+                    sx={{ textTransform: 'none' }}
+                  >
                     Improve message (AI)
                   </Button>
                 </span>
@@ -880,7 +981,11 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
               {channelTab === 0 ? (
                 <Box sx={{ overflow: 'hidden', mb: 1.5 }}>
-                  <TiptapEdit key={editorKey} initialContent={emailBody} onUpdate={handleEditorUpdate} />
+                  <TiptapEdit
+                    key={editorKey}
+                    initialContent={emailBody}
+                    onUpdate={handleEditorUpdate}
+                  />
                 </Box>
               ) : (
                 <TextField
@@ -894,13 +999,24 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 />
               )}
               {channelTab === 1 && (
-                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  sx={{ mb: 1.5 }}
+                >
                   {smsBody.length} characters · {Math.ceil(smsBody.length / 160) || 1} SMS segment
                   {Math.ceil(smsBody.length / 160) === 1 ? '' : 's'} per message
                 </Typography>
               )}
 
-              <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" mb={0.75}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                display="block"
+                mb={0.75}
+              >
                 Available merge tags
               </Typography>
               <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
@@ -917,8 +1033,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
               {channelTab === 0 && (
                 <Alert severity="info" icon={false} sx={{ mb: 1.5, py: 0.5, fontSize: 12 }}>
-                  An <strong>Invoice Button</strong> is automatically included in every email — no need
-                  to add a link manually.
+                  An <strong>Invoice Button</strong> is automatically included in every email — no
+                  need to add a link manually.
                 </Alert>
               )}
             </>
@@ -945,7 +1061,12 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           <Box sx={{ flex: 1 }} />
 
           <Divider sx={{ my: 1.5 }} />
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            spacing={1.5}
+          >
             <Box display="flex" alignItems="flex-start" gap={1}>
               <ReadyIcon sx={{ color: 'success.main', fontSize: 18, mt: 0.2 }} />
               <Box>
@@ -955,7 +1076,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                 <Typography variant="caption" color="text.secondary">
                   You are about to send invoice {channelTab === 0 ? 'emails' : 'SMS messages'} to{' '}
                   {selectedParents.length || readyCount} parents.{' '}
-                  {sentCount > 0 && `${sentCount} parents have already been sent invoices for this term.`}
+                  {sentCount > 0 &&
+                    `${sentCount} parents have already been sent invoices for this term.`}
                 </Typography>
               </Box>
             </Box>
@@ -967,7 +1089,10 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                   try {
                     localStorage.setItem(
                       `send_invoice_draft_${channelTab}`,
-                      JSON.stringify({ subject: emailSubject, body: channelTab === 0 ? emailBody : smsBody }),
+                      JSON.stringify({
+                        subject: emailSubject,
+                        body: channelTab === 0 ? emailBody : smsBody,
+                      }),
                     );
                     showSnackbar?.('Draft saved on this device', 'success');
                   } catch {
@@ -1009,15 +1134,27 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Excel invoices are generated one workbook per class — using{' '}
-              <strong>{selectedClassName || 'the first selected class'}</strong>. Select just one class
-              above for a different one.
+              <strong>{selectedClassName || 'the first selected class'}</strong>. Select just one
+              class above for a different one.
             </Typography>
           </Box>
 
           <Stack direction="row" spacing={1.5} mb={1.5} flexWrap="wrap" useFlexGap>
-            <Chip label={`${readyCount} Pending`} size="small" sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }} />
-            <Chip label={`${sentCount} Generated`} size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }} />
-            <Chip label={`${missingCount} Missing Email`} size="small" sx={{ bgcolor: '#FFEDD5', color: '#C2410C', fontWeight: 700 }} />
+            <Chip
+              label={`${readyCount} Pending`}
+              size="small"
+              sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700 }}
+            />
+            <Chip
+              label={`${sentCount} Generated`}
+              size="small"
+              sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700 }}
+            />
+            <Chip
+              label={`${missingCount} Missing Email`}
+              size="small"
+              sx={{ bgcolor: '#FFEDD5', color: '#C2410C', fontWeight: 700 }}
+            />
           </Stack>
 
           <TableContainer sx={{ maxHeight: 420, overflowY: 'auto' }}>
@@ -1082,7 +1219,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       </Grid>
 
       <Grid size={{ xs: 12, md: 5 }}>
-        <ParentCard sx={{ height: '100%', '& .MuiCardContent-root': { p: 2, '&:last-child': { pb: 2 } } }}>
+        <ParentCard
+          sx={{ height: '100%', '& .MuiCardContent-root': { p: 2, '&:last-child': { pb: 2 } } }}
+        >
           <Typography variant="subtitle1" fontWeight={700} mb={0.5}>
             Generate Excel Invoice
           </Typography>
@@ -1127,183 +1266,216 @@ const SendInvoiceTab = ({ showSnackbar }) => {
       </Grid>
 
       <Box
-        display="flex"
-        flexDirection={{ xs: 'column', md: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', md: 'center' }}
-        gap={2}
-        mb={2}
-        pb={2}
-        sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+        p={1}
+        mb={1}
+        sx={{
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
+        }}
       >
-        <Tabs
-          value={channelTab}
-          onChange={handleChannelTabChange}
-          sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minHeight: 40 } }}
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', md: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', md: 'center' }}
+          gap={2}
+          mb={2}
+          pb={2}
+          sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
         >
-          <Tab icon={<EmailTabIcon fontSize="small" />} iconPosition="start" label="Email" />
-          <Tab icon={<SmsTabIcon fontSize="small" />} iconPosition="start" label="SMS" />
-          <Tab icon={<ExcelTabIcon fontSize="small" />} iconPosition="start" label="Excel" />
-        </Tabs>
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<SettingsIcon fontSize="small" />}
-          onClick={() => navigate('/communications')}
-          sx={{ fontWeight: 600, textTransform: 'none', whiteSpace: 'nowrap' }}
-        >
-          Communication Channel & Credits
-        </Button>
-      </Box>
-
-      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={2} alignItems={{ xs: 'stretch', md: 'center' }} mb={1.5}>
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
-          <InputLabel>Academic Session</InputLabel>
-          <Select
-            value={selectedSessionId}
-            label="Academic Session"
-            onChange={(e) => setSelectedSessionId(e.target.value)}
-            disabled={loadingFilters}
+          <Tabs
+            value={channelTab}
+            onChange={handleChannelTabChange}
+            sx={{ '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, minHeight: 40 } }}
           >
-            {distinctSessions.map((item) => (
-              <MenuItem key={item.session_id} value={item.session_id}>
-                {item.session?.session_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 120 } }}>
-          <InputLabel>Term</InputLabel>
-          <Select
-            value={selectedTermId}
-            label="Term"
-            onChange={(e) => setSelectedTermId(e.target.value)}
-            disabled={loadingFilters || termsForSelectedSession.length === 0}
-          >
-            {termsForSelectedSession.map((item) => (
-              <MenuItem key={item.term_id} value={item.term_id}>
-                {item.term?.term_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
-          <InputLabel>Programme</InputLabel>
-          <Select
-            value={selectedProgrammeId}
-            label="Programme"
-            onChange={(e) => setSelectedProgrammeId(e.target.value)}
-            disabled={loadingFilters}
-          >
-            {programmes.map((prog) => (
-              <MenuItem key={prog.id} value={String(prog.id)}>
-                {prog.programme_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 } }}>
-          <InputLabel shrink>Class</InputLabel>
-          <Select
-            multiple={channelTab !== 2}
-            notched
-            value={channelTab === 2 ? selectedClassIds[0] || '' : selectedClassIds}
-            label="Class"
-            onChange={(e) => {
-              if (channelTab === 2) {
-                setSelectedClassIds(e.target.value ? [e.target.value] : []);
-              } else {
-                setSelectedClassIds(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value);
-              }
-            }}
-            disabled={loadingProgrammeClasses}
-            renderValue={(selected) => {
-              const arr = Array.isArray(selected) ? selected : [selected].filter(Boolean);
-              if (arr.length === 0) return 'Select class';
-              if (arr.length === 1) {
-                return classOptionsForFilter.find((c) => String(c.id) === String(arr[0]))?.class_name || '1 class selected';
-              }
-              return `${arr.length} classes selected`;
-            }}
-          >
-            {classOptionsForFilter.map((cls) => (
-              <MenuItem key={cls.id} value={String(cls.id)}>
-                {channelTab !== 2 && <Checkbox size="small" checked={selectedClassIds.some((id) => String(id) === String(cls.id))} />}
-                {cls.class_name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <TextField
-          size="small"
-          placeholder="Search parents or students..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleRefresh()}
-          sx={{ flexGrow: 1 }}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
-        <Tooltip title="Refresh">
-          <IconButton onClick={handleRefresh} sx={{ border: '1px solid', borderColor: 'divider' }}>
-            <RefreshIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        {channelTab !== 2 && (
+            <Tab icon={<EmailTabIcon fontSize="small" />} iconPosition="start" label="Email" />
+            <Tab icon={<SmsTabIcon fontSize="small" />} iconPosition="start" label="SMS" />
+            <Tab icon={<ExcelTabIcon fontSize="small" />} iconPosition="start" label="Excel" />
+          </Tabs>
           <Button
             variant="outlined"
             size="small"
-            startIcon={<PreviewRecipientsIcon fontSize="small" />}
-            onClick={() => setPreviewRecipientsOpen(true)}
+            startIcon={<SettingsIcon fontSize="small" />}
+            onClick={() => navigate('/communications')}
             sx={{ fontWeight: 600, textTransform: 'none', whiteSpace: 'nowrap' }}
           >
-            Preview Recipients
+            Communication Channel & Credits
           </Button>
+        </Box>
+
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', md: 'row' }}
+          gap={2}
+          alignItems={{ xs: 'stretch', md: 'center' }}
+          mb={1.5}
+        >
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
+            <InputLabel>Academic Session</InputLabel>
+            <Select
+              value={selectedSessionId}
+              label="Academic Session"
+              onChange={(e) => setSelectedSessionId(e.target.value)}
+              disabled={loadingFilters}
+            >
+              {distinctSessions.map((item) => (
+                <MenuItem key={item.session_id} value={item.session_id}>
+                  {item.session?.session_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 120 } }}>
+            <InputLabel>Term</InputLabel>
+            <Select
+              value={selectedTermId}
+              label="Term"
+              onChange={(e) => setSelectedTermId(e.target.value)}
+              disabled={loadingFilters || termsForSelectedSession.length === 0}
+            >
+              {termsForSelectedSession.map((item) => (
+                <MenuItem key={item.term_id} value={item.term_id}>
+                  {item.term?.term_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 150 } }}>
+            <InputLabel>Programme</InputLabel>
+            <Select
+              value={selectedProgrammeId}
+              label="Programme"
+              onChange={(e) => setSelectedProgrammeId(e.target.value)}
+              disabled={loadingFilters}
+            >
+              {programmes.map((prog) => (
+                <MenuItem key={prog.id} value={String(prog.id)}>
+                  {prog.programme_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 } }}>
+            <InputLabel shrink>Class</InputLabel>
+            <Select
+              multiple={channelTab !== 2}
+              notched
+              value={channelTab === 2 ? selectedClassIds[0] || '' : selectedClassIds}
+              label="Class"
+              onChange={(e) => {
+                if (channelTab === 2) {
+                  setSelectedClassIds(e.target.value ? [e.target.value] : []);
+                } else {
+                  setSelectedClassIds(
+                    typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value,
+                  );
+                }
+              }}
+              disabled={loadingProgrammeClasses}
+              renderValue={(selected) => {
+                const arr = Array.isArray(selected) ? selected : [selected].filter(Boolean);
+                if (arr.length === 0) return 'Select class';
+                if (arr.length === 1) {
+                  return (
+                    classOptionsForFilter.find((c) => String(c.id) === String(arr[0]))
+                      ?.class_name || '1 class selected'
+                  );
+                }
+                return `${arr.length} classes selected`;
+              }}
+            >
+              {classOptionsForFilter.map((cls) => (
+                <MenuItem key={cls.id} value={String(cls.id)}>
+                  {channelTab !== 2 && (
+                    <Checkbox
+                      size="small"
+                      checked={selectedClassIds.some((id) => String(id) === String(cls.id))}
+                    />
+                  )}
+                  {cls.class_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            size="small"
+            placeholder="Search parents or students..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleRefresh()}
+            sx={{ flexGrow: 1 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+          <Tooltip title="Refresh">
+            <IconButton
+              onClick={handleRefresh}
+              sx={{ border: '1px solid', borderColor: 'divider' }}
+            >
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {channelTab !== 2 && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<PreviewRecipientsIcon fontSize="small" />}
+              onClick={() => setPreviewRecipientsOpen(true)}
+              sx={{ fontWeight: 600, textTransform: 'none', whiteSpace: 'nowrap' }}
+            >
+              Preview Recipients
+            </Button>
+          )}
+        </Box>
+
+        {channelTab !== 2 && selectedClassIds.length > 0 && (
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={2}>
+            {selectedClassIds.map((id) => {
+              const cls = classOptionsForFilter.find((c) => String(c.id) === String(id));
+              if (!cls) return null;
+              return (
+                <Chip
+                  key={id}
+                  label={cls.class_name}
+                  size="small"
+                  onDelete={() => handleRemoveClassChip(id)}
+                  deleteIcon={<RemoveChipIcon fontSize="small" />}
+                  sx={{ fontWeight: 600 }}
+                />
+              );
+            })}
+            <Chip
+              label="Add Classes"
+              size="small"
+              variant="outlined"
+              icon={<AddClassesIcon fontSize="small" />}
+              onClick={() =>
+                showSnackbar?.('Use the Class dropdown above to add more classes', 'info')
+              }
+            />
+          </Stack>
         )}
       </Box>
-
-      {channelTab !== 2 && selectedClassIds.length > 0 && (
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={2}>
-          {selectedClassIds.map((id) => {
-            const cls = classOptionsForFilter.find((c) => String(c.id) === String(id));
-            if (!cls) return null;
-            return (
-              <Chip
-                key={id}
-                label={cls.class_name}
-                size="small"
-                onDelete={() => handleRemoveClassChip(id)}
-                deleteIcon={<RemoveChipIcon fontSize="small" />}
-                sx={{ fontWeight: 600 }}
-              />
-            );
-          })}
-          <Chip
-            label="Add Classes"
-            size="small"
-            variant="outlined"
-            icon={<AddClassesIcon fontSize="small" />}
-            onClick={() => showSnackbar?.('Use the Class dropdown above to add more classes', 'info')}
-          />
-        </Stack>
-      )}
 
       {channelTab === 2 ? renderExcelContent() : renderRecipientsAndMessage()}
 
       {/* Edit Parent Contact Dialog */}
       <Dialog open={editDialogOpen} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{editField === 'phone' ? 'Edit Parent Phone Number' : 'Edit Parent Email'}</DialogTitle>
+        <DialogTitle>
+          {editField === 'phone' ? 'Edit Parent Phone Number' : 'Edit Parent Email'}
+        </DialogTitle>
         <DialogContent>
           {editParent && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -1327,27 +1499,49 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={handleCloseEditDialog} disabled={savingEdit}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCloseEditDialog}
+            disabled={savingEdit}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleSaveEdit} disabled={savingEdit} startIcon={savingEdit ? <CircularProgress size={16} /> : null}>
+          <Button
+            size="small"
+            onClick={handleSaveEdit}
+            disabled={savingEdit}
+            startIcon={savingEdit ? <CircularProgress size={16} /> : null}
+          >
             {savingEdit ? 'Saving...' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Preview Recipients */}
-      <Dialog open={previewRecipientsOpen} onClose={() => setPreviewRecipientsOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Recipients who will receive this {channelTab === 0 ? 'email' : 'message'}</DialogTitle>
+      <Dialog
+        open={previewRecipientsOpen}
+        onClose={() => setPreviewRecipientsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Recipients who will receive this {channelTab === 0 ? 'email' : 'message'}
+        </DialogTitle>
         <DialogContent dividers sx={{ maxHeight: 420 }}>
           {parentsList.filter((p) => rowState(p) !== 'missing').length === 0 ? (
-            <Alert severity="info">No recipients with a valid contact in the current filters.</Alert>
+            <Alert severity="info">
+              No recipients with a valid contact in the current filters.
+            </Alert>
           ) : (
             <List dense>
               {parentsList
                 .filter((p) => rowState(p) !== 'missing')
                 .map((p) => (
-                  <ListItem key={`${p.guardian_user_id}-${p.student_registration_id}`} disableGutters>
+                  <ListItem
+                    key={`${p.guardian_user_id}-${p.student_registration_id}`}
+                    disableGutters
+                  >
                     <ListItemIcon sx={{ minWidth: 32 }}>
                       {selectedParents.includes(p.guardian_user_id) ? (
                         <ReadyIcon fontSize="small" sx={{ color: 'success.main' }} />
@@ -1364,14 +1558,23 @@ const SendInvoiceTab = ({ showSnackbar }) => {
           {missingCount > 0 && (
             <>
               <Divider sx={{ my: 1.5 }} />
-              <Typography variant="caption" fontWeight={700} color="error.main" display="block" mb={1}>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="error.main"
+                display="block"
+                mb={1}
+              >
                 Excluded — missing {channelTab === 1 ? 'phone number' : 'email'}
               </Typography>
               <List dense>
                 {parentsList
                   .filter((p) => rowState(p) === 'missing')
                   .map((p) => (
-                    <ListItem key={`${p.guardian_user_id}-${p.student_registration_id}`} disableGutters>
+                    <ListItem
+                      key={`${p.guardian_user_id}-${p.student_registration_id}`}
+                      disableGutters
+                    >
                       <ListItemText primary={`${p.guardian_name} — ${p.student_name}`} />
                     </ListItem>
                   ))}

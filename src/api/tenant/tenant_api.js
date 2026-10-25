@@ -43,6 +43,10 @@ tenantApi.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
     const isAuthRequest =
       originalRequest.url.includes('/login') ||
       originalRequest.url.includes('/refresh_token');

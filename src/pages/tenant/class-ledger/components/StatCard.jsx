@@ -1,30 +1,25 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Stack, Divider, useTheme } from '@mui/material';
+import { Card, CardContent, Typography, Box, LinearProgress, useTheme } from '@mui/material';
 import { IconChartBar } from '@tabler/icons-react';
 import PropTypes from 'prop-types';
 
-const schemeMap = [
-  { bg: '#DBEAFE', color: '#2563EB' },
-  { bg: '#DCFCE7', color: '#16A34A' },
-  { bg: '#F3E8FF', color: '#9333EA' },
-  { bg: '#FEF3C7', color: '#D97706' },
-  { bg: '#FEE2E2', color: '#DC2626' },
-];
-
 const StatCard = ({
-  title,
+  icon: Icon,
+  iconBg,
+  iconColor,
+  label,
+  studentCount,
   value,
-  valueColor,
-  valueBg,
-  subStats = [],
+  progressCaption,
+  progressPercent,
+  progressColor = 'success',
+  loading,
   onIconClick,
   onClick,
-  colorIndex = 0,
   sx = {},
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const scheme = schemeMap[colorIndex % schemeMap.length];
 
   return (
     <Card
@@ -47,61 +42,89 @@ const StatCard = ({
         ...sx,
       }}
     >
-      <CardContent sx={{ p: '14px !important', '&:last-child': { pb: '14px !important' }, height: '100%', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" fontWeight="700" sx={{ color: 'text.secondary', fontSize: '13px' }}>
-            {title}
-          </Typography>
+      <CardContent
+        sx={{
+          p: '14px !important',
+          '&:last-child': { pb: '14px !important' },
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 0.75,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 32,
+                height: 32,
+                borderRadius: '8px',
+                bgcolor: iconBg,
+                color: iconColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Icon sx={{ fontSize: 18 }} />
+            </Box>
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              sx={{ color: 'text.secondary', fontSize: '12.5px', lineHeight: 1.2 }}
+            >
+              {label}
+            </Typography>
+          </Box>
           <Box
             onClick={(e) => {
               e.stopPropagation();
               onIconClick?.();
             }}
             sx={{
-              width: 32,
-              height: 32,
-              borderRadius: '8px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.08)' : scheme.bg,
-              color: isDark ? '#ffffff' : scheme.color,
+              width: 26,
+              height: 26,
+              borderRadius: '6px',
+              bgcolor: isDark ? 'rgba(37,99,235,0.15)' : '#EFF6FF',
+              color: '#2563EB',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
               cursor: onIconClick ? 'pointer' : 'default',
-              '&:hover': onIconClick ? { opacity: 0.85 } : {},
+              '&:hover': onIconClick ? { opacity: 0.8 } : {},
             }}
           >
-            <IconChartBar size={18} color="currentColor" />
+            <IconChartBar size={15} color="currentColor" />
           </Box>
         </Box>
 
-        <Box
-          sx={{
-            borderRadius: '8px',
-            display: 'inline-flex',
-            alignSelf: 'flex-start',
-          }}
-        >
-          <Typography
-            variant="h3"
-            fontWeight="800"
-          >
-            {value}
-          </Typography>
-        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11.5px' }}>
+          {loading ? '—' : studentCount}
+        </Typography>
 
-        {subStats.length > 0 && (
-          <Stack direction="row" spacing={0} divider={<Divider orientation="vertical" flexItem />} sx={{ mt: 'auto' }}>
-            {subStats.map((stat, i) => (
-              <Box key={i} sx={{ flex: 1, px: i === 0 ? 0 : 2, pr: i === subStats.length - 1 ? 0 : 2, textAlign: i === subStats.length - 1 ? 'right' : 'left' }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, display: 'block', mb: 0.3, fontSize: '12px' }}>
-                  {stat.label}
-                </Typography>
-                <Typography variant="subtitle2" fontWeight="700" sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}>
-                  {stat.value}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
+        <Typography variant="h5" fontWeight={800} sx={{ lineHeight: 1.15 }}>
+          {loading ? <LinearProgress sx={{ width: 90, borderRadius: 1 }} /> : value}
+        </Typography>
+
+        {!loading && (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '11.5px' }}>
+              {progressCaption}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={Math.min(100, Math.max(0, progressPercent || 0))}
+              color={progressColor}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                mt: 0.25,
+                bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              }}
+            />
+          </>
         )}
       </CardContent>
     </Card>
@@ -109,19 +132,18 @@ const StatCard = ({
 };
 
 StatCard.propTypes = {
-  title: PropTypes.string.isRequired,
+  icon: PropTypes.elementType.isRequired,
+  iconBg: PropTypes.string.isRequired,
+  iconColor: PropTypes.string.isRequired,
+  label: PropTypes.string.isRequired,
+  studentCount: PropTypes.string,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  valueColor: PropTypes.string,
-  valueBg: PropTypes.string,
-  subStats: PropTypes.arrayOf(
-    PropTypes.shape({
-      label: PropTypes.string.isRequired,
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-    }),
-  ),
+  progressCaption: PropTypes.string,
+  progressPercent: PropTypes.number,
+  progressColor: PropTypes.oneOf(['success', 'warning', 'error', 'info', 'primary']),
+  loading: PropTypes.bool,
   onIconClick: PropTypes.func,
   onClick: PropTypes.func,
-  colorIndex: PropTypes.number,
   sx: PropTypes.object,
 };
 

@@ -37,6 +37,7 @@ import {
   Tabs,
   Tab,
   Tooltip,
+  LinearProgress,
 } from '@mui/material';
 import { TenantAuthContext } from '@/context/TenantContext/auth';
 
@@ -44,8 +45,10 @@ import {
   Search as SearchIcon,
   MoreVert as MoreVertIcon,
   Add as AddIcon,
-  CloudUpload as UploadIcon,
   Download as DownloadIcon,
+  Refresh as RefreshIcon,
+  ArrowForward as ArrowForwardIcon,
+  PrintOutlined as PrintOutlinedIcon,
 } from '@mui/icons-material';
 
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -60,6 +63,10 @@ import CurrencyExchangeOutlinedIcon from '@mui/icons-material/CurrencyExchangeOu
 import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
+import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import {
   fetchActiveSessionTerm,
   fetchClassAndArmsByProgramme,
@@ -322,12 +329,15 @@ const ClassLedger = () => {
     }
   };
 
-  const fetchClassLedgerData = async () => {
+  const fetchInFlightRef = React.useRef(false);
+
+  const fetchClassLedgerData = async (overrides = {}) => {
     if (!programme || !classLevel) {
       notify.warning('Please select Programme and Class');
       return;
     }
 
+    fetchInFlightRef.current = true;
     setLoadingTable(true);
     setLoadingAnalytics(true);
 
@@ -338,6 +348,7 @@ const ClassLedger = () => {
           class_arm_id: classLevel,
           payment_status: paymentStatusFilter,
           search: search,
+          ...overrides,
           session_id: sessionId || null,
           term_id: termId || null,
           page: page + 1,
@@ -360,11 +371,13 @@ const ClassLedger = () => {
     } finally {
       setLoadingTable(false);
       setLoadingAnalytics(false);
+      fetchInFlightRef.current = false;
     }
   };
 
   const fetchAnalyticsOnly = async () => {
     if (!programme || !classLevel) return;
+    if (fetchInFlightRef.current) return;
 
     setLoadingAnalytics(true);
     try {
@@ -424,13 +437,6 @@ const ClassLedger = () => {
       fetchClassLedgerData();
     }
   }, [page, rowsPerPage]);
-
-  // Auto refresh analytics when payment status filter changes
-  useEffect(() => {
-    if (programme && classLevel) {
-      fetchAnalyticsOnly();
-    }
-  }, [paymentStatusFilter]);
 
   useEffect(() => {
     loadProgrammes();
@@ -552,23 +558,33 @@ const ClassLedger = () => {
 
       {mainTab === 0 && (
         <>
-          <Grid container spacing={3} sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
               <StatCard
-                title="Total Invoice(Compulsory Bill)"
+                icon={DescriptionOutlinedIcon}
+                iconBg={isDark ? 'rgba(37,99,235,0.18)' : '#DBEAFE'}
+                iconColor="#2563EB"
+                label="Compulsory Invoiced"
+                studentCount={`${analyticsData?.students_with_compulsory ?? 0} students`}
                 value={`₦${(analyticsData?.total_comp_schedule || 0).toLocaleString()}`}
-                colorIndex={1}
                 loading={loadingAnalytics}
-                subStats={[
-                  {
-                    label: 'Total Paid',
-                    value: `₦${(analyticsData?.total_comp_transaction || 0).toLocaleString()}`,
-                  },
-                  {
-                    label: 'Balance',
-                    value: `₦${(analyticsData?.total_comp_balance || 0).toLocaleString()}`,
-                  },
-                ]}
+                progressCaption={`Total Paid: ₦${(analyticsData?.total_comp_transaction || 0).toLocaleString()} (${
+                  analyticsData?.total_comp_schedule
+                    ? Math.round(
+                        ((analyticsData.total_comp_transaction || 0) /
+                          analyticsData.total_comp_schedule) *
+                          100,
+                      )
+                    : 0
+                }%)`}
+                progressPercent={
+                  analyticsData?.total_comp_schedule
+                    ? ((analyticsData.total_comp_transaction || 0) /
+                        analyticsData.total_comp_schedule) *
+                      100
+                    : 0
+                }
+                progressColor="success"
                 onIconClick={() => {
                   setIsFeeModalOpen(true);
                   setChartTitle('Compulsory Fees');
@@ -584,22 +600,32 @@ const ClassLedger = () => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, lg: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
               <StatCard
-                title="Total Invoice (Optional Bill)"
+                icon={PaymentsOutlinedIcon}
+                iconBg={isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7'}
+                iconColor="#16A34A"
+                label="Optional Invoiced"
+                studentCount={`${analyticsData?.students_with_optional ?? 0} students`}
                 value={`₦${(analyticsData?.total_opt_schedule || 0).toLocaleString()}`}
-                colorIndex={2}
                 loading={loadingAnalytics}
-                subStats={[
-                  {
-                    label: 'Total Paid',
-                    value: `₦${(analyticsData?.total_opt_transaction || 0).toLocaleString()}`,
-                  },
-                  {
-                    label: 'Balance',
-                    value: `₦${(analyticsData?.total_opt_balance || 0).toLocaleString()}`,
-                  },
-                ]}
+                progressCaption={`Total Paid: ₦${(analyticsData?.total_opt_transaction || 0).toLocaleString()} (${
+                  analyticsData?.total_opt_schedule
+                    ? Math.round(
+                        ((analyticsData.total_opt_transaction || 0) /
+                          analyticsData.total_opt_schedule) *
+                          100,
+                      )
+                    : 0
+                }%)`}
+                progressPercent={
+                  analyticsData?.total_opt_schedule
+                    ? ((analyticsData.total_opt_transaction || 0) /
+                        analyticsData.total_opt_schedule) *
+                      100
+                    : 0
+                }
+                progressColor="success"
                 onIconClick={() => {
                   setIsFeeModalOpen(true);
                   setChartTitle('Optional Fees');
@@ -614,31 +640,126 @@ const ClassLedger = () => {
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, lg: 4 }}>
+
+            <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
               <StatCard
-                title="Total Payable"
-                value={`₦${(analyticsData?.outstanding_balance || 0).toLocaleString()}`}
-                colorIndex={0}
+                icon={CreditCardOutlinedIcon}
+                iconBg={isDark ? 'rgba(147,51,234,0.18)' : '#F3E8FF'}
+                iconColor="#9333EA"
+                label="Total Collected"
+                studentCount={`${analyticsData?.students_with_payment ?? 0} students`}
+                value={`₦${(analyticsData?.total_transaction || 0).toLocaleString()}`}
                 loading={loadingAnalytics}
-                subStats={[
-                  {
-                    label: 'Total Paid',
-                    value: `₦${(analyticsData?.total_transaction || 0).toLocaleString()}`,
-                  },
-                  {
-                    label: 'Balance',
-                    value: `₦${(analyticsData?.total_balance || 0).toLocaleString()}`,
-                  },
-                ]}
+                progressCaption={(() => {
+                  const totalInvoice =
+                    (analyticsData?.total_comp_schedule || 0) +
+                    (analyticsData?.total_opt_schedule || 0);
+                  const pct = totalInvoice
+                    ? Math.round(((analyticsData?.total_transaction || 0) / totalInvoice) * 100)
+                    : 0;
+                  return `${pct}% of Total Invoice`;
+                })()}
+                progressPercent={(() => {
+                  const totalInvoice =
+                    (analyticsData?.total_comp_schedule || 0) +
+                    (analyticsData?.total_opt_schedule || 0);
+                  return totalInvoice
+                    ? ((analyticsData?.total_transaction || 0) / totalInvoice) * 100
+                    : 0;
+                })()}
+                progressColor="success"
                 onIconClick={() => {
                   setIsFeeModalOpen(true);
-                  setChartTitle('Total Payable');
+                  setChartTitle('Total Collected');
                   setChartType('bar');
                   setIsPayable(true);
                 }}
                 onClick={() => {
                   setIsFeeModalOpen(true);
-                  setChartTitle('Total Payable');
+                  setChartTitle('Total Collected');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+              <StatCard
+                icon={PendingActionsOutlinedIcon}
+                iconBg={isDark ? 'rgba(217,119,6,0.18)' : '#FFEDD5'}
+                iconColor="#D97706"
+                label="Outstanding Balance"
+                studentCount={`${analyticsData?.students_with_outstanding ?? 0} students`}
+                value={`₦${(analyticsData?.total_balance || 0).toLocaleString()}`}
+                loading={loadingAnalytics}
+                progressCaption={(() => {
+                  const totalInvoice =
+                    (analyticsData?.total_comp_schedule || 0) +
+                    (analyticsData?.total_opt_schedule || 0);
+                  const pct = totalInvoice
+                    ? Math.round(((analyticsData?.total_balance || 0) / totalInvoice) * 100)
+                    : 0;
+                  return `${pct}% of Total Invoice`;
+                })()}
+                progressPercent={(() => {
+                  const totalInvoice =
+                    (analyticsData?.total_comp_schedule || 0) +
+                    (analyticsData?.total_opt_schedule || 0);
+                  return totalInvoice
+                    ? ((analyticsData?.total_balance || 0) / totalInvoice) * 100
+                    : 0;
+                })()}
+                progressColor="error"
+                onIconClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Outstanding Balance');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+                onClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Outstanding Balance');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
+              <StatCard
+                icon={GroupsOutlinedIcon}
+                iconBg={isDark ? 'rgba(220,38,38,0.18)' : '#FEE2E2'}
+                iconColor="#DC2626"
+                label="Students with Outstanding Balance"
+                studentCount={`${analyticsData?.total_students ?? 0} students`}
+                value={`${analyticsData?.students_with_outstanding ?? 0} / ${analyticsData?.total_students ?? 0}`}
+                loading={loadingAnalytics}
+                progressCaption={`${
+                  analyticsData?.total_students
+                    ? Math.round(
+                        ((analyticsData.students_with_outstanding || 0) /
+                          analyticsData.total_students) *
+                          100,
+                      )
+                    : 0
+                }% of class`}
+                progressPercent={
+                  analyticsData?.total_students
+                    ? ((analyticsData.students_with_outstanding || 0) /
+                        analyticsData.total_students) *
+                      100
+                    : 0
+                }
+                progressColor="error"
+                onIconClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Students with Outstanding Balance');
+                  setChartType('bar');
+                  setIsPayable(true);
+                }}
+                onClick={() => {
+                  setIsFeeModalOpen(true);
+                  setChartTitle('Students with Outstanding Balance');
                   setChartType('bar');
                   setIsPayable(true);
                 }}
@@ -650,51 +771,9 @@ const ClassLedger = () => {
               '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
               '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
-            title={
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: { xs: 'flex-start', md: 'center' },
-                  flexDirection: { xs: 'column', md: 'row' },
-                  justifyContent: 'space-between',
-                  gap: 2,
-                }}
-              >
-                <Typography variant="h5"></Typography>
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    gap: 1,
-                    flexWrap: 'wrap',
-                    width: { xs: '100%', md: 'auto' },
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<DownloadIcon />}
-                    sx={{ width: { xs: '100%', sm: 'auto' } }}
-                    onClick={handleDownloadExcel}
-                  >
-                    View In CSV Format
-                  </Button>
-
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<UploadIcon />}
-                    sx={{ width: { xs: '100%', sm: 'auto' } }}
-                    onClick={handlePrintPaymentList}
-                  >
-                    Print Payment List
-                  </Button>
-                </Box>
-              </Box>
-            }
           >
             <Grid container spacing={3} sx={{ mb: 2, mt: 0 }} alignItems="center">
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <TextField
                   select
                   fullWidth
@@ -715,7 +794,7 @@ const ClassLedger = () => {
                 </TextField>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 1.4 }}>
                 <TextField
                   select
                   fullWidth
@@ -732,7 +811,7 @@ const ClassLedger = () => {
                 </TextField>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 1.4 }}>
                 <TextField
                   select
                   fullWidth
@@ -752,7 +831,7 @@ const ClassLedger = () => {
                 </TextField>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 1.5 }}>
                 <TextField
                   select
                   fullWidth
@@ -769,7 +848,7 @@ const ClassLedger = () => {
                 </TextField>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 2.5 }}>
+              <Grid size={{ xs: 12, md: 1.7 }}>
                 <TextField
                   select
                   fullWidth
@@ -803,18 +882,97 @@ const ClassLedger = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 1 }}>
-                <Button
-                  variant="contained"
-                  size="small"
-                  fullWidth
-                  onClick={fetchClassLedgerData}
-                  disabled={!programme || !classLevel}
-                >
-                  Fetch
-                </Button>
+              <Grid size={{ xs: 12, md: 2 }}>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    fullWidth
+                    onClick={() => fetchClassLedgerData()}
+                    disabled={!programme || !classLevel}
+                  >
+                    Apply
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    startIcon={<RefreshIcon fontSize="small" />}
+                    onClick={() => {
+                      setSearch('');
+                      setPaymentStatusFilter('');
+                      fetchClassLedgerData();
+                    }}
+                  >
+                    Refresh
+                  </Button>
+                </Stack>
               </Grid>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 1,
+                }}
+              >
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<DownloadIcon />}
+                  onClick={handleDownloadExcel}
+                  sx={{
+                    bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    color: '#2563EB',
+                  }}
+                >
+                  Export CSV
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<PrintOutlinedIcon />}
+                  onClick={handlePrintPaymentList}
+                  sx={{
+                    bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                    borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                    color: '#2563EB',
+                  }}
+                >
+                  Print Payment List
+                </Button>
+              </Box>
             </Grid>
+
+            {Number(analyticsData?.students_with_outstanding || 0) > 0 && (
+              <Alert
+                severity="warning"
+                icon={<WarningAmberOutlinedIcon fontSize="inherit" />}
+                sx={{
+                  mb: 2,
+                  alignItems: 'center',
+                  bgcolor: isDark ? 'rgba(217,119,6,0.12)' : '#FFFBEB',
+                  border: '1px solid',
+                  borderColor: isDark ? 'rgba(217,119,6,0.3)' : '#FDE68A',
+                  color: isDark ? '#FBBF24' : '#C2410C',
+                }}
+                action={
+                  <Button
+                    size="small"
+                    endIcon={<ArrowForwardIcon fontSize="small" />}
+                    onClick={() => {
+                      setPaymentStatusFilter('owing');
+                      fetchClassLedgerData({ payment_status: 'owing' });
+                    }}
+                  >
+                    View outstanding
+                  </Button>
+                }
+              >
+                {analyticsData.students_with_outstanding} of {analyticsData.total_students} students
+                in this class have an outstanding balance.
+              </Alert>
+            )}
 
             <TableContainer elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
               <Table stickyHeader size="small">
@@ -823,13 +981,14 @@ const ClassLedger = () => {
                     <TableCell sx={thCell}>S/N</TableCell>
                     <TableCell sx={thCell}>Student Name</TableCell>
                     <TableCell sx={thCell}>Pay Category</TableCell>
-                    <TableCell sx={thCell}>Total Compulsory Bill</TableCell>
-                    <TableCell sx={thCell}>Total Optional Bill</TableCell>
-                    <TableCell sx={thCell}>Total Payable</TableCell>
-                    <TableCell sx={thCell}>Total Paid</TableCell>
-                    <TableCell sx={thCell}>Penalty</TableCell>
-                    <TableCell sx={thCell}>Discount</TableCell>
-                    <TableCell sx={thCell}>Balance</TableCell>
+                    <TableCell sx={thCell}>Compulsory Bill (₦)</TableCell>
+                    <TableCell sx={thCell}>Optional Bill (₦)</TableCell>
+                    <TableCell sx={thCell}>Total Payable (₦)</TableCell>
+                    <TableCell sx={thCell}>Total Paid (₦)</TableCell>
+                    <TableCell sx={thCell}>Penalty (₦)</TableCell>
+                    <TableCell sx={thCell}>Discount (₦)</TableCell>
+                    <TableCell sx={thCell}>Oustanding Balance (₦)</TableCell>
+                    <TableCell sx={thCell}>Payment Progress</TableCell>
                     <TableCell sx={thCell}>Action</TableCell>
                   </TableRow>
                 </TableHead>
@@ -870,6 +1029,9 @@ const ClassLedger = () => {
                         <TableCell sx={tdCell}>
                           <Skeleton variant="text" width={90} height={20} />
                         </TableCell>
+                        <TableCell sx={tdCell}>
+                          <Skeleton variant="text" width={110} height={20} />
+                        </TableCell>
                         <TableCell align="center" sx={tdCell}>
                           <Skeleton variant="circular" width={28} height={28} sx={{ mx: 'auto' }} />
                         </TableCell>
@@ -908,16 +1070,36 @@ const ClassLedger = () => {
                             </Box>
                           </TableCell>
                           <TableCell sx={tdCell}>
-                            {student.bursary_payment_category_name ? (
-                              <Chip
-                                label={student.bursary_payment_category_name}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                              />
-                            ) : (
-                              '—'
-                            )}
+                            {student.bursary_payment_category_name
+                              ? (() => {
+                                  const name = student.bursary_payment_category_name;
+                                  const isNew = /new/i.test(name);
+                                  const isReturning = /returning/i.test(name);
+                                  return (
+                                    <Chip
+                                      label={name}
+                                      size="small"
+                                      sx={
+                                        isNew
+                                          ? {
+                                              bgcolor: '#DBEAFE',
+                                              color: '#2563EB',
+                                              fontWeight: 600,
+                                            }
+                                          : isReturning
+                                            ? {
+                                                bgcolor: '#F3E8FF',
+                                                color: '#9333EA',
+                                                fontWeight: 600,
+                                              }
+                                            : undefined
+                                      }
+                                      color={isNew || isReturning ? undefined : 'primary'}
+                                      variant={isNew || isReturning ? 'filled' : 'outlined'}
+                                    />
+                                  );
+                                })()
+                              : '—'}
                           </TableCell>
                           <TableCell sx={tdCell}>
                             ₦
@@ -942,15 +1124,40 @@ const ClassLedger = () => {
                           <TableCell sx={tdCell}>
                             ₦{(student.total_discount || 0).toLocaleString()}
                           </TableCell>{' '}
-                          <TableCell
-                            sx={{
-                              ...tdCell,
-                              color:
-                                (student.total_balance || 0) > 0 ? 'error.main' : 'success.main',
-                              fontWeight: 600,
-                            }}
-                          >
-                            ₦{(student.total_balance || 0).toLocaleString()}
+                          <TableCell sx={tdCell}>
+                            <Chip
+                              label={`₦${(student.total_balance || 0).toLocaleString()}`}
+                              size="small"
+                              color={(student.total_balance || 0) > 0 ? 'error' : 'success'}
+                              sx={{ fontWeight: 600 }}
+                            />
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            {(() => {
+                              const payable = Number(student.total_payable || 0);
+                              const paid = Number(student.total_paid || 0);
+                              const pct =
+                                payable > 0 ? Math.min(100, Math.round((paid / payable) * 100)) : 0;
+                              const color = pct >= 100 ? 'success' : pct > 0 ? 'warning' : 'error';
+                              return (
+                                <Box sx={{ minWidth: 90 }}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    {pct}%
+                                  </Typography>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={pct}
+                                    color={color}
+                                    sx={{
+                                      height: 6,
+                                      borderRadius: 3,
+                                      mt: 0.25,
+                                      bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                                    }}
+                                  />
+                                </Box>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell align="right" sx={tdCell}>
                             <IconButton
@@ -968,7 +1175,7 @@ const ClassLedger = () => {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={12} align="center" sx={{ py: 6 }}>
                         <Alert severity="info" sx={{ justifyContent: 'center' }}>
                           No students found for the selected class.
                         </Alert>

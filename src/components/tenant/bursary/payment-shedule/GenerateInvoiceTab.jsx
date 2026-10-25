@@ -769,8 +769,14 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               <Typography variant="body2" fontWeight={700} mb={1.5}>
                 Invoice Progress
               </Typography>
-              <Stack direction="row" spacing={3} mb={1.5}>
-                <Stack direction="row" spacing={1} alignItems="center">
+              <Stack
+                direction="row"
+                mb={1.5}
+                divider={
+                  <Divider orientation="vertical" flexItem sx={{ height: 72, alignSelf: 'flex-start', mt: 0.5 }} />
+                }
+              >
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, pr: 2 }}>
                   <MiniIconTile
                     icon={PersonIcon}
                     bg={isDark ? 'rgba(255,255,255,0.08)' : 'grey.100'}
@@ -789,7 +795,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     </Typography>
                   </Box>
                 </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, px: 2 }}>
                   <MiniIconTile
                     icon={DocIconGreen}
                     bg={isDark ? 'rgba(22,163,74,0.18)' : '#ECFDF5'}
@@ -813,7 +819,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     </Typography>
                   </Box>
                 </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, pl: 2 }}>
                   <MiniIconTile
                     icon={DocIconGreen}
                     bg={
@@ -904,17 +910,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               <Typography variant="body2" fontWeight={700} mb={1.5}>
                 Insights
               </Typography>
-              <Stack
-                direction={{ xs: 'column', lg: 'row' }}
-                divider={
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ display: { xs: 'none', lg: 'block' } }}
-                  />
-                }
-                sx={{ borderRadius: 2, overflow: 'hidden' }}
-              >
+              <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5}>
                 <Tooltip title="The student payment category with the highest total projected amount across all payment items in the current scope.">
                   <Box
                     sx={{
@@ -923,6 +919,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                       alignItems: 'center',
                       gap: 1.5,
                       bgcolor: isDark ? 'rgba(22,163,74,0.22)' : '#DCFCE7',
+                      borderRadius: 2,
                       p: 1.5,
                       cursor: 'default',
                     }}
@@ -980,6 +977,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                       alignItems: 'center',
                       gap: 1.5,
                       bgcolor: isDark ? 'rgba(147,51,234,0.22)' : '#F3E8FF',
+                      borderRadius: 2,
                       p: 1.5,
                       cursor: 'default',
                     }}
@@ -1036,6 +1034,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                       alignItems: 'center',
                       gap: 1.5,
                       bgcolor: isDark ? 'rgba(217,119,6,0.25)' : '#FFEDD5',
+                      borderRadius: 2,
                       p: 1.5,
                       cursor: 'default',
                     }}

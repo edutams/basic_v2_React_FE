@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,6 +22,7 @@ import {
   Skeleton,
   LinearProgress,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import {
   Receipt as ReceiptIcon,
@@ -29,6 +30,7 @@ import {
   Email as EmailIcon,
   Article as ArticleIcon,
   ChevronRight as ChevronRightIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import {
   IconStack2,
@@ -94,7 +96,7 @@ const StatCardHeader = ({ icon: Icon, iconBg, iconColor, title, subtitle }) => (
 /** The two figures inside a stat card, separated by a vertical divider —
  * "Not Set" renders in red whenever the underlying value is genuinely
  * absent (no schedule data at all yet), never a fabricated ₦0. */
-const StatFigure = ({ value, label, color, notSet }) => (
+const StatFigure = ({ value, label, color, notSet, achievedBy }) => (
   <Box flex={1} textAlign="center">
     {notSet ? (
       <Typography
@@ -112,6 +114,30 @@ const StatFigure = ({ value, label, color, notSet }) => (
     <Typography variant="caption" color="textSecondary">
       {label}
     </Typography>
+    {!notSet && achievedBy && (
+      <Box
+        sx={{
+          mt: 0.75,
+          mx: 'auto',
+          maxWidth: '100%',
+          px: 1,
+          py: 0.5,
+          borderRadius: 1.5,
+          bgcolor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)',
+        }}
+      >
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          display="block"
+          noWrap
+          sx={{ color }}
+        >
+          {achievedBy}
+        </Typography>
+      </Box>
+    )}
   </Box>
 );
 
@@ -185,7 +211,6 @@ const PaymentShedule = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
-  const scheduleGridRef = useRef(null);
 
   const schemeMap = [
     { bg: '#DBEAFE', color: '#2563EB' },
@@ -207,16 +232,17 @@ const PaymentShedule = () => {
   });
 
   const [sessions, setSessions] = useState([]);
+  // Active payment categories — now the grid's column dimension (one
+  // column per category for the selected class), not a single filter.
   const [categories, setCategories] = useState([]);
-  // null = not evaluated yet; false only once the backend confirms zero
-  // payment items exist for the current pay_option — a state every
-  // category's own missing_count can't tell apart from "fully scheduled".
-  const [hasPaymentItems, setHasPaymentItems] = useState(null);
 
   const [selectedSessionTerm, setSelectedSessionTerm] = useState('');
   const [selectedSession, setSelectedSession] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  // The Set Schedule grid is now pivoted on class (selected via the Classes
+  // row below) with category as the table's own column dimension — the
+  // inverse of the old single-category-dropdown + class-columns layout.
+  const [selectedScheduleClassId, setSelectedScheduleClassId] = useState('');
   const [activeSubTermId, setActiveSubTermId] = useState(null);
   const [subTerms, setSubTerms] = useState([]);
   const [selectedClass, setSelectedClass] = useState('');
@@ -225,6 +251,8 @@ const PaymentShedule = () => {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [scheduleStats, setScheduleStats] = useState({
     paymentItemsTotal: 0,
+    paymentItemsCompulsory: 0,
+    paymentItemsOptional: 0,
     schedule: { total: 0, classes: 0 },
     missingSchedules: { total: 0 },
     paymentName: { withMinSchedule: 0, withMaxSchedule: 0, minLabel: 'N/A', maxLabel: 'N/A' },
@@ -249,10 +277,19 @@ const PaymentShedule = () => {
         // merged Set Schedule grid.
         const res = await fetchPaymentScheduleStats(selectedSession, activeSubTermId);
         if (res?.success && res.data) {
-          const { payment_items_total, schedule, missing_schedules, amount, student_category } =
-            res.data;
+          const {
+            payment_items_total,
+            payment_items_compulsory,
+            payment_items_optional,
+            schedule,
+            missing_schedules,
+            amount,
+            student_category,
+          } = res.data;
           setScheduleStats({
             paymentItemsTotal: payment_items_total ?? 0,
+            paymentItemsCompulsory: payment_items_compulsory ?? 0,
+            paymentItemsOptional: payment_items_optional ?? 0,
             schedule: { total: schedule?.total ?? 0, classes: schedule?.classes ?? 0 },
             missingSchedules: { total: missing_schedules?.total ?? 0 },
             paymentName: {
@@ -283,11 +320,7 @@ const PaymentShedule = () => {
     const loadOverview = async () => {
       try {
         setLoadingClassesOverview(true);
-        const res = await fetchScheduleClassesOverview(
-          selectedSession,
-          activeSubTermId,
-          selectedCategory || undefined,
-        );
+        const res = await fetchScheduleClassesOverview(selectedSession, activeSubTermId);
         if (res?.success && Array.isArray(res.data)) {
           setClassesOverview(res.data);
         }
@@ -299,6 +332,20 @@ const PaymentShedule = () => {
     };
     loadOverview();
   };
+
+  // The first class loads by default; if the previously-selected class
+  // disappears (e.g. a term switch), fall back to the new first class
+  // rather than leaving the grid pointed at a class that's no longer listed.
+  useEffect(() => {
+    if (classesOverview.length === 0) return;
+    const stillValid = classesOverview.some(
+      (cls) => String(cls.id) === String(selectedScheduleClassId),
+    );
+    if (!stillValid) {
+      setSelectedScheduleClassId(String(classesOverview[0].id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classesOverview]);
 
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
@@ -337,12 +384,9 @@ const PaymentShedule = () => {
     loadSessionTerms();
   }, []);
 
-  // Refetches whenever the session or term changes so each category's
-  // `missing_count` reflects what's actually selected — a category can be
-  // fully scheduled for one term and missing for another. Doesn't reset
-  // `selectedCategory` on refetch so switching term doesn't yank the
-  // bursar's current pick away. Unscoped by pay_option — counts Compulsory
-  // + Optional combined, matching the merged Set Schedule grid.
+  // The full active-category list — used as the grid's column set for
+  // whichever class is selected below, so it's independent of any one
+  // class/category pairing.
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -353,13 +397,7 @@ const PaymentShedule = () => {
           payType: 'bursary',
         });
 
-        const list = Array.isArray(res?.data) ? res.data : [];
-        setCategories(list);
-        setHasPaymentItems(res?.has_payment_items ?? null);
-
-        if (list.length > 0 && !selectedCategory) {
-          setSelectedCategory(String(list[0].id));
-        }
+        setCategories(Array.isArray(res?.data) ? res.data : []);
       } catch (err) {
         showSnackbar('Failed to load categories', 'error');
       } finally {
@@ -370,40 +408,6 @@ const PaymentShedule = () => {
     loadCategories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSession, activeSubTermId]);
-
-  // Flags categories with zero prices set for the current session/term/tab
-  // before the bursar even opens the dropdown — the whole point being they
-  // shouldn't have to click through each one just to find the gaps.
-  const categoriesMissingCount = categories.filter((c) => (c.missing_count ?? 0) > 0).length;
-  const totalMissingAcrossCategories = categories.reduce(
-    (sum, c) => sum + (c.missing_count ?? 0),
-    0,
-  );
-  // Categories with literally nothing priced yet vs. ones that are only
-  // partially done — same missing_count > 0 either way, but a bursar
-  // needs to know which is which.
-  const categoriesFullyUnsetCount = categories.filter((c) => c.has_none_set).length;
-  const categoriesPartiallyMissingCount = categoriesMissingCount - categoriesFullyUnsetCount;
-
-  // hasPaymentItems === false takes priority: with zero payment items,
-  // every category's missing_count is silently 0 (nothing to schedule
-  // against yet), which would otherwise look identical to "fully done".
-  const categoryCalloutMessage =
-    hasPaymentItems === false
-      ? 'No payment items created yet — add one to start scheduling'
-      : categoriesFullyUnsetCount > 0
-        ? `${categoriesFullyUnsetCount} categor${categoriesFullyUnsetCount === 1 ? 'y has' : 'ies have'} no schedule/price set for any class${
-            categoriesPartiallyMissingCount > 0
-              ? ` — ${categoriesPartiallyMissingCount} more only partially priced across classes`
-              : ''
-          }`
-        : categoriesMissingCount > 0
-          ? `${categoriesMissingCount} categor${categoriesMissingCount === 1 ? 'y' : 'ies'} missing schedules${
-              totalMissingAcrossCategories > 0
-                ? ` — ${totalMissingAcrossCategories} class/item pairs`
-                : ''
-            }`
-          : null;
 
   // The Set Schedule tab's own picker is session-only — which term is
   // active gets picked via the term pills inside PaymentScheduleGrid.
@@ -485,12 +489,12 @@ const PaymentShedule = () => {
     term?.displayTerm?.display_name ||
     'Term';
 
-  // Fetch stats + classes overview when session, term, or category changes.
+  // Fetch stats + classes overview when session or term changes.
   useEffect(() => {
     refreshStats();
     refreshClassesOverview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSession, activeSubTermId, selectedCategory]);
+  }, [selectedSession, activeSubTermId]);
 
   const stats = scheduleStats;
 
@@ -599,7 +603,17 @@ const PaymentShedule = () => {
                 />
                 <Box display="flex" flex={1} alignItems="stretch">
                   {loadingStats || loadingCategories ? (
-                    <Skeleton width="100%" height={48} />
+                    <>
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={40} height={40} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={85} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={40} height={40} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={100} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                    </>
                   ) : (
                     <>
                       <StatFigure
@@ -616,6 +630,44 @@ const PaymentShedule = () => {
                     </>
                   )}
                 </Box>
+                {!loadingStats && (
+                  <Stack direction="row" spacing={1} mt={1.5}>
+                    <Box
+                      flex={1}
+                      sx={{
+                        borderRadius: 1.5,
+                        p: 1,
+                        textAlign: 'center',
+                        bgcolor: isDark ? 'rgba(22,163,74,0.14)' : '#DCFCE7',
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={700} sx={{ color: '#15803D' }}>
+                        {stats.paymentItemsCompulsory} Compulsory Item
+                        {stats.paymentItemsCompulsory === 1 ? '' : 's'}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Items required for all students
+                      </Typography>
+                    </Box>
+                    <Box
+                      flex={1}
+                      sx={{
+                        borderRadius: 1.5,
+                        p: 1,
+                        textAlign: 'center',
+                        bgcolor: isDark ? 'rgba(217,119,6,0.14)' : '#FFEDD5',
+                      }}
+                    >
+                      <Typography variant="body2" fontWeight={700} sx={{ color: '#C2410C' }}>
+                        {stats.paymentItemsOptional} Optional Item
+                        {stats.paymentItemsOptional === 1 ? '' : 's'}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        Items selected by category
+                      </Typography>
+                    </Box>
+                  </Stack>
+                )}
               </Paper>
             </Grid>
 
@@ -643,7 +695,17 @@ const PaymentShedule = () => {
                 />
                 <Box display="flex" flex={1} alignItems="stretch">
                   {loadingStats ? (
-                    <Skeleton width="100%" height={40} />
+                    <>
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={70} height={36} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={90} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={70} height={36} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={95} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                    </>
                   ) : (
                     <>
                       <StatFigure
@@ -651,6 +713,11 @@ const PaymentShedule = () => {
                         label="Minimum Amount"
                         color="success.main"
                         notSet={stats.schedule.total === 0}
+                        achievedBy={
+                          stats.studentCategory.minLabel !== 'N/A'
+                            ? `${stats.studentCategory.minLabel} — ₦${stats.studentCategory.withMinSchedule?.toLocaleString()}`
+                            : null
+                        }
                       />
                       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                       <StatFigure
@@ -658,6 +725,11 @@ const PaymentShedule = () => {
                         label="Maximum Amount"
                         color={s1.color}
                         notSet={stats.schedule.total === 0}
+                        achievedBy={
+                          stats.studentCategory.maxLabel !== 'N/A'
+                            ? `${stats.studentCategory.maxLabel} — ₦${stats.studentCategory.withMaxSchedule?.toLocaleString()}`
+                            : null
+                        }
                       />
                     </>
                   )}
@@ -689,7 +761,17 @@ const PaymentShedule = () => {
                 />
                 <Box display="flex" flex={1} alignItems="stretch">
                   {loadingStats ? (
-                    <Skeleton width="100%" height={40} />
+                    <>
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={70} height={36} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={90} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                      <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                      <Box flex={1} textAlign="center">
+                        <Skeleton variant="text" width={70} height={36} sx={{ mx: 'auto' }} />
+                        <Skeleton variant="text" width={95} height={18} sx={{ mx: 'auto' }} />
+                      </Box>
+                    </>
                   ) : (
                     <>
                       <StatFigure
@@ -697,6 +779,11 @@ const PaymentShedule = () => {
                         label="Minimum Amount"
                         color="success.main"
                         notSet={stats.schedule.total === 0}
+                        achievedBy={
+                          stats.paymentName.minLabel !== 'N/A'
+                            ? `${stats.paymentName.minLabel} — ₦${stats.paymentName.withMinSchedule?.toLocaleString()}`
+                            : null
+                        }
                       />
                       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
                       <StatFigure
@@ -704,6 +791,11 @@ const PaymentShedule = () => {
                         label="Maximum Amount"
                         color={s2.color}
                         notSet={stats.schedule.total === 0}
+                        achievedBy={
+                          stats.paymentName.maxLabel !== 'N/A'
+                            ? `${stats.paymentName.maxLabel} — ₦${stats.paymentName.withMaxSchedule?.toLocaleString()}`
+                            : null
+                        }
                       />
                     </>
                   )}
@@ -806,56 +898,6 @@ const PaymentShedule = () => {
                   </Select>
                 </FormControl>
 
-                <FormControl size="small" sx={{ minWidth: 170 }}>
-                  <InputLabel>Student Pay Category</InputLabel>
-                  <Select
-                    value={selectedCategory}
-                    label="Student Pay Category"
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    disabled={loadingCategories}
-                    renderValue={(val) =>
-                      categories.find((c) => String(c.id) === String(val))?.name || ''
-                    }
-                  >
-                    {loadingCategories ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={16} sx={{ mr: 1 }} /> Loading...
-                      </MenuItem>
-                    ) : (
-                      categories.map((category) => (
-                        <MenuItem key={category.id} value={String(category.id)}>
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            width="100%"
-                            gap={1}
-                          >
-                            {category.name}
-                            {category.missing_count > 0 && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  fontSize: 11,
-                                  fontWeight: 800,
-                                  color: '#fff',
-                                  bgcolor: 'error.main',
-                                  borderRadius: '10px',
-                                  px: 1,
-                                  py: 0.25,
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {category.missing_count} missing
-                              </Box>
-                            )}
-                          </Box>
-                        </MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
-
                 <Button
                   variant="contained"
                   size="small"
@@ -868,14 +910,9 @@ const PaymentShedule = () => {
               </Box>
             </Box>
 
-            {/* Always-visible category callout, relocated here now that the
-             * category selector itself lives in this card. */}
-            {/* {categoryCalloutMessage && (
-              <Alert severity="error" variant="outlined" sx={{ mb: 2, py: 0.25 }}>
-                {categoryCalloutMessage}
-              </Alert>
-            )} */}
-
+            {/* Click a class to select it — the table below always shows
+             * one class at a time, by category. The first class loads by
+             * default (see the classesOverview effect above). */}
             <Grid container spacing={2}>
               {(loadingClassesOverview ? Array.from({ length: 6 }) : classesOverview).map(
                 (cls, idx) => {
@@ -884,27 +921,54 @@ const PaymentShedule = () => {
                     ? Math.round((cls.priced_items / Math.max(cls.total_items, 1)) * 100)
                     : 0;
                   const notSet = cls && cls.priced_items === 0;
+                  const isSelected = cls && String(cls.id) === String(selectedScheduleClassId);
                   return (
                     <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                      <Tooltip
+                        title={
+                          cls
+                            ? `${cls.class_name || cls.class_code} — ${cls.student_count} student${cls.student_count === 1 ? '' : 's'}. ${cls.priced_items} of ${cls.total_items} item/category combinations priced (${pct}%). ${isSelected ? 'Currently selected below.' : 'Click to view and edit its schedule below.'}`
+                            : ''
+                        }
+                        arrow
+                      >
                       <Paper
                         variant="outlined"
-                        onClick={() => cls && scheduleGridRef.current?.scrollToClass(cls.id)}
+                        onClick={() => cls && setSelectedScheduleClassId(String(cls.id))}
                         sx={{
                           p: 1.5,
                           borderRadius: '12px',
                           bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
                           cursor: cls ? 'pointer' : 'default',
+                          borderWidth: isSelected ? 2 : 1,
+                          borderColor: isSelected ? scheme.color : 'divider',
+                          boxShadow: isSelected ? `0 0 0 2px ${scheme.color}33` : 'none',
                           transition: 'transform 150ms ease, box-shadow 150ms ease',
                           '&:hover': cls
                             ? {
                                 transform: 'translateY(-2px)',
-                                boxShadow: '0 4px 12px rgba(15,23,42,0.08)',
+                                boxShadow: isSelected
+                                  ? `0 0 0 2px ${scheme.color}33`
+                                  : '0 4px 12px rgba(15,23,42,0.08)',
                               }
                             : undefined,
                         }}
                       >
                         {!cls ? (
-                          <Skeleton variant="rounded" height={90} />
+                          <>
+                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '8px' }} />
+                                <Skeleton variant="text" width={70} height={22} />
+                              </Box>
+                            </Box>
+                            <Skeleton variant="text" width={80} height={18} sx={{ mb: 0.5 }} />
+                            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                              <Skeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: 3 }} />
+                              <Skeleton variant="text" width={28} height={18} />
+                            </Box>
+                            <Skeleton variant="text" width={110} height={18} />
+                          </>
                         ) : (
                           <>
                             <Box
@@ -933,7 +997,11 @@ const PaymentShedule = () => {
                                   {cls.class_code || cls.class_name}
                                 </Typography>
                               </Box>
-                              <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                              {isSelected ? (
+                                <CheckCircleIcon sx={{ color: scheme.color, flexShrink: 0, fontSize: 20 }} />
+                              ) : (
+                                <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
+                              )}
                             </Box>
                             <Typography
                               variant="caption"
@@ -978,6 +1046,7 @@ const PaymentShedule = () => {
                           </>
                         )}
                       </Paper>
+                      </Tooltip>
                     </Grid>
                   );
                 },
@@ -1045,13 +1114,18 @@ const PaymentShedule = () => {
       <Box>
         {actionTab === 0 && (
           <PaymentScheduleGrid
-            ref={scheduleGridRef}
             showSnackbar={showSnackbar}
             sessionId={selectedSession}
             activeTermId={activeSubTermId}
-            categoryId={selectedCategory}
+            classId={selectedScheduleClassId}
+            className={
+              classesOverview.find((cls) => String(cls.id) === String(selectedScheduleClassId))
+                ?.class_code ||
+              classesOverview.find((cls) => String(cls.id) === String(selectedScheduleClassId))
+                ?.class_name
+            }
             payType="bursary"
-            classesOverview={classesOverview}
+            categoriesList={categories}
             onOpenMigrate={() => setMigrateModalOpen(true)}
             refreshStats={() => {
               refreshStats();

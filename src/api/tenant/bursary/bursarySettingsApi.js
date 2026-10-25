@@ -63,11 +63,11 @@ export const fetchGatewayChargeBearer = async () => {
 // payOption left undefined combines Compulsory + Optional into one list,
 // sorted compulsory-first by the backend — the Set Schedule grid's unified
 // view. Pass 'compulsory'/'optional' explicitly to scope to just one.
-export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOption, payType = 'bursary', search = '') => {
+export const fetchPaymentSchedules = async (sessionId, termId, classId, payOption, payType = 'bursary', search = '') => {
     const params = {
         session_id: sessionId,
         term_id: termId,
-        category_id: categoryId,
+        class_id: classId,
         pay_option: payOption,
         pay_type: payType
     };
@@ -80,9 +80,8 @@ export const fetchPaymentSchedules = async (sessionId, termId, categoryId, payOp
     return res.data;
 };
 
-export const fetchScheduleClassesOverview = async (sessionId, termId, categoryId, payType = 'bursary') => {
+export const fetchScheduleClassesOverview = async (sessionId, termId, payType = 'bursary') => {
     const params = { session_id: sessionId, term_id: termId, pay_type: payType };
-    if (categoryId) params.category_id = categoryId;
     const res = await api.get('/bursary/payment_schedule/classes_overview', { params });
     return res.data;
 };

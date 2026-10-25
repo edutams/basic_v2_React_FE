@@ -23,14 +23,35 @@ import {
   Menu,
   Button,
   Divider,
+  Avatar,
+  Tabs,
+  Tab,
+  InputAdornment,
+  useTheme,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PhoneOutlinedIcon from '@mui/icons-material/PhoneOutlined';
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import SavingsOutlinedIcon from '@mui/icons-material/SavingsOutlined';
+import LaptopMacOutlinedIcon from '@mui/icons-material/LaptopMacOutlined';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
 import debounce from 'lodash/debounce';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
+import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import useAuth from '@/hooks/useAuth';
 import useNotification from '@/hooks/useNotification';
 import {
@@ -44,6 +65,7 @@ import {
   fetchPaymentHistorySummary,
   fetchPaymentHistoryTransactions,
   fetchPaymentHistoryPaymentNameOptions,
+  fetchPaymentHistoryStudentInfo,
   searchPaymentHistoryStudents,
   requeryPaymentHistoryTransaction,
 } from '@/api/tenant/bursary/paymentHistoryApi';
@@ -58,35 +80,66 @@ const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment History' }];
 const STAFF_ROLES = ['bursar', 'super_admin', 'school_admin', 'bursary_officer'];
 
 const STATUS_COLOR = { APPROVED: 'success', PENDING: 'warning', DECLINED: 'error' };
-const TYPE_LABEL = { CASH: 'Post Cash', ONLINE: 'Online', BANK_TELLER: 'Bank Teller' };
+const CHANNEL_LABEL = { CASH: 'Post Cash', ONLINE: 'Online', BANK_TELLER: 'Bank Teller' };
+const CHANNEL_ICON = { CASH: PaidOutlinedIcon, ONLINE: LaptopMacOutlinedIcon, BANK_TELLER: AccountBalanceOutlinedIcon };
 
 const money = (n) =>
   `₦${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const SummaryStat = ({ label, value, color }) => (
-  <Box sx={{ flex: 1, textAlign: 'center', py: 1 }}>
-    <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-      {label}
-    </Typography>
-    <Typography variant="h5" fontWeight={800} color={color}>
-      {value}
-    </Typography>
-  </Box>
-);
+const EMPTY_SUMMARY = {
+  compulsory: { due: 0, paid: 0, balance: 0 },
+  optional: { due: 0, paid: 0, balance: 0 },
+  total: { due: 0, paid: 0, balance: 0 },
+  counts: { all: 0, compulsory: 0, optional: 0 },
+};
 
-const SummaryCard = ({ label, data, color }) => (
-  <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, borderTop: `4px solid ${color}`, height: '100%' }}>
-    <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
-      {label}
-    </Typography>
+const StatCard = ({ icon: Icon, iconBg, iconColor, label, data }) => (
+  <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1.5 }}>
+      <Box
+        sx={{
+          width: 34,
+          height: 34,
+          borderRadius: '9px',
+          bgcolor: iconBg,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 19 }} />
+      </Box>
+      <Typography variant="subtitle1" fontWeight={700}>
+        {label}
+      </Typography>
+    </Stack>
     <Stack direction="row" divider={<Divider orientation="vertical" flexItem />}>
-      <SummaryStat label="Due" value={money(data.due)} />
-      <SummaryStat label="Paid" value={money(data.paid)} color="success.main" />
-      <SummaryStat
-        label="Balance"
-        value={money(data.balance)}
-        color={data.balance > 0 ? 'error.main' : 'text.primary'}
-      />
+      <Box sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+          Total Due
+        </Typography>
+        <Typography variant="subtitle1" fontWeight={800}>
+          {money(data.due)}
+        </Typography>
+      </Box>
+      <Box sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+          Total Paid
+        </Typography>
+        <Typography variant="subtitle1" fontWeight={800} color="success.main">
+          {money(data.paid)}
+        </Typography>
+      </Box>
+      <Box sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+          Outstanding
+        </Typography>
+        <Typography variant="subtitle1" fontWeight={800} color={data.balance > 0 ? 'error.main' : 'text.primary'}>
+          {money(data.balance)}
+        </Typography>
+      </Box>
     </Stack>
   </Paper>
 );
@@ -131,9 +184,259 @@ const WalletCard = ({ wallet, guardianName }) => (
   </Paper>
 );
 
+const StudentInfoCard = ({ info, loading }) => {
+  if (loading) {
+    return (
+      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, mb: 3 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Skeleton variant="circular" width={56} height={56} />
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width={180} height={28} />
+            <Skeleton variant="text" width={120} />
+          </Box>
+        </Stack>
+      </Paper>
+    );
+  }
+
+  if (!info) return null;
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, mb: 3 }}>
+      <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 220 }}>
+          <Avatar src={info.avatar} sx={{ width: 56, height: 56 }}>
+            <PersonOutlineIcon />
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle1" fontWeight={800} noWrap>
+              {info.full_name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              {info.admission_no}
+            </Typography>
+            <Stack direction="row" spacing={0.75}>
+              {info.class_label && <Chip size="small" color="primary" variant="outlined" label={info.class_label} />}
+              {info.programme_name && (
+                <Chip size="small" color="success" variant="outlined" label={info.programme_name} />
+              )}
+            </Stack>
+          </Box>
+        </Stack>
+
+        <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
+
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 200 }}>
+          <PhoneOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
+          <Box>
+            <Typography variant="caption" color="text.secondary" display="block">
+              Parent/Guardian
+            </Typography>
+            <Typography variant="body2" fontWeight={700}>
+              {info.guardian?.full_name || '—'}
+            </Typography>
+            {info.guardian?.phone && (
+              <Typography variant="caption" color="text.secondary">
+                {info.guardian.phone}
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          <CalendarMonthOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
+          <Box>
+            <Typography variant="caption" color="text.secondary" display="block">
+              Current Session
+            </Typography>
+            <Typography variant="body2" fontWeight={700}>
+              {info.session?.name || '—'}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          <MenuBookOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
+          <Box>
+            <Typography variant="caption" color="text.secondary" display="block">
+              Current Term
+            </Typography>
+            <Typography variant="body2" fontWeight={700}>
+              {info.term?.name || '—'}
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Box sx={{ ml: { md: 'auto' } }}>
+          <Chip
+            icon={info.is_active ? <CheckCircleOutlineIcon /> : <CancelOutlinedIcon />}
+            color={info.is_active ? 'success' : 'default'}
+            variant="outlined"
+            label={
+              <Box>
+                <Typography variant="body2" fontWeight={700} component="span" display="block">
+                  {info.is_active ? 'Active Student' : 'Not Active'}
+                </Typography>
+                <Typography variant="caption" component="span" display="block">
+                  {info.is_active ? 'Currently enrolled' : info.enrollment_status}
+                </Typography>
+              </Box>
+            }
+            sx={{ height: 'auto', py: 1, '& .MuiChip-label': { py: 0.5 } }}
+          />
+        </Box>
+      </Stack>
+    </Paper>
+  );
+};
+
+// A transaction row has two real, distinct timestamps — created_at (row
+// insertion) and trans_date (the payment's own business date, which can
+// genuinely land before OR after created_at depending on the channel) —
+// plus updated_at, which only moves again on a later status requery. Rather
+// than assume a fixed column→stage mapping, this sorts whichever of the
+// three are present into true chronological order so the timeline always
+// reads correctly regardless of which channel produced the row.
+const buildTimeline = (row) => {
+  if (!row) return [];
+
+  const stages = [
+    { key: 'created', label: 'Payment Created', time: row.created_at, detail: row.payment_name },
+    {
+      key: 'initiated',
+      label: 'Payment Initiated',
+      time: row.trans_date,
+      detail: CHANNEL_LABEL[row.payment_type] || row.payment_type,
+    },
+  ];
+
+  if (row.updated_at && row.updated_at !== row.created_at) {
+    const statusLabel =
+      row.status === 'APPROVED' ? 'Payment Approved' : row.status === 'DECLINED' ? 'Payment Declined' : 'Payment Pending';
+    stages.push({
+      key: 'status',
+      label: statusLabel,
+      time: row.updated_at,
+      detail: `${money(row.amount_paid)}, via ${CHANNEL_LABEL[row.payment_type] || row.payment_type}${row.bank_name ? ` (${row.bank_name})` : ''}`,
+    });
+  }
+
+  return stages
+    .filter((s) => s.time)
+    .sort((a, b) => new Date(b.time) - new Date(a.time)); // newest first, matching the reference
+};
+
+const PaymentTimeline = ({ row }) => {
+  const stages = useMemo(() => buildTimeline(row), [row]);
+
+  if (!row) return null;
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 3 }}>
+      <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+        Payment Timeline
+      </Typography>
+      <Stack spacing={0}>
+        {stages.map((stage, i) => (
+          <Box key={stage.key} sx={{ display: 'flex', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  bgcolor: i === 0 ? 'success.main' : 'grey.300',
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {i === 0 ? <CheckCircleOutlineIcon sx={{ fontSize: 15 }} /> : null}
+              </Box>
+              {i < stages.length - 1 && <Box sx={{ width: 2, flex: 1, bgcolor: 'grey.300', my: 0.25 }} />}
+            </Box>
+            <Box sx={{ pb: i < stages.length - 1 ? 2.5 : 0, minWidth: 0 }}>
+              <Typography variant="body2" fontWeight={700}>
+                {stage.label}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                {stage.detail}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {stage.time}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Stack>
+    </Paper>
+  );
+};
+
+const TermPaymentSummary = ({ total }) => {
+  const paid = Number(total.paid || 0);
+  const balance = Number(total.balance || 0);
+  const due = Number(total.due || 0);
+  const percent = due > 0 ? Math.round((paid / due) * 100) : 0;
+
+  const donutData = [
+    { name: 'Paid', value: paid || 0.0001, color: '#16A34A' },
+    { name: 'Outstanding', value: balance, color: '#DC2626' },
+  ];
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+      <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+        Term Payment Summary
+      </Typography>
+      <Stack direction="row" alignItems="center" spacing={2}>
+        <ReusableDonutChart
+          data={donutData}
+          height={130}
+          centerValue={`${percent}%`}
+          centerTitle="Paid"
+        />
+        <Stack spacing={1} sx={{ flex: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: 'grey.400' }} />
+            <Typography variant="caption" color="text.secondary">
+              Total Due
+            </Typography>
+            <Typography variant="caption" fontWeight={700} sx={{ ml: 'auto' }}>
+              {money(due)}
+            </Typography>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#16A34A' }} />
+            <Typography variant="caption" color="text.secondary">
+              Total Paid
+            </Typography>
+            <Typography variant="caption" fontWeight={700} sx={{ ml: 'auto' }}>
+              {money(paid)}
+            </Typography>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: '#DC2626' }} />
+            <Typography variant="caption" color="text.secondary">
+              Outstanding
+            </Typography>
+            <Typography variant="caption" fontWeight={700} sx={{ ml: 'auto' }}>
+              {money(balance)}
+            </Typography>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+};
+
 const PaymentHistory = () => {
   const { user, roles } = useAuth();
   const notify = useNotification();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const isBursaryStaff = useMemo(
     () =>
@@ -158,9 +461,6 @@ const PaymentHistory = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
 
   // ── Parent ward picker ──────────────────────────────────────────
-  // A parent has no fees of their own — only wards do — so "Myself" is a
-  // distinct view (payments the parent personally made, across any ward),
-  // not just another entry in the ward list.
   const [wards, setWards] = useState([]);
   const [guardian, setGuardian] = useState(null);
   const [viewMode, setViewMode] = useState('myself'); // 'myself' | 'ward'
@@ -188,9 +488,6 @@ const PaymentHistory = () => {
         const loadedWards = res.data?.wards || [];
         setWards(loadedWards);
         setGuardian(res.data?.guardian || null);
-        // Default to the first ward instead of landing on the empty
-        // "Myself" view — most parents are here to check a specific ward's
-        // payments, not their own.
         if (loadedWards.length > 0) {
           setSelectedWardId(loadedWards[0].id);
           setViewMode('ward');
@@ -203,8 +500,6 @@ const PaymentHistory = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isParent]);
 
-  // Ward mode drives selectedUserId from the picked ward; Myself mode uses
-  // a completely separate endpoint (payments made, not a fee record).
   useEffect(() => {
     if (!isParent) return;
     setSelectedUserId(viewMode === 'ward' ? selectedWardId : '');
@@ -286,8 +581,6 @@ const PaymentHistory = () => {
     setProgrammeId(option.programme_id ?? '');
     setClassArmId(option.class_arm_id ?? '');
 
-    // Prefill the Programme → Class cascade to match the picked student,
-    // instead of leaving it blank/inconsistent with the search result.
     try {
       if (option.programme_id) {
         const classesRes = await fetchClassAndArmsByProgramme(option.programme_id);
@@ -313,12 +606,11 @@ const PaymentHistory = () => {
   const [selectedSessionId, setSelectedSessionId] = useState('all');
   const [selectedTermId, setSelectedTermId] = useState('all');
   const [payType, setPayType] = useState('');
+  const [payOption, setPayOption] = useState(''); // '' | 'compulsory' | 'optional' — the new tabs
   const [status, setStatus] = useState('');
   const [paymentNameId, setPaymentNameId] = useState('');
   const [paymentNameOptions, setPaymentNameOptions] = useState([]);
 
-  // Load every session, plus the tenant's currently active session+term (to
-  // preselect both filters by default) — same pattern as My Applications.
   useEffect(() => {
     (async () => {
       try {
@@ -343,8 +635,6 @@ const PaymentHistory = () => {
     })();
   }, []);
 
-  // Terms scoped to the selected session (a term's own id repeats across
-  // every session — the session_term id here is what filters actually use).
   useEffect(() => {
     if (selectedSessionId === 'all') {
       setTerms([{ id: 'all', label: 'All Terms' }]);
@@ -364,26 +654,26 @@ const PaymentHistory = () => {
     })();
   }, [selectedSessionId]);
 
-  const [summary, setSummary] = useState({
-    compulsory: { due: 0, paid: 0, balance: 0 },
-    optional: { due: 0, paid: 0, balance: 0 },
-  });
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [studentInfo, setStudentInfo] = useState(null);
+  const [loadingStudentInfo, setLoadingStudentInfo] = useState(false);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [total, setTotal] = useState(0);
+  const [exporting, setExporting] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
     if (!isParent && !selectedUserId) return;
     setPayType('');
+    setPayOption('');
     setStatus('');
     setPaymentNameId('');
     setPaymentNameOptions([]);
     setPage(0);
 
-    // The payment-name filter is scoped to one student's own transactions —
-    // not applicable to the Myself view, which spans multiple wards.
     if (!selectedUserId) return;
 
     (async () => {
@@ -397,21 +687,41 @@ const PaymentHistory = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUserId, viewMode]);
 
-  // A specific term (session_term_id) is the most precise filter; picking
-  // "All Terms" within one session falls back to filtering by session alone.
   const effectiveSessionTermId = selectedTermId !== 'all' ? selectedTermId : undefined;
   const effectiveSessionId =
     selectedTermId === 'all' && selectedSessionId !== 'all' ? selectedSessionId : undefined;
 
   const showingMyself = isParent && viewMode === 'myself';
 
+  // Student-info header card — independent of the transactions list, so it
+  // loads (and can fail) without blocking the table.
+  useEffect(() => {
+    if (showingMyself || !selectedUserId) {
+      setStudentInfo(null);
+      return;
+    }
+    setLoadingStudentInfo(true);
+    (async () => {
+      try {
+        const res = await fetchPaymentHistoryStudentInfo({
+          user_id: selectedUserId,
+          session_term_id: effectiveSessionTermId,
+        });
+        setStudentInfo(res?.status ? res.data : null);
+      } catch (error) {
+        console.error('Failed to load student info', error);
+        setStudentInfo(null);
+      } finally {
+        setLoadingStudentInfo(false);
+      }
+    })();
+  }, [showingMyself, selectedUserId, effectiveSessionTermId]);
+
   const loadData = useCallback(async () => {
     if (!showingMyself && !selectedUserId) return;
     setLoading(true);
     try {
       if (showingMyself) {
-        // A parent has no fees of their own — no summary cards here, just
-        // every payment they personally made, across any ward.
         const txRes = await fetchPaymentsIMade({
           session_id: effectiveSessionId,
           session_term_id: effectiveSessionTermId,
@@ -434,13 +744,14 @@ const PaymentHistory = () => {
             session_id: effectiveSessionId,
             session_term_id: effectiveSessionTermId,
             pay_type: payType || undefined,
+            pay_option: payOption || undefined,
             status: status || undefined,
             payment_name_id: paymentNameId || undefined,
             page: page + 1,
             per_page: rowsPerPage,
           }),
         ]);
-        setSummary(summaryRes.data);
+        setSummary(summaryRes.data || EMPTY_SUMMARY);
         setRows(txRes.data || []);
         setTotal(txRes.meta?.total || 0);
       }
@@ -451,7 +762,7 @@ const PaymentHistory = () => {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showingMyself, selectedUserId, effectiveSessionId, effectiveSessionTermId, payType, status, paymentNameId, page, rowsPerPage]);
+  }, [showingMyself, selectedUserId, effectiveSessionId, effectiveSessionTermId, payType, payOption, status, paymentNameId, page, rowsPerPage]);
 
   useEffect(() => {
     loadData();
@@ -492,13 +803,168 @@ const PaymentHistory = () => {
     window.open(`/bursary/transactions/print_receipt?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
+  // Export/Print both need the full filtered list, not just the current
+  // page — a single shared fetch (generous per_page) keeps the two
+  // features, and the on-screen table, from ever disagreeing about which
+  // rows matched the active filters.
+  const fetchAllFilteredTransactions = async () => {
+    const res = await fetchPaymentHistoryTransactions({
+      user_id: selectedUserId,
+      session_id: effectiveSessionId,
+      session_term_id: effectiveSessionTermId,
+      pay_type: payType || undefined,
+      pay_option: payOption || undefined,
+      status: status || undefined,
+      payment_name_id: paymentNameId || undefined,
+      page: 1,
+      per_page: 100,
+    });
+    return res.data || [];
+  };
+
+  const handleExportCsv = async () => {
+    if (!selectedUserId) return;
+    setExporting(true);
+    try {
+      const allRows = await fetchAllFilteredTransactions();
+      const header = [
+        'Date & Time',
+        'Transaction ID',
+        'Payment Name',
+        'Description',
+        'Type',
+        'Amount',
+        'Status',
+        'Channel',
+        'Wallet/Bank',
+        'Paid By',
+      ];
+      const csvRows = [header, ...allRows.map((r) => [
+        r.trans_date,
+        r.order_id,
+        r.payment_name,
+        r.description,
+        r.pay_option,
+        r.amount_paid,
+        r.status,
+        CHANNEL_LABEL[r.payment_type] || r.payment_type,
+        r.wallet_account_no ? `${r.wallet_account_no}${r.bank_name ? ` (${r.bank_name})` : ''}` : '',
+        r.paid_by_name,
+      ])];
+      const csvContent = csvRows
+        .map((row) => row.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `payment_history_${studentInfo?.admission_no || selectedUserId}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export CSV', error);
+      notify.error('Failed to export payment history');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handlePrintStatement = async () => {
+    if (!selectedUserId) return;
+    setPrinting(true);
+    try {
+      const allRows = await fetchAllFilteredTransactions();
+      const rowsHtml = allRows
+        .map(
+          (r, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${r.trans_date || ''}</td>
+            <td>${r.payment_name || ''}</td>
+            <td>${r.pay_option || ''}</td>
+            <td>${money(r.amount_paid)}</td>
+            <td>${r.status || ''}</td>
+            <td>${CHANNEL_LABEL[r.payment_type] || r.payment_type || ''}</td>
+          </tr>`,
+        )
+        .join('');
+
+      const html = `
+        <html>
+          <head>
+            <title>Payment Statement - ${studentInfo?.full_name || ''}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
+              h2 { margin-bottom: 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+              th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 12px; text-align: left; }
+              th { background: #f1f5f9; }
+              .meta { margin-top: 8px; color: #555; font-size: 13px; }
+            </style>
+          </head>
+          <body>
+            <h2>${studentInfo?.full_name || 'Payment Statement'}</h2>
+            <div class="meta">
+              Admission No: ${studentInfo?.admission_no || '—'} | Class: ${studentInfo?.class_label || '—'}<br/>
+              Session: ${studentInfo?.session?.name || '—'} | Term: ${studentInfo?.term?.name || '—'}<br/>
+              Total Due: ${money(summary.total.due)} | Total Paid: ${money(summary.total.paid)} | Outstanding: ${money(summary.total.balance)}
+            </div>
+            <table>
+              <thead>
+                <tr><th>#</th><th>Date</th><th>Payment Name</th><th>Type</th><th>Amount</th><th>Status</th><th>Channel</th></tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </body>
+        </html>`;
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        notify.warning('Please allow pop-ups to print the statement');
+        return;
+      }
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.onload = () => printWindow.print();
+    } catch (error) {
+      console.error('Failed to print statement', error);
+      notify.error('Failed to prepare the statement');
+    } finally {
+      setPrinting(false);
+    }
+  };
+
+  const tabValue = payOption || 'all';
+
   return (
     <PageContainer title="Payment History" description="Track individual bursary payment transactions">
-      <Breadcrumb
-        title="Payment History"
-        subtitle="Track individual transactions made through Post Cash, Bank Teller, and Online"
-        items={BCrumb}
-      />
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
+        <Box
+          sx={{
+            width: 38,
+            height: 38,
+            borderRadius: '10px',
+            bgcolor: 'primary.main',
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            mt: 0.25,
+          }}
+        >
+          <ReceiptLongOutlinedIcon sx={{ fontSize: 20 }} />
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Breadcrumb
+            title="Payment History"
+            subtitle="Track individual student transactions made through Post Cash, Bank Teller, and Online."
+            items={BCrumb}
+          />
+        </Box>
+      </Box>
 
       {isParent && <WalletCard wallet={guardian?.wallet} guardianName={guardian?.name || 'You'} />}
 
@@ -538,8 +1004,8 @@ const PaymentHistory = () => {
 
       {isBursaryStaff && (
         <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={{ xs: 12, md: 5 }}>
               <Autocomplete
                 size="small"
                 options={searchOptions}
@@ -559,28 +1025,73 @@ const PaymentHistory = () => {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Search student by name or admission no"
-                    placeholder="Start typing..."
-                    InputProps={{
-                      ...params.InputProps,
-                      endAdornment: (
-                        <>
-                          {searchLoading ? <CircularProgress size={16} /> : null}
-                          {params.InputProps.endAdornment}
-                        </>
-                      ),
+                    placeholder="Search student by name or admission number..."
+                    slotProps={{
+                      input: {
+                        ...params.InputProps,
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <>
+                            {searchLoading ? <CircularProgress size={16} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      },
                     }}
                   />
                 )}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="caption" color="text.secondary">
-                Or narrow down by Programme → Class → Student below.
-              </Typography>
+            <Grid size={{ xs: 12, sm: 4, md: 2.5 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Session"
+                value={selectedSessionId}
+                onChange={(e) => { setSelectedSessionId(e.target.value); setSelectedTermId('all'); setPage(0); }}
+              >
+                {sessions.map((s) => (
+                  <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 2.5 }}>
+              <TextField
+                select
+                fullWidth
+                size="small"
+                label="Term"
+                value={selectedTermId}
+                disabled={selectedSessionId === 'all'}
+                onChange={(e) => { setSelectedTermId(e.target.value); setPage(0); }}
+              >
+                {terms.map((t) => (
+                  <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                startIcon={<SearchIcon />}
+                onClick={loadData}
+                sx={{ height: 40 }}
+              >
+                Search
+              </Button>
             </Grid>
           </Grid>
-          <Grid container spacing={2} alignItems="center">
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block' }}>
+            Or narrow down by Programme → Class → Student:
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 0.5 }} alignItems="center">
             <Grid size={{ xs: 12, md: 3 }}>
               <TextField
                 select
@@ -639,188 +1150,301 @@ const PaymentHistory = () => {
         </Alert>
       ) : (
         <>
+          {!showingMyself && <StudentInfoCard info={studentInfo} loading={loadingStudentInfo} />}
+
           {!showingMyself && (
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SummaryCard label="Compulsory Fees" data={summary.compulsory} color="#2563EB" />
+              <Grid size={{ xs: 12, md: 4 }}>
+                <StatCard
+                  icon={DescriptionOutlinedIcon}
+                  iconBg={isDark ? 'rgba(37,99,235,0.18)' : '#DBEAFE'}
+                  iconColor="#2563EB"
+                  label="Compulsory Fees"
+                  data={summary.compulsory}
+                />
               </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <SummaryCard label="Optional Fees" data={summary.optional} color="#9333EA" />
+              <Grid size={{ xs: 12, md: 4 }}>
+                <StatCard
+                  icon={PaymentsOutlinedIcon}
+                  iconBg={isDark ? 'rgba(147,51,234,0.18)' : '#F3E8FF'}
+                  iconColor="#9333EA"
+                  label="Optional Fees"
+                  data={summary.optional}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <StatCard
+                  icon={SavingsOutlinedIcon}
+                  iconBg={isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7'}
+                  iconColor="#16A34A"
+                  label="Total Fees"
+                  data={summary.total}
+                />
               </Grid>
             </Grid>
           )}
 
-          <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Session"
-                  value={selectedSessionId}
-                  onChange={(e) => { setSelectedSessionId(e.target.value); setSelectedTermId('all'); setPage(0); }}
-                >
-                  {sessions.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Term"
-                  value={selectedTermId}
-                  disabled={selectedSessionId === 'all'}
-                  onChange={(e) => { setSelectedTermId(e.target.value); setPage(0); }}
-                >
-                  {terms.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              {!showingMyself && (
-                <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    label="Payment Name"
-                    value={paymentNameId}
-                    onChange={(e) => { setPaymentNameId(e.target.value); setPage(0); }}
-                  >
-                    <MenuItem value="">All</MenuItem>
-                    {paymentNameOptions.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              )}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Payment Purpose"
-                  value={payType}
-                  onChange={(e) => { setPayType(e.target.value); setPage(0); }}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="bursary">Registered Students</MenuItem>
-                  <MenuItem value="admission">Admission</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  label="Status"
-                  value={status}
-                  onChange={(e) => { setStatus(e.target.value); setPage(0); }}
-                >
-                  <MenuItem value="">All</MenuItem>
-                  <MenuItem value="APPROVED">Approved</MenuItem>
-                  <MenuItem value="PENDING">Pending</MenuItem>
-                  <MenuItem value="DECLINED">Declined</MenuItem>
-                </TextField>
-              </Grid>
-            </Grid>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>Transaction ID</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Payment Name</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Wallet / Bank</TableCell>
-                    <TableCell>{showingMyself ? 'Paid For' : 'Paid By'}</TableCell>
-                    <TableCell align="center">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        {Array.from({ length: 11 }).map((__, j) => (
-                          <TableCell key={j}><Skeleton variant="text" /></TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={11}>
-                        <Alert severity="info" sx={{ my: 1 }}>No transactions found.</Alert>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    rows.map((row, index) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                        <TableCell>{row.order_id || '—'}</TableCell>
-                        <TableCell>{row.trans_date}</TableCell>
-                        <TableCell>{row.payment_name}</TableCell>
-                        <TableCell>{row.description || '—'}</TableCell>
-                        <TableCell>{TYPE_LABEL[row.payment_type] || row.payment_type}</TableCell>
-                        <TableCell>{money(row.amount_paid)}</TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={row.status}
-                            color={STATUS_COLOR[row.status] || 'default'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {row.wallet_account_no
-                            ? `${row.wallet_account_no}${row.bank_name ? ` (${row.bank_name})` : ''}`
-                            : '—'}
-                        </TableCell>
-                        <TableCell>
-                          {(showingMyself ? row.paid_for_name : row.paid_by_name)?.trim() || '—'}
-                        </TableCell>
-                        <TableCell align="center">
-                          {row.status === 'APPROVED' || row.payment_type === 'ONLINE' ? (
-                            <IconButton
-                              size="small"
-                              disabled={requeryingId === row.id}
-                              onClick={(e) => handleActionMenuOpen(e, row)}
-                            >
-                              {requeryingId === row.id ? (
-                                <CircularProgress size={16} />
-                              ) : (
-                                <MoreVertIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          ) : (
-                            '—'
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 8.5 }}>
+              <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
+                <Grid container spacing={2}>
+                  {!isBursaryStaff && (
+                    <>
+                      <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                        <TextField
+                          select
+                          fullWidth
+                          size="small"
+                          label="Session"
+                          value={selectedSessionId}
+                          onChange={(e) => { setSelectedSessionId(e.target.value); setSelectedTermId('all'); setPage(0); }}
+                        >
+                          {sessions.map((s) => (
+                            <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                        <TextField
+                          select
+                          fullWidth
+                          size="small"
+                          label="Term"
+                          value={selectedTermId}
+                          disabled={selectedSessionId === 'all'}
+                          onChange={(e) => { setSelectedTermId(e.target.value); setPage(0); }}
+                        >
+                          {terms.map((t) => (
+                            <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                    </>
                   )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <TablePagination
-              component="div"
-              count={total}
-              page={page}
-              onPageChange={(e, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-              rowsPerPageOptions={[15, 30, 50, 100]}
-            />
-          </Paper>
+                  {!showingMyself && (
+                    <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                      <TextField
+                        select
+                        fullWidth
+                        size="small"
+                        label="Payment Name"
+                        value={paymentNameId}
+                        onChange={(e) => { setPaymentNameId(e.target.value); setPage(0); }}
+                      >
+                        <MenuItem value="">All</MenuItem>
+                        {paymentNameOptions.map((p) => (
+                          <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  )}
+                  <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Payment Purpose"
+                      value={payType}
+                      onChange={(e) => { setPayType(e.target.value); setPage(0); }}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="bursary">Registered Students</MenuItem>
+                      <MenuItem value="admission">Admission</MenuItem>
+                    </TextField>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Status"
+                      value={status}
+                      onChange={(e) => { setStatus(e.target.value); setPage(0); }}
+                    >
+                      <MenuItem value="">All</MenuItem>
+                      <MenuItem value="APPROVED">Approved</MenuItem>
+                      <MenuItem value="PENDING">Pending</MenuItem>
+                      <MenuItem value="DECLINED">Declined</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              <Paper variant="outlined" sx={{ borderRadius: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 1,
+                    px: 1,
+                    pt: 1,
+                  }}
+                >
+                  {!showingMyself ? (
+                    <Tabs
+                      value={tabValue}
+                      onChange={(e, v) => { setPayOption(v === 'all' ? '' : v); setPage(0); }}
+                      sx={{ minHeight: 40 }}
+                    >
+                      <Tab value="all" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`All Transactions (${summary.counts?.all ?? 0})`} />
+                      <Tab value="compulsory" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`Compulsory Fees (${summary.counts?.compulsory ?? 0})`} />
+                      <Tab value="optional" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`Optional Fees (${summary.counts?.optional ?? 0})`} />
+                    </Tabs>
+                  ) : (
+                    <Typography variant="subtitle2" sx={{ py: 1.5, px: 1 }} fontWeight={700}>
+                      Payment Transactions ({total})
+                    </Typography>
+                  )}
+
+                  {!showingMyself && (
+                    <Stack direction="row" spacing={1} sx={{ pb: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={exporting ? <CircularProgress size={14} /> : <FileDownloadOutlinedIcon />}
+                        onClick={handleExportCsv}
+                        disabled={exporting}
+                      >
+                        Export
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={printing ? <CircularProgress size={14} color="inherit" /> : <PrintOutlinedIcon />}
+                        onClick={handlePrintStatement}
+                        disabled={printing}
+                      >
+                        Print Statement
+                      </Button>
+                    </Stack>
+                  )}
+                </Box>
+                <Divider />
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Date & Time</TableCell>
+                        <TableCell>Transaction ID</TableCell>
+                        <TableCell>Payment Name</TableCell>
+                        <TableCell>Description</TableCell>
+                        <TableCell>Type</TableCell>
+                        <TableCell>Amount</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Channel</TableCell>
+                        <TableCell>Wallet / Bank</TableCell>
+                        <TableCell>{showingMyself ? 'Paid For' : 'Paid By'}</TableCell>
+                        <TableCell align="center">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {loading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                          <TableRow key={i}>
+                            {Array.from({ length: 12 }).map((__, j) => (
+                              <TableCell key={j}><Skeleton variant="text" /></TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : rows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={12}>
+                            <Alert severity="info" sx={{ my: 1 }}>No transactions found.</Alert>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        rows.map((row, index) => {
+                          const ChannelIcon = CHANNEL_ICON[row.payment_type];
+
+                          return (
+                            <TableRow key={row.id} hover>
+                              <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                              <TableCell>{row.trans_date}</TableCell>
+                              <TableCell sx={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {row.order_id || '—'}
+                              </TableCell>
+                              <TableCell>{row.payment_name}</TableCell>
+                              <TableCell>{row.description || '—'}</TableCell>
+                              <TableCell>
+                                {row.pay_option && (
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    color={row.pay_option === 'COMPULSORY' ? 'primary' : 'secondary'}
+                                    label={row.pay_option === 'COMPULSORY' ? 'Compulsory' : 'Optional'}
+                                  />
+                                )}
+                              </TableCell>
+                              <TableCell>{money(row.amount_paid)}</TableCell>
+                              <TableCell>
+                                <Chip
+                                  size="small"
+                                  label={row.status}
+                                  color={STATUS_COLOR[row.status] || 'default'}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  {ChannelIcon && <ChannelIcon sx={{ fontSize: 16, color: 'text.secondary' }} />}
+                                  <Typography variant="body2">
+                                    {CHANNEL_LABEL[row.payment_type] || row.payment_type}
+                                  </Typography>
+                                </Stack>
+                              </TableCell>
+                              <TableCell>
+                                {row.wallet_account_no
+                                  ? `${row.wallet_account_no}${row.bank_name ? ` (${row.bank_name})` : ''}`
+                                  : '—'}
+                              </TableCell>
+                              <TableCell>
+                                {(showingMyself ? row.paid_for_name : row.paid_by_name)?.trim() || '—'}
+                              </TableCell>
+                              <TableCell align="center">
+                                {row.status === 'APPROVED' || row.payment_type === 'ONLINE' ? (
+                                  <IconButton
+                                    size="small"
+                                    disabled={requeryingId === row.id}
+                                    onClick={(e) => handleActionMenuOpen(e, row)}
+                                  >
+                                    {requeryingId === row.id ? (
+                                      <CircularProgress size={16} />
+                                    ) : (
+                                      <MoreVertIcon fontSize="small" />
+                                    )}
+                                  </IconButton>
+                                ) : (
+                                  '—'
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={total}
+                  page={page}
+                  onPageChange={(e, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                  rowsPerPageOptions={[15, 30, 50, 100]}
+                />
+              </Paper>
+            </Grid>
+
+            {!showingMyself && (
+              <Grid size={{ xs: 12, md: 3.5 }}>
+                <PaymentTimeline row={rows[0]} />
+                <TermPaymentSummary total={summary.total} />
+              </Grid>
+            )}
+          </Grid>
         </>
       )}
 

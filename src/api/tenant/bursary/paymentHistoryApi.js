@@ -54,13 +54,23 @@ export const fetchPaymentHistoryTransactions = async ({
   session_id,
   session_term_id,
   pay_type,
+  pay_option,
   status,
   payment_name_id,
   page,
   per_page,
 } = {}) => {
   const res = await api.get('/bursary/payment_history/transactions', {
-    params: { user_id, session_id, session_term_id, pay_type, status, payment_name_id, page, per_page },
+    params: { user_id, session_id, session_term_id, pay_type, pay_option, status, payment_name_id, page, per_page },
+  });
+  return res.data;
+};
+
+// Student-info header card: name, admission no, class, programme, guardian
+// contact, and enrollment status — none of the other endpoints return this.
+export const fetchPaymentHistoryStudentInfo = async ({ user_id, session_term_id } = {}) => {
+  const res = await api.get('/bursary/payment_history/student_info', {
+    params: { user_id, session_term_id },
   });
   return res.data;
 };

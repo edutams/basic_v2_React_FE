@@ -40,6 +40,9 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
@@ -82,6 +85,7 @@ const STAFF_ROLES = ['bursar', 'super_admin', 'school_admin', 'bursary_officer']
 const STATUS_COLOR = { APPROVED: 'success', PENDING: 'warning', DECLINED: 'error' };
 const CHANNEL_LABEL = { CASH: 'Post Cash', ONLINE: 'Online', BANK_TELLER: 'Bank Teller' };
 const CHANNEL_ICON = { CASH: PaidOutlinedIcon, ONLINE: LaptopMacOutlinedIcon, BANK_TELLER: AccountBalanceOutlinedIcon };
+const CHANNEL_COLOR = { CASH: '#D97706', ONLINE: '#2563EB', BANK_TELLER: '#7C3AED' };
 
 const money = (n) =>
   `₦${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -93,14 +97,28 @@ const EMPTY_SUMMARY = {
   counts: { all: 0, compulsory: 0, optional: 0 },
 };
 
+const StatSub = ({ icon: Icon, iconColor, label, value, valueColor }) => (
+  <Box sx={{ flex: 1, minWidth: 0, textAlign: 'center', px: 0.5 }}>
+    <Stack direction="row" spacing={0.4} alignItems="center" justifyContent="center" sx={{ mb: 0.25 }}>
+      <Icon sx={{ fontSize: 13, color: iconColor }} />
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10.5px' }}>
+        {label}
+      </Typography>
+    </Stack>
+    <Typography variant="subtitle1" fontWeight={800} sx={{ wordBreak: 'break-word', color: valueColor, fontSize: '17px' }}>
+      {value}
+    </Typography>
+  </Box>
+);
+
 const StatCard = ({ icon: Icon, iconBg, iconColor, label, data }) => (
-  <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1.5 }}>
+  <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2, height: '100%' }}>
+    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25 }}>
       <Box
         sx={{
-          width: 34,
-          height: 34,
-          borderRadius: '9px',
+          width: 30,
+          height: 30,
+          borderRadius: '8px',
           bgcolor: iconBg,
           color: iconColor,
           display: 'flex',
@@ -109,37 +127,22 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, data }) => (
           flexShrink: 0,
         }}
       >
-        <Icon sx={{ fontSize: 19 }} />
+        <Icon sx={{ fontSize: 16 }} />
       </Box>
-      <Typography variant="subtitle1" fontWeight={700}>
+      <Typography variant="body2" fontWeight={700}>
         {label}
       </Typography>
     </Stack>
-    <Stack direction="row" divider={<Divider orientation="vertical" flexItem />}>
-      <Box sx={{ flex: 1, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-          Total Due
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={800}>
-          {money(data.due)}
-        </Typography>
-      </Box>
-      <Box sx={{ flex: 1, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-          Total Paid
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={800} color="success.main">
-          {money(data.paid)}
-        </Typography>
-      </Box>
-      <Box sx={{ flex: 1, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-          Outstanding
-        </Typography>
-        <Typography variant="subtitle1" fontWeight={800} color={data.balance > 0 ? 'error.main' : 'text.primary'}>
-          {money(data.balance)}
-        </Typography>
-      </Box>
+    <Stack direction="row" divider={<Divider orientation="vertical" flexItem />} sx={{ width: '100%' }}>
+      <StatSub icon={ReceiptLongOutlinedIcon} iconColor="#64748B" label="Due" value={money(data.due)} />
+      <StatSub icon={CheckCircleOutlineIcon} iconColor="#16A34A" label="Paid" value={money(data.paid)} valueColor="#16A34A" />
+      <StatSub
+        icon={WarningAmberOutlinedIcon}
+        iconColor={data.balance > 0 ? '#DC2626' : '#64748B'}
+        label="Outstanding"
+        value={money(data.balance)}
+        valueColor={data.balance > 0 ? '#DC2626' : undefined}
+      />
     </Stack>
   </Paper>
 );
@@ -184,7 +187,7 @@ const WalletCard = ({ wallet, guardianName }) => (
   </Paper>
 );
 
-const StudentInfoCard = ({ info, loading }) => {
+const StudentInfoCard = ({ info, loading, isDark }) => {
   if (loading) {
     return (
       <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, mb: 3 }}>
@@ -201,9 +204,42 @@ const StudentInfoCard = ({ info, loading }) => {
 
   if (!info) return null;
 
+  const InfoField = ({ icon: Icon, iconBg, iconColor, label, value, valueColor, caption }) => (
+    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flex: 1, minWidth: 180 }}>
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: '8px',
+          bgcolor: iconBg,
+          color: iconColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Icon sx={{ fontSize: 17 }} />
+      </Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="caption" color="text.secondary" display="block">
+          {label}
+        </Typography>
+        <Typography variant="body2" fontWeight={700} sx={{ color: valueColor }} noWrap>
+          {value}
+        </Typography>
+        {caption && (
+          <Typography variant="caption" fontWeight={600} sx={{ color: valueColor }}>
+            {caption}
+          </Typography>
+        )}
+      </Box>
+    </Stack>
+  );
+
   return (
     <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, mb: 3 }}>
-      <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap sx={{ width: '100%' }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 220 }}>
           <Avatar src={info.avatar} sx={{ width: 56, height: 56 }}>
             <PersonOutlineIcon />
@@ -226,46 +262,33 @@ const StudentInfoCard = ({ info, loading }) => {
 
         <Divider orientation="vertical" flexItem sx={{ display: { xs: 'none', md: 'block' } }} />
 
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 200 }}>
-          <PhoneOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
-          <Box>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Parent/Guardian
-            </Typography>
-            <Typography variant="body2" fontWeight={700}>
-              {info.guardian?.full_name || '—'}
-            </Typography>
-            {info.guardian?.phone && (
-              <Typography variant="caption" color="text.secondary">
-                {info.guardian.phone}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
+        <InfoField
+          icon={PhoneOutlinedIcon}
+          iconBg={isDark ? 'rgba(37,99,235,0.18)' : '#DBEAFE'}
+          iconColor="#2563EB"
+          label="Parent/Guardian"
+          value={info.guardian?.full_name || '—'}
+          valueColor="#2563EB"
+          caption={info.guardian?.phone}
+        />
 
-        <Stack direction="row" spacing={1} alignItems="center">
-          <CalendarMonthOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
-          <Box>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Current Session
-            </Typography>
-            <Typography variant="body2" fontWeight={700}>
-              {info.session?.name || '—'}
-            </Typography>
-          </Box>
-        </Stack>
+        <InfoField
+          icon={CalendarMonthOutlinedIcon}
+          iconBg={isDark ? 'rgba(147,51,234,0.18)' : '#F3E8FF'}
+          iconColor="#9333EA"
+          label="Current Session"
+          value={info.session?.name || '—'}
+          valueColor="#9333EA"
+        />
 
-        <Stack direction="row" spacing={1} alignItems="center">
-          <MenuBookOutlinedIcon sx={{ color: 'text.secondary' }} fontSize="small" />
-          <Box>
-            <Typography variant="caption" color="text.secondary" display="block">
-              Current Term
-            </Typography>
-            <Typography variant="body2" fontWeight={700}>
-              {info.term?.name || '—'}
-            </Typography>
-          </Box>
-        </Stack>
+        <InfoField
+          icon={MenuBookOutlinedIcon}
+          iconBg={isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7'}
+          iconColor="#16A34A"
+          label="Current Term"
+          value={info.term?.name || '—'}
+          valueColor="#16A34A"
+        />
 
         <Box sx={{ ml: { md: 'auto' } }}>
           <Chip
@@ -392,13 +415,15 @@ const TermPaymentSummary = ({ total }) => {
         Term Payment Summary
       </Typography>
       <Stack direction="row" alignItems="center" spacing={2}>
-        <ReusableDonutChart
-          data={donutData}
-          height={130}
-          centerValue={`${percent}%`}
-          centerTitle="Paid"
-        />
-        <Stack spacing={1} sx={{ flex: 1 }}>
+        <Box sx={{ width: 130, flexShrink: 0 }}>
+          <ReusableDonutChart
+            data={donutData}
+            height={130}
+            centerValue={`${percent}%`}
+            centerTitle="Paid"
+          />
+        </Box>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Box sx={{ width: 9, height: 9, borderRadius: '50%', bgcolor: 'grey.400' }} />
             <Typography variant="caption" color="text.secondary">
@@ -468,16 +493,47 @@ const PaymentHistory = () => {
 
   const [selectedUserId, setSelectedUserId] = useState(isBursaryStaff || isParent ? '' : selfId);
 
+  // Staff land on a populated page rather than an empty "pick someone"
+  // state — the first programme/class/student cascade auto-selects, same
+  // defaulting pattern as Class Ledger/Set Schedule.
   useEffect(() => {
     if (!isBursaryStaff) return;
     (async () => {
       try {
         const res = await fetchProgrammes();
-        setProgrammes(res.data.map((p) => ({ value: p.id, label: p.programme_name })));
+        const progList = res.data.map((p) => ({ value: p.id, label: p.programme_name }));
+        setProgrammes(progList);
+
+        if (progList.length === 0) return;
+        const firstProgrammeId = progList[0].value;
+        setProgrammeId(firstProgrammeId);
+
+        const classesRes = await fetchClassAndArmsByProgramme(firstProgrammeId);
+        const classList = classesRes.data.map((c) => ({
+          value: c.class_arm_id,
+          label: `${c.class_code} (${c.class_arm_names})`,
+        }));
+        setClasses(classList);
+
+        if (classList.length === 0) return;
+        const firstClassArmId = classList[0].value;
+        setClassArmId(firstClassArmId);
+
+        setLoadingStudents(true);
+        const studentsRes = await fetchPaymentHistoryClassStudents(firstClassArmId);
+        const studentList = studentsRes.data || [];
+        setStudents(studentList);
+
+        if (studentList.length > 0) {
+          setSelectedUserId(studentList[0].user_id);
+        }
       } catch (error) {
         console.error('Failed to load programmes', error);
+      } finally {
+        setLoadingStudents(false);
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isBursaryStaff]);
 
   useEffect(() => {
@@ -767,6 +823,17 @@ const PaymentHistory = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const [expandedDescriptions, setExpandedDescriptions] = useState(() => new Set());
+  const toggleDescription = (id) => {
+    setExpandedDescriptions((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+
+      return next;
+    });
+  };
 
   const [requeryingId, setRequeryingId] = useState(null);
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
@@ -1150,7 +1217,7 @@ const PaymentHistory = () => {
         </Alert>
       ) : (
         <>
-          {!showingMyself && <StudentInfoCard info={studentInfo} loading={loadingStudentInfo} />}
+          {!showingMyself && <StudentInfoCard info={studentInfo} loading={loadingStudentInfo} isDark={isDark} />}
 
           {!showingMyself && (
             <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -1322,8 +1389,15 @@ const PaymentHistory = () => {
                   )}
                 </Box>
                 <Divider />
-                <TableContainer>
-                  <Table size="small">
+                <TableContainer sx={{ maxHeight: 560, overflow: 'auto' }}>
+                  <Table
+                    stickyHeader
+                    size="small"
+                    sx={{
+                      '& .MuiTableCell-root': { fontSize: '12px', py: 0.75, px: 1 },
+                      '& .MuiTableCell-head': { fontSize: '11.5px', fontWeight: 700, whiteSpace: 'nowrap' },
+                    }}
+                  >
                     <TableHead>
                       <TableRow>
                         <TableCell>#</TableCell>
@@ -1363,11 +1437,59 @@ const PaymentHistory = () => {
                             <TableRow key={row.id} hover>
                               <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                               <TableCell>{row.trans_date}</TableCell>
-                              <TableCell sx={{ maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <TableCell sx={{ maxWidth: 180, whiteSpace: 'normal', wordBreak: 'break-all' }}>
                                 {row.order_id || '—'}
                               </TableCell>
                               <TableCell>{row.payment_name}</TableCell>
-                              <TableCell>{row.description || '—'}</TableCell>
+                              <TableCell sx={{ maxWidth: 220 }}>
+                                {row.description ? (
+                                  (() => {
+                                    const isLong = row.description.length > 45;
+                                    const isExpanded = expandedDescriptions.has(row.id);
+
+                                    return (
+                                      <Box>
+                                        <Typography
+                                          component="span"
+                                          sx={{
+                                            fontSize: 'inherit',
+                                            display: isExpanded || !isLong ? 'block' : '-webkit-box',
+                                            WebkitLineClamp: isExpanded || !isLong ? 'unset' : 1,
+                                            WebkitBoxOrient: 'vertical',
+                                            overflow: 'hidden',
+                                          }}
+                                        >
+                                          {row.description}
+                                        </Typography>
+                                        {isLong && (
+                                          <Box
+                                            component="span"
+                                            onClick={() => toggleDescription(row.id)}
+                                            sx={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              color: 'primary.main',
+                                              fontWeight: 700,
+                                              fontSize: '11px',
+                                              cursor: 'pointer',
+                                              mt: 0.25,
+                                            }}
+                                          >
+                                            {isExpanded ? 'View less' : 'View more'}
+                                            {isExpanded ? (
+                                              <ExpandLessIcon sx={{ fontSize: 14 }} />
+                                            ) : (
+                                              <ExpandMoreIcon sx={{ fontSize: 14 }} />
+                                            )}
+                                          </Box>
+                                        )}
+                                      </Box>
+                                    );
+                                  })()
+                                ) : (
+                                  '—'
+                                )}
+                              </TableCell>
                               <TableCell>
                                 {row.pay_option && (
                                   <Chip
@@ -1388,8 +1510,12 @@ const PaymentHistory = () => {
                               </TableCell>
                               <TableCell>
                                 <Stack direction="row" spacing={0.5} alignItems="center">
-                                  {ChannelIcon && <ChannelIcon sx={{ fontSize: 16, color: 'text.secondary' }} />}
-                                  <Typography variant="body2">
+                                  {ChannelIcon && (
+                                    <ChannelIcon sx={{ fontSize: 15, color: CHANNEL_COLOR[row.payment_type] || 'text.secondary' }} />
+                                  )}
+                                  <Typography
+                                    sx={{ fontSize: 'inherit', fontWeight: 700, color: CHANNEL_COLOR[row.payment_type] || 'text.primary' }}
+                                  >
                                     {CHANNEL_LABEL[row.payment_type] || row.payment_type}
                                   </Typography>
                                 </Stack>

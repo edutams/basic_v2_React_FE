@@ -1,92 +1,137 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Box, Typography, LinearProgress, useTheme, Divider } from '@mui/material';
+import { Box, Typography, LinearProgress, useTheme } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CancelIcon from '@mui/icons-material/Cancel';
 
-const StatusBreakdownCard = ({ title = 'Distribution', items = [] }) => {
+const ICON_BY_LABEL = {
+  Successful: CheckCircleIcon,
+  Pending: AccessTimeIcon,
+  Declined: CancelIcon,
+};
+
+const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   return (
-    <Box>
-      <Typography sx={{ fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6B7280', mb: 1.5 }}>
-        TRANSACTION STATUS
-      </Typography>
-
-      {items.map((item, index) => (
-        <Box key={item.label} sx={{ mb: index === items.length - 1 ? 0 : 2 }}>
-          {/* Amount - Progress Bar - Percentage on ONE LINE */}
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7',
+              color: '#16A34A',
               display: 'flex',
               alignItems: 'center',
-              gap: 2.5,
-              mb: 1.5,
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            {/* Amount */}
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: item.color,
-                fontSize: 24,
-                minWidth: 110,
-              }}
-            >
-              ₦{Number(item.amount || 0).toLocaleString()}
+            <CheckCircleIcon sx={{ fontSize: 20 }} />
+          </Box>
+          <Box>
+            <Typography variant="h6" fontWeight={700} sx={{ fontSize: 17 }}>
+              Transaction Status
             </Typography>
-
-            {/* Progress Bar */}
-            <Box sx={{ flex: 1 }}>
-              <LinearProgress
-                variant="determinate"
-                value={item.value}
-                sx={{
-                  height: 8,
-                  borderRadius: 10,
-                  bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 10,
-                    background: `linear-gradient(90deg, ${item.color}, ${item.color}CC)`,
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Percentage */}
-            <Typography
-              sx={{
-                fontWeight: 700,
-                color: item.color,
-                fontSize: 15.5,
-                minWidth: 50,
-                textAlign: 'right',
-              }}
-            >
-              {item.value}%
+            <Typography variant="body2" color="text.secondary">
+              Breakdown of transactions by status.
             </Typography>
           </Box>
-
-          {/* Label with Color Dot */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pl: 1 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-            <Typography sx={{ fontWeight: 500, color: isDark ? '#fff' : '#111827', fontSize: 14 }}>
-              {item.label}
-            </Typography>
-          </Box>
-
-          {/* Divider between items */}
-          {index !== items.length - 1 && (
-            <Divider sx={{ mt: 2, borderColor: isDark ? '#333' : '#E5E7EB', opacity: 0.6 }} />
-          )}
         </Box>
-      ))}
+        {onViewDetails && (
+          <Typography
+            component="button"
+            onClick={onViewDetails}
+            sx={{
+              border: 0,
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 700,
+              color: 'primary.main',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            View Details →
+          </Typography>
+        )}
+      </Box>
+
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly',
+          gap: 3,
+        }}
+      >
+        {items.map((item) => {
+          const Icon = ICON_BY_LABEL[item.label];
+
+          return (
+            <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 130 }}>
+                {Icon && (
+                  <Box
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      bgcolor: `${item.color}1A`,
+                      color: item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon sx={{ fontSize: 16 }} />
+                  </Box>
+                )}
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111827' }}>
+                  {item.label}
+                </Typography>
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={item.value}
+                  sx={{
+                    height: 10,
+                    borderRadius: 10,
+                    bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 10,
+                      bgcolor: item.color,
+                    },
+                  }}
+                />
+              </Box>
+
+              <Typography sx={{ fontWeight: 800, color: isDark ? '#fff' : '#111827', fontSize: 18, minWidth: 32, textAlign: 'right' }}>
+                {item.count ?? 0}
+              </Typography>
+              <Typography sx={{ fontWeight: 700, color: item.color, fontSize: 14, minWidth: 50, textAlign: 'right' }}>
+                {item.value}%
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 };
 
 StatusBreakdownCard.propTypes = {
-  title: PropTypes.string,
   items: PropTypes.array,
+  onViewDetails: PropTypes.func,
 };
 
 export default StatusBreakdownCard;

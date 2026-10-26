@@ -11,7 +11,15 @@ spec:
   ingressClassName: nginx
   {{- if .Values.ingress.tls.enabled }}
   tls:
-    {{- if .Values.ingress.tls.secretName }}
+    {{- if .Values.certificates.items }}
+    {{- range .Values.certificates.items }}
+    - hosts:
+        {{- range .dnsNames }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+    {{- else if .Values.ingress.tls.secretName }}
     - hosts:
         {{- range .Values.ingress.hosts }}
         - {{ . | quote }}

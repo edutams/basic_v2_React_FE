@@ -28,13 +28,19 @@ ingress:
   hosts:
     - oneskool.net
     - "*.oneskool.net"
+    - oneskool.ng
+    - "*.oneskool.ng"
   tls:
     enabled: true
-    secretName: oneskool-net-tls
 
-certificate:
-  enabled: true
+certificates:
   issuer: letsencrypt-dns-cloudflare
-  dnsNames:
-    - oneskool.net
-    - "*.oneskool.net"
+  items:
+    - secretName: oneskool-net-tls
+      dnsNames:
+        - oneskool.net
+        - "*.oneskool.net"
+    - secretName: oneskool-ng-tls
+      dnsNames:
+        - oneskool.ng
+        - "*.oneskool.ng"

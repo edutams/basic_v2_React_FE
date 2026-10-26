@@ -30,6 +30,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import WalletAccountCell from '@/components/shared/WalletAccountCell';
@@ -40,6 +41,7 @@ import {
   fetchOnlineTransactions,
   fetchOnlineTransactionAnalytics,
   checkTransactionStatus,
+  fetchTransactionValues,
 } from '@/api/tenant/bursary/transactionApi';
 import {
   fetchSessions,
@@ -52,8 +54,9 @@ import dayjs from 'dayjs';
 const Overview = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const tableRef = React.useRef(null);
 
-  const [chartTitle] = useState('Transaction Overview');
+  const [chartTitle] = useState('Collection Trend');
   const [chartType] = useState('bar');
   const [activeTab, setActiveTab] = useState(0);
 
@@ -75,6 +78,8 @@ const Overview = () => {
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
   const [search, setSearch] = useState('');
+  const [paymentMode, setPaymentMode] = useState('');
+  const [stalePendingCount, setStalePendingCount] = useState(0);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeRow, setActiveRow] = useState(null);
@@ -93,11 +98,12 @@ const Overview = () => {
       term_id: termId || null,
       search: search || null,
       status: activeTab > 0 ? statusTabs[activeTab] : null,
+      payment_type: paymentMode || null,
       page: page + 1, // API is 1-based
       per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, sessionId, termId, search, activeTab, page, perPage],
+    [fromDate, toDate, sessionId, termId, search, activeTab, paymentMode, page, perPage],
   );
 
   const loadTable = useCallback(
@@ -187,6 +193,10 @@ const Overview = () => {
       .catch(console.error);
 
     loadAnalytics();
+
+    fetchTransactionValues()
+      .then((res) => setStalePendingCount(res?.data?.stale_pending_count || 0))
+      .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -210,6 +220,31 @@ const Overview = () => {
     setPage(0);
     loadTable(0, perPage);
     loadAnalytics();
+  };
+
+  const handleReset = () => {
+    setFromDate('');
+    setToDate('');
+    setSessionId('');
+    setTermId('');
+    setSearch('');
+    setPaymentMode('');
+    setActiveTab(0);
+    setPage(0);
+    loadTable(0, perPage, { from: null, to: null, session_id: null, term_id: null, search: null, payment_type: null, status: null });
+    loadAnalytics({ session_id: null, term_id: null });
+  };
+
+  const scrollToTable = () => {
+    tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleViewStatusDetails = () => scrollToTable();
+
+  const handleViewReconciliation = () => {
+    setActiveTab(2); // Pending
+    setPage(0);
+    scrollToTable();
   };
 
   const handleTabChange = (event, newValue) => {
@@ -273,6 +308,7 @@ const Overview = () => {
             term_id: termId || null,
             search: search || null,
             status: activeTab > 0 ? statusTabs[activeTab] : null,
+            payment_type: paymentMode || null,
           },
         },
         { responseType: 'blob' },
@@ -355,7 +391,25 @@ const Overview = () => {
           setPeriodValue(null);
         }}
         onPeriodValueChange={(v) => setPeriodValue(v)}
+        onViewDetails={handleViewStatusDetails}
       />
+
+      {stalePendingCount > 0 && (
+        <Alert
+          severity="warning"
+          icon={<WarningAmberOutlinedIcon fontSize="inherit" />}
+          sx={{ mb: 2 }}
+          action={
+            <Button size="small" onClick={handleViewReconciliation} sx={{ fontWeight: 700 }}>
+              View
+            </Button>
+          }
+        >
+          <strong>Reconciliation Attention</strong> — {stalePendingCount} pending transaction
+          {stalePendingCount === 1 ? '' : 's'} older than 24 hours.
+        </Alert>
+      )}
+
       <ParentCard
         sx={{
           '& .MuiCardHeader-root': { pb: 0.5, pt: 1.5, px: 1.5 },
@@ -379,13 +433,13 @@ const Overview = () => {
               startIcon={<DownloadIcon />}
               sx={{ width: { xs: '100%', sm: 'auto' } }}
             >
-              Download CSV Format
+              Export
             </Button>
           </Box>
         }
       >
         <Grid container spacing={2} sx={{ mb: 2 }} alignItems="center">
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
             <TextField
               fullWidth
               size="small"
@@ -396,7 +450,7 @@ const Overview = () => {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
             <TextField
               fullWidth
               size="small"
@@ -407,7 +461,7 @@ const Overview = () => {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>Session</InputLabel>
               <Select
@@ -424,7 +478,7 @@ const Overview = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>Term</InputLabel>
               <Select label="Term" value={termId} onChange={(e) => setTermId(e.target.value)}>
@@ -437,9 +491,43 @@ const Overview = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Payment Mode</InputLabel>
+              <Select
+                label="Payment Mode"
+                value={paymentMode}
+                onChange={(e) => setPaymentMode(e.target.value)}
+              >
+                <MenuItem value="">All Modes</MenuItem>
+                <MenuItem value="ONLINE">Online</MenuItem>
+                <MenuItem value="BANK_TELLER">Bank Teller</MenuItem>
+                <MenuItem value="CASH">Cash</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 1.6 }}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                label="Status"
+                value={activeTab}
+                onChange={(e) => {
+                  setActiveTab(e.target.value);
+                  setPage(0);
+                }}
+              >
+                {statusTabs.map((label, idx) => (
+                  <MenuItem key={label} value={idx}>
+                    {idx === 0 ? 'All Statuses' : label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.4 }}>
             <TextField
-              placeholder="Search by name"
+              placeholder="Search by student, payer, transaction ID..."
               size="small"
               fullWidth
               value={search}
@@ -455,7 +543,12 @@ const Overview = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, md: 1 }}>
+          <Grid size={{ xs: 6, md: 1 }}>
+            <Button variant="outlined" size="small" fullWidth sx={{ height: '40px' }} onClick={handleReset}>
+              Reset
+            </Button>
+          </Grid>
+          <Grid size={{ xs: 6, md: 1 }}>
             <Button
               variant="contained"
               size="small"
@@ -463,7 +556,7 @@ const Overview = () => {
               sx={{ height: '40px' }}
               onClick={handleFetch}
             >
-              Fetch
+              Search
             </Button>
           </Grid>
         </Grid>
@@ -490,6 +583,7 @@ const Overview = () => {
         </Box>
 
         <TableContainer
+          ref={tableRef}
           component={Paper}
           elevation={0}
           variant="outlined"
@@ -500,15 +594,15 @@ const Overview = () => {
               <TableRow>
                 <TableCell sx={thCell}>#</TableCell>
                 <TableCell sx={thCell} width={20}>Transaction ID</TableCell>
-                <TableCell sx={thCell}>Paid For</TableCell>
-                <TableCell sx={thCell}>Paid By</TableCell>
-                <TableCell sx={thCell}>Wallet Account</TableCell>
-                <TableCell sx={thCell}>Description</TableCell>
+                <TableCell sx={thCell}>Student / Payer</TableCell>
+                <TableCell sx={thCell}>Class</TableCell>
+                <TableCell sx={thCell}>Wallet / Bank</TableCell>
+                <TableCell sx={thCell}>Payment Item</TableCell>
                 <TableCell sx={thCell}>Amount</TableCell>
-                <TableCell sx={thCell}>Date</TableCell>
                 <TableCell sx={thCell}>Payment Mode</TableCell>
+                <TableCell sx={thCell}>Date & Time</TableCell>
                 <TableCell sx={thCell}>Status</TableCell>
-                <TableCell sx={thCell} align="right">Action</TableCell>
+                <TableCell sx={thCell} align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -556,23 +650,31 @@ const Overview = () => {
                               'https://ik.imagekit.io/edx82gwzy/istockphoto-1332100919-612x612.jpg?updatedAt=1710424155848'
                             }
                           ></Avatar>
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" fontWeight={600} noWrap>
                               {row.ward_name}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {row.class}
-                            </Typography>
+                            {row.payer_name && row.payer_name !== row.ward_name && (
+                              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                Paid by {row.payer_name}
+                              </Typography>
+                            )}
                           </Box>
                         </Box>
                       </TableCell>
-                      <TableCell sx={tdCell}>{row.payer_name}</TableCell>
+                      <TableCell sx={tdCell}>{row.class || 'N/A (Staff)'}</TableCell>
                       <TableCell sx={tdCell}>
                         <WalletAccountCell row={row} />
                       </TableCell>
-                      <TableCell sx={tdCell}>{row.description}</TableCell>
+                      <TableCell sx={tdCell}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {row.payment_item || '—'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                          {row.description}
+                        </Typography>
+                      </TableCell>
                       <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
-                      <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                       <TableCell sx={tdCell}>
                         <Chip
                           size="small"
@@ -589,6 +691,7 @@ const Overview = () => {
                           color={row.payment_type === 'ONLINE' ? 'info' : 'default'}
                         />
                       </TableCell>
+                      <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                       <TableCell sx={tdCell}>
                         <Chip
                           size="small"

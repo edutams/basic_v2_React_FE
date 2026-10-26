@@ -19,6 +19,7 @@ import {
 import StandardModal from '@/components/shared/StandardModal';
 import Chart from 'react-apexcharts';
 import { IconDownload } from '@tabler/icons';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import StatusBreakdownCard from './StatusBreakdownCard';
 
 import { DatePicker as MuiDatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -45,6 +46,7 @@ const FeeChart = ({
   onPeriodChange,
   // setPeriodValue,
   onPeriodValueChange,
+  onViewDetails,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -157,9 +159,31 @@ const FeeChart = ({
               gap: 1,
             }}
           >
-            <Typography variant="h6" fontWeight={600} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>
-              {title}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '9px',
+                  bgcolor: isDark ? 'rgba(37,99,235,0.18)' : '#DBEAFE',
+                  color: '#2563EB',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <BarChartOutlinedIcon sx={{ fontSize: 17 }} />
+              </Box>
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ color: isDark ? '#fff' : '#1a1a1a' }}>
+                  {title}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Daily collection amount for the selected period.
+                </Typography>
+              </Box>
+            </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <Select value={period} onChange={(e) => onPeriodChange(e.target.value)}>
@@ -186,11 +210,7 @@ const FeeChart = ({
             height: '100%',
           }}
         >
-          <StatusBreakdownCard
-            title={statusData?.title}
-            items={statusData?.items}
-            metrics={statusData?.metrics}
-          />
+          <StatusBreakdownCard items={statusData?.items} onViewDetails={onViewDetails} />
         </Box>
       </Grid>
     </Grid>

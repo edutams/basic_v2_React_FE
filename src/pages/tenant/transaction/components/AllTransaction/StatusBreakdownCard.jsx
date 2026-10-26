@@ -16,14 +16,14 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
   const isDark = theme.palette.mode === 'dark';
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
-              width: 32,
-              height: 32,
-              borderRadius: '9px',
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
               bgcolor: isDark ? 'rgba(22,163,74,0.18)' : '#DCFCE7',
               color: '#16A34A',
               display: 'flex',
@@ -32,13 +32,13 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
               flexShrink: 0,
             }}
           >
-            <CheckCircleIcon sx={{ fontSize: 17 }} />
+            <CheckCircleIcon sx={{ fontSize: 20 }} />
           </Box>
           <Box>
-            <Typography variant="subtitle1" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} sx={{ fontSize: 17 }}>
               Transaction Status
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body2" color="text.secondary">
               Breakdown of transactions by status.
             </Typography>
           </Box>
@@ -51,7 +51,7 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
               border: 0,
               background: 'none',
               cursor: 'pointer',
-              fontSize: 12.5,
+              fontSize: 13,
               fontWeight: 700,
               color: 'primary.main',
               whiteSpace: 'nowrap',
@@ -62,15 +62,39 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
         )}
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly',
+          gap: 3,
+        }}
+      >
         {items.map((item) => {
           const Icon = ICON_BY_LABEL[item.label];
 
           return (
-            <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 100 }}>
-                {Icon && <Icon sx={{ fontSize: 16, color: item.color }} />}
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: isDark ? '#fff' : '#111827' }}>
+            <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 130 }}>
+                {Icon && (
+                  <Box
+                    sx={{
+                      width: 26,
+                      height: 26,
+                      borderRadius: '50%',
+                      bgcolor: `${item.color}1A`,
+                      color: item.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon sx={{ fontSize: 16 }} />
+                  </Box>
+                )}
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: isDark ? '#fff' : '#111827' }}>
                   {item.label}
                 </Typography>
               </Box>
@@ -80,7 +104,7 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
                   variant="determinate"
                   value={item.value}
                   sx={{
-                    height: 7,
+                    height: 10,
                     borderRadius: 10,
                     bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
                     '& .MuiLinearProgress-bar': {
@@ -91,10 +115,10 @@ const StatusBreakdownCard = ({ items = [], onViewDetails }) => {
                 />
               </Box>
 
-              <Typography sx={{ fontWeight: 800, color: isDark ? '#fff' : '#111827', fontSize: 14, minWidth: 28, textAlign: 'right' }}>
+              <Typography sx={{ fontWeight: 800, color: isDark ? '#fff' : '#111827', fontSize: 18, minWidth: 32, textAlign: 'right' }}>
                 {item.count ?? 0}
               </Typography>
-              <Typography sx={{ fontWeight: 700, color: item.color, fontSize: 12.5, minWidth: 42, textAlign: 'right' }}>
+              <Typography sx={{ fontWeight: 700, color: item.color, fontSize: 14, minWidth: 50, textAlign: 'right' }}>
                 {item.value}%
               </Typography>
             </Box>

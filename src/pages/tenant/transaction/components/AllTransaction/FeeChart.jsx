@@ -139,7 +139,7 @@ const FeeChart = ({
   };
 
   return (
-    <Grid container spacing={2} mt={1.5} mb={2}>
+    <Grid container spacing={2} mt={1.5} mb={2} alignItems="stretch">
       <Grid size={{ xs: 12, md: 7 }}>
         <Box
           sx={{
@@ -147,6 +147,9 @@ const FeeChart = ({
             borderRadius: '10px',
             bgcolor: isDark ? '#1e1e1e' : 'white',
             p: 1.5,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <Box
@@ -196,7 +199,7 @@ const FeeChart = ({
               {renderSubPicker()}
             </Box>
           </Box>
-          <Chart options={chartOptions} series={chartSeries} type={chartType} height={320} />
+          <Chart options={chartOptions} series={chartSeries} type={chartType} height={290} />
         </Box>
       </Grid>
 

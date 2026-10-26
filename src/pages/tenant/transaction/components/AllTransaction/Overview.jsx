@@ -27,6 +27,7 @@ import {
   Tab,
   Skeleton,
   Alert,
+  Tooltip,
 } from '@mui/material';
 import { Search as SearchIcon, Download as DownloadIcon } from '@mui/icons-material';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
@@ -40,6 +41,8 @@ import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
+import useNotification from '@/hooks/useNotification';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import WalletAccountCell from '@/components/shared/WalletAccountCell';
@@ -94,6 +97,28 @@ const Overview = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const tableRef = React.useRef(null);
+  const notify = useNotification();
+
+  const handleCopyTransactionId = async (id) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(id);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = id;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      notify.success('Transaction ID copied');
+    } catch (error) {
+      notify.error('Failed to copy');
+    }
+  };
 
   const [chartTitle] = useState('Collection Trend');
   const [chartType] = useState('bar');
@@ -156,7 +181,19 @@ const Overview = () => {
       per_page: perPage,
       ...extra,
     }),
-    [fromDate, toDate, sessionId, termId, search, activeTab, paymentMode, sortBy, sortDir, page, perPage],
+    [
+      fromDate,
+      toDate,
+      sessionId,
+      termId,
+      search,
+      activeTab,
+      paymentMode,
+      sortBy,
+      sortDir,
+      page,
+      perPage,
+    ],
   );
 
   const loadTable = useCallback(
@@ -179,36 +216,39 @@ const Overview = () => {
     [buildFilters],
   );
 
-  const loadAnalytics = useCallback(async (overrides = {}) => {
-    try {
-      const payload = {
-        session_id: sessionId || null,
-        term_id: termId || null,
-        period,
-        ...overrides,
-      };
+  const loadAnalytics = useCallback(
+    async (overrides = {}) => {
+      try {
+        const payload = {
+          session_id: sessionId || null,
+          term_id: termId || null,
+          period,
+          ...overrides,
+        };
 
-      if (period === 'today') {
-        payload.selected_date = periodValue || dayjs().format('YYYY-MM-DD');
-      } else if (period === 'this_week') {
-        payload.selected_week = periodValue?.week || dayjs().isoWeek();
-        payload.selected_year = periodValue?.year || dayjs().year();
-      } else if (period === 'this_month') {
-        payload.selected_month = periodValue?.month || dayjs().month() + 1;
-        payload.selected_year = periodValue?.year || dayjs().year();
-      } else if (period === 'this_year') {
-        payload.selected_year = periodValue || dayjs().year();
-      }
+        if (period === 'today') {
+          payload.selected_date = periodValue || dayjs().format('YYYY-MM-DD');
+        } else if (period === 'this_week') {
+          payload.selected_week = periodValue?.week || dayjs().isoWeek();
+          payload.selected_year = periodValue?.year || dayjs().year();
+        } else if (period === 'this_month') {
+          payload.selected_month = periodValue?.month || dayjs().month() + 1;
+          payload.selected_year = periodValue?.year || dayjs().year();
+        } else if (period === 'this_year') {
+          payload.selected_year = periodValue || dayjs().year();
+        }
 
-      const res = await fetchOnlineTransactionAnalytics({ filters: payload });
-      if (res.success) {
-        setChartData(res.chart);
-        setStatusData(res.status_breakdown);
+        const res = await fetchOnlineTransactionAnalytics({ filters: payload });
+        if (res.success) {
+          setChartData(res.chart);
+          setStatusData(res.status_breakdown);
+        }
+      } catch (err) {
+        console.error('Failed to fetch analytics', err);
       }
-    } catch (err) {
-      console.error('Failed to fetch analytics', err);
-    }
-  }, [sessionId, termId, period, periodValue]);
+    },
+    [sessionId, termId, period, periodValue],
+  );
 
   useEffect(() => {
     loadAnalytics();
@@ -313,7 +353,17 @@ const Overview = () => {
     setSortBy(null);
     setSortDir('desc');
     setPage(0);
-    loadTable(0, perPage, { from: null, to: null, session_id: null, term_id: null, search: null, payment_type: null, status: null, sort_by: null, sort_dir: 'desc' });
+    loadTable(0, perPage, {
+      from: null,
+      to: null,
+      session_id: null,
+      term_id: null,
+      search: null,
+      payment_type: null,
+      status: null,
+      sort_by: null,
+      sort_dir: 'desc',
+    });
     loadAnalytics({ session_id: null, term_id: null });
   };
 
@@ -428,7 +478,13 @@ const Overview = () => {
   const SortableHeader = ({ column, children }) => (
     <Box
       onClick={() => handleSort(column)}
-      sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4, cursor: 'pointer', userSelect: 'none' }}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 0.4,
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
     >
       {children}
       {sortBy === column ? (
@@ -530,7 +586,10 @@ const Overview = () => {
                 px: 1,
               }}
             >
-              <CalendarMonthOutlinedIcon fontSize="small" sx={{ color: 'text.secondary', flexShrink: 0 }} />
+              <CalendarMonthOutlinedIcon
+                fontSize="small"
+                sx={{ color: 'text.secondary', flexShrink: 0 }}
+              />
               <TextField
                 variant="standard"
                 type="date"
@@ -695,7 +754,17 @@ const Overview = () => {
             value={activeTab}
             onChange={handleTabChange}
             variant="scrollable"
-            sx={{ minHeight: 0, '& .MuiTabs-indicator': { bottom: -9 }, '& .MuiTab-root': { minHeight: 0, py: 1, textTransform: 'none', fontWeight: 600, fontSize: '14px' } }}
+            sx={{
+              minHeight: 0,
+              '& .MuiTabs-indicator': { bottom: -9 },
+              '& .MuiTab-root': {
+                minHeight: 0,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '14px',
+              },
+            }}
           >
             {statusTabs.map((label, idx) => {
               const colors = TAB_PILL_COLORS[label];
@@ -748,7 +817,8 @@ const Overview = () => {
                 Reconciliation Attention
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-                — {stalePendingCount} pending transaction{stalePendingCount === 1 ? '' : 's'} older than 24 hours.
+                — {stalePendingCount} pending transaction{stalePendingCount === 1 ? '' : 's'} older
+                than 24 hours.
               </Typography>
               <Button
                 size="small"
@@ -772,24 +842,44 @@ const Overview = () => {
             <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
               <TableRow>
                 <TableCell sx={thCell}>#</TableCell>
-                <TableCell sx={thCell} width={20}>Transaction ID</TableCell>
-                <TableCell sx={thCell}><SortableHeader column="student">Student / Payer</SortableHeader></TableCell>
-                <TableCell sx={thCell}><SortableHeader column="class">Class</SortableHeader></TableCell>
+                <TableCell sx={thCell} width={20}>
+                  Transaction ID
+                </TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="student">Student / Payer</SortableHeader>
+                </TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="class">Class</SortableHeader>
+                </TableCell>
                 <TableCell sx={thCell}>Wallet / Bank</TableCell>
-                <TableCell sx={thCell}><SortableHeader column="payment_item">Payment Item</SortableHeader></TableCell>
-                <TableCell sx={thCell}><SortableHeader column="amount">Amount</SortableHeader></TableCell>
-                <TableCell sx={thCell}><SortableHeader column="payment_mode">Payment Mode</SortableHeader></TableCell>
-                <TableCell sx={thCell}><SortableHeader column="date">Date & Time</SortableHeader></TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="payment_item">Payment Item</SortableHeader>
+                </TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="amount">Amount</SortableHeader>
+                </TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="payment_mode">Payment Mode</SortableHeader>
+                </TableCell>
+                <TableCell sx={thCell}>
+                  <SortableHeader column="date">Date & Time</SortableHeader>
+                </TableCell>
                 <TableCell sx={thCell}>Status</TableCell>
-                <TableCell sx={thCell} align="right">Actions</TableCell>
+                <TableCell sx={thCell} align="right">
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
                     <TableCell sx={tdCell}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                         <Skeleton variant="circular" width={36} height={36} />
@@ -799,213 +889,288 @@ const Overview = () => {
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={110} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={130} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={80} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="text" width={90} height={20} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                    <TableCell sx={tdCell}><Skeleton variant="rounded" width={65} height={22} sx={{ borderRadius: '12px' }} /></TableCell>
-                    <TableCell align="right" sx={tdCell}><Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} /></TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={110} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={110} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={130} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={80} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton variant="text" width={90} height={20} />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton
+                        variant="rounded"
+                        width={80}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Skeleton
+                        variant="rounded"
+                        width={65}
+                        height={22}
+                        sx={{ borderRadius: '12px' }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={tdCell}>
+                      <Skeleton variant="circular" width={28} height={28} sx={{ ml: 'auto' }} />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : tableData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
-                    <Alert severity="info" sx={{ justifyContent: 'center' }}>No transactions found.</Alert>
+                    <Alert severity="info" sx={{ justifyContent: 'center' }}>
+                      No transactions found.
+                    </Alert>
                   </TableCell>
                 </TableRow>
               ) : (
-                  tableData.map((row, index) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
-                      <TableCell sx={tdCell}>{row.order_id}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 36, height: 36 }} src={row.avatar || undefined}>
-                            <PersonOutlineIcon fontSize="small" />
-                          </Avatar>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography variant="body2" fontWeight={600} noWrap>
-                              {row.ward_name}
-                            </Typography>
-                            {row.payer_name && row.payer_name !== row.ward_name && (
-                              <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
-                                Paid by {row.payer_name}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell sx={tdCell}>{row.class || 'N/A (Staff)'}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <WalletAccountCell row={row} />
-                      </TableCell>
-                      <TableCell sx={{ ...tdCell, maxWidth: 190 }}>
-                        <Typography variant="body2" fontWeight={600} noWrap>
-                          {row.payment_item || '—'}
+                tableData.map((row, index) => (
+                  <TableRow key={row.id} hover>
+                    <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                    <TableCell sx={tdCell}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            maxWidth: 140,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={row.order_id}
+                        >
+                          {row.order_id}
                         </Typography>
-                        {row.description && expandedRows.has(row.id) && (
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                            {row.description}
-                          </Typography>
-                        )}
-                        {row.description && (
-                          <Box
-                            onClick={() => toggleRowExpanded(row.id)}
-                            sx={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              color: 'primary.main',
-                              fontWeight: 700,
-                              fontSize: 11,
-                              cursor: 'pointer',
-                            }}
+
+                        <Tooltip title="Copy Transaction ID">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCopyTransactionId(row.order_id)}
+                            sx={{ p: 0.4, flexShrink: 0 }}
                           >
-                            {expandedRows.has(row.id) ? 'View less' : 'View more'}
-                            {expandedRows.has(row.id) ? (
-                              <ExpandLessIcon sx={{ fontSize: 14 }} />
-                            ) : (
-                              <ExpandMoreIcon sx={{ fontSize: 14 }} />
-                            )}
-                          </Box>
-                        )}
-                      </TableCell>
-                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Chip
-                          size="small"
-                          variant="outlined"
-                          label={
-                            row.payment_type === 'ONLINE'
-                              ? 'Online'
-                              : row.payment_type === 'BANK_TELLER'
-                                ? 'Bank Teller'
-                                : row.payment_type === 'CASH'
-                                  ? 'Cash'
-                                  : row.payment_type || '—'
-                          }
-                          color={row.payment_type === 'ONLINE' ? 'info' : 'default'}
-                        />
-                      </TableCell>
-                      <TableCell sx={tdCell}>{dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Chip
-                          size="small"
-                          label={
-                            row.status === 'APPROVED'
-                              ? 'Successful'
-                              : row.status === 'PENDING'
-                                ? 'Pending'
-                                : 'Declined'
-                          }
-                          color={
-                            row.status === 'APPROVED'
-                              ? 'success'
-                              : row.status === 'PENDING'
-                                ? 'warning'
-                                : 'error'
-                          }
-                        />
-                      </TableCell>
-                      <TableCell align="right" sx={tdCell}>
-                        <IconButton
-                          size="small"
-                          disabled={checkingStatusId === row.id}
-                          onClick={(e) => {
-                            setAnchorEl(e.currentTarget);
-                            setActiveRow(row);
+                            <ContentCopyOutlinedIcon sx={{ fontSize: 14 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ width: 36, height: 36 }} src={row.avatar || undefined}>
+                          <PersonOutlineIcon fontSize="small" />
+                        </Avatar>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={600} noWrap>
+                            {row.ward_name}
+                          </Typography>
+                          {row.payer_name && row.payer_name !== row.ward_name && (
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                              sx={{ display: 'block' }}
+                            >
+                              Paid by {row.payer_name}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={tdCell}>{row.class || 'N/A (Staff)'}</TableCell>
+                    <TableCell sx={tdCell}>
+                      <WalletAccountCell row={row} />
+                    </TableCell>
+                    <TableCell sx={{ ...tdCell, maxWidth: 190 }}>
+                      <Typography variant="body2" fontWeight={600} noWrap>
+                        {row.payment_item || '—'}
+                      </Typography>
+                      {row.description && expandedRows.has(row.id) && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ display: 'block' }}
+                        >
+                          {row.description}
+                        </Typography>
+                      )}
+                      {row.description && (
+                        <Box
+                          onClick={() => toggleRowExpanded(row.id)}
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            color: 'primary.main',
+                            fontWeight: 700,
+                            fontSize: 11,
+                            cursor: 'pointer',
                           }}
                         >
-                          {checkingStatusId === row.id ? (
-                            <CircularProgress size={16} />
+                          {expandedRows.has(row.id) ? 'View less' : 'View more'}
+                          {expandedRows.has(row.id) ? (
+                            <ExpandLessIcon sx={{ fontSize: 14 }} />
                           ) : (
-                            <IconDotsVertical size={18} />
+                            <ExpandMoreIcon sx={{ fontSize: 14 }} />
                           )}
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                    <TableCell sx={tdCell}>
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={
+                          row.payment_type === 'ONLINE'
+                            ? 'Online'
+                            : row.payment_type === 'BANK_TELLER'
+                              ? 'Bank Teller'
+                              : row.payment_type === 'CASH'
+                                ? 'Cash'
+                                : row.payment_type || '—'
+                        }
+                        color={row.payment_type === 'ONLINE' ? 'info' : 'default'}
+                      />
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      {dayjs(row.date).format('YYYY-MM-DD HH:mm:ss')}
+                    </TableCell>
+                    <TableCell sx={tdCell}>
+                      <Chip
+                        size="small"
+                        label={
+                          row.status === 'APPROVED'
+                            ? 'Successful'
+                            : row.status === 'PENDING'
+                              ? 'Pending'
+                              : 'Declined'
+                        }
+                        color={
+                          row.status === 'APPROVED'
+                            ? 'success'
+                            : row.status === 'PENDING'
+                              ? 'warning'
+                              : 'error'
+                        }
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={tdCell}>
+                      <IconButton
+                        size="small"
+                        disabled={checkingStatusId === row.id}
+                        onClick={(e) => {
+                          setAnchorEl(e.currentTarget);
+                          setActiveRow(row);
+                        }}
+                      >
+                        {checkingStatusId === row.id ? (
+                          <CircularProgress size={16} />
+                        ) : (
+                          <IconDotsVertical size={18} />
+                        )}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          {totalCount > 0 && (
-            <Box
-              sx={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 1.5,
-                px: 1,
-                py: 1.5,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Showing {page * perPage + 1}-{Math.min((page + 1) * perPage, totalCount)} of {totalCount}{' '}
-                transactions
-              </Typography>
+        {totalCount > 0 && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              px: 1,
+              py: 1.5,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Showing {page * perPage + 1}-{Math.min((page + 1) * perPage, totalCount)} of{' '}
+              {totalCount} transactions
+            </Typography>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <FormControl size="small">
-                  <Select
-                    value={perPage}
-                    onChange={handleChangeRowsPerPage}
-                    renderValue={(v) => `Rows per page: ${v}`}
-                  >
-                    {[10, 15, 25, 50].map((n) => (
-                      <MenuItem key={n} value={n}>
-                        {n}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                <IconButton size="small" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
-                  <ChevronLeftIcon fontSize="small" />
-                </IconButton>
-
-                {buildPageList(page + 1, Math.ceil(totalCount / perPage)).map((p, i) =>
-                  p === '...' ? (
-                    <Typography key={`gap-${i}`} color="text.secondary" sx={{ px: 0.5 }}>
-                      …
-                    </Typography>
-                  ) : (
-                    <Box
-                      key={p}
-                      onClick={() => setPage(p - 1)}
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: 13,
-                        fontWeight: 700,
-                        bgcolor: p === page + 1 ? 'primary.main' : 'transparent',
-                        color: p === page + 1 ? '#fff' : 'text.primary',
-                        '&:hover': { bgcolor: p === page + 1 ? 'primary.main' : isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9' },
-                      }}
-                    >
-                      {p}
-                    </Box>
-                  ),
-                )}
-
-                <IconButton
-                  size="small"
-                  disabled={(page + 1) * perPage >= totalCount}
-                  onClick={() => setPage((p) => p + 1)}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <FormControl size="small">
+                <Select
+                  value={perPage}
+                  onChange={handleChangeRowsPerPage}
+                  renderValue={(v) => `Rows per page: ${v}`}
                 >
-                  <ChevronRightIcon fontSize="small" />
-                </IconButton>
-              </Box>
+                  {[10, 15, 25, 50].map((n) => (
+                    <MenuItem key={n} value={n}>
+                      {n}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <IconButton
+                size="small"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
+                <ChevronLeftIcon fontSize="small" />
+              </IconButton>
+
+              {buildPageList(page + 1, Math.ceil(totalCount / perPage)).map((p, i) =>
+                p === '...' ? (
+                  <Typography key={`gap-${i}`} color="text.secondary" sx={{ px: 0.5 }}>
+                    …
+                  </Typography>
+                ) : (
+                  <Box
+                    key={p}
+                    onClick={() => setPage(p - 1)}
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      bgcolor: p === page + 1 ? 'primary.main' : 'transparent',
+                      color: p === page + 1 ? '#fff' : 'text.primary',
+                      '&:hover': {
+                        bgcolor:
+                          p === page + 1
+                            ? 'primary.main'
+                            : isDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : '#F1F5F9',
+                      },
+                    }}
+                  >
+                    {p}
+                  </Box>
+                ),
+              )}
+
+              <IconButton
+                size="small"
+                disabled={(page + 1) * perPage >= totalCount}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronRightIcon fontSize="small" />
+              </IconButton>
             </Box>
-          )}
+          </Box>
+        )}
 
         <Menu
           anchorEl={anchorEl}

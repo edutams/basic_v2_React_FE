@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -25,8 +25,8 @@ import Chart from 'react-apexcharts';
 import {
   IconBook,
   IconBulb,
-  IconCalendar,
   IconCheck,
+  IconChevronRight,
   IconInfoCircle,
   IconNotes,
   IconPlayerPlay,
@@ -141,77 +141,13 @@ const StatusChip = ({ status }) => {
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Context header — shows subject, class, week, topic & subtopic at a glance
-// ─────────────────────────────────────────────────────────────────────────────
-const ContextHeader = ({ cfg, context, statusChip }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
-  return (
-    <Paper
-      variant="outlined"
-      sx={{
-        mb: 2.5,
-        borderRadius: '14px',
-        borderColor: isDark ? 'rgba(255,255,255,0.1)' : cfg.accent + '44',
-        background: isDark
-          ? `linear-gradient(135deg, rgba(0,0,0,0.3) 0%, ${cfg.accentLight} 100%)`
-          : `linear-gradient(135deg, #ffffff 0%, ${cfg.accentLight} 100%)`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Accent top bar */}
-      <Box sx={{ height: 3, background: `linear-gradient(90deg, ${cfg.accent}, ${cfg.accent}88)` }} />
-
-      <Box sx={{ p: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={1}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar sx={{ width: 36, height: 36, bgcolor: cfg.accentLight, color: cfg.accent }}>
-              <cfg.Icon size={19} />
-            </Avatar>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={800} lineHeight={1.2}>
-                {context?.subjectName || 'Subject'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {[context?.className, context?.armName].filter(Boolean).join(' – ')}
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
-            {context?.weekName && (
-              <Chip
-                icon={<IconCalendar size={12} />}
-                label={context.weekName}
-                size="small"
-                sx={{ fontSize: 11, fontWeight: 600, bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9' }}
-              />
-            )}
-            {context?.topic && (
-              <Chip
-                label={context.topic}
-                size="small"
-                sx={{ fontSize: 11, fontWeight: 600, bgcolor: isDark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', maxWidth: 180 }}
-              />
-            )}
-            {context?.subtopic && (
-              <Chip
-                label={context.subtopic}
-                size="small"
-                variant="outlined"
-                sx={{ fontSize: 11, fontWeight: 700, borderColor: cfg.accent, color: cfg.accent, maxWidth: 180 }}
-              />
-            )}
-            {statusChip}
-          </Stack>
-        </Stack>
-      </Box>
-    </Paper>
-  );
-};
+// One elevation shared by every card on this page — soft, low-contrast, and
+// expressed as a callback so it tracks the palette: cards still lift off the
+// background in dark mode instead of disappearing into it.
+const cardElevation = (theme) =>
+  theme.palette.mode === 'dark'
+    ? '0 6px 20px rgba(0,0,0,0.45)'
+    : '0 6px 20px rgba(15,23,42,0.08)';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Action chooser cards (Create / Edit | Generate with AI | Upload)
@@ -221,37 +157,32 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // No filled background — a flat, transparent card with a hairline border
+  // keeps the row quiet, and the accent shows up on the icon, the border and
+  // the hover state instead of a block of colour.
   const styles = {
     default: {
-      border: `2px dashed ${isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'}`,
-      bg: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
+      border: `2px solid ${isDark ? 'rgba(255,255,255,0.18)' : '#D1D5DB'}`,
       hoverBorder: '#3B82F6',
-      hoverBg: isDark ? 'rgba(59,130,246,0.08)' : '#F0F7FF',
-      iconBg: isDark ? 'rgba(59,130,246,0.15)' : '#DBEAFE',
+      hoverBg: isDark ? 'rgba(59,130,246,0.08)' : '#F5F9FF',
       iconColor: '#3B82F6',
     },
     ai: {
-      border: `2px solid ${isDark ? 'rgba(139,92,246,0.4)' : '#DDD6FE'}`,
-      bg: isDark ? 'rgba(139,92,246,0.08)' : '#FAF5FF',
+      border: `2px solid ${isDark ? 'rgba(139,92,246,0.45)' : '#C4B5FD'}`,
       hoverBorder: '#8B5CF6',
-      hoverBg: isDark ? 'rgba(139,92,246,0.14)' : '#F3EEFF',
-      iconBg: isDark ? 'rgba(139,92,246,0.2)' : '#EDE9FE',
+      hoverBg: isDark ? 'rgba(139,92,246,0.10)' : '#FAF7FF',
       iconColor: '#8B5CF6',
     },
     regenerate: {
-      border: `2px solid ${isDark ? 'rgba(245,158,11,0.4)' : '#FEF3C7'}`,
-      bg: isDark ? 'rgba(245,158,11,0.08)' : '#FFFBEB',
+      border: `2px solid ${isDark ? 'rgba(245,158,11,0.45)' : '#FCD34D'}`,
       hoverBorder: '#F59E0B',
-      hoverBg: isDark ? 'rgba(245,158,11,0.14)' : '#FFF9EC',
-      iconBg: isDark ? 'rgba(245,158,11,0.2)' : '#FEF3C7',
+      hoverBg: isDark ? 'rgba(245,158,11,0.10)' : '#FFFBF3',
       iconColor: '#F59E0B',
     },
     upload: {
-      border: `2px dashed ${isDark ? 'rgba(20,184,166,0.4)' : '#CCFBF1'}`,
-      bg: isDark ? 'rgba(20,184,166,0.06)' : '#F0FDFA',
+      border: `2px dashed ${isDark ? 'rgba(20,184,166,0.5)' : '#5EEAD4'}`,
       hoverBorder: '#14B8A6',
-      hoverBg: isDark ? 'rgba(20,184,166,0.12)' : '#E6FFFA',
-      iconBg: isDark ? 'rgba(20,184,166,0.2)' : '#CCFBF1',
+      hoverBg: isDark ? 'rgba(20,184,166,0.10)' : '#F0FDFA',
       iconColor: '#14B8A6',
     },
   };
@@ -265,10 +196,11 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
       disabled={disabled || busy}
       sx={{
         width: '100%',
-        background: s.bg,
+        background: 'transparent',
         border: s.border,
-        borderRadius: '14px',
-        p: 2,
+        borderRadius: '12px',
+        px: 1.75,
+        py: 1.5,
         cursor: disabled || busy ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.55 : 1,
         textAlign: 'left',
@@ -277,19 +209,24 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
         overflow: 'hidden',
         '&:hover:not(:disabled)': {
           borderColor: s.hoverBorder,
-          borderStyle: 'solid',
           background: s.hoverBg,
-          transform: 'translateY(-2px)',
-          boxShadow: `0 6px 20px ${s.hoverBorder}22`,
+          transform: 'translateY(-1px)',
+          boxShadow: `0 4px 14px ${s.hoverBorder}1A`,
+        },
+        '&:focus-visible:not(:disabled)': {
+          outline: `2px solid ${s.hoverBorder}`,
+          outlineOffset: 2,
         },
         '&:active:not(:disabled)': { transform: 'translateY(0)' },
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center">
-        <Avatar sx={{ width: 40, height: 40, bgcolor: s.iconBg, color: s.iconColor, flexShrink: 0 }}>
-          {busy ? <CircularProgress size={18} sx={{ color: s.iconColor }} /> : <IconC size={20} />}
-        </Avatar>
-        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+        {busy ? (
+          <CircularProgress size={20} sx={{ color: s.iconColor, flexShrink: 0 }} />
+        ) : (
+          <IconC size={22} color={s.iconColor} style={{ flexShrink: 0 }} />
+        )}
+        <Box sx={{ flex: 1, overflow: 'hidden', minWidth: 0 }}>
           <Typography variant="body2" fontWeight={700} color="text.primary" noWrap>
             {title}
           </Typography>
@@ -297,6 +234,11 @@ const ActionCard = ({ icon: IconC, title, subtitle, onClick, disabled = false, b
             {subtitle}
           </Typography>
         </Box>
+        <IconChevronRight
+          size={18}
+          color={s.hoverBorder}
+          style={{ flexShrink: 0, opacity: 0.55 }}
+        />
       </Stack>
     </Box>
   );
@@ -450,8 +392,6 @@ const LessonContentTab = ({ type, context }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, schemeOfWorkId, contextMissing]);
 
-  const statusChip = useMemo(() => <StatusChip status={status} />, [status]);
-
   // ── AI generation ─────────────────────────────────────────────────────────
   const handleGenerateAi = async () => {
     setConfirmOpen(false);
@@ -550,9 +490,6 @@ const LessonContentTab = ({ type, context }) => {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <Box>
-      {/* ── Context header ──────────────────────────────────────────────── */}
-      <ContextHeader cfg={cfg} context={context} statusChip={statusChip} />
-
       <Grid container spacing={1}>
         {/* ── Main column ─────────────────────────────────────────────── */}
         <Grid size={{ xs: 12, lg: 8 }}>
@@ -617,11 +554,15 @@ const LessonContentTab = ({ type, context }) => {
               variant="outlined"
               sx={{
                 borderStyle: 'dashed',
+                borderWidth: 2,
                 borderRadius: '14px',
                 textAlign: 'center',
                 py: 6,
                 px: 3,
                 bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#FAFAFA',
+                // Same elevation as the filled cards, so an empty tab doesn't
+                // sit flat next to them.
+                boxShadow: cardElevation,
               }}
             >
               <Avatar
@@ -631,7 +572,7 @@ const LessonContentTab = ({ type, context }) => {
                   bgcolor: cfg.accentLight,
                   color: cfg.accent,
                   mx: 'auto',
-                  mb: 2,
+                  mb: 1,
                 }}
               >
                 <cfg.Icon size={32} />
@@ -651,7 +592,9 @@ const LessonContentTab = ({ type, context }) => {
               variant="outlined"
               sx={{
                 borderRadius: '14px',
+                borderWidth: 2,
                 borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
+                boxShadow: cardElevation,
               }}
             >
               <CardContent>
@@ -684,7 +627,7 @@ const LessonContentTab = ({ type, context }) => {
                   )}
                 </Stack>
 
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={{ mb: 0.5 }} />
 
                 {/* An upload and an AI draft are not mutually exclusive — a
                     teacher who uploaded a file and later generated AI content
@@ -749,7 +692,7 @@ const LessonContentTab = ({ type, context }) => {
           {!loading && hasContent && isVideo && (
             <Card
               variant="outlined"
-              sx={{ borderRadius: '14px', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }}
+              sx={{ borderRadius: '14px', borderWidth: 2, borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB', boxShadow: cardElevation }}
             >
               <CardContent>
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
@@ -906,35 +849,70 @@ const LessonContentTab = ({ type, context }) => {
         {/* ── Sidebar ─────────────────────────────────────────────────── */}
         <Grid size={{ xs: 12, lg: 4 }}>
 
-          {/* Tips (Lesson Plan) */}
+          {/* Tips (Lesson Plan) — neutral, bordered, no color wash */}
           {type === 'plan' && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '14px', borderColor: '#F59E0B44' }}
+              sx={{
+                mb: 2.5,
+                borderRadius: '14px',
+                border: '2px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.14)' : '#E2E8F0',
+                overflow: 'hidden',
+                boxShadow: cardElevation,
+              }}
             >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9',
+                }}
+              >
+                <Avatar sx={{ width: 30, height: 30, bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9', color: 'text.secondary' }}>
+                  <IconBulb size={16} />
+                </Avatar>
+                <Typography variant="subtitle2" fontWeight={700} color="text.primary">
+                  Tips &amp; Best Practices
+                </Typography>
+              </Box>
               <CardContent>
-                <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
-                  <Avatar sx={{ width: 28, height: 28, bgcolor: '#FFFBEB', color: '#F59E0B' }}>
-                    <IconBulb size={15} />
-                  </Avatar>
-                  <Typography variant="subtitle2" fontWeight={700}>
-                    Tips &amp; Best Practices
-                  </Typography>
-                </Stack>
-                <Stack spacing={1}>
+                <Stack spacing={1.25}>
                   {TIPS.map((tip, i) => (
-                    <Stack key={i} direction="row" spacing={1} alignItems="flex-start">
+                    <Stack
+                      key={i}
+                      direction="row"
+                      spacing={1.25}
+                      alignItems="flex-start"
+                      sx={{
+                        p: 1,
+                        borderRadius: '10px',
+                        border: '1px solid',
+                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#EDF0F3',
+                      }}
+                    >
                       <Box
                         sx={{
-                          width: 6,
-                          height: 6,
+                          width: 22,
+                          height: 22,
                           borderRadius: '50%',
-                          bgcolor: cfg.accent,
-                          mt: 0.75,
+                          bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9',
+                          color: 'text.secondary',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           flexShrink: 0,
+                          fontSize: 11,
+                          fontWeight: 700,
                         }}
-                      />
-                      <Typography variant="body2" color="text.secondary" fontSize={13}>
+                      >
+                        {i + 1}
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" fontSize={13} sx={{ lineHeight: 1.5 }}>
                         {tip}
                       </Typography>
                     </Stack>
@@ -949,7 +927,7 @@ const LessonContentTab = ({ type, context }) => {
           {type === 'note' && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '14px', borderColor: '#0284C744', overflow: 'hidden' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderWidth: 2, borderColor: '#0284C744', overflow: 'hidden', boxShadow: cardElevation }}
             >
               <CardContent>
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
@@ -1025,7 +1003,7 @@ const LessonContentTab = ({ type, context }) => {
           {isVideo && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '14px', overflow: 'hidden' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderWidth: 2, overflow: 'hidden', boxShadow: cardElevation }}
             >
               <CardContent>
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5}>
@@ -1104,7 +1082,7 @@ const LessonContentTab = ({ type, context }) => {
           {(type === 'note' || isVideo) && (
             <Card
               variant="outlined"
-              sx={{ mb: 2.5, borderRadius: '14px', borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB' }}
+              sx={{ mb: 2.5, borderRadius: '14px', borderWidth: 2, borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB', boxShadow: cardElevation }}
             >
               <CardContent>
                 {record?.id ? (

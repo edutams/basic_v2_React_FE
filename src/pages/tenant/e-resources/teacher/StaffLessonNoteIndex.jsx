@@ -27,7 +27,6 @@ import {
   IconCheck,
   IconExternalLink,
   IconGauge,
-  IconInfoCircle,
   IconNotes,
   IconProgressCheck,
   IconUserCircle,
@@ -119,13 +118,13 @@ const SubjectCard = ({ item, onSelect }) => {
       elevation={0}
       sx={{
         borderRadius: '16px',
-        border: '1px solid',
+        border: '2px solid',
         borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
+        boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.45)' : '0 4px 14px rgba(15,23,42,0.08)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         '&:hover': {
           transform: 'translateY(-3px)',
@@ -889,9 +888,13 @@ const StaffLessonNoteIndex = () => {
         variant="outlined"
         sx={{
           borderRadius: '14px',
-          border: '1px solid',
+          border: '2px solid',
           borderColor: (theme) =>
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 6px 20px rgba(0,0,0,0.45)'
+              : '0 6px 20px rgba(15,23,42,0.08)',
         }}
       >
         {/* ── Card header: filters + Fetch + Back to subjects ────────── */}
@@ -1099,34 +1102,6 @@ const StaffLessonNoteIndex = () => {
         <CardContent>
           {!isDeepLink && !selectedSubject && (
             <>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.25,
-                  p: 1.5,
-                  mb: 2,
-                  borderRadius: '12px',
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.08)' : '#EFF6FF',
-                  border: '1px solid',
-                  borderColor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.25)' : '#BFDBFE',
-                }}
-              >
-                <IconInfoCircle size={18} color="#2563EB" style={{ flexShrink: 0 }} />
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: (theme) => (theme.palette.mode === 'dark' ? '#cbd5e1' : '#1e3a8a'),
-                  }}
-                >
-                  Pick a subject below to open its workspace — each one has a{' '}
-                  <strong>Lesson Plan</strong>, <strong>Lesson Note</strong> and{' '}
-                  <strong>Video Content</strong> tab for every week on the scheme of work.
-                </Typography>
-              </Box>
-
               {loadingSubjects ? (
                 <Grid container spacing={2}>
                   {[0, 1, 2].map((item) => (
@@ -1181,22 +1156,15 @@ const StaffLessonNoteIndex = () => {
               )}
 
               {!loadingWeeks && schemeOfWorkId && editorContext && (
-                <Box mt={1}>
+                <Box>
                   <Tabs
                     value={activeContentTab}
                     onChange={(_, value) => setActiveContentTab(value)}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile
-                    slotProps={{ indicator: { sx: { display: 'none' } } }}
                     sx={{
                       mb: 2.5,
-                      minHeight: 44,
-                      p: 0.5,
-                      borderRadius: '12px',
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
-                      '& .MuiTabs-flexContainer': { gap: 0.5 },
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                      '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', minHeight: 48 },
                     }}
                   >
                     {CONTENT_TABS.map((tab, index) => (
@@ -1206,21 +1174,6 @@ const StaffLessonNoteIndex = () => {
                         label={tab.label}
                         icon={<tab.Icon size={17} />}
                         iconPosition="start"
-                        disableRipple
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 700,
-                          fontSize: 12.5,
-                          minHeight: 38,
-                          borderRadius: '9px',
-                          color: 'text.secondary',
-                          transition: 'all 150ms ease',
-                          '&.Mui-selected': {
-                            color: '#fff',
-                            bgcolor: '#2563EB',
-                            boxShadow: '0 2px 6px rgba(37,99,235,0.35)',
-                          },
-                        }}
                       />
                     ))}
                   </Tabs>

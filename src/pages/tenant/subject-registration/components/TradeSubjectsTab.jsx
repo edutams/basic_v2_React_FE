@@ -26,7 +26,18 @@ import SubjectMatrixTable from './SubjectMatrixTable';
 import SubjectMatrixTableSkeleton from './SubjectMatrixTableSkeleton';
 
 const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
-  { session, term, termId, programme, classLevel, classArm, onStatusChange, onSaved, search = '' },
+  {
+    session,
+    term,
+    termId,
+    programme,
+    classLevel,
+    classArm,
+    onStatusChange,
+    onSaved,
+    search = '',
+    hasUnassignedSubjects = false,
+  },
   ref,
 ) {
   const navigate = useNavigate();
@@ -302,23 +313,25 @@ const TradeSubjectsTab = forwardRef(function TradeSubjectsTab(
       {loading ? (
         <SubjectMatrixTableSkeleton />
       ) : subjects.length === 0 ? (
-        <Alert
-          severity="info"
-          sx={{ alignItems: 'center' }}
-          action={
-            <Button
-              variant="contained"
-              color="info"
-              size="small"
-              onClick={() => navigate('/curriculum-setup')}
-            >
-              Go to Curriculum
-            </Button>
-          }
-        >
-          No trade subjects have been created for this class. Please go to the Curriculum step to
-          create subjects before registering learners.
-        </Alert>
+        hasUnassignedSubjects ? null : (
+          <Alert
+            severity="info"
+            sx={{ alignItems: 'center' }}
+            action={
+              <Button
+                variant="contained"
+                color="info"
+                size="small"
+                onClick={() => navigate('/curriculum-setup')}
+              >
+                Go to Curriculum
+              </Button>
+            }
+          >
+            No trade subjects have been created for this class. Please go to the Curriculum step to
+            create subjects before registering learners.
+          </Alert>
+        )
       ) : filteredLearners.length === 0 ? (
         <Alert severity="info">No learners match your search.</Alert>
       ) : (

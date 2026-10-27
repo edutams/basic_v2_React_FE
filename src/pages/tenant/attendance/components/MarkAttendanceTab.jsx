@@ -1572,7 +1572,9 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                         key={day}
                         align="center"
                         sx={{
-                          minWidth: 105,
+                          width: 140,
+                          minWidth: 140,
+                          maxWidth: 140,
                           bgcolor: isSelected
                             ? isDark
                               ? 'rgba(16, 185, 129, 0.18)'
@@ -1643,7 +1645,24 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                 disabled={isFuture}
                                 sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                               >
-                                <CheckCircleIcon color="success" sx={{ fontSize: 18 }} />
+                                <CheckCircleIcon sx={{ color: '#16A34A', fontSize: 20 }} />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Tooltip
+                            title={
+                              isFuture
+                                ? "Can't mark a day that hasn't happened yet"
+                                : `Mark all ${dayLabel} ${periodLabel} Late`
+                            }
+                          >
+                            <span>
+                              <IconButton
+                                onClick={() => bulkSetDayStatus(day, 'late')}
+                                disabled={isFuture}
+                                sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
+                              >
+                                <LateClockIcon sx={{ color: '#F59E0B', fontSize: 20 }} />
                               </IconButton>
                             </span>
                           </Tooltip>
@@ -1660,7 +1679,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                 disabled={isFuture}
                                 sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                               >
-                                <CancelOutlinedIcon color="error" sx={{ fontSize: 18 }} />
+                                <CancelIcon sx={{ color: '#DC2626', fontSize: 20 }} />
                               </IconButton>
                             </span>
                           </Tooltip>
@@ -1677,7 +1696,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                                 disabled={isFuture}
                                 sx={{ p: 0, width: 28, height: 28, minWidth: 28 }}
                               >
-                                <RadioButtonUncheckedIcon color="action" sx={{ fontSize: 18 }} />
+                                <RadioButtonUncheckedIcon sx={{ color: '#cbd5e1', fontSize: 20 }} />
                               </IconButton>
                             </span>
                           </Tooltip>

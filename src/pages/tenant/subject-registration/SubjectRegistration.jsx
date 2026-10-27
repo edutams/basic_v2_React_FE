@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -203,6 +204,7 @@ const AnalyticsStatCard = ({
 // ── Main Page ───────────────────────────────────────────────────
 const SubjectRegistration = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const { can } = usePermissions();
   const canManage = can('manage.class_manager.subject_registrar.manage');
   const canBulkRegister = can('manage.class_manager.subject_registrar.bulk_register');
@@ -259,6 +261,14 @@ const SubjectRegistration = () => {
     optional: { total_subjects: 0, registered_learners: 0 },
     trade: { total_subjects: 0, registered_learners: 0 },
   });
+  const [needsTeacherSubjects, setNeedsTeacherSubjects] = useState([]);
+  const relevantNeedsTeacher = useMemo(
+    () =>
+      needsTeacherSubjects.filter((s) =>
+        activeTab === 1 ? s.status === 'trade' : s.status === 'compulsory' || s.status === 'optional',
+      ),
+    [needsTeacherSubjects, activeTab],
+  );
   const [progress, setProgress] = useState({ completed_all: 0, total_learners: 0, learners: [] });
 
   // "Primary 2 – Blue Arm" style label for the Learners stat card — resolves
@@ -442,6 +452,7 @@ const SubjectRegistration = () => {
           optional: statsRes.data.data.optional ?? { total_subjects: 0, registered_learners: 0 },
           trade: statsRes.data.data.trade ?? { total_subjects: 0, registered_learners: 0 },
         });
+        setNeedsTeacherSubjects(statsRes.data.data.needs_teacher_subjects ?? []);
       }
       if (progressRes.data?.status && progressRes.data?.data) {
         setProgress({
@@ -749,10 +760,44 @@ const SubjectRegistration = () => {
                 )}
               </Box>
 
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Core subjects are preselected according to school policy. You can review and adjust for
-                individual learners where allowed.
-              </Alert>
+              {activeTab === 0 && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  Core subjects are preselected according to school policy. You can review and adjust for
+                  individual learners where allowed.
+                </Alert>
+              )}
+
+              {relevantNeedsTeacher.length > 0 && (
+                  <Alert
+                    severity="warning"
+                    sx={{
+                      mb: 2,
+                      bgcolor: '#FFF4E5',
+                      color: '#8A4B00',
+                      '& .MuiAlert-icon': { color: '#ED6C02' },
+                      alignItems: 'center',
+                    }}
+                    action={
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate('/teaching-allocations?sub=subject-teacher')}
+                        sx={{
+                          color: '#8A4B00',
+                          borderColor: '#ED6C02',
+                          whiteSpace: 'nowrap',
+                          // '&:hover': { borderColor: '#8A4B00', bgcolor: 'rgba(237,108,2,0.08)' },
+                        }}
+                      >
+                        Assign Teacher
+                      </Button>
+                    }
+                  >
+                    A subject must have a teacher assigned to it before it can appear here and learners
+                    can register for it. {relevantNeedsTeacher.length === 1 ? 'This subject needs' : 'These subjects need'}{' '}
+                    a teacher assigned: {relevantNeedsTeacher.map((s) => s.subject_name).join(', ')}.
+                  </Alert>
+              )}
 
               {activeTab === 0 && (
                 <SubjectsTab
@@ -782,6 +827,7 @@ const SubjectRegistration = () => {
                   classLevel={pClass}
                   classArm={pArm}
                   search={search}
+                  hasUnassignedSubjects={relevantNeedsTeacher.length > 0}
                 />
               )}
 

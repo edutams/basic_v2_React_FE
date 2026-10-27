@@ -914,8 +914,35 @@ const PaymentScheduleGrid = ({
           <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.75, px: 1 } }}>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, width: 40 }}>#</TableCell>
-                <TableCell sx={{ fontWeight: 700, minWidth: 150 }}>Payment Item</TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    width: 40,
+                    minWidth: 40,
+                    maxWidth: 40,
+                    boxSizing: 'border-box',
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 3,
+                    bgcolor: 'background.paper',
+                  }}
+                >
+                  #
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    minWidth: 150,
+                    position: 'sticky',
+                    left: 40,
+                    zIndex: 3,
+                    bgcolor: 'background.paper',
+                    borderRight: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  Payment Item
+                </TableCell>
                 <TableCell sx={{ fontWeight: 700, width: 110 }}>Status</TableCell>
                 {allCategories.map((cat, idx) => {
                   const scheme = SCHEME_MAP[idx % SCHEME_MAP.length];
@@ -960,10 +987,19 @@ const PaymentScheduleGrid = ({
                 // even before the data arrives.
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell>
+                    <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', width: 40, minWidth: 40, maxWidth: 40, boxSizing: 'border-box' }}>
                       <Skeleton variant="text" width={16} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: 40,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
                       <Skeleton variant="text" width={120} height={22} />
                     </TableCell>
                     <TableCell>
@@ -993,8 +1029,19 @@ const PaymentScheduleGrid = ({
               ) : (
                 paginatedSchedules.map((schedule, index) => (
                   <TableRow key={schedule.payment_name.id} hover>
-                    <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', width: 40, minWidth: 40, maxWidth: 40, boxSizing: 'border-box' }}>
+                      {page * rowsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: 40,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        borderRight: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
                       <Typography variant="body2" fontWeight={700} color="primary.main">
                         {schedule.payment_name.name}
                       </Typography>

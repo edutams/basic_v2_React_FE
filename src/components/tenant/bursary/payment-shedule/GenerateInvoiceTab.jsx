@@ -1133,10 +1133,13 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                   sx={{
                     fontWeight: 700,
                     width: 50,
+                    minWidth: 50,
+                    maxWidth: 50,
+                    boxSizing: 'border-box',
                     position: 'sticky',
                     left: 0,
                     bgcolor: isDark ? 'background.default' : 'grey.50',
-                    zIndex: 1,
+                    zIndex: 3,
                   }}
                 >
                   #
@@ -1148,7 +1151,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     position: 'sticky',
                     left: 50,
                     bgcolor: isDark ? 'background.default' : 'grey.50',
-                    zIndex: 1,
+                    zIndex: 3,
+                    borderRight: '1px solid',
+                    borderColor: 'divider',
                   }}
                 >
                   PAYMENT ITEM
@@ -1242,8 +1247,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     sx={{
                       position: 'sticky',
                       left: 0,
+                      width: 50,
+                      minWidth: 50,
+                      maxWidth: 50,
+                      boxSizing: 'border-box',
                       bgcolor: isDark ? 'background.paper' : '#fff',
-                      zIndex: 1,
+                      zIndex: 2,
                     }}
                   >
                     {loadingOverview ? <Skeleton variant="text" width={14} /> : idx + 1}
@@ -1253,7 +1262,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                       position: 'sticky',
                       left: 50,
                       bgcolor: isDark ? 'background.paper' : '#fff',
-                      zIndex: 1,
+                      zIndex: 2,
+                      borderRight: '1px solid',
+                      borderColor: 'divider',
                     }}
                   >
                     {loadingOverview ? (
@@ -1309,7 +1320,9 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     position: 'sticky',
                     left: 0,
                     bgcolor: isDark ? 'rgba(37,99,235,0.08)' : '#EFF6FF',
-                    zIndex: 1,
+                    zIndex: 2,
+                    borderRight: '1px solid',
+                    borderColor: 'divider',
                   }}
                 >
                   <Typography variant="body1" fontWeight={800} sx={{ color: 'primary.dark' }}>

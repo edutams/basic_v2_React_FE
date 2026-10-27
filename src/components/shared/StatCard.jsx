@@ -100,6 +100,7 @@ const StatCard = ({
   align = 'right',
   countFontSize,
   showChevron = false,
+  accent = false,
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -122,6 +123,13 @@ const StatCard = ({
         pr: showChevron ? '26px' : '14px',
         width: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+        ...(accent && {
+          backgroundImage: isDark
+            ? `linear-gradient(135deg, ${scheme.color}26 0%, transparent 65%)`
+            : `linear-gradient(135deg, ${scheme.bg} 0%, #ffffff 75%)`,
+          borderTop: '3px solid',
+          borderTopColor: scheme.color,
+        }),
         border: '1px solid',
         borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
@@ -134,12 +142,29 @@ const StatCard = ({
         cursor: onClick ? 'pointer' : 'default',
         '&:hover': {
           transform: 'translateY(-2px)',
-          borderColor: '#94a3b8',
-          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+          borderColor: accent ? scheme.color : '#94a3b8',
+          boxShadow: accent ? `0 6px 16px ${scheme.color}26` : '0 4px 12px rgba(15, 23, 42, 0.08)',
         },
         ...sx,
       }}
     >
+      {/* Oversized faded icon watermark — only on the accent variant, so
+          existing StatCard usages everywhere else are unaffected. */}
+      {accent && Icon && (
+        <Icon
+          size={72}
+          style={{
+            position: 'absolute',
+            right: -12,
+            bottom: -14,
+            color: scheme.color,
+            opacity: isDark ? 0.14 : 0.1,
+            transform: 'rotate(-8deg)',
+            zIndex: 0,
+          }}
+        />
+      )}
+
       <Box
         sx={{
           display: 'flex',
@@ -170,6 +195,7 @@ const StatCard = ({
               flexShrink: 0,
               position: 'relative',
               zIndex: 1,
+              boxShadow: accent ? `0 4px 10px ${scheme.color}40` : 'none',
             }}
           >
             {Icon && <Icon size={22} />}
@@ -325,6 +351,7 @@ StatCard.propTypes = {
   align: PropTypes.oneOf(['left', 'right']),
   countFontSize: PropTypes.number,
   showChevron: PropTypes.bool,
+  accent: PropTypes.bool,
 };
 
 export default StatCard;

@@ -54,10 +54,6 @@ export const landlordSchemeApi = {
     );
     return response.data;
   },
-  updateSchemeEntry: async (id, data) => {
-    const response = await landlordApi.put(`/v1/landlord/scheme-of-work/entry/${id}`, data);
-    return response.data;
-  },
   getDetails: async (id) => {
     const response = await landlordApi.get(`/v1/landlord/scheme-of-work/view/${id}`);
     return response.data;

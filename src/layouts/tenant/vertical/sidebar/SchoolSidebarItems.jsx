@@ -110,6 +110,8 @@ const SchoolSidebarItems = () => {
   const { user } = useAuth();
   const { canAny } = usePermissions();
   const [menuItems, setMenuItems] = useState([]);
+  // Accordion-style: only one top-level module stays open at a time.
+  const [openModuleId, setOpenModuleId] = useState(null);
 
   // Recursive function to handle multiple levels of nesting
   const processNestedModules = (subModules) => {
@@ -150,6 +152,28 @@ const SchoolSidebarItems = () => {
     fetchModules();
   }, []);
 
+  // Recursively checks whether a module (or any of its nested children)
+  // links to the given path.
+  const moduleContainsPath = (item, path) => {
+    if (!item) return false;
+    if (item.href === path) return true;
+    return item.children?.some((child) => moduleContainsPath(child, path)) ?? false;
+  };
+
+  // Auto-open whichever top-level module contains the current route, and
+  // close the rest — mirrors the per-item behavior NavCollapse used to own
+  // independently, now centralized so only one module is ever open.
+  useEffect(() => {
+    const match = menuItems.find(
+      (item) => item.children && item.children.length > 0 && moduleContainsPath(item, pathname),
+    );
+    setOpenModuleId(match ? match.id : null);
+  }, [pathname, menuItems]);
+
+  const handleToggleModule = (id) => {
+    setOpenModuleId((prev) => (prev === id ? null : id));
+  };
+
   return (
     <Box sx={{ px: 3 }}>
       <List sx={{ pt: 0 }} className="sidebarNav">
@@ -172,6 +196,8 @@ const SchoolSidebarItems = () => {
                   level={1}
                   key={item.id}
                   onClick={() => setIsMobileSidebar(!isMobileSidebar)}
+                  controlledOpen={openModuleId === item.id}
+                  onToggleOpen={() => handleToggleModule(item.id)}
                 />
               );
             } else {

@@ -23,6 +23,8 @@ import {
   LinearProgress,
   Divider,
   Tooltip,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   ChevronRight as ChevronRightIcon,
@@ -122,85 +124,13 @@ const StatFigure = ({ value, label, color, notSet, achievedBy }) => (
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)',
         }}
       >
-        <Typography
-          variant="caption"
-          fontWeight={700}
-          display="block"
-          noWrap
-          sx={{ color }}
-        >
+        <Typography variant="caption" fontWeight={700} display="block" noWrap sx={{ color }}>
           {achievedBy}
         </Typography>
       </Box>
     )}
   </Box>
 );
-
-/** Numbered 3-step stepper (Set Schedule / Generate Invoice / Send
- * Invoice) rendered inside the Breadcrumb's right-aligned slot. */
-const ActionStepper = ({ activeTab, onChange }) => {
-  const steps = ['Set Schedule', 'Generate Invoice', 'Send Invoice'];
-  return (
-    <Stack direction="row" alignItems="center" spacing={1}>
-      {steps.map((label, idx) => (
-        <Stack key={label} direction="row" alignItems="center" spacing={1}>
-          {idx > 0 && <Box sx={{ width: 24, height: 2, bgcolor: 'divider' }} />}
-          <Box
-            onClick={() => onChange(idx)}
-            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer' }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Box
-                sx={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: '50%',
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  bgcolor:
-                    idx === activeTab
-                      ? 'primary.main'
-                      : idx < activeTab
-                        ? 'success.main'
-                        : 'grey.300',
-                  color: '#fff',
-                }}
-              >
-                {idx + 1}
-              </Box>
-              <Typography
-                variant="body2"
-                noWrap
-                sx={{
-                  fontWeight: idx === activeTab ? 700 : 500,
-                  color: idx === activeTab ? 'primary.main' : 'text.secondary',
-                }}
-              >
-                {label}
-              </Typography>
-            </Box>
-            {/* Underline on the active step only, so it's unmistakable which
-                of the 3 stages (Set Schedule / Generate Invoice / Send
-                Invoice) is currently open. */}
-            <Box
-              sx={{
-                mt: 0.5,
-                width: '100%',
-                height: 2,
-                borderRadius: 1,
-                bgcolor: idx === activeTab ? 'primary.main' : 'transparent',
-              }}
-            />
-          </Box>
-        </Stack>
-      ))}
-    </Stack>
-  );
-};
 
 const PaymentShedule = () => {
   const theme = useTheme();
@@ -493,7 +423,6 @@ const PaymentShedule = () => {
 
   const stats = scheduleStats;
 
-
   return (
     <PageContainer title="Payment Schedule" description="Configure fees and payment settings">
       <Breadcrumb
@@ -519,9 +448,38 @@ const PaymentShedule = () => {
         }
         subtitle="Configure payment amounts across classes for the selected term."
         items={BCrumb}
+      />
+
+      <Box
+        sx={{
+          mb: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          overflowX: 'auto',
+          '& .MuiTabs-root': { minWidth: '300px' },
+        }}
       >
-        <ActionStepper activeTab={actionTab} onChange={setActionTab} />
-      </Breadcrumb>
+        <Tabs
+          value={actionTab}
+          onChange={(e, newValue) => setActionTab(newValue)}
+          textColor="primary"
+          indicatorColor="primary"
+          variant="scrollable"
+        >
+          <Tab
+            label="Set Schedule"
+            sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+          />
+          <Tab
+            label="Generate Invoice"
+            sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+          />
+          <Tab
+            label="Send Invoice"
+            sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
+          />
+        </Tabs>
+      </Box>
 
       {actionTab === 0 && (
         <>
@@ -881,120 +839,139 @@ const PaymentShedule = () => {
                         }
                         arrow
                       >
-                      <Paper
-                        variant="outlined"
-                        onClick={() => cls && setSelectedScheduleClassId(String(cls.id))}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: '12px',
-                          bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
-                          cursor: cls ? 'pointer' : 'default',
-                          borderWidth: isSelected ? 2 : 1,
-                          borderColor: isSelected ? scheme.color : 'divider',
-                          boxShadow: isSelected ? `0 0 0 2px ${scheme.color}33` : 'none',
-                          transition: 'transform 150ms ease, box-shadow 150ms ease',
-                          '&:hover': cls
-                            ? {
-                                transform: 'translateY(-2px)',
-                                boxShadow: isSelected
-                                  ? `0 0 0 2px ${scheme.color}33`
-                                  : '0 4px 12px rgba(15,23,42,0.08)',
-                              }
-                            : undefined,
-                        }}
-                      >
-                        {!cls ? (
-                          <>
-                            <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '8px' }} />
-                                <Skeleton variant="text" width={70} height={22} />
-                              </Box>
-                            </Box>
-                            <Skeleton variant="text" width={80} height={18} sx={{ mb: 0.5 }} />
-                            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                              <Skeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: 3 }} />
-                              <Skeleton variant="text" width={28} height={18} />
-                            </Box>
-                            <Skeleton variant="text" width={110} height={18} />
-                          </>
-                        ) : (
-                          <>
-                            <Box
-                              display="flex"
-                              alignItems="center"
-                              justifyContent="space-between"
-                              mb={1}
-                            >
-                              <Box display="flex" alignItems="center" gap={1} minWidth={0}>
-                                <Box
-                                  sx={{
-                                    width: 28,
-                                    height: 28,
-                                    borderRadius: '8px',
-                                    bgcolor: scheme.bg,
-                                    color: scheme.color,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <IconUsers size={16} />
+                        <Paper
+                          variant="outlined"
+                          onClick={() => cls && setSelectedScheduleClassId(String(cls.id))}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: '12px',
+                            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : scheme.bg + '33',
+                            cursor: cls ? 'pointer' : 'default',
+                            borderWidth: isSelected ? 2 : 1,
+                            borderColor: isSelected ? scheme.color : 'divider',
+                            boxShadow: isSelected ? `0 0 0 2px ${scheme.color}33` : 'none',
+                            transition: 'transform 150ms ease, box-shadow 150ms ease',
+                            '&:hover': cls
+                              ? {
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: isSelected
+                                    ? `0 0 0 2px ${scheme.color}33`
+                                    : '0 4px 12px rgba(15,23,42,0.08)',
+                                }
+                              : undefined,
+                          }}
+                        >
+                          {!cls ? (
+                            <>
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="space-between"
+                                mb={1}
+                              >
+                                <Box display="flex" alignItems="center" gap={1}>
+                                  <Skeleton
+                                    variant="rounded"
+                                    width={28}
+                                    height={28}
+                                    sx={{ borderRadius: '8px' }}
+                                  />
+                                  <Skeleton variant="text" width={70} height={22} />
                                 </Box>
-                                <Typography variant="body2" fontWeight={700} noWrap>
-                                  {cls.class_code || cls.class_name}
-                                </Typography>
                               </Box>
-                              {isSelected ? (
-                                <CheckCircleIcon sx={{ color: scheme.color, flexShrink: 0, fontSize: 20 }} />
-                              ) : (
-                                <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
-                              )}
-                            </Box>
-                            <Typography
-                              variant="caption"
-                              color="textSecondary"
-                              display="block"
-                              mb={0.5}
-                            >
-                              {cls.student_count} students
-                            </Typography>
-                            <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                              <LinearProgress
-                                variant="determinate"
-                                value={pct}
-                                sx={{
-                                  flex: 1,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                                  '& .MuiLinearProgress-bar': {
-                                    bgcolor: notSet ? 'error.main' : scheme.color,
-                                    borderRadius: 3,
-                                  },
-                                }}
-                              />
+                              <Skeleton variant="text" width={80} height={18} sx={{ mb: 0.5 }} />
+                              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                <Skeleton
+                                  variant="rounded"
+                                  width="100%"
+                                  height={6}
+                                  sx={{ borderRadius: 3 }}
+                                />
+                                <Skeleton variant="text" width={28} height={18} />
+                              </Box>
+                              <Skeleton variant="text" width={110} height={18} />
+                            </>
+                          ) : (
+                            <>
+                              <Box
+                                display="flex"
+                                alignItems="center"
+                                justifyContent="space-between"
+                                mb={1}
+                              >
+                                <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+                                  <Box
+                                    sx={{
+                                      width: 28,
+                                      height: 28,
+                                      borderRadius: '8px',
+                                      bgcolor: scheme.bg,
+                                      color: scheme.color,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <IconUsers size={16} />
+                                  </Box>
+                                  <Typography variant="body2" fontWeight={700} noWrap>
+                                    {cls.class_code || cls.class_name}
+                                  </Typography>
+                                </Box>
+                                {isSelected ? (
+                                  <CheckCircleIcon
+                                    sx={{ color: scheme.color, flexShrink: 0, fontSize: 20 }}
+                                  />
+                                ) : (
+                                  <ChevronRightIcon
+                                    sx={{ color: 'text.disabled', flexShrink: 0 }}
+                                  />
+                                )}
+                              </Box>
                               <Typography
                                 variant="caption"
-                                fontWeight={700}
-                                sx={{ color: notSet ? 'error.main' : scheme.color }}
+                                color="textSecondary"
+                                display="block"
+                                mb={0.5}
                               >
-                                {pct}%
+                                {cls.student_count} students
                               </Typography>
-                            </Box>
-                            {notSet ? (
-                              <Typography variant="caption" fontWeight={700} color="error.main">
-                                Not Set
-                              </Typography>
-                            ) : (
-                              <Typography variant="caption" color="textSecondary">
-                                {cls.priced_items} of {cls.total_items} items scheduled
-                              </Typography>
-                            )}
-                          </>
-                        )}
-                      </Paper>
+                              <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={pct}
+                                  sx={{
+                                    flex: 1,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    bgcolor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                                    '& .MuiLinearProgress-bar': {
+                                      bgcolor: notSet ? 'error.main' : scheme.color,
+                                      borderRadius: 3,
+                                    },
+                                  }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  fontWeight={700}
+                                  sx={{ color: notSet ? 'error.main' : scheme.color }}
+                                >
+                                  {pct}%
+                                </Typography>
+                              </Box>
+                              {notSet ? (
+                                <Typography variant="caption" fontWeight={700} color="error.main">
+                                  Not Set
+                                </Typography>
+                              ) : (
+                                <Typography variant="caption" color="textSecondary">
+                                  {cls.priced_items} of {cls.total_items} items scheduled
+                                </Typography>
+                              )}
+                            </>
+                          )}
+                        </Paper>
                       </Tooltip>
                     </Grid>
                   );
@@ -1004,7 +981,6 @@ const PaymentShedule = () => {
           </Paper>
         </>
       )}
-
 
       <Box>
         {actionTab === 0 && (
@@ -1039,9 +1015,7 @@ const PaymentShedule = () => {
             />
           </Paper>
         )}
-        {actionTab === 2 && (
-          <SendInvoiceTab showSnackbar={showSnackbar} />
-        )}
+        {actionTab === 2 && <SendInvoiceTab showSnackbar={showSnackbar} />}
       </Box>
 
       <TermMigrationModal

@@ -122,27 +122,9 @@ const TeachingStaffTab = ({
   onRowClick,
   selectedStaffId,
 }) => {
-  const allSelected = staff.length > 0 && staff.every((s) => selectedIds.has(s.user_id));
-  const someSelected = staff.some((s) => selectedIds.has(s.user_id)) && !allSelected;
-
-  const toggleAll = () => {
-    const next = new Set(selectedIds);
-    if (allSelected) {
-      staff.forEach((s) => next.delete(s.user_id));
-    } else {
-      staff.forEach((s) => next.add(s.user_id));
-    }
-    setSelectedIds(next);
-  };
-
+  // Radio-style selection: exactly one row selected at a time.
   const toggleOne = (id) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    setSelectedIds(next);
+    setSelectedIds(new Set([id]));
   };
 
   return (
@@ -326,15 +308,7 @@ const TeachingStaffTab = ({
               }}
             >
               <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    size="small"
-                    indeterminate={someSelected}
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    disabled={staff.length === 0}
-                  />
-                </TableCell>
+                <TableCell padding="checkbox" />
                 <TableCell sx={{ fontWeight: 700 }}>#</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>FullName</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>

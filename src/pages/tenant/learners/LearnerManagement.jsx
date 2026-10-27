@@ -196,6 +196,21 @@ const LearnerManagement = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerLearner, setDrawerLearner] = useState(null);
 
+  // Row selection is radio-style: exactly one row selected at a time,
+  // driving both the checkbox and the detail drawer. Auto-select the first
+  // row whenever the list loads and the current selection isn't in it
+  // (initial load, or a filter/search that drops the selected row).
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const stillPresent = drawerLearner && rows.some((r) => r.user_id === drawerLearner.user_id);
+    if (!stillPresent) {
+      setDrawerLearner(rows[0]);
+      setDrawerOpen(true);
+      setSelectedIds(new Set([rows[0].user_id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
+
   // Onboarding tour: "click a row" -> "panel updates" -> gone for the rest
   // of this page visit. Driven by the real drawerOpen state, not a timer —
   // once the user actually opens the panel the first hint is retired for
@@ -624,21 +639,9 @@ const LearnerManagement = () => {
     setPage(0);
   };
 
-  // ─── Row selection (bulk actions) ───────────────────────────────────────
-  const handleSelectAll = (e) => {
-    setSelectedIds(e.target.checked ? new Set(rows.map((r) => r.user_id)) : new Set());
-  };
-
+  // ─── Row selection (radio-style: exactly one row at a time) ─────────────
   const handleSelectRow = (row) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(row.user_id)) {
-        next.delete(row.user_id);
-      } else {
-        next.add(row.user_id);
-      }
-      return next;
-    });
+    setSelectedIds(new Set([row.user_id]));
     setDrawerLearner(row);
     setDrawerOpen(true);
   };
@@ -1028,14 +1031,7 @@ const LearnerManagement = () => {
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        size="small"
-                        indeterminate={selectedIds.size > 0 && selectedIds.size < rows.length}
-                        checked={rows.length > 0 && selectedIds.size === rows.length}
-                        onChange={handleSelectAll}
-                      />
-                    </TableCell>
+                    <TableCell padding="checkbox" />
                     <TableCell>#</TableCell>
                     <TableCell>Name</TableCell>
                     <TableCell>Class / Arm</TableCell>

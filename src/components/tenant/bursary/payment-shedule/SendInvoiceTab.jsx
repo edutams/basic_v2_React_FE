@@ -55,7 +55,6 @@ import {
   SmsOutlined as SmsTabIcon,
   ArticleOutlined as ExcelTabIcon,
   SettingsOutlined as SettingsIcon,
-  VisibilityOutlined as PreviewRecipientsIcon,
   AutoAwesome as AiIcon,
   RestartAlt as RestoreIcon,
   CheckCircle as ReadyIcon,
@@ -172,6 +171,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
   const [editError, setEditError] = useState('');
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [previewRecipientsOpen, setPreviewRecipientsOpen] = useState(false);
+  const [addClassAnchorEl, setAddClassAnchorEl] = useState(null);
   const [composeView, setComposeView] = useState('compose'); // 'compose' | 'preview'
 
   const [emailSubject, setEmailSubject] = useState(DEFAULT_SUBJECT);
@@ -660,7 +660,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
 
   const renderRecipientsAndMessage = () => (
     <Grid container spacing={2}>
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12, md: 5 }}>
         <ParentCard sx={{ '& .MuiCardContent-root': { p: 2, '&:last-child': { pb: 2 } } }}>
           <Box mb={1.5}>
             <Typography variant="subtitle1" fontWeight={700}>
@@ -725,7 +725,6 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                     />
                   </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Student Name (Admission No.)</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Class / Arm</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>
                     Parent Name ({channelTab === 1 ? 'Phone' : 'Email'})
                   </TableCell>
@@ -738,13 +737,13 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               <TableBody>
                 {loadingParents ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                       <CircularProgress size={24} />
                     </TableCell>
                   </TableRow>
                 ) : paginatedParentsList.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                       <Alert severity="info" sx={{ justifyContent: 'center' }}>
                         No parents found for the selected filters.
                       </Alert>
@@ -774,10 +773,8 @@ const SendInvoiceTab = ({ showSnackbar }) => {
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {row.admission_no}
+                            {row.class_name ? ` • ${row.class_name}` : ''}
                           </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{row.class_name}</Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" fontWeight={600}>
@@ -884,7 +881,7 @@ const SendInvoiceTab = ({ showSnackbar }) => {
         </ParentCard>
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6 }}>
+      <Grid size={{ xs: 12, md: 7 }}>
         <ParentCard
           sx={{
             height: '100%',
@@ -1359,48 +1356,28 @@ const SendInvoiceTab = ({ showSnackbar }) => {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 } }}>
-            <InputLabel shrink>Class</InputLabel>
-            <Select
-              multiple={channelTab !== 2}
-              notched
-              value={channelTab === 2 ? selectedClassIds[0] || '' : selectedClassIds}
-              label="Class"
-              onChange={(e) => {
-                if (channelTab === 2) {
-                  setSelectedClassIds(e.target.value ? [e.target.value] : []);
-                } else {
-                  setSelectedClassIds(
-                    typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value,
-                  );
+          {channelTab === 2 && (
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 } }}>
+              <InputLabel shrink>Class</InputLabel>
+              <Select
+                notched
+                value={selectedClassIds[0] || ''}
+                label="Class"
+                onChange={(e) => setSelectedClassIds(e.target.value ? [e.target.value] : [])}
+                disabled={loadingProgrammeClasses}
+                renderValue={(selected) =>
+                  classOptionsForFilter.find((c) => String(c.id) === String(selected))
+                    ?.class_name || 'Select class'
                 }
-              }}
-              disabled={loadingProgrammeClasses}
-              renderValue={(selected) => {
-                const arr = Array.isArray(selected) ? selected : [selected].filter(Boolean);
-                if (arr.length === 0) return 'Select class';
-                if (arr.length === 1) {
-                  return (
-                    classOptionsForFilter.find((c) => String(c.id) === String(arr[0]))
-                      ?.class_name || '1 class selected'
-                  );
-                }
-                return `${arr.length} classes selected`;
-              }}
-            >
-              {classOptionsForFilter.map((cls) => (
-                <MenuItem key={cls.id} value={String(cls.id)}>
-                  {channelTab !== 2 && (
-                    <Checkbox
-                      size="small"
-                      checked={selectedClassIds.some((id) => String(id) === String(cls.id))}
-                    />
-                  )}
-                  {cls.class_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              >
+                {classOptionsForFilter.map((cls) => (
+                  <MenuItem key={cls.id} value={String(cls.id)}>
+                    {cls.class_name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
 
           <TextField
             size="small"
@@ -1427,20 +1404,9 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               <RefreshIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          {channelTab !== 2 && (
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<PreviewRecipientsIcon fontSize="small" />}
-              onClick={() => setPreviewRecipientsOpen(true)}
-              sx={{ fontWeight: 600, textTransform: 'none', whiteSpace: 'nowrap' }}
-            >
-              Preview Recipients
-            </Button>
-          )}
         </Box>
 
-        {channelTab !== 2 && selectedClassIds.length > 0 && (
+        {channelTab !== 2 && (
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={2}>
             {selectedClassIds.map((id) => {
               const cls = classOptionsForFilter.find((c) => String(c.id) === String(id));
@@ -1461,10 +1427,37 @@ const SendInvoiceTab = ({ showSnackbar }) => {
               size="small"
               variant="outlined"
               icon={<AddClassesIcon fontSize="small" />}
-              onClick={() =>
-                showSnackbar?.('Use the Class dropdown above to add more classes', 'info')
-              }
+              onClick={(e) => setAddClassAnchorEl(e.currentTarget)}
             />
+            <Menu
+              anchorEl={addClassAnchorEl}
+              open={Boolean(addClassAnchorEl)}
+              onClose={() => setAddClassAnchorEl(null)}
+            >
+              {classOptionsForFilter.filter(
+                (cls) => !selectedClassIds.some((id) => String(id) === String(cls.id)),
+              ).length === 0 ? (
+                <MenuItem disabled>
+                  {selectedProgrammeId
+                    ? 'No more classes in this programme'
+                    : 'Select a programme first'}
+                </MenuItem>
+              ) : (
+                classOptionsForFilter
+                  .filter((cls) => !selectedClassIds.some((id) => String(id) === String(cls.id)))
+                  .map((cls) => (
+                    <MenuItem
+                      key={cls.id}
+                      onClick={() => {
+                        setSelectedClassIds((prev) => [...prev, String(cls.id)]);
+                        setAddClassAnchorEl(null);
+                      }}
+                    >
+                      {cls.class_name}
+                    </MenuItem>
+                  ))
+              )}
+            </Menu>
           </Stack>
         )}
       </Box>

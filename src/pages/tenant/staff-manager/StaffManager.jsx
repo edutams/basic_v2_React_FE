@@ -1326,7 +1326,7 @@ const StaffManager = () => {
           </Button>
           <Button
             size="small"
-            color="inherit"
+            // color="inherit"
             onClick={handleConfirmedImpersonateStaff}
             sx={{ bgcolor: '#593196', '&:hover': { bgcolor: '#4a2880' }, color: '#ffffff' }}
           >

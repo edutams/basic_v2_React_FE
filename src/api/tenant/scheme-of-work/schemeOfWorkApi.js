@@ -54,10 +54,6 @@ export const tenantSchemeApi = {
         const response = await tenantApi.delete(`/scheme-of-work/learning-objective/${id}`);
         return response.data;
     },
-    updateSchemeEntry: async (id, data) => {
-        const response = await tenantApi.put(`/scheme-of-work/entry/${id}`, data);
-        return response.data;
-    },
     getDetails: async (id) => {
         const response = await tenantApi.get(`/scheme-of-work/view/${id}`);
         return response.data;

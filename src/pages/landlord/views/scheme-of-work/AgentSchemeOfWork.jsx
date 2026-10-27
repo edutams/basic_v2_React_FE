@@ -310,38 +310,32 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
 
   const handleSaveObjective = async (objectiveData) => {
     try {
+      // These fields live on the learning objective itself — each one has
+      // its own previous knowledge, practical approach, etc., rather than
+      // sharing a single value with every other objective in the same week.
+      const lessonContentFields = {
+        previous_knowledge: objectiveData.previous_knowledge,
+        practical_approach: objectiveData.practical_approach,
+        evaluation: objectiveData.evaluation,
+        instructional_resources: objectiveData.instructional_resources,
+        teaching_note: objectiveData.teaching_note,
+        teacher_activity: objectiveData.teacher_activity,
+        learner_activity: objectiveData.learner_activity,
+      };
+
       if (selectedObjective) {
         await landlordSchemeApi.updateObjective(selectedObjective.id, {
           learning_objective_details: objectiveData.learning_objective_details,
+          ...lessonContentFields,
         });
         notify.success('Learning objective updated successfully');
       } else {
         await landlordSchemeApi.addObjective({
           learning_objective_details: objectiveData.learning_objective_details,
           sub_topic_id: selectedRow.sub_topic_id,
+          ...lessonContentFields,
         });
         notify.success('Learning objective added successfully');
-      }
-
-      // Update scheme entry with all additional fields
-      if (
-        objectiveData.previous_knowledge ||
-        objectiveData.practical_approach ||
-        objectiveData.evaluation ||
-        objectiveData.instructional_resources ||
-        objectiveData.teaching_note ||
-        objectiveData.teacher_activity ||
-        objectiveData.learner_activity
-      ) {
-        await landlordSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
-          previous_knowledge: objectiveData.previous_knowledge,
-          practical_approach: objectiveData.practical_approach,
-          evaluation: objectiveData.evaluation,
-          instructional_resources: objectiveData.instructional_resources,
-          teaching_note: objectiveData.teaching_note,
-          teacher_activity: objectiveData.teacher_activity,
-          learner_activity: objectiveData.learner_activity,
-        });
       }
 
       setObjectiveModalOpen(false);
@@ -1003,18 +997,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
                         </List>
                       </TableCell>
 
-                      {/* Lesson Content Status */}
+                      {/* Lesson Content Status — true if any learning objective under this subtopic has it, since each objective now carries its own value. */}
                       <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
-                        {row.learning_material ? (
+                        {row.learningObjectives?.some((lo) => lo.learning_material) ? (
                           <IconCheck size={20} color="green" />
                         ) : (
                           <IconX size={20} color="red" />
                         )}
                       </TableCell>
 
-                      {/* Video Content Status */}
+                      {/* Video Content Status — same per-objective aggregation. */}
                       <TableCell align="center" sx={{ border: '1px solid #dee2e6' }}>
-                        {row.resource_links ? (
+                        {row.learningObjectives?.some((lo) => lo.resource_links) ? (
                           <IconCheck size={20} color="green" />
                         ) : (
                           <IconX size={20} color="red" />

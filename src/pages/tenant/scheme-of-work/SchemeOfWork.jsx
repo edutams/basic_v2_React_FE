@@ -528,42 +528,35 @@ const SchemeOfWork = () => {
 
   const handleSaveObjective = async (objectiveData) => {
     try {
+      // These fields live on the learning objective itself — each one has
+      // its own video link, material, teacher/learner activity, etc.,
+      // rather than sharing a single value with every other objective in
+      // the same week.
+      const lessonContentFields = {
+        previous_knowledge: objectiveData.previous_knowledge,
+        practical_approach: objectiveData.practical_approach,
+        evaluation: objectiveData.evaluation,
+        instructional_resources: objectiveData.instructional_resources,
+        teaching_note: objectiveData.teaching_note,
+        teacher_activity: objectiveData.teacher_activity,
+        learner_activity: objectiveData.learner_activity,
+        resource_links: objectiveData.resource_links,
+        learning_material: objectiveData.learning_material,
+      };
+
       if (selectedObjective) {
         await tenantSchemeApi.updateObjective(selectedObjective.id, {
           learning_objective_details: objectiveData.learning_objective_details,
+          ...lessonContentFields,
         });
         notify.success('Learning objective updated successfully');
       } else {
         await tenantSchemeApi.addObjective({
           learning_objective_details: objectiveData.learning_objective_details,
           sub_topic_id: selectedRow.sub_topic_id,
+          ...lessonContentFields,
         });
         notify.success('Learning objective added successfully');
-      }
-
-      // Update scheme entry with all additional fields
-      if (
-        objectiveData.previous_knowledge ||
-        objectiveData.practical_approach ||
-        objectiveData.evaluation ||
-        objectiveData.instructional_resources ||
-        objectiveData.teaching_note ||
-        objectiveData.teacher_activity ||
-        objectiveData.learner_activity ||
-        objectiveData.resource_links ||
-        objectiveData.learning_material
-      ) {
-        await tenantSchemeApi.updateSchemeEntry(selectedRow.scheme_of_work_id, {
-          previous_knowledge: objectiveData.previous_knowledge,
-          practical_approach: objectiveData.practical_approach,
-          evaluation: objectiveData.evaluation,
-          instructional_resources: objectiveData.instructional_resources,
-          teaching_note: objectiveData.teaching_note,
-          teacher_activity: objectiveData.teacher_activity,
-          learner_activity: objectiveData.learner_activity,
-          resource_links: objectiveData.resource_links,
-          learning_material: objectiveData.learning_material,
-        });
       }
 
       setObjectiveModalOpen(false);
@@ -963,18 +956,18 @@ const SchemeOfWork = () => {
                         </List>
                       </TableCell>
 
-                      {/* Lesson Content Status */}
+                      {/* Lesson Content Status — true if any learning objective under this subtopic has it, since each objective now carries its own value. */}
                       <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
-                        {row.learning_material ? (
+                        {row.learningObjectives?.some((lo) => lo.learning_material) ? (
                           <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
                           <IconX size={20} color={theme.palette.error.main} />
                         )}
                       </TableCell>
 
-                      {/* Video Content Status */}
+                      {/* Video Content Status — same per-objective aggregation. */}
                       <TableCell align="center" sx={{ border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid #dee2e6' }}>
-                        {row.resource_links ? (
+                        {row.learningObjectives?.some((lo) => lo.resource_links) ? (
                           <IconCheck size={20} color={theme.palette.success.main} />
                         ) : (
                           <IconX size={20} color={theme.palette.error.main} />

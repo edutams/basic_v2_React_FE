@@ -349,7 +349,18 @@ export const DocxPreview = ({ url, height = 480 }) => {
 
   if (failed) {
     return (
-      <Alert severity="warning" sx={{ width: '100%', borderRadius: 1 }}>
+      <Alert
+        severity="warning"
+        sx={{
+          width: '100%',
+          borderRadius: 1,
+          // Orange alert (not the theme's yellow warning colour).
+          bgcolor: 'rgba(230,81,0,0.10)',
+          color: '#E65100',
+          border: '1px solid rgba(230,81,0,0.35)',
+          '& .MuiAlert-icon': { color: '#E65100', opacity: 1 },
+        }}
+      >
         The document preview could not be loaded.
       </Alert>
     );

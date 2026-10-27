@@ -228,7 +228,7 @@ const LessonVideoManager = ({ context, embedded = false }) => {
                   </Typography>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} mb={2}>
                     <Button
-                      variant="contained"
+                      variant="outlined"
                       color="secondary"
                       disabled={generating || contextMissing}
                       onClick={handleGenerateAi}

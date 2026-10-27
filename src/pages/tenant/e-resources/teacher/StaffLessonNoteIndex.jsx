@@ -19,6 +19,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   IconAlertTriangle,
   IconArrowLeft,
@@ -26,9 +27,9 @@ import {
   IconCheck,
   IconExternalLink,
   IconGauge,
-  IconInfoCircle,
   IconNotes,
   IconProgressCheck,
+  IconUserCircle,
   IconUsers,
   IconVideo,
 } from '@tabler/icons-react';
@@ -36,7 +37,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
-import useAuth from '@/hooks/useAuth';
 import {
   fetchActiveTenantSessionTerm,
   fetchSessionTerms,
@@ -81,68 +81,105 @@ const uniqueSessions = (rows) => {
   return Array.from(map.values());
 };
 
-// Subject card styled like the Score Upload cards (ScoreUploadCard.jsx):
-// tinted status header + accent left border, progress block, status banner
-// and a full-width action footer.
+// Subject card: tinted status header (gradient, with a colored subject
+// initial badge), progress block, status banner and a full-width action
+// footer. Flat 1px border all round — state is carried by the header tint,
+// badge color and status chip, not a left accent border.
 const SubjectCard = ({ item, onSelect }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const percent = item.lesson_plan_percentage ?? 0;
   const learners = item.registered_students || 0;
+  const teacherName = [item.fname, item.lname].filter(Boolean).join(' ');
   const isComplete = percent >= 100;
   const isStarted = percent > 0;
 
-  // Status accent — same idea as Score Upload: a left border + tinted header
-  // so cards in different states are tellable apart at a glance.
-  const accentColor = isComplete ? '#2E7D32' : isStarted ? '#1565C0' : '#E67E22';
+  const statusLabel = isComplete ? 'Complete' : isStarted ? 'In progress' : 'Not started';
+  // A custom trio instead of MUI's default success/primary/warning — keeps
+  // this card's palette distinct from the blue/orange used all over the
+  // rest of the app.
+  const accentColor = isComplete ? '#059669' : isStarted ? '#7C3AED' : '#F59E0B';
+
   const headerTint = isComplete
     ? isDark
-      ? 'rgba(46,125,50,0.14)'
-      : '#DCEFDC'
+      ? 'rgba(5,150,105,0.16)'
+      : '#D1FAE5'
     : isStarted
       ? isDark
-        ? 'rgba(21,101,192,0.14)'
-        : '#DCEAFB'
+        ? 'rgba(124,58,237,0.16)'
+        : '#EDE9FE'
       : isDark
-        ? 'rgba(230,126,34,0.16)'
-        : '#FDF0E1';
-  const statusLabel = isComplete ? 'Complete' : isStarted ? 'In progress' : 'Not started';
-  const statusColor = isComplete ? 'success' : isStarted ? 'primary' : 'warning';
+        ? 'rgba(245,158,11,0.16)'
+        : '#FEF3C7';
 
   return (
     <Paper
       elevation={0}
       sx={{
-        borderRadius: '14px',
-        border: '1px solid',
-        borderLeft: '4px solid',
+        borderRadius: '16px',
+        border: '2px solid',
         borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
-        borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
+        boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.45)' : '0 4px 14px rgba(15,23,42,0.08)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 8px 20px rgba(15,23,42,0.1)',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#94a3b8',
-          borderLeftColor: accentColor,
+          transform: 'translateY(-3px)',
+          boxShadow: isDark ? '0 6px 20px rgba(0,0,0,0.45)' : `0 10px 24px ${accentColor}26`,
+          borderColor: accentColor,
         },
       }}
     >
-      {/* ── Top Header Section — tinted by generation status ── */}
+      {/* ── Top Header Section — gradient tint by generation status ── */}
       <Box
         sx={{
           p: 1.5,
           backgroundColor: headerTint,
+          backgroundImage: `linear-gradient(135deg, ${headerTint} 0%, transparent 115%)`,
           borderBottom: '1px solid',
           borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                flexShrink: 0,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: accentColor,
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: '1rem',
+                boxShadow: `0 4px 10px ${accentColor}4d`,
+              }}
+            >
+              {String(item.subject_name || '?').charAt(0).toUpperCase()}
+            </Box>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
+              sx={{
+                fontSize: '0.925rem',
+                lineHeight: 1.25,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+              }}
+              title={item.subject_name}
+            >
+              {item.subject_name}
+            </Typography>
+          </Box>
           <Chip
             label={`${item.class_name} - ${item.arm_name}`}
             size="small"
@@ -150,6 +187,7 @@ const SubjectCard = ({ item, onSelect }) => {
               fontWeight: 600,
               fontSize: '11px',
               height: '22px',
+              flexShrink: 0,
               backgroundColor: isDark ? theme.palette.background.paper : '#FFFFFF',
               border: '1px solid',
               borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#D0D5DD',
@@ -158,22 +196,19 @@ const SubjectCard = ({ item, onSelect }) => {
           />
         </Box>
 
-        <Typography
-          variant="subtitle1"
-          fontWeight={700}
-          color="text.primary"
-          sx={{
-            mb: 1,
-            fontSize: '0.925rem',
-            lineHeight: 1.25,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={item.subject_name}
-        >
-          {item.subject_name}
-        </Typography>
+        {teacherName && (
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.5}
+            sx={{ mb: 1, color: 'text.secondary' }}
+          >
+            <IconUserCircle size={13} />
+            <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+              Taught by <strong>{teacherName}</strong>
+            </Typography>
+          </Stack>
+        )}
 
         <Box
           sx={{
@@ -184,18 +219,15 @@ const SubjectCard = ({ item, onSelect }) => {
             gap: 0.75,
           }}
         >
-          <Typography
-            variant="caption"
-            fontWeight={500}
-            color="text.secondary"
-            sx={{ fontSize: '0.75rem' }}
-          >
-            Registered learners: <strong>{learners}</strong>
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ color: 'text.secondary' }}>
+            <IconUsers size={13} />
+            <Typography variant="caption" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+              <strong>{learners}</strong> learners
+            </Typography>
+          </Stack>
           <Chip
             label={statusLabel}
             size="small"
-            color={statusColor}
             icon={
               isComplete ? (
                 <IconCheck size={12} />
@@ -203,7 +235,14 @@ const SubjectCard = ({ item, onSelect }) => {
                 <IconProgressCheck size={12} />
               ) : undefined
             }
-            sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
+            sx={{
+              fontWeight: 600,
+              fontSize: '11px',
+              height: '22px',
+              bgcolor: alpha(accentColor, isDark ? 0.22 : 0.14),
+              color: accentColor,
+              '& .MuiChip-icon': { color: accentColor },
+            }}
           />
         </Box>
       </Box>
@@ -225,8 +264,7 @@ const SubjectCard = ({ item, onSelect }) => {
             <Typography
               variant="caption"
               fontWeight={700}
-              color="text.primary"
-              sx={{ fontSize: '0.775rem' }}
+              sx={{ fontSize: '0.775rem', color: accentColor }}
             >
               {percent}%
             </Typography>
@@ -235,12 +273,12 @@ const SubjectCard = ({ item, onSelect }) => {
             variant="determinate"
             value={percent}
             sx={{
-              height: 6,
-              borderRadius: 3,
+              height: 7,
+              borderRadius: 4,
               backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
               '& .MuiLinearProgress-bar': {
-                backgroundColor: isStarted ? '#1B7A16' : '#CCCCCC',
-                borderRadius: 3,
+                backgroundColor: accentColor,
+                borderRadius: 4,
               },
             }}
           />
@@ -256,9 +294,13 @@ const SubjectCard = ({ item, onSelect }) => {
         {/* Generation Status Indicator Banner */}
         <Box
           sx={{
-            py: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.75,
+            py: 0.6,
             px: 1,
-            borderRadius: '4px',
+            borderRadius: '8px',
             backgroundColor: isComplete
               ? isDark
                 ? 'rgba(76, 175, 80, 0.15)'
@@ -270,10 +312,10 @@ const SubjectCard = ({ item, onSelect }) => {
                 : isDark
                   ? 'rgba(230, 126, 34, 0.15)'
                   : '#FDF0E1',
-            textAlign: 'center',
             mt: 'auto',
           }}
         >
+          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: accentColor, flexShrink: 0 }} />
           <Typography
             variant="caption"
             fontWeight={600}
@@ -285,8 +327,7 @@ const SubjectCard = ({ item, onSelect }) => {
               component="span"
               variant="caption"
               fontWeight={700}
-              color={isComplete ? 'success.main' : isStarted ? 'primary.main' : 'warning.main'}
-              sx={{ fontSize: '0.725rem' }}
+              sx={{ fontSize: '0.725rem', color: accentColor }}
             >
               {statusLabel}
             </Typography>
@@ -306,7 +347,6 @@ const SubjectCard = ({ item, onSelect }) => {
         <Button
           fullWidth
           variant="contained"
-          color="primary"
           size="small"
           startIcon={<IconNotes size={14} />}
           endIcon={<IconExternalLink size={14} />}
@@ -316,8 +356,15 @@ const SubjectCard = ({ item, onSelect }) => {
             fontWeight: 600,
             fontSize: '11px',
             textTransform: 'none',
-            py: 0.5,
-            borderRadius: '5px',
+            py: 0.6,
+            borderRadius: '8px',
+            color: '#fff',
+            backgroundImage: `linear-gradient(135deg, ${accentColor} 0%, ${alpha(accentColor, 0.8)} 100%)`,
+            boxShadow: `0 4px 10px ${alpha(accentColor, 0.35)}`,
+            '&:hover': {
+              backgroundImage: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor} 100%)`,
+              boxShadow: `0 6px 14px ${alpha(accentColor, 0.45)}`,
+            },
           }}
         >
           Manage Content
@@ -330,16 +377,6 @@ const SubjectCard = ({ item, onSelect }) => {
 const StaffLessonNoteIndex = () => {
   const navigate = useNavigate();
   const notify = useNotification();
-  const { user, roles } = useAuth();
-
-  const isAdmin = useMemo(
-    () =>
-      (roles || []).some((role) =>
-        ['super_admin', 'school_admin'].includes(typeof role === 'string' ? role : role?.name),
-      ),
-    [roles],
-  );
-
   // Deep link: the new tab carries a single opaque token holding the
   // subject/session-term/programme/class ids — no descriptive parameter
   // names in the URL.
@@ -377,15 +414,12 @@ const StaffLessonNoteIndex = () => {
   const [sessionTerms, setSessionTerms] = useState([]);
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
-  const [teachers, setTeachers] = useState([]);
 
   const [selectedSesTerm, setSelectedSesTerm] = useState('');
   const [selectedSession, setSelectedSession] = useState('');
   const [activeSesTerm, setActiveSesTerm] = useState(null);
   const [selectedProgId, setSelectedProgId] = useState('');
   const [selectedClassDesc, setSelectedClassDesc] = useState('');
-  const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [selectedSubjectId, setSelectedSubjectId] = useState('');
 
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [loadingProgrammes, setLoadingProgrammes] = useState(false);
@@ -473,38 +507,17 @@ const StaffLessonNoteIndex = () => {
     [notify],
   );
 
-  const loadTeachers = useCallback(
-    async ({ termId, progId, classDesc }) => {
-      if (!isAdmin || !progId || !classDesc) {
-        setTeachers([]);
-        setSelectedTeacherId('');
-        return;
-      }
-      try {
-        const res = await tenantLessonNoteApi.subjTchAll({
-          filter: { progId, classDesc, selectedSesTerm: termId },
-        });
-        setTeachers(Array.isArray(res) ? res : []);
-      } catch {
-        setTeachers([]);
-      }
-    },
-    [isAdmin],
-  );
-
   const loadTeachingSubjects = useCallback(
-    async ({ termId, progId, classDesc, teacherId = '', subjectId = '' }) => {
+    async ({ termId, progId, classDesc }) => {
       if (!termId || !progId || !classDesc) return;
       setLoadingSubjects(true);
       try {
         const res = await tenantLessonNoteApi.getTeacherSubject({
-          userId: teacherId || user?.id,
           filters: {
             selectedSesTerm: termId,
             selectedTermId: termId,
             progId,
             classDesc,
-            subject_id: subjectId || null,
           },
         });
         const rows = res?.subjects ?? (Array.isArray(res) ? res : []);
@@ -516,7 +529,7 @@ const StaffLessonNoteIndex = () => {
         setLoadingSubjects(false);
       }
     },
-    [notify, user],
+    [notify],
   );
 
   useEffect(() => {
@@ -600,36 +613,12 @@ const StaffLessonNoteIndex = () => {
 
   useEffect(() => {
     if (isDeepLink) return;
-    loadTeachers({ termId: selectedSesTerm, progId: selectedProgId, classDesc: selectedClassDesc });
     loadTeachingSubjects({
       termId: selectedSesTerm,
       progId: selectedProgId,
       classDesc: selectedClassDesc,
-      teacherId: selectedTeacherId,
-      subjectId: selectedSubjectId,
     });
-  }, [
-    selectedSesTerm,
-    selectedProgId,
-    selectedClassDesc,
-    selectedTeacherId,
-    selectedSubjectId,
-    loadTeachers,
-    loadTeachingSubjects,
-    isDeepLink,
-  ]);
-
-  const uniqueSubjects = useMemo(() => {
-    const seen = new Set();
-    return teachingSubjects
-      .filter((item) => {
-        if (seen.has(item.subject_id)) return false;
-        seen.add(item.subject_id);
-        return true;
-      })
-      .map((item) => ({ subject_id: item.subject_id, subject_name: item.subject_name }))
-      .sort((a, b) => String(a.subject_name).localeCompare(String(b.subject_name)));
-  }, [teachingSubjects]);
+  }, [selectedSesTerm, selectedProgId, selectedClassDesc, loadTeachingSubjects, isDeepLink]);
 
   // Clicking a subject card opens its workspace in a new tab. The context
   // travels as one base64url token so the URL exposes no parameter names.
@@ -899,9 +888,13 @@ const StaffLessonNoteIndex = () => {
         variant="outlined"
         sx={{
           borderRadius: '14px',
-          border: '1px solid',
+          border: '2px solid',
           borderColor: (theme) =>
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 6px 20px rgba(0,0,0,0.45)'
+              : '0 6px 20px rgba(15,23,42,0.08)',
         }}
       >
         {/* ── Card header: filters + Fetch + Back to subjects ────────── */}
@@ -936,8 +929,6 @@ const StaffLessonNoteIndex = () => {
                           setSelectedSession(e.target.value);
                           setSelectedProgId('');
                           setSelectedClassDesc('');
-                          setSelectedTeacherId('');
-                          setSelectedSubjectId('');
                         }}
                         disabled={loadingTerms}
                       >
@@ -959,8 +950,6 @@ const StaffLessonNoteIndex = () => {
                           setSelectedSesTerm(e.target.value);
                           setSelectedProgId('');
                           setSelectedClassDesc('');
-                          setSelectedTeacherId('');
-                          setSelectedSubjectId('');
                         }}
                         disabled={loadingTerms || sessionFilteredTerms.length === 0}
                       >
@@ -981,7 +970,6 @@ const StaffLessonNoteIndex = () => {
                         onChange={(e) => {
                           setSelectedProgId(e.target.value);
                           setSelectedClassDesc('');
-                          setSelectedTeacherId('');
                         }}
                         disabled={loadingProgrammes || !selectedSesTerm}
                       >
@@ -999,60 +987,12 @@ const StaffLessonNoteIndex = () => {
                         size="small"
                         label="Class"
                         value={selectedClassDesc}
-                        onChange={(e) => {
-                          setSelectedClassDesc(e.target.value);
-                          setSelectedTeacherId('');
-                          setSelectedSubjectId('');
-                        }}
+                        onChange={(e) => setSelectedClassDesc(e.target.value)}
                         disabled={loadingClasses || !selectedProgId}
                       >
                         {classes.map((cls) => (
                           <MenuItem key={cls.class_description_id} value={cls.class_description_id}>
                             {cls.class_name} {cls.arm_name ? `- ${cls.arm_name}` : ''}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    </Grid>
-                    {isAdmin && (
-                      <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Teacher"
-                          value={selectedTeacherId}
-                          onChange={(e) => {
-                            setSelectedTeacherId(e.target.value);
-                            setSelectedSubjectId('');
-                          }}
-                          disabled={!selectedClassDesc}
-                        >
-                          <MenuItem value="">All Teachers</MenuItem>
-                          {teachers.map((teacher, index) => (
-                            <MenuItem
-                              key={`${teacher.teacher_id}-${index}`}
-                              value={teacher.teacher_id}
-                            >
-                              {teacher.fname} {teacher.lname} ({teacher.user_id})
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    )}
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                      <TextField
-                        select
-                        fullWidth
-                        size="small"
-                        label="Subject"
-                        value={selectedSubjectId}
-                        onChange={(e) => setSelectedSubjectId(e.target.value)}
-                        disabled={!selectedClassDesc}
-                      >
-                        <MenuItem value="">All Subjects</MenuItem>
-                        {uniqueSubjects.map((subject) => (
-                          <MenuItem key={subject.subject_id} value={subject.subject_id}>
-                            {subject.subject_name}
                           </MenuItem>
                         ))}
                       </TextField>
@@ -1137,8 +1077,6 @@ const StaffLessonNoteIndex = () => {
                         termId: selectedSesTerm,
                         progId: selectedProgId,
                         classDesc: selectedClassDesc,
-                        teacherId: selectedTeacherId,
-                        subjectId: selectedSubjectId,
                       })
                     }
                   >
@@ -1164,34 +1102,6 @@ const StaffLessonNoteIndex = () => {
         <CardContent>
           {!isDeepLink && !selectedSubject && (
             <>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.25,
-                  p: 1.5,
-                  mb: 2,
-                  borderRadius: '12px',
-                  bgcolor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.08)' : '#EFF6FF',
-                  border: '1px solid',
-                  borderColor: (theme) =>
-                    theme.palette.mode === 'dark' ? 'rgba(37,99,235,0.25)' : '#BFDBFE',
-                }}
-              >
-                <IconInfoCircle size={18} color="#2563EB" style={{ flexShrink: 0 }} />
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    color: (theme) => (theme.palette.mode === 'dark' ? '#cbd5e1' : '#1e3a8a'),
-                  }}
-                >
-                  Pick a subject below to open its workspace — each one has a{' '}
-                  <strong>Lesson Plan</strong>, <strong>Lesson Note</strong> and{' '}
-                  <strong>Video Content</strong> tab for every week on the scheme of work.
-                </Typography>
-              </Box>
-
               {loadingSubjects ? (
                 <Grid container spacing={2}>
                   {[0, 1, 2].map((item) => (
@@ -1246,22 +1156,15 @@ const StaffLessonNoteIndex = () => {
               )}
 
               {!loadingWeeks && schemeOfWorkId && editorContext && (
-                <Box mt={1}>
+                <Box>
                   <Tabs
                     value={activeContentTab}
                     onChange={(_, value) => setActiveContentTab(value)}
-                    variant="scrollable"
-                    scrollButtons="auto"
-                    allowScrollButtonsMobile
-                    slotProps={{ indicator: { sx: { display: 'none' } } }}
                     sx={{
                       mb: 2.5,
-                      minHeight: 44,
-                      p: 0.5,
-                      borderRadius: '12px',
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
-                      '& .MuiTabs-flexContainer': { gap: 0.5 },
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                      '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', minHeight: 48 },
                     }}
                   >
                     {CONTENT_TABS.map((tab, index) => (
@@ -1271,21 +1174,6 @@ const StaffLessonNoteIndex = () => {
                         label={tab.label}
                         icon={<tab.Icon size={17} />}
                         iconPosition="start"
-                        disableRipple
-                        sx={{
-                          textTransform: 'none',
-                          fontWeight: 700,
-                          fontSize: 12.5,
-                          minHeight: 38,
-                          borderRadius: '9px',
-                          color: 'text.secondary',
-                          transition: 'all 150ms ease',
-                          '&.Mui-selected': {
-                            color: '#fff',
-                            bgcolor: '#2563EB',
-                            boxShadow: '0 2px 6px rgba(37,99,235,0.35)',
-                          },
-                        }}
                       />
                     ))}
                   </Tabs>

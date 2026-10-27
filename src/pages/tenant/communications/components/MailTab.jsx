@@ -272,10 +272,10 @@ const MailTab = () => {
           <StatCard count={stats.received ?? 0} label="Received" subtitle="Inbox messages received" icon={IconMailOpened} colorIndex={2} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard count={stats.sent ?? 0} label="Sent Mails" subtitle="Mails you have sent" icon={IconSend} colorIndex={3} />
+          <StatCard count={stats.sent ?? 0} label="Sent Mails" subtitle="Mails you have sent" icon={IconSend} colorIndex={3} accent />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-          <StatCard count={stats.archive ?? 0} label="Archived Mails" subtitle="Mails in your archive" icon={IconArchive} colorIndex={4} />
+          <StatCard count={stats.archive ?? 0} label="Archived Mails" subtitle="Mails in your archive" icon={IconArchive} colorIndex={4} accent />
         </Grid>
       </Grid>
 

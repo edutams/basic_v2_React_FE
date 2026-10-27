@@ -203,7 +203,6 @@ const ClassDossierPage = Loadable(lazy(() => import('@/pages/tenant/result/Class
 const ReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/ReportCardPage')));
 const WardReportCardPage = Loadable(lazy(() => import('@/pages/tenant/result/WardReportCardPage')));
 const CommentBankPage = Loadable(lazy(() => import('@/pages/tenant/result/CommentBankPage')));
-const MessagingPage = Loadable(lazy(() => import('@/pages/tenant/result/MessagingPage')));
 const CommunicationsPage = Loadable(
   lazy(() => import('@/pages/tenant/communications/CommunicationsPage')),
 );
@@ -773,12 +772,11 @@ const TenantRoutes = [
         ),
       },
       {
+        // Result Messaging is now the "Result Message" tab inside
+        // /communications — kept as a redirect rather than removed
+        // outright, in case anything still links to the old path.
         path: 'result-messaging',
-        element: (
-          <TenantProtectedRoute permission="result.admin.manage_result_messaging">
-            <MessagingPage />
-          </TenantProtectedRoute>
-        ),
+        element: <Navigate to="/communications" replace />,
       },
       {
         path: 'communications',

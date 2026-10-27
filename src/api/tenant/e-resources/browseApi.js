@@ -13,6 +13,10 @@ export const tenantBrowseApi = {
     const response = await tenantApi.get('/e-resources/browse/student/subjects');
     return response.data;
   },
+  getTopicContent: async (topicId) => {
+    const response = await tenantApi.post('/e-resources/browse/topic-content', { topic_id: topicId });
+    return response.data;
+  },
 };
 
 export const tenantForumApi = {

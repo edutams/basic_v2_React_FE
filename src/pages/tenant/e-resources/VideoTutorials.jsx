@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogContent,
   Divider,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   LinearProgress,
   MenuItem,
@@ -18,11 +25,13 @@ import {
   Skeleton,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
   IconCalendarWeek,
+  IconChevronDown,
   IconExternalLink,
   IconFileText,
   IconInfoCircle,
@@ -31,6 +40,7 @@ import {
   IconSearch,
   IconSparkles,
   IconVideoOff,
+  IconX,
 } from '@tabler/icons-react';
 import { Link as RouterLink } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
@@ -90,7 +100,7 @@ const toRows = (value) => {
 };
 
 const MaterialCard = ({ item, weekName }) => {
-  const [playing, setPlaying] = useState(false);
+  const [videoDialogOpen, setVideoDialogOpen] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
 
   const videoHref = toHref(item.resource_links);
@@ -100,14 +110,15 @@ const MaterialCard = ({ item, weekName }) => {
   const youtubeThumb = !thumbFailed ? getYoutubeThumb(videoHref) : null;
 
   const topic = item.topic || 'Lesson material';
+  const fullDescription = item.topic_description ? String(item.topic_description) : '';
 
   const videoPoster = (
     <Box
-      onClick={() => videoHref && !playing && setPlaying(true)}
+      onClick={() => videoHref && setVideoDialogOpen(true)}
       sx={{
         position: 'relative',
         width: '100%',
-        pt: '56.25%',
+        pt: '38%',
         overflow: 'hidden',
         cursor: videoHref ? 'pointer' : 'default',
         bgcolor: '#0f172a',
@@ -120,93 +131,84 @@ const MaterialCard = ({ item, weekName }) => {
               )} 100%)`,
       }}
     >
-      {playing && videoHref ? (
-        <iframe
-          src={toEmbedSrc(videoHref)}
-          title={`Video for ${topic}`}
-          allow="autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+      {youtubeThumb && (
+        <Box
+          component="img"
+          src={youtubeThumb}
+          alt=""
+          onError={() => setThumbFailed(true)}
+          className="vt-thumb"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 400ms ease',
+          }}
         />
-      ) : (
-        <>
-          {youtubeThumb && (
-            <Box
-              component="img"
-              src={youtubeThumb}
-              alt=""
-              onError={() => setThumbFailed(true)}
-              className="vt-thumb"
-              sx={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transition: 'transform 400ms ease',
-              }}
-            />
-          )}
-          {/* Legibility gradient over the real thumbnail (no-op on the
-              flat-colour fallback, which already reads fine on its own) */}
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              background: youtubeThumb
-                ? 'linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.65) 100%)'
-                : 'none',
-            }}
-          />
-          <Stack
-            alignItems="center"
-            justifyContent="center"
-            spacing={1.25}
-            sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'common.white' }}
-          >
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                bgcolor: 'common.white',
-                color: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 6px 20px rgba(0,0,0,0.35)',
-                transform: 'scale(1)',
-                transition: 'transform 0.2s ease',
-                ...(videoHref
-                  ? { '&:hover': { transform: 'scale(1.08)' } }
-                  : { opacity: 0.85 }),
-              }}
-            >
-              <IconPlayerPlay size={26} style={{ marginLeft: 4 }} />
-            </Box>
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              letterSpacing={0.4}
-              sx={{ color: 'common.white', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
-            >
-              {videoHref ? 'Play video lesson' : 'Video on file'}
-            </Typography>
-          </Stack>
-        </>
       )}
+      {/* Legibility gradient over the real thumbnail (no-op on the
+          flat-colour fallback, which already reads fine on its own) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background: youtubeThumb
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.15) 0%, rgba(15,23,42,0.65) 100%)'
+            : 'none',
+        }}
+      />
+      <Stack
+        alignItems="center"
+        justifyContent="center"
+        spacing={0.5}
+        sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'common.white' }}
+      >
+        <Box
+          sx={{
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            bgcolor: 'common.white',
+            color: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+            transform: 'scale(1)',
+            transition: 'transform 0.2s ease',
+            ...(videoHref
+              ? { '&:hover': { transform: 'scale(1.08)' } }
+              : { opacity: 0.85 }),
+          }}
+        >
+          <IconPlayerPlay size={17} style={{ marginLeft: 2 }} />
+        </Box>
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          letterSpacing={0.3}
+          sx={{ fontSize: 10, color: 'common.white', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+        >
+          {videoHref ? 'Watch lesson' : 'Video on file'}
+        </Typography>
+      </Stack>
       <Chip
         size="small"
         label="Video"
         sx={{
           position: 'absolute',
-          top: 10,
-          left: 10,
+          top: 8,
+          left: 8,
+          height: 18,
+          fontSize: 9.5,
           bgcolor: 'common.white',
           color: 'primary.main',
           fontWeight: 700,
           boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
           pointerEvents: 'none',
+          '& .MuiChip-label': { px: 0.75 },
         }}
       />
     </Box>
@@ -217,7 +219,7 @@ const MaterialCard = ({ item, weekName }) => {
       sx={{
         position: 'relative',
         width: '100%',
-        pt: '56.25%',
+        pt: '38%',
         overflow: 'hidden',
         bgcolor: 'grey.100',
         backgroundImage: (theme) =>
@@ -230,25 +232,25 @@ const MaterialCard = ({ item, weekName }) => {
       <Stack
         alignItems="center"
         justifyContent="center"
-        spacing={1.25}
+        spacing={0.5}
         sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'common.white' }}
       >
         <Box
           sx={{
-            width: 56,
-            height: 56,
+            width: 36,
+            height: 36,
             borderRadius: '50%',
             bgcolor: 'common.white',
             color: 'success.main',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 4,
+            boxShadow: 3,
           }}
         >
-          <IconFileText size={26} />
+          <IconFileText size={18} />
         </Box>
-        <Typography variant="caption" fontWeight={700} letterSpacing={0.4} sx={{ color: 'common.white' }}>
+        <Typography variant="caption" fontWeight={700} letterSpacing={0.3} sx={{ fontSize: 10, color: 'common.white' }}>
           Lesson material
         </Typography>
       </Stack>
@@ -257,13 +259,16 @@ const MaterialCard = ({ item, weekName }) => {
         label="Note"
         sx={{
           position: 'absolute',
-          top: 10,
-          left: 10,
+          top: 8,
+          left: 8,
+          height: 18,
+          fontSize: 9.5,
           bgcolor: 'common.white',
           color: 'success.main',
           fontWeight: 700,
           boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
           pointerEvents: 'none',
+          '& .MuiChip-label': { px: 0.75 },
         }}
       />
     </Box>
@@ -274,7 +279,7 @@ const MaterialCard = ({ item, weekName }) => {
       sx={{
         position: 'relative',
         width: '100%',
-        pt: '56.25%',
+        pt: '38%',
         overflow: 'hidden',
         bgcolor: 'grey.100',
         backgroundImage: (theme) =>
@@ -287,25 +292,25 @@ const MaterialCard = ({ item, weekName }) => {
       <Stack
         alignItems="center"
         justifyContent="center"
-        spacing={1.25}
+        spacing={0.5}
         sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', color: 'common.white' }}
       >
         <Box
           sx={{
-            width: 56,
-            height: 56,
+            width: 36,
+            height: 36,
             borderRadius: '50%',
             bgcolor: 'rgba(255,255,255,0.9)',
             color: 'grey.700',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 4,
+            boxShadow: 3,
           }}
         >
-          <IconVideoOff size={26} />
+          <IconVideoOff size={18} />
         </Box>
-        <Typography variant="caption" fontWeight={700} letterSpacing={0.4} sx={{ color: 'common.white' }}>
+        <Typography variant="caption" fontWeight={700} letterSpacing={0.3} sx={{ fontSize: 10, color: 'common.white' }}>
           Link unavailable
         </Typography>
       </Stack>
@@ -314,102 +319,171 @@ const MaterialCard = ({ item, weekName }) => {
 
   const poster = hasVideo ? (videoHref ? videoPoster : unavailablePoster) : materialPoster;
 
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '14px',
-        overflow: 'hidden',
-        border: '1px solid',
-        borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : '#e2e8f0'),
-        bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff'),
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease',
-        '&:hover': {
-          boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
-          transform: 'translateY(-3px)',
-          borderColor: 'primary.main',
-        },
-        '&:hover .vt-thumb': { transform: 'scale(1.06)' },
-      }}
-    >
-      {poster}
-      <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 0.5, flexGrow: 1 }}>
-        <Typography
-          sx={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: '#0f172a',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
-          {topic}
+  const titleBlock = (
+    <>
+      <Typography
+        sx={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: '#0f172a',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}
+      >
+        {topic}
+      </Typography>
+      {fullDescription ? (
+        <Typography sx={{ fontSize: 11, color: 'text.secondary' }} noWrap>
+          {fullDescription}
         </Typography>
-        {item.topic_description ? (
-          <Typography sx={{ fontSize: 12, color: 'text.secondary' }} noWrap title={item.topic_description}>
-            {item.topic_description}
-          </Typography>
-        ) : (
-          <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>{weekName}</Typography>
-        )}
+      ) : (
+        <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>{weekName}</Typography>
+      )}
+    </>
+  );
 
-        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mt: 'auto', pt: 1.25 }}>
-          {videoHref && (
-            <Button
-              size="small"
-              variant="outlined"
-              endIcon={<IconExternalLink size={13} />}
-              href={videoHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ borderRadius: '8px', fontWeight: 600, fontSize: 11.5, textTransform: 'none' }}
-            >
-              Open video
-            </Button>
-          )}
-          {materialHref ? (
-            <Button
-              size="small"
-              variant={videoHref ? 'outlined' : 'contained'}
-              color="success"
-              endIcon={<IconExternalLink size={13} />}
-              href={materialHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              sx={{ borderRadius: '8px', fontWeight: 600, fontSize: 11.5, textTransform: 'none' }}
-            >
-              Lesson material
-            </Button>
+  return (
+    <>
+      <Paper
+        elevation={0}
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '1.5px solid',
+          borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.18)' : '#cbd5e1'),
+          bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff'),
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          transition: 'box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease',
+          '&:hover': {
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+            transform: 'translateY(-2px)',
+            borderColor: 'primary.main',
+          },
+          '&:hover .vt-thumb': { transform: 'scale(1.06)' },
+        }}
+      >
+        {poster}
+        <CardContent sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 0.3, flexGrow: 1 }}>
+          {fullDescription ? (
+            <Tooltip title={fullDescription} arrow placement="top" enterDelay={300}>
+              <Box sx={{ minWidth: 0 }}>{titleBlock}</Box>
+            </Tooltip>
           ) : (
-            hasMaterial && (
+            titleBlock
+          )}
+
+          <Stack direction="row" spacing={0.6} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mt: 'auto', pt: 1 }}>
+            {videoHref && (
+              <ButtonGroup
+                variant="contained"
+                size="small"
+                disableElevation
+                sx={{
+                  borderRadius: '7px',
+                  '& .MuiButtonGroup-grouped': {
+                    borderColor: 'rgba(255,255,255,0.4)',
+                  },
+                }}
+              >
+                <Button
+                  onClick={() => setVideoDialogOpen(true)}
+                  sx={{ fontWeight: 600, fontSize: 11, textTransform: 'none', py: 0.25, px: 1.25 }}
+                >
+                  Watch lesson
+                </Button>
+                <Tooltip title="Open in a new tab" arrow>
+                  <Button
+                    component="a"
+                    href={videoHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{ minWidth: 0, px: 0.75 }}
+                  >
+                    <IconExternalLink size={13} />
+                  </Button>
+                </Tooltip>
+              </ButtonGroup>
+            )}
+            {materialHref ? (
+              <Button
+                size="small"
+                variant={videoHref ? 'outlined' : 'contained'}
+                color="success"
+                endIcon={<IconExternalLink size={12} />}
+                href={materialHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ borderRadius: '7px', fontWeight: 600, fontSize: 11, textTransform: 'none', py: 0.25 }}
+              >
+                Lesson material
+              </Button>
+            ) : (
+              hasMaterial && (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  color="success"
+                  label={shorten(item.learning_material)}
+                  title={String(item.learning_material)}
+                  sx={{ fontSize: 10.5, height: 22, fontWeight: 600, borderRadius: '7px' }}
+                />
+              )
+            )}
+            {!videoHref && hasVideo && (
               <Chip
                 size="small"
                 variant="outlined"
-                color="success"
-                label={shorten(item.learning_material)}
-                title={String(item.learning_material)}
-                sx={{ fontSize: 11, fontWeight: 600, borderRadius: '8px' }}
+                label={shorten(item.resource_links)}
+                title={String(item.resource_links)}
+                sx={{ fontSize: 10.5, height: 22, fontWeight: 600, borderRadius: '7px' }}
               />
-            )
+            )}
+          </Stack>
+        </CardContent>
+      </Paper>
+
+      {/* Overlay dialog for playing the video, instead of navigating away */}
+      <Dialog
+        open={videoDialogOpen}
+        onClose={() => setVideoDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '14px', overflow: 'hidden' } }}
+      >
+        <DialogContent sx={{ p: 0, position: 'relative', bgcolor: '#000' }}>
+          <IconButton
+            onClick={() => setVideoDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              bgcolor: 'rgba(0,0,0,0.5)',
+              color: '#fff',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+            }}
+          >
+            <IconX size={18} />
+          </IconButton>
+          {videoDialogOpen && videoHref && (
+            <Box sx={{ position: 'relative', width: '100%', pt: '56.25%' }}>
+              <iframe
+                src={toEmbedSrc(videoHref)}
+                title={`Video for ${topic}`}
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+              />
+            </Box>
           )}
-          {!videoHref && hasVideo && (
-            <Chip
-              size="small"
-              variant="outlined"
-              label={shorten(item.resource_links)}
-              title={String(item.resource_links)}
-              sx={{ fontSize: 11, fontWeight: 600, borderRadius: '8px' }}
-            />
-          )}
-        </Stack>
-      </CardContent>
-    </Paper>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
@@ -456,6 +530,19 @@ const VideoTutorials = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [optionsError, setOptionsError] = useState('');
+  // Each week now carries every topic, not just the first — this tracks
+  // which topic is selected per week (keyed by week id).
+  const [selectedTopicByWeek, setSelectedTopicByWeek] = useState({});
+  // Weeks render as an accordion — each one can be independently expanded;
+  // the first week opens by default whenever a new set of weeks loads.
+  const [expandedWeekIds, setExpandedWeekIds] = useState(() => new Set());
+  // A selected topic's subtopics/learning objectives are fetched on demand
+  // (real filter request) rather than sliced out of an already-downloaded
+  // payload — cached here keyed by topic id so re-selecting a topic
+  // doesn't re-fetch it.
+  const [topicContentById, setTopicContentById] = useState({});
+  const [loadingTopicIds, setLoadingTopicIds] = useState(() => new Set());
+  const [analytics, setAnalytics] = useState({ total_topics: 0, total_video_content: 0, total_lesson_content: 0 });
 
   useEffect(() => {
     const init = async () => {
@@ -529,13 +616,21 @@ const VideoTutorials = () => {
     if (!filtersReady) return;
     setLoading(true);
     setError('');
+    setTopicContentById({});
+    setSelectedTopicByWeek({});
     try {
-      const data = await tenantBrowseApi.getBrowse({
-        class_id: classId,
-        term_id: termId,
-        subject_id: subjectId,
-      });
-      setResources(Array.isArray(data) ? data : []);
+      const [data, analyticsRes] = await Promise.all([
+        tenantBrowseApi.getBrowse({
+          class_id: classId,
+          term_id: termId,
+          subject_id: subjectId,
+        }),
+        tenantSchemeApi.getAnalytics({ class_id: classId, term_id: termId, subject_id: subjectId }).catch(() => null),
+      ]);
+      const weekRows = Array.isArray(data) ? data : [];
+      setResources(weekRows);
+      setExpandedWeekIds(weekRows.length > 0 ? new Set([weekRows[0].wk_id]) : new Set());
+      if (analyticsRes) setAnalytics(analyticsRes);
     } catch (err) {
       if (err.response?.status === 503) {
         setError('E-Resources materials are temporarily unavailable. Please try again shortly.');
@@ -552,6 +647,30 @@ const VideoTutorials = () => {
     }
   }, [filtersReady, termId, classId, subjectId]);
 
+  // Fetch (and cache) one topic's subtopics/learning objectives — this is
+  // the actual filter request fired whenever a week's Topic dropdown
+  // selects a topic that isn't already cached.
+  const fetchTopicContent = useCallback(
+    async (topicId) => {
+      if (!topicId || topicContentById[topicId] || loadingTopicIds.has(topicId)) return;
+      setLoadingTopicIds((prev) => new Set(prev).add(topicId));
+      try {
+        const res = await tenantBrowseApi.getTopicContent(topicId);
+        const subtopics = Array.isArray(res?.subtopics) ? res.subtopics : [];
+        setTopicContentById((prev) => ({ ...prev, [topicId]: subtopics }));
+      } catch {
+        setTopicContentById((prev) => ({ ...prev, [topicId]: [] }));
+      } finally {
+        setLoadingTopicIds((prev) => {
+          const next = new Set(prev);
+          next.delete(topicId);
+          return next;
+        });
+      }
+    },
+    [topicContentById, loadingTopicIds],
+  );
+
   // Auto-fetch once when initial defaults first become ready
   const autoFetchedRef = useRef(false);
   useEffect(() => {
@@ -561,49 +680,95 @@ const VideoTutorials = () => {
     }
   }, [filtersReady, fetchResources]);
 
-  const totals = useMemo(() => {
-    const weekKeys = new Set();
-    let videos = 0;
-    let materials = 0;
-    resources.forEach((row) => {
-      weekKeys.add(row.wk_id ?? row.week_id ?? row.id);
-      if (hasValue(row.resource_links)) videos += 1;
-      if (hasValue(row.learning_material)) materials += 1;
-    });
-    return { weeks: weekKeys.size, videos, materials };
-  }, [resources]);
+  // Video/material/topic counts come from the server-side analytics
+  // endpoint (already used by the Scheme of Work page) rather than being
+  // derived from a fully-downloaded payload, since topic content is now
+  // fetched per-topic on demand instead of all at once.
+  const totals = useMemo(
+    () => ({
+      weeks: resources.length,
+      videos: analytics.total_video_content ?? 0,
+      materials: analytics.total_lesson_content ?? 0,
+      topics: analytics.total_topics ?? 0,
+    }),
+    [resources, analytics],
+  );
 
-  const weeks = useMemo(() => {
-    const grouped = [];
-    const indexByWeek = {};
-    resources.forEach((row) => {
-      const key = row.wk_id ?? row.week_id ?? row.id;
-      if (!(key in indexByWeek)) {
-        indexByWeek[key] = grouped.length;
-        grouped.push({ wkId: key, weekName: row.week_name || 'Unknown week', items: [] });
-      }
-      grouped[indexByWeek[key]].items.push(row);
-    });
-
-    const withContent = grouped.map((week) => ({
-      ...week,
-      published: week.items.filter((item) => hasValue(item.resource_links) || hasValue(item.learning_material)),
-    }));
-
+  // Selection only (which topic is picked per week) — search matches on
+  // topic name/description, the only topic-level text available before a
+  // topic's content is actually fetched.
+  const weeksBase = useMemo(() => {
     const needle = weekSearch.trim().toLowerCase();
-    if (!needle) return withContent;
 
-    return withContent
-      .map((week) => ({
-        ...week,
-        published: week.published.filter((item) =>
-          [item.topic, item.topic_description].some((value) =>
-            value ? String(value).toLowerCase().includes(needle) : false,
-          ),
-        ),
-      }))
-      .filter((week) => week.weekName.toLowerCase().includes(needle) || week.published.length > 0);
-  }, [resources, weekSearch]);
+    const topicMatches = (topic) => {
+      if (!needle) return true;
+      return (
+        String(topic.topic_name || '').toLowerCase().includes(needle) ||
+        String(topic.topic_description || '').toLowerCase().includes(needle)
+      );
+    };
+
+    return resources
+      .map((week) => {
+        const weekName = week.week_name || 'Unknown week';
+        const visibleTopics = needle ? (week.topics || []).filter(topicMatches) : week.topics || [];
+
+        const selectedTopicId = selectedTopicByWeek[week.wk_id] ?? visibleTopics[0]?.id ?? '';
+        const selectedTopic =
+          visibleTopics.find((topic) => topic.id === selectedTopicId) || visibleTopics[0] || null;
+
+        return {
+          wkId: week.wk_id,
+          weekName,
+          topics: visibleTopics,
+          selectedTopicId: selectedTopic?.id ?? '',
+        };
+      })
+      .filter((week) => !needle || week.weekName.toLowerCase().includes(needle) || week.topics.length > 0);
+  }, [resources, weekSearch, selectedTopicByWeek]);
+
+  // Fires the actual filter request for whichever topic is currently
+  // selected per week — runs again whenever a dropdown selection changes.
+  useEffect(() => {
+    weeksBase.forEach((week) => {
+      if (week.selectedTopicId) fetchTopicContent(week.selectedTopicId);
+    });
+  }, [weeksBase, fetchTopicContent]);
+
+  // Render-ready weeks: combines the selection above with whatever topic
+  // content has been fetched so far.
+  const weeks = useMemo(
+    () =>
+      weeksBase.map((week) => {
+        const subtopics = week.selectedTopicId ? topicContentById[week.selectedTopicId] : undefined;
+        const items = (subtopics || []).flatMap((subtopic) =>
+          (subtopic.learning_objectives || []).map((lo) => ({
+            ...lo,
+            topic: subtopic.subtopic_name || 'Lesson material',
+            topic_description: lo.learning_objective_details || '',
+          })),
+        );
+
+        return {
+          ...week,
+          loadingTopic: Boolean(week.selectedTopicId) && subtopics === undefined,
+          published: items.filter((item) => hasValue(item.resource_links) || hasValue(item.learning_material)),
+        };
+      }),
+    [weeksBase, topicContentById],
+  );
+
+  const toggleWeek = (weekId) => {
+    setExpandedWeekIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(weekId)) {
+        next.delete(weekId);
+      } else {
+        next.add(weekId);
+      }
+      return next;
+    });
+  };
 
   const selectField = (id, label, value, onChange, options, disabled, getLabel) => (
     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
@@ -711,7 +876,7 @@ const VideoTutorials = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            count={resources.length}
+            count={totals.topics}
             label="Total Topics"
             subtitle="Curriculum topics logged"
             icon={IconNotes}
@@ -845,84 +1010,182 @@ const VideoTutorials = () => {
               }
             />
           ) : (
-            <Stack spacing={4}>
-              {weeks.map((week, weekIndex) => (
-                <Box key={week.wkId}>
-                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.75 }}>
-                    <Box
+            <Box
+              sx={{
+                maxHeight: '75vh',
+                overflowY: 'auto',
+                pr: 0.5,
+                '&::-webkit-scrollbar': { width: 8 },
+                '&::-webkit-scrollbar-thumb': { backgroundColor: '#CBD5E1', borderRadius: 8 },
+              }}
+            >
+              <Stack spacing={2}>
+                {weeks.map((week, weekIndex) => (
+                  <Accordion
+                    key={week.wkId}
+                    expanded={expandedWeekIds.has(week.wkId)}
+                    onChange={() => toggleWeek(week.wkId)}
+                    disableGutters
+                    elevation={0}
+                    sx={{
+                      border: '1.5px solid',
+                      borderColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.14)' : '#e2e8f0'),
+                      borderRadius: '14px !important',
+                      bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'background.paper' : '#ffffff'),
+                      overflow: 'hidden',
+                      '&:before': { display: 'none' },
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<IconChevronDown size={18} />}
                       sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: '#EEF2FF',
-                        color: '#2563EB',
-                        flexShrink: 0,
+                        px: 2,
+                        '& .MuiAccordionSummary-content': { alignItems: 'center', my: 1.25 },
                       }}
                     >
-                      <Typography sx={{ fontSize: 12.5, fontWeight: 800 }}>{weekIndex + 1}</Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: 15.5, fontWeight: 800, color: '#0f172a' }}>
-                      {week.weekName}
-                    </Typography>
-                    <Chip
-                      size="small"
-                      label={`${week.published.length} ${
-                        week.published.length === 1 ? 'lesson' : 'lessons'
-                      }`}
-                      sx={{
-                        fontSize: 10.5,
-                        fontWeight: 700,
-                        bgcolor: week.published.length ? '#DCFCE7' : '#f1f5f9',
-                        color: week.published.length ? '#166534' : '#94a3b8',
-                      }}
-                    />
-                    <Box sx={{ flexGrow: 1, height: 1, bgcolor: '#f1f5f9' }} />
-                  </Stack>
-
-                  {week.published.length === 0 ? (
-                    <Box
-                      sx={{
-                        border: '1px dashed #e2e8f0',
-                        borderRadius: '14px',
-                        bgcolor: '#FAFBFC',
-                        px: 3,
-                        py: 2.5,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <IconVideoOff size={20} color="#94a3b8" style={{ flexShrink: 0 }} />
-                      <Typography variant="body2" sx={{ color: '#64748b', flex: 1 }}>
-                        No video or lesson material has been published for <strong>{week.weekName}</strong>{' '}
-                        yet. Add one from the Scheme of Work.
-                      </Typography>
-                      <Button
-                        component={RouterLink}
-                        to="/scheme-of-work"
-                        size="small"
-                        variant="outlined"
-                        sx={{ borderRadius: '8px', fontWeight: 600, flexShrink: 0 }}
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1.5}
+                        flexWrap="wrap"
+                        useFlexGap
+                        sx={{ width: '100%', pr: 1 }}
                       >
-                        Add content
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Grid container spacing={2}>
-                      {week.published.map((item, itemIndex) => (
-                        <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id ?? `${week.wkId}-${itemIndex}`}>
-                          <MaterialCard item={item} weekName={week.weekName} />
+                        <Box
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            bgcolor: '#EEF2FF',
+                            color: '#2563EB',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Typography sx={{ fontSize: 12.5, fontWeight: 800 }}>{weekIndex + 1}</Typography>
+                        </Box>
+                        <Typography sx={{ fontSize: 15.5, fontWeight: 800, color: '#0f172a' }}>
+                          {week.weekName}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={`${week.published.length} ${
+                            week.published.length === 1 ? 'lesson' : 'lessons'
+                          }`}
+                          sx={{
+                            fontSize: 10.5,
+                            fontWeight: 700,
+                            bgcolor: week.published.length ? '#DCFCE7' : '#f1f5f9',
+                            color: week.published.length ? '#166534' : '#94a3b8',
+                          }}
+                        />
+                        <Box sx={{ flexGrow: 1, height: 1, bgcolor: '#f1f5f9' }} />
+                        {week.topics.length > 0 && (
+                          <Box onClick={(e) => e.stopPropagation()} onFocus={(e) => e.stopPropagation()}>
+                            <FormControl size="small" sx={{ minWidth: 200 }}>
+                              <InputLabel id={`topic-${week.wkId}-label`}>Topic</InputLabel>
+                              <Select
+                                labelId={`topic-${week.wkId}-label`}
+                                label="Topic"
+                                value={week.selectedTopicId}
+                                onChange={(e) =>
+                                  setSelectedTopicByWeek((prev) => ({ ...prev, [week.wkId]: e.target.value }))
+                                }
+                              >
+                                {week.topics.map((topic) => (
+                                  <MenuItem key={topic.id} value={topic.id}>
+                                    {topic.topic_name}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Box>
+                        )}
+                      </Stack>
+                    </AccordionSummary>
+
+                    <AccordionDetails sx={{ px: 2, pb: 2, pt: 0 }}>
+                      {week.topics.length === 0 ? (
+                        <Box
+                          sx={{
+                            border: '1px dashed #e2e8f0',
+                            borderRadius: '14px',
+                            bgcolor: '#FAFBFC',
+                            px: 3,
+                            py: 2.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <IconVideoOff size={20} color="#94a3b8" style={{ flexShrink: 0 }} />
+                          <Typography variant="body2" sx={{ color: '#64748b', flex: 1 }}>
+                            No topics have been added for <strong>{week.weekName}</strong> yet. Add one from
+                            the Scheme of Work.
+                          </Typography>
+                          <Button
+                            component={RouterLink}
+                            to="/scheme-of-work"
+                            size="small"
+                            variant="outlined"
+                            sx={{ borderRadius: '8px', fontWeight: 600, flexShrink: 0 }}
+                          >
+                            Add content
+                          </Button>
+                        </Box>
+                      ) : week.loadingTopic ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25, py: 4 }}>
+                          <CircularProgress size={18} />
+                          <Typography variant="body2" sx={{ color: '#64748b' }}>
+                            Loading topic content…
+                          </Typography>
+                        </Box>
+                      ) : week.published.length === 0 ? (
+                        <Box
+                          sx={{
+                            border: '1px dashed #e2e8f0',
+                            borderRadius: '14px',
+                            bgcolor: '#FAFBFC',
+                            px: 3,
+                            py: 2.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <IconVideoOff size={20} color="#94a3b8" style={{ flexShrink: 0 }} />
+                          <Typography variant="body2" sx={{ color: '#64748b', flex: 1 }}>
+                            No video or lesson material has been published for this topic yet. Add one from
+                            the Scheme of Work.
+                          </Typography>
+                          <Button
+                            component={RouterLink}
+                            to="/scheme-of-work"
+                            size="small"
+                            variant="outlined"
+                            sx={{ borderRadius: '8px', fontWeight: 600, flexShrink: 0 }}
+                          >
+                            Add content
+                          </Button>
+                        </Box>
+                      ) : (
+                        <Grid container spacing={2}>
+                          {week.published.map((item, itemIndex) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={item.id ?? `${week.wkId}-${itemIndex}`}>
+                              <MaterialCard item={item} weekName={week.weekName} />
+                            </Grid>
+                          ))}
                         </Grid>
-                      ))}
-                    </Grid>
-                  )}
-                </Box>
-              ))}
-            </Stack>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </Stack>
+            </Box>
           )}
         </>
       )}

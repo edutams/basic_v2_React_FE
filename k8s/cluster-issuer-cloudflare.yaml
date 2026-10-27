@@ -17,3 +17,4 @@ spec:
         selector:
           dnsZones:
             - oneskool.net
+            - oneskool.ng

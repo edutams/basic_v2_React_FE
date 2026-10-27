@@ -167,6 +167,21 @@ const ParentManagement = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerGuardian, setDrawerGuardian] = useState(null);
 
+  // Row selection is radio-style: exactly one row selected at a time,
+  // driving both the checkbox and the detail drawer. Auto-select the first
+  // row whenever the list loads and the current selection isn't in it
+  // (initial load, or a filter/search that drops the selected row).
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const stillPresent = drawerGuardian && rows.some((r) => r.user_id === drawerGuardian.user_id);
+    if (!stillPresent) {
+      setDrawerGuardian(rows[0]);
+      setDrawerOpen(true);
+      setSelectedIds(new Set([rows[0].user_id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows]);
+
   // One-time, per-visit onboarding hint: "click a row" -> "panel updates".
   // Skipped entirely if the drawer is already open on mount (e.g. a deep
   // link); never re-armed once it reaches null, even if the drawer is
@@ -497,24 +512,12 @@ const ParentManagement = () => {
 
   const statusColor = (status) => (status === 'active' ? 'success' : 'default');
 
-  // ─── Row selection (bulk actions) ───────────────────────────────────────
-  const handleSelectAll = (e) => {
-    setSelectedIds(e.target.checked ? new Set(rows.map((r) => r.user_id)) : new Set());
-  };
-
-  // Checking the checkbox both toggles bulk-selection AND opens the
-  // overview panel for that row — per design, either clicking the row or
-  // its checkbox should surface the panel.
+  // ─── Row selection (radio-style: exactly one row at a time) ─────────────
+  // Checking the checkbox both selects that row AND opens the overview
+  // panel for it — either clicking the row or its checkbox surfaces the
+  // panel, and selecting a new row replaces whatever was selected before.
   const handleSelectRow = (row) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(row.user_id)) {
-        next.delete(row.user_id);
-      } else {
-        next.add(row.user_id);
-      }
-      return next;
-    });
+    setSelectedIds(new Set([row.user_id]));
     setDrawerGuardian(row);
     setDrawerOpen(true);
   };
@@ -843,14 +846,7 @@ const ParentManagement = () => {
               <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        size="small"
-                        indeterminate={selectedIds.size > 0 && selectedIds.size < rows.length}
-                        checked={rows.length > 0 && selectedIds.size === rows.length}
-                        onChange={handleSelectAll}
-                      />
-                    </TableCell>
+                    <TableCell padding="checkbox" />
                     <TableCell>#</TableCell>
                     <TableCell>Parent / Guardian</TableCell>
                     <TableCell>Contact Information</TableCell>

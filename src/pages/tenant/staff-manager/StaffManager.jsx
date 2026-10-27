@@ -678,8 +678,24 @@ const StaffManager = () => {
   };
 
   const handleRowClick = (staffMember) => {
-    setDetailPanelStaff((prev) => (prev?.user_id === staffMember.user_id ? null : staffMember));
+    setDetailPanelStaff(staffMember);
+    setSelectedIds(new Set([staffMember.user_id]));
   };
+
+  // Row selection is radio-style: exactly one row selected at a time, which
+  // drives both the checkbox and the detail panel. Auto-select the first row
+  // whenever the list loads and the current selection isn't in it (initial
+  // load, tab switch, or a filter/search that drops the previously-selected
+  // row from the results).
+  useEffect(() => {
+    if (staff.length === 0) return;
+    const stillPresent = detailPanelStaff && staff.some((s) => s.user_id === detailPanelStaff.user_id);
+    if (!stillPresent) {
+      setDetailPanelStaff(staff[0]);
+      setSelectedIds(new Set([staff[0].user_id]));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staff]);
 
   // Bulk actions loop the existing single-staff endpoints — the selection
   // is always small (one page of rows), and this reuses the same

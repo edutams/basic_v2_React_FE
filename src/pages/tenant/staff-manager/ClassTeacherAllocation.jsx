@@ -286,6 +286,20 @@ const ClassTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProgramme, selectedTerm, selectedClass]);
 
+  // Auto-open the detail panel for the first arm so it's already visible on
+  // load, same as Staff/Parent/Learner Manager — falls back to the first row
+  // again if the previously-open one dropped out of the list (filter/refetch).
+  useEffect(() => {
+    if (allocations.length === 0) return;
+    const stillPresent =
+      detailArm && allocations.some((a) => a.class_arm_id === detailArm.class_arm_id);
+    if (!stillPresent) {
+      setDetailArm(allocations[0]);
+      setDetailInitialTab('overview');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allocations]);
+
   const initData = async () => {
     try {
       const [sessionsRes, progsRes, staffRes] = await Promise.all([

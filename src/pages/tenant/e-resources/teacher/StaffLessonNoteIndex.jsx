@@ -143,7 +143,15 @@ const SubjectCard = ({ item, onSelect }) => {
           borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            mb: 1,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
             <Box
               sx={{
@@ -161,7 +169,9 @@ const SubjectCard = ({ item, onSelect }) => {
                 boxShadow: `0 4px 10px ${accentColor}4d`,
               }}
             >
-              {String(item.subject_name || '?').charAt(0).toUpperCase()}
+              {String(item.subject_name || '?')
+                .charAt(0)
+                .toUpperCase()}
             </Box>
             <Typography
               variant="subtitle1"
@@ -315,7 +325,9 @@ const SubjectCard = ({ item, onSelect }) => {
             mt: 'auto',
           }}
         >
-          <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: accentColor, flexShrink: 0 }} />
+          <Box
+            sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: accentColor, flexShrink: 0 }}
+          />
           <Typography
             variant="caption"
             fontWeight={600}
@@ -980,7 +992,7 @@ const StaffLessonNoteIndex = () => {
                         ))}
                       </TextField>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
                       <TextField
                         select
                         fullWidth

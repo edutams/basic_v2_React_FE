@@ -334,6 +334,14 @@ const SubjectTeacherAllocation = ({ activeTab, onTabChange, onOpenMigrate }) => 
     fetchSubjects(firstArmId);
   };
 
+  // Auto-open the first class's detail panel so it's already visible on
+  // load, same as Staff/Parent/Learner Manager and the Class Teacher tab.
+  useEffect(() => {
+    if (classes.length === 0 || selectedClass) return;
+    handleSelectClass(classes[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classes]);
+
   const handleSelectArm = (armId) => {
     if (armId === selectedArmId) return;
     setSelectedArmId(armId);

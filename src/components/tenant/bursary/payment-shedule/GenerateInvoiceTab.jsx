@@ -322,13 +322,19 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
   // a different, non-duplicate cut of needs_review_count (which counts
   // item × category combinations, not distinct items).
   const itemsNeedingReviewCount = items.filter((row) =>
-    Object.values(row.cells || {}).some((cell) => cell.status === 'unpriced' || cell.status === 'partial'),
+    Object.values(row.cells || {}).some(
+      (cell) => cell.status === 'unpriced' || cell.status === 'partial',
+    ),
   ).length;
   // While loading, the table reuses the last real column/row count as its
   // skeleton shape so nothing jumps once fresh data lands; a true first
   // load (nothing fetched yet) falls back to a generic 3x5 placeholder.
-  const tableCategories = categories.length > 0 ? categories : [{ id: 'sk-c1' }, { id: 'sk-c2' }, { id: 'sk-c3' }];
-  const tableItems = items.length > 0 ? items : [{ id: 'sk-i1' }, { id: 'sk-i2' }, { id: 'sk-i3' }, { id: 'sk-i4' }, { id: 'sk-i5' }];
+  const tableCategories =
+    categories.length > 0 ? categories : [{ id: 'sk-c1' }, { id: 'sk-c2' }, { id: 'sk-c3' }];
+  const tableItems =
+    items.length > 0
+      ? items
+      : [{ id: 'sk-i1' }, { id: 'sk-i2' }, { id: 'sk-i3' }, { id: 'sk-i4' }, { id: 'sk-i5' }];
   const stats = overview?.stats || {
     students_in_scope: 0,
     classes_in_scope: 0,
@@ -348,7 +354,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
     unpriced_count: 0,
   };
 
-  const selectedClassName = classes.find((c) => String(c.id) === String(selectedClass))?.class_name;
+  const selectedClassName = classes.find((c) => String(c.id) === String(selectedClass))?.class_code;
   const hasData = !loadingOverview && !errorOverview && items.length > 0 && categories.length > 0;
 
   const handleRefresh = () => {
@@ -431,7 +437,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               </Typography>
             )}
             {loadingOverview ? (
-              <Skeleton variant="rounded" width={140} height={22} sx={{ mt: 1, borderRadius: '999px' }} />
+              <Skeleton
+                variant="rounded"
+                width={140}
+                height={22}
+                sx={{ mt: 1, borderRadius: '999px' }}
+              />
             ) : (
               <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                 <Chip
@@ -488,13 +499,26 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               <Skeleton variant="text" width={160} height={20} sx={{ mt: 1 }} />
             ) : (
               <>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 1, display: 'block' }}
+                >
                   Across {stats.items_in_scope} payment item{stats.items_in_scope === 1 ? '' : 's'}
                 </Typography>
                 {summary.largest_category && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, display: 'block' }}
+                  >
                     Largest category:{' '}
-                    <Typography component="span" variant="caption" fontWeight={700} color="text.primary">
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.primary"
+                    >
                       {summary.largest_category.name}
                     </Typography>{' '}
                     — {CURRENCY(summary.largest_category.amount)}
@@ -503,7 +527,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 {summary.highest_item && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                     Highest item:{' '}
-                    <Typography component="span" variant="caption" fontWeight={700} color="text.primary">
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      fontWeight={700}
+                      color="text.primary"
+                    >
                       {summary.highest_item.name}
                     </Typography>{' '}
                     — {CURRENCY(summary.highest_item.amount)}
@@ -529,7 +558,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
             />
             <Box display="flex" alignItems="center" gap={1.5}>
               {loadingOverview ? (
-                <Skeleton variant="text" width={90} height={36} sx={{ transform: 'none', flexShrink: 0 }} />
+                <Skeleton
+                  variant="text"
+                  width={90}
+                  height={36}
+                  sx={{ transform: 'none', flexShrink: 0 }}
+                />
               ) : (
                 <Typography
                   variant="h5"
@@ -553,7 +587,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 )}
               </Box>
               {loadingOverview ? (
-                <Skeleton variant="text" width={32} height={20} sx={{ transform: 'none', flexShrink: 0 }} />
+                <Skeleton
+                  variant="text"
+                  width={32}
+                  height={20}
+                  sx={{ transform: 'none', flexShrink: 0 }}
+                />
               ) : (
                 <Typography variant="caption" fontWeight={700} color="text.secondary">
                   {stats.coverage_pct}%
@@ -566,13 +605,21 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
               <Typography
                 variant="caption"
                 fontWeight={700}
-                sx={{ mt: 1, display: 'block', color: summary.pending > 0 ? '#D97706' : 'success.main' }}
+                sx={{
+                  mt: 1,
+                  display: 'block',
+                  color: summary.pending > 0 ? '#D97706' : 'success.main',
+                }}
               >
                 {summary.pending} pending
               </Typography>
             )}
             {!loadingOverview && selectedClassName && (
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {selectedClassName}
               </Typography>
             )}
@@ -692,7 +739,6 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 ))}
               </Select>
             </FormControl>
-
           </Stack>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="center">
@@ -756,16 +802,24 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
             (cls, idx) => {
               const scheme = SCHEME_CYCLE[idx % SCHEME_CYCLE.length];
               const pct = cls
-                ? Math.min(100, Math.round((cls.invoices_generated / Math.max(cls.student_count, 1)) * 100))
+                ? Math.min(
+                    100,
+                    Math.round((cls.invoices_generated / Math.max(cls.student_count, 1)) * 100),
+                  )
                 : 0;
               const notStarted = cls && cls.invoices_generated === 0;
               const isSelected = cls && String(selectedClass) === String(cls.id);
+              // Fit every class into a single row at wide screens — a
+              // primary school's crèche-to-primary-6 lineup (8-10 classes)
+              // shouldn't wrap to a 2nd row just because 6 happened to fit
+              // a secondary school's class count.
+              const lgSize = Math.min(2, 12 / Math.max(classes.length || 6, 1));
               return (
-                <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: lgSize }}>
                   <Tooltip
                     title={
                       cls
-                        ? `${cls.class_name} — ${cls.student_count} student${cls.student_count === 1 ? '' : 's'}. ${cls.invoices_generated} of ${cls.student_count} invoiced (${pct}%). ${isSelected ? 'Currently selected below.' : 'Click to view and generate invoices for this class.'}`
+                        ? `${cls.class_code} — ${cls.student_count} student${cls.student_count === 1 ? '' : 's'}. ${cls.invoices_generated} of ${cls.student_count} invoiced (${pct}%). ${isSelected ? 'Currently selected below.' : 'Click to view and generate invoices for this class.'}`
                         : ''
                     }
                     arrow
@@ -794,22 +848,42 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                     >
                       {!cls ? (
                         <>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            mb={1}
+                          >
                             <Box display="flex" alignItems="center" gap={1}>
-                              <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '8px' }} />
+                              <Skeleton
+                                variant="rounded"
+                                width={28}
+                                height={28}
+                                sx={{ borderRadius: '8px' }}
+                              />
                               <Skeleton variant="text" width={70} height={22} />
                             </Box>
                           </Box>
                           <Skeleton variant="text" width={80} height={18} sx={{ mb: 0.5 }} />
                           <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                            <Skeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: 3 }} />
+                            <Skeleton
+                              variant="rounded"
+                              width="100%"
+                              height={6}
+                              sx={{ borderRadius: 3 }}
+                            />
                             <Skeleton variant="text" width={28} height={18} />
                           </Box>
                           <Skeleton variant="text" width={110} height={18} />
                         </>
                       ) : (
                         <>
-                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                          <Box
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="space-between"
+                            mb={1}
+                          >
                             <Box display="flex" alignItems="center" gap={1} minWidth={0}>
                               <Box
                                 sx={{
@@ -827,16 +901,23 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                                 <StudentsIcon sx={{ fontSize: 16 }} />
                               </Box>
                               <Typography variant="body2" fontWeight={700} noWrap>
-                                {cls.class_name}
+                                {cls.class_code}
                               </Typography>
                             </Box>
                             {isSelected ? (
-                              <CheckCircleIcon sx={{ color: scheme.color, flexShrink: 0, fontSize: 20 }} />
+                              <CheckCircleIcon
+                                sx={{ color: scheme.color, flexShrink: 0, fontSize: 20 }}
+                              />
                             ) : (
                               <ChevronRightIcon sx={{ color: 'text.disabled', flexShrink: 0 }} />
                             )}
                           </Box>
-                          <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                            mb={0.5}
+                          >
                             {cls.student_count} students
                           </Typography>
                           <Box display="flex" alignItems="center" gap={1} mb={0.5}>
@@ -955,7 +1036,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                         justifyContent="center"
                       >
                         {loadingOverview ? (
-                          <Skeleton variant="rounded" width={26} height={26} sx={{ borderRadius: '8px' }} />
+                          <Skeleton
+                            variant="rounded"
+                            width={26}
+                            height={26}
+                            sx={{ borderRadius: '8px' }}
+                          />
                         ) : (
                           <Box
                             sx={{

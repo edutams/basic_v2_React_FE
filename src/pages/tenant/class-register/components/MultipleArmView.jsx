@@ -292,9 +292,7 @@ const MultipleArmView = ({ onEnrollmentChange }) => {
   const [genderFilter, setGenderFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  // Collapsed by default so the student table is fully visible without
-  // scrolling — Class Explorer is opt-in via the toggle rail.
-  const [explorerOpen, setExplorerOpen] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(true);
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [meta, setMeta] = useState(null);

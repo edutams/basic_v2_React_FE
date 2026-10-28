@@ -339,10 +339,7 @@ const SingleArmView = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [profileStatusFilter, setProfileStatusFilter] = useState('');
 
-  // Collapsed by default so the student table (and its Actions column) is
-  // fully visible without scrolling — Class Explorer is opt-in via the
-  // toggle rail.
-  const [explorerOpen, setExplorerOpen] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(true);
 
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);

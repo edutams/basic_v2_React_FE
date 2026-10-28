@@ -757,7 +757,9 @@ const BursarySetupTab = ({
                           key={row.session_id}
                           hover
                           selected={row.session_id === viewSessionId}
+                          onClick={() => setViewSessionId(row.session_id)}
                           sx={{
+                            cursor: 'pointer',
                             '&.Mui-selected': { bgcolor: 'rgba(37, 99, 235, 0.08)' },
                             '&.Mui-selected:hover': { bgcolor: 'rgba(37, 99, 235, 0.14)' },
                           }}
@@ -792,6 +794,7 @@ const BursarySetupTab = ({
                             <IconButton
                               size="small"
                               onClick={(e) => {
+                                e.stopPropagation();
                                 setSessionMenuAnchor(e.currentTarget);
                                 setSessionMenuRow(row);
                               }}

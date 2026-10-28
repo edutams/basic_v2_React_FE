@@ -829,12 +829,17 @@ const PaymentShedule = () => {
                     : 0;
                   const notSet = cls && cls.priced_items === 0;
                   const isSelected = cls && String(cls.id) === String(selectedScheduleClassId);
+                  // Fit every class into a single row at wide screens — a
+                  // primary school's crèche-to-primary-6 lineup (8-10
+                  // classes) shouldn't wrap to a 2nd row just because 6
+                  // happened to fit a secondary school's class count.
+                  const lgSize = Math.min(2, 12 / Math.max(classesOverview.length || 6, 1));
                   return (
-                    <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+                    <Grid key={cls?.id ?? idx} size={{ xs: 12, sm: 6, md: 4, lg: lgSize }}>
                       <Tooltip
                         title={
                           cls
-                            ? `${cls.class_name || cls.class_code} — ${cls.student_count} student${cls.student_count === 1 ? '' : 's'}. ${cls.priced_items} of ${cls.total_items} item/category combinations priced (${pct}%). ${isSelected ? 'Currently selected below.' : 'Click to view and edit its schedule below.'}`
+                            ? `${cls.class_code} — ${cls.student_count} student${cls.student_count === 1 ? '' : 's'}. ${cls.priced_items} of ${cls.total_items} item/category combinations priced (${pct}%). ${isSelected ? 'Currently selected below.' : 'Click to view and edit its schedule below.'}`
                             : ''
                         }
                         arrow
@@ -916,7 +921,7 @@ const PaymentShedule = () => {
                                     <IconUsers size={16} />
                                   </Box>
                                   <Typography variant="body2" fontWeight={700} noWrap>
-                                    {cls.class_code || cls.class_name}
+                                    {cls.class_code}
                                   </Typography>
                                 </Box>
                                 {isSelected ? (

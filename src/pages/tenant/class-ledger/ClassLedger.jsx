@@ -432,6 +432,17 @@ const ClassLedger = () => {
     }
   }, [programme, classLevel, paymentStatusFilter]);
 
+  // Fetch the table once the preselected defaults (Programme/Class) are
+  // ready, so the page isn't just showing empty filters until Apply is
+  // clicked — later filter changes still require Apply/Refresh as before.
+  const didInitialFetchRef = React.useRef(false);
+  useEffect(() => {
+    if (!didInitialFetchRef.current && programme && classLevel) {
+      didInitialFetchRef.current = true;
+      fetchClassLedgerData();
+    }
+  }, [programme, classLevel]);
+
   useEffect(() => {
     if (programme && classLevel && ledgerData.length > 0) {
       fetchClassLedgerData();
@@ -862,26 +873,6 @@ const ClassLedger = () => {
                   <MenuItem value="owing">Debtor's List (Owing)</MenuItem>
                 </TextField>
               </Grid>
-
-              <Grid size={{ xs: 12, md: 3.5 }}>
-                <TextField
-                  placeholder="Search by name"
-                  size="small"
-                  fullWidth
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              </Grid>
-
               <Grid size={{ xs: 12, md: 2 }}>
                 <Stack direction="row" spacing={1}>
                   <Button
@@ -908,6 +899,26 @@ const ClassLedger = () => {
                   </Button>
                 </Stack>
               </Grid>
+
+              <Grid size={{ xs: 12, md: 3.5 }}>
+                <TextField
+                  placeholder="Search by name"
+                  size="small"
+                  fullWidth
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </Grid>
+
               <Box
                 sx={{
                   display: 'flex',

@@ -71,7 +71,7 @@ const EnrolmentByClass = ({
       sx={{
         p: 0.75,
         borderRadius: '14px',
-        maxHeight: 250,
+        height: 250,
         display: 'flex',
         flexDirection: 'column',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',

@@ -421,7 +421,10 @@ export const TenantAuthProvider = ({ children }) => {
       setImpersonatorId(null);
       setIsAuthenticated(true);
 
-      window.location.reload();
+      // Hard-navigate to a known-safe route rather than reloading whatever
+      // URL is current — the impersonated session may have drilled into a
+      // route the restored account has no permission for, which would 404.
+      window.location.href = '/dashboard';
 
       return { success: true };
     } catch (err) {

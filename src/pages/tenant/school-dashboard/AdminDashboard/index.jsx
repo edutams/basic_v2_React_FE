@@ -15,6 +15,7 @@ import AttendanceOverview from './components/AttendanceOverview';
 import TermCalendarCard from './components/TermCalendarCard';
 import AnnouncementsCard from './components/AnnouncementsCard';
 import EnrolmentByClass from './components/EnrolmentByClass';
+import TimetableOverview from './components/TimetableOverview';
 import OverviewBreakdownModal from './components/OverviewBreakdownModal';
 import { SchoolCalendarModal as CalendarModal } from '@/pages/tenant/staff-manager/non-teaching-dashboard/components/School-calendar';
 
@@ -52,7 +53,9 @@ const AdminDashboard = () => {
         setCalendarWeeks(fetchedWeeks);
 
         const holidaysData = holidaysRes.status === 'fulfilled' ? holidaysRes.value : null;
-        const fetchedHolidays = Array.isArray(holidaysData) ? holidaysData : holidaysData?.data || [];
+        const fetchedHolidays = Array.isArray(holidaysData)
+          ? holidaysData
+          : holidaysData?.data || [];
         setCalendarHolidays(fetchedHolidays);
 
         if (weeksData?.stats) {
@@ -70,7 +73,9 @@ const AdminDashboard = () => {
       }
     };
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [calendarModalOpen]);
 
   // Section data hook — no session_term_id, backend uses active term
@@ -144,6 +149,27 @@ const AdminDashboard = () => {
     fetchEnrollment();
   }, [fetchEnrollment]);
 
+  // Timetable overview — same /timetable/stats data that drives the 6 stat
+  // cards on the Generate Timetable screen, reused as-is for this card.
+  const [timetableData, setTimetableData] = useState({});
+  const [timetableLoading, setTimetableLoading] = useState(true);
+
+  const fetchTimetableOverview = useCallback(async () => {
+    setTimetableLoading(true);
+    try {
+      const res = await tenantApi.get('/timetable/stats');
+      setTimetableData(res.data?.status ? res.data.data : {});
+    } catch {
+      setTimetableData({});
+    } finally {
+      setTimetableLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTimetableOverview();
+  }, [fetchTimetableOverview]);
+
   // Academic performance — backend uses active session term
   const [academicData, setAcademicData] = useState({});
   const [academicLoading, setAcademicLoading] = useState(true);
@@ -179,7 +205,9 @@ const AdminDashboard = () => {
         total_students={overview.data?.total_students ?? 0}
         teaching_staff={overview.data?.teaching_staff ?? 0}
         non_teaching_staff={overview.data?.non_teaching_staff ?? 0}
-        attendance_rate={overview.data?.attendance_rate != null ? `${overview.data.attendance_rate}%` : '0%'}
+        attendance_rate={
+          overview.data?.attendance_rate != null ? `${overview.data.attendance_rate}%` : '0%'
+        }
         student_growth={overview.data?.student_growth}
         teaching_growth={overview.data?.teaching_growth}
         non_teaching_growth={overview.data?.non_teaching_growth}
@@ -200,10 +228,26 @@ const AdminDashboard = () => {
           <QuickActions loading={overview.loading} />
 
           <FinancialOverviewBar
-            expectedIncome={financial.data?.total_expected_income != null ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}` : '₦ 0'}
-            collectedIncome={financial.data?.total_collected_income != null ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}` : '₦ 0'}
-            outstandingBalance={financial.data?.total_outstanding_balance != null ? `₦ ${Number(financial.data.total_outstanding_balance).toLocaleString()}` : '₦ 0'}
-            efficiency={financial.data?.collection_efficiency != null ? `${financial.data.collection_efficiency}%` : '0%'}
+            expectedIncome={
+              financial.data?.total_expected_income != null
+                ? `₦ ${Number(financial.data.total_expected_income).toLocaleString()}`
+                : '₦ 0'
+            }
+            collectedIncome={
+              financial.data?.total_collected_income != null
+                ? `₦ ${Number(financial.data.total_collected_income).toLocaleString()}`
+                : '₦ 0'
+            }
+            outstandingBalance={
+              financial.data?.total_outstanding_balance != null
+                ? `₦ ${Number(financial.data.total_outstanding_balance).toLocaleString()}`
+                : '₦ 0'
+            }
+            efficiency={
+              financial.data?.collection_efficiency != null
+                ? `${financial.data.collection_efficiency}%`
+                : '0%'
+            }
             efficiencyTrend={financial.data?.efficiency_trend}
             collectedTrend={financial.data?.collected_trend}
             outstandingTrend={financial.data?.outstanding_trend}
@@ -213,31 +257,46 @@ const AdminDashboard = () => {
           />
 
           {/* Row: Academic Performance & Attendance */}
-          <Grid container spacing={2.5}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               <AcademicPerformanceOverview
                 data={academicData.exam_performance_overview}
-                avgScore={academicData.exam_performance != null ? `${academicData.exam_performance}%` : '0%'}
+                avgScore={
+                  academicData.exam_performance != null ? `${academicData.exam_performance}%` : '0%'
+                }
                 loading={academicLoading}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <AttendanceOverview
                 data={attendanceData.current_week_days}
-                avgAttendance={attendanceData.avg_attendance ? `${attendanceData.avg_attendance}%` : '—'}
-                trend={attendanceData.trend ? `${attendanceData.trend > 0 ? '+' : ''}${attendanceData.trend}%` : '0%'}
+                avgAttendance={
+                  attendanceData.avg_attendance ? `${attendanceData.avg_attendance}%` : '—'
+                }
+                trend={
+                  attendanceData.trend
+                    ? `${attendanceData.trend > 0 ? '+' : ''}${attendanceData.trend}%`
+                    : '0%'
+                }
                 loading={attendanceLoading}
               />
             </Grid>
           </Grid>
 
-          <EnrolmentByClass
-            classData={enrollmentData}
-            loading={enrollmentLoading}
-            onCellClick={(classCode, sex) => {
-              handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
-            }}
-          />
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <EnrolmentByClass
+                classData={enrollmentData}
+                loading={enrollmentLoading}
+                onCellClick={(classCode, sex) => {
+                  handleBreakdownClick('enrollment_by_class', { class_code: classCode, sex });
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TimetableOverview data={timetableData} loading={timetableLoading} />
+            </Grid>
+          </Grid>
         </Box>
 
         {/* Right Column: Term Calendar, Announcements, Enrolment By Class */}
@@ -264,7 +323,10 @@ const AdminDashboard = () => {
         open={Boolean(breakdownType)}
         type={breakdownType}
         extra={breakdownExtra}
-        onClose={() => { setBreakdownType(null); setBreakdownExtra({}); }}
+        onClose={() => {
+          setBreakdownType(null);
+          setBreakdownExtra({});
+        }}
       />
 
       {/* ── Full Calendar Modal ────────────────────────────────────── */}

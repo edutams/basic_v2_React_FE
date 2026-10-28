@@ -35,7 +35,7 @@ const StatCardItem = ({
           height: '100%',
           bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
           border: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+          borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#94a3b8',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
@@ -62,7 +62,7 @@ const StatCardItem = ({
         height: '100%',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#94a3b8',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column',

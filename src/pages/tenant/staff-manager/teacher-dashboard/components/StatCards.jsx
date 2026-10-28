@@ -160,7 +160,7 @@ export default function StatCards() {
                   sx={{
                     bgcolor: isDark ? theme.palette.background.paper : "#ffffff",
                     border: "1px solid",
-                    borderColor: isDark ? "rgba(255,255,255,0.12)" : "#E5E7EB",
+                    borderColor: isDark ? "rgba(255,255,255,0.12)" : "#94a3b8",
                     borderRadius: "14px",
                     p: 1.5,
                     height: "100%",

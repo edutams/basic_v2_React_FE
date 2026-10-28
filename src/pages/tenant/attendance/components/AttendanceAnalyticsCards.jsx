@@ -79,7 +79,7 @@ const StatCard = ({ children, colorIndex = 0, clickable = false, onClick, sx = {
         borderRadius: '14px',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         border: '1px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+        borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#94a3b8',
         boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         height: '100%',
         cursor: clickable ? 'pointer' : 'default',

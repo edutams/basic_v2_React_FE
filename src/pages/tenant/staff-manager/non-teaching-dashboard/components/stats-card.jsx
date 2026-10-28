@@ -36,7 +36,7 @@ const StatsCard = ({
                 sx={{
                     height: "100%",
                     bgcolor: "#ffffff",
-                    border: "1px solid #E5E7EB",
+                    border: "1px solid #94a3b8",
                     borderRadius: "14px",
                     boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
                     cursor: onClick ? "pointer" : "default",

@@ -31,6 +31,7 @@ import {
   DialogContent,
   DialogActions,
   LinearProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -45,6 +46,8 @@ import {
   SentimentSatisfied as BehaviourOkIcon,
   SentimentDissatisfied as BehaviourPoorIcon,
   HelpOutline as BehaviourUnknownIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import classRegisterApi from '@/api/tenant/class-register/classRegisterApi';
@@ -335,6 +338,11 @@ const SingleArmView = () => {
   const [genderFilter, setGenderFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [profileStatusFilter, setProfileStatusFilter] = useState('');
+
+  // Collapsed by default so the student table (and its Actions column) is
+  // fully visible without scrolling — Class Explorer is opt-in via the
+  // toggle rail.
+  const [explorerOpen, setExplorerOpen] = useState(false);
 
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -790,30 +798,80 @@ const SingleArmView = () => {
 
       {/* ── Body ────────────────────────────────────────────── */}
       <Grid container spacing={1}>
-        {(isAdmin || teacherArms.length > 1) && (
-          <Grid size={{ xs: 12, md: isAdmin ? 2.2 : 2 }}>
-            {isAdmin ? (
-              <ClassExplorerSidebar
-                mode="admin"
-                breakdown={breakdown}
-                loading={loadingBreakdown}
-                programmeFilter={saProgramme}
-                onProgrammeFilterChange={handleProgrammeChange}
-                selectedClassId={saClass}
-                onSelectClass={handleSelectClass}
-              />
-            ) : (
-              <ClassExplorerSidebar
-                mode="teacher"
-                teacherArms={teacherArms}
-                selectedArmId={saArm}
-                onSelectTeacherArm={handleSelectTeacherArm}
-              />
-            )}
-          </Grid>
-        )}
+        {(isAdmin || teacherArms.length > 1) &&
+          (explorerOpen ? (
+            <Grid size={{ xs: 12, md: isAdmin ? 2.2 : 2 }}>
+              <Box sx={{ position: 'relative' }}>
+                <Tooltip title="Collapse Class Explorer">
+                  <IconButton
+                    onClick={() => setExplorerOpen(false)}
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: 6,
+                      right: 6,
+                      zIndex: 2,
+                      bgcolor: 'background.paper',
+                      border: '1px solid',
+                      borderColor: '#94a3b8',
+                      '&:hover': { bgcolor: '#f1f5f9' },
+                    }}
+                  >
+                    <ChevronLeftIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                {isAdmin ? (
+                  <ClassExplorerSidebar
+                    mode="admin"
+                    breakdown={breakdown}
+                    loading={loadingBreakdown}
+                    programmeFilter={saProgramme}
+                    onProgrammeFilterChange={handleProgrammeChange}
+                    selectedClassId={saClass}
+                    onSelectClass={handleSelectClass}
+                  />
+                ) : (
+                  <ClassExplorerSidebar
+                    mode="teacher"
+                    teacherArms={teacherArms}
+                    selectedArmId={saArm}
+                    onSelectTeacherArm={handleSelectTeacherArm}
+                  />
+                )}
+              </Box>
+            </Grid>
+          ) : (
+            <Grid size={{ xs: 12, md: 0.6 }}>
+              <Tooltip title="Show Class Explorer" placement="right">
+                <IconButton
+                  onClick={() => setExplorerOpen(true)}
+                  size="small"
+                  sx={{
+                    width: '100%',
+                    height: 40,
+                    border: '1px solid',
+                    borderColor: '#94a3b8',
+                    borderRadius: '8px',
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: '#f1f5f9' },
+                  }}
+                >
+                  <ChevronRightIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          ))}
 
-        <Grid size={{ xs: 12, md: isAdmin || teacherArms.length > 1 ? 7 : 9 }}>
+        <Grid
+          size={{
+            xs: 12,
+            md: !(isAdmin || teacherArms.length > 1)
+              ? 9
+              : explorerOpen
+                ? 7
+                : (isAdmin ? 2.2 : 2) + 7 - 0.6,
+          }}
+        >
           <TableContainer
             sx={{
               borderRadius: 2,

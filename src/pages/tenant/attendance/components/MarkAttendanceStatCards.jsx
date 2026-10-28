@@ -42,7 +42,7 @@ const StatCard = ({ icon, iconBg, iconColor, label, tooltip, children, onClick }
       sx={{
         p: '10px 12px',
         borderRadius: '10px',
-        border: '1px solid #E5E7EB',
+        border: '1px solid #94a3b8',
         bgcolor: '#fff',
         height: '100%',
         width: '100%',
@@ -84,7 +84,7 @@ const StatCard = ({ icon, iconBg, iconColor, label, tooltip, children, onClick }
 );
 
 const CardSkeleton = () => (
-  <Paper elevation={0} sx={{ p: '10px 12px', borderRadius: '10px', border: '1px solid #E5E7EB', height: '100%' }}>
+  <Paper elevation={0} sx={{ p: '10px 12px', borderRadius: '10px', border: '1px solid #94a3b8', height: '100%' }}>
     <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1 }}>
       <Skeleton variant="rounded" width={28} height={28} sx={{ borderRadius: '8px' }} />
       <Skeleton variant="text" width="60%" height={14} />

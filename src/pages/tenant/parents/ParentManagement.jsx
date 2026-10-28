@@ -210,6 +210,16 @@ const ParentManagement = () => {
     setPage(0);
   };
 
+  // Auto-apply after typing settles — Enter (handleApplySearch above) still
+  // applies instantly without waiting for this.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const tabFilters = useMemo(() => {
     switch (activeTab) {
       case 'active':

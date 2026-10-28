@@ -43,7 +43,7 @@ const Trend = ({ diff }) => {
 const StatCard = ({ icon, iconBg, iconColor, label, children }) => (
   <Paper
     elevation={0}
-    sx={{ p: '8px 10px', borderRadius: '10px', border: '1px solid #E5E7EB', bgcolor: '#fff', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', gap: 0.25 }}
+    sx={{ p: '8px 10px', borderRadius: '10px', border: '1px solid #94a3b8', bgcolor: '#fff', height: '100%', width: '100%', display: 'flex', flexDirection: 'column', gap: 0.25 }}
   >
     <Stack direction="row" alignItems="center" spacing={0.75}>
       <Box sx={{ width: 26, height: 26, borderRadius: '7px', bgcolor: iconBg, color: iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, '& svg': { fontSize: 15 } }}>
@@ -58,7 +58,7 @@ const StatCard = ({ icon, iconBg, iconColor, label, children }) => (
 );
 
 const CardSkeleton = () => (
-  <Paper elevation={0} sx={{ p: '8px 10px', borderRadius: '10px', border: '1px solid #E5E7EB', height: '100%' }}>
+  <Paper elevation={0} sx={{ p: '8px 10px', borderRadius: '10px', border: '1px solid #94a3b8', height: '100%' }}>
     <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 0.5 }}>
       <Skeleton variant="rounded" width={26} height={26} sx={{ borderRadius: '7px' }} />
       <Skeleton variant="text" width="60%" height={14} />

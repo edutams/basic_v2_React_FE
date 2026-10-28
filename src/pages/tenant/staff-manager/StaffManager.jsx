@@ -82,6 +82,7 @@ const StaffManager = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'teaching');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [classFilter, setClassFilter] = useState('all');
@@ -169,12 +170,17 @@ const StaffManager = () => {
   });
 
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     fetchStaff();
   }, [
     activeTab,
     page,
     rowsPerPage,
-    searchQuery,
+    debouncedSearchQuery,
     statusFilter,
     subjectFilter,
     classFilter,
@@ -235,7 +241,7 @@ const StaffManager = () => {
       const params = {
         page: page + 1,
         per_page: rowsPerPage,
-        search: searchQuery,
+        search: debouncedSearchQuery,
         staff_type: activeTab,
       };
 

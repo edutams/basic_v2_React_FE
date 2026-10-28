@@ -1198,7 +1198,7 @@ const LearnerManagement = () => {
                                     setViewParentsOpen(true);
                                   }}
                                 >
-                                  {row.guardians_count ?? 0} linked
+                                  {row.guardians_count ?? 0}
                                 </Link>
                               </Typography>
                             </Box>

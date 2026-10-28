@@ -1131,10 +1131,10 @@ const ClassLedger = () => {
                           </TableCell>
                           <TableCell sx={tdCell}>
                             ₦{(student.total_penalty || 0).toLocaleString()}
-                          </TableCell>{' '}
+                          </TableCell>
                           <TableCell sx={tdCell}>
                             ₦{(student.total_discount || 0).toLocaleString()}
-                          </TableCell>{' '}
+                          </TableCell>
                           <TableCell sx={tdCell}>
                             <Chip
                               label={`₦${(student.total_balance || 0).toLocaleString()}`}
@@ -1323,24 +1323,17 @@ const ClassLedger = () => {
               </MenuItem>
 
               <MenuItem
-                disabled={!activeRow?.latest_bulk_order_id}
+                disabled={!activeRow?.user_id}
                 onClick={() => {
                   setAnchorEl(null);
-                  if (activeRow?.latest_bulk_order_id) {
-                    const params = new URLSearchParams({
-                      bulk_order_id: activeRow.latest_bulk_order_id,
-                      user_id: activeRow.user_id,
-                      session_term_id: bursarySessionTermId,
-                    });
-                    window.open(
-                      `/bursary/transactions/print_receipt?${params.toString()}`,
-                      '_blank',
-                    );
+                  if (activeRow?.user_id) {
+                    const params = new URLSearchParams({ user_id: activeRow.user_id });
+                    window.open(`/bursary/payment-history?${params.toString()}`, '_blank');
                   }
                 }}
               >
                 <ReceiptOutlinedIcon fontSize="small" sx={{ color: '#6b7280', mr: 1 }} />
-                View Receipt
+                View Payment History
               </MenuItem>
             </Menu>
             <FeeChart

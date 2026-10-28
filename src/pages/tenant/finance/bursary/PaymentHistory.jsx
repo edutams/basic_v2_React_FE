@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -80,11 +81,15 @@ import {
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Payment History' }];
 
-const STAFF_ROLES = ['bursar', 'super_admin', 'school_admin', 'bursary_officer'];
+const STAFF_ROLES = ['bursar', 'super_admin', 'school_admin'];
 
 const STATUS_COLOR = { APPROVED: 'success', PENDING: 'warning', DECLINED: 'error' };
 const CHANNEL_LABEL = { CASH: 'Post Cash', ONLINE: 'Online', BANK_TELLER: 'Bank Teller' };
-const CHANNEL_ICON = { CASH: PaidOutlinedIcon, ONLINE: LaptopMacOutlinedIcon, BANK_TELLER: AccountBalanceOutlinedIcon };
+const CHANNEL_ICON = {
+  CASH: PaidOutlinedIcon,
+  ONLINE: LaptopMacOutlinedIcon,
+  BANK_TELLER: AccountBalanceOutlinedIcon,
+};
 const CHANNEL_COLOR = { CASH: '#D97706', ONLINE: '#2563EB', BANK_TELLER: '#7C3AED' };
 
 const money = (n) =>
@@ -99,13 +104,23 @@ const EMPTY_SUMMARY = {
 
 const StatSub = ({ icon: Icon, iconColor, label, value, valueColor }) => (
   <Box sx={{ flex: 1, minWidth: 0, textAlign: 'center', px: 0.5 }}>
-    <Stack direction="row" spacing={0.4} alignItems="center" justifyContent="center" sx={{ mb: 0.25 }}>
+    <Stack
+      direction="row"
+      spacing={0.4}
+      alignItems="center"
+      justifyContent="center"
+      sx={{ mb: 0.25 }}
+    >
       <Icon sx={{ fontSize: 13, color: iconColor }} />
       <Typography variant="caption" color="text.secondary" sx={{ fontSize: '10.5px' }}>
         {label}
       </Typography>
     </Stack>
-    <Typography variant="subtitle1" fontWeight={800} sx={{ wordBreak: 'break-word', color: valueColor, fontSize: '17px' }}>
+    <Typography
+      variant="subtitle1"
+      fontWeight={800}
+      sx={{ wordBreak: 'break-word', color: valueColor, fontSize: '17px' }}
+    >
       {value}
     </Typography>
   </Box>
@@ -133,9 +148,24 @@ const StatCard = ({ icon: Icon, iconBg, iconColor, label, data }) => (
         {label}
       </Typography>
     </Stack>
-    <Stack direction="row" divider={<Divider orientation="vertical" flexItem />} sx={{ width: '100%' }}>
-      <StatSub icon={ReceiptLongOutlinedIcon} iconColor="#64748B" label="Due" value={money(data.due)} />
-      <StatSub icon={CheckCircleOutlineIcon} iconColor="#16A34A" label="Paid" value={money(data.paid)} valueColor="#16A34A" />
+    <Stack
+      direction="row"
+      divider={<Divider orientation="vertical" flexItem />}
+      sx={{ width: '100%' }}
+    >
+      <StatSub
+        icon={ReceiptLongOutlinedIcon}
+        iconColor="#64748B"
+        label="Due"
+        value={money(data.due)}
+      />
+      <StatSub
+        icon={CheckCircleOutlineIcon}
+        iconColor="#16A34A"
+        label="Paid"
+        value={money(data.paid)}
+        valueColor="#16A34A"
+      />
       <StatSub
         icon={WarningAmberOutlinedIcon}
         iconColor={data.balance > 0 ? '#DC2626' : '#64748B'}
@@ -239,7 +269,14 @@ const StudentInfoCard = ({ info, loading, isDark }) => {
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, mb: 3 }}>
-      <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap" useFlexGap sx={{ width: '100%' }}>
+      <Stack
+        direction="row"
+        spacing={3}
+        alignItems="center"
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ width: '100%' }}
+      >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 220 }}>
           <Avatar src={info.avatar} sx={{ width: 56, height: 56 }}>
             <PersonOutlineIcon />
@@ -252,7 +289,9 @@ const StudentInfoCard = ({ info, loading, isDark }) => {
               {info.admission_no}
             </Typography>
             <Stack direction="row" spacing={0.75}>
-              {info.class_label && <Chip size="small" color="primary" variant="outlined" label={info.class_label} />}
+              {info.class_label && (
+                <Chip size="small" color="primary" variant="outlined" label={info.class_label} />
+              )}
               {info.programme_name && (
                 <Chip size="small" color="success" variant="outlined" label={info.programme_name} />
               )}
@@ -335,7 +374,11 @@ const buildTimeline = (row) => {
 
   if (row.updated_at && row.updated_at !== row.created_at) {
     const statusLabel =
-      row.status === 'APPROVED' ? 'Payment Approved' : row.status === 'DECLINED' ? 'Payment Declined' : 'Payment Pending';
+      row.status === 'APPROVED'
+        ? 'Payment Approved'
+        : row.status === 'DECLINED'
+          ? 'Payment Declined'
+          : 'Payment Pending';
     stages.push({
       key: 'status',
       label: statusLabel,
@@ -344,9 +387,7 @@ const buildTimeline = (row) => {
     });
   }
 
-  return stages
-    .filter((s) => s.time)
-    .sort((a, b) => new Date(b.time) - new Date(a.time)); // newest first, matching the reference
+  return stages.filter((s) => s.time).sort((a, b) => new Date(b.time) - new Date(a.time)); // newest first, matching the reference
 };
 
 const PaymentTimeline = ({ row }) => {
@@ -378,7 +419,9 @@ const PaymentTimeline = ({ row }) => {
               >
                 {i === 0 ? <CheckCircleOutlineIcon sx={{ fontSize: 15 }} /> : null}
               </Box>
-              {i < stages.length - 1 && <Box sx={{ width: 2, flex: 1, bgcolor: 'grey.300', my: 0.25 }} />}
+              {i < stages.length - 1 && (
+                <Box sx={{ width: 2, flex: 1, bgcolor: 'grey.300', my: 0.25 }} />
+              )}
             </Box>
             <Box sx={{ pb: i < stages.length - 1 ? 2.5 : 0, minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700}>
@@ -463,6 +506,12 @@ const PaymentHistory = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  // Deep-linked from Class Ledger's "View Payment History" action — land
+  // directly on that student, no lookup widget needed since we already
+  // know who we're here for.
+  const [searchParams] = useSearchParams();
+  const deepLinkedUserId = searchParams.get('user_id') || '';
+
   const isBursaryStaff = useMemo(
     () =>
       Array.isArray(roles) &&
@@ -491,13 +540,16 @@ const PaymentHistory = () => {
   const [viewMode, setViewMode] = useState('myself'); // 'myself' | 'ward'
   const [selectedWardId, setSelectedWardId] = useState('');
 
-  const [selectedUserId, setSelectedUserId] = useState(isBursaryStaff || isParent ? '' : selfId);
+  const [selectedUserId, setSelectedUserId] = useState(
+    deepLinkedUserId || (isBursaryStaff || isParent ? '' : selfId),
+  );
 
   // Staff land on a populated page rather than an empty "pick someone"
   // state — the first programme/class/student cascade auto-selects, same
-  // defaulting pattern as Class Ledger/Set Schedule.
+  // defaulting pattern as Class Ledger/Set Schedule. Skipped when deep-linked
+  // to a specific student — that selection must not be overwritten.
   useEffect(() => {
-    if (!isBursaryStaff) return;
+    if (!isBursaryStaff || deepLinkedUserId) return;
     (async () => {
       try {
         const res = await fetchProgrammes();
@@ -702,7 +754,10 @@ const PaymentHistory = () => {
         const res = await fetchSessionTerms(selectedSessionId);
         setTerms([
           { id: 'all', label: 'All Terms' },
-          ...res.data.map((st) => ({ id: st.id, label: st.term?.term_name || st.term_name || '—' })),
+          ...res.data.map((st) => ({
+            id: st.id,
+            label: st.term?.term_name || st.term_name || '—',
+          })),
         ]);
       } catch (error) {
         console.error('Failed to load terms', error);
@@ -818,7 +873,18 @@ const PaymentHistory = () => {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showingMyself, selectedUserId, effectiveSessionId, effectiveSessionTermId, payType, payOption, status, paymentNameId, page, rowsPerPage]);
+  }, [
+    showingMyself,
+    selectedUserId,
+    effectiveSessionId,
+    effectiveSessionTermId,
+    payType,
+    payOption,
+    status,
+    paymentNameId,
+    page,
+    rowsPerPage,
+  ]);
 
   useEffect(() => {
     loadData();
@@ -850,7 +916,9 @@ const PaymentHistory = () => {
     setRequeryingId(row.id);
     try {
       const res = await requeryPaymentHistoryTransaction(row.id);
-      setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: res.transaction_status } : r)));
+      setRows((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, status: res.transaction_status } : r)),
+      );
       notify.success(`Transaction status: ${res.transaction_status}`);
     } catch (error) {
       console.error('Failed to requery transaction', error);
@@ -867,7 +935,11 @@ const PaymentHistory = () => {
       user_id: row.user_id || selectedUserId,
       session_term_id: row.session_term_id,
     });
-    window.open(`/bursary/transactions/print_receipt?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    window.open(
+      `/bursary/transactions/print_receipt?${params.toString()}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
   };
 
   // Export/Print both need the full filtered list, not just the current
@@ -906,18 +978,23 @@ const PaymentHistory = () => {
         'Wallet/Bank',
         'Paid By',
       ];
-      const csvRows = [header, ...allRows.map((r) => [
-        r.trans_date,
-        r.order_id,
-        r.payment_name,
-        r.description,
-        r.pay_option,
-        r.amount_paid,
-        r.status,
-        CHANNEL_LABEL[r.payment_type] || r.payment_type,
-        r.wallet_account_no ? `${r.wallet_account_no}${r.bank_name ? ` (${r.bank_name})` : ''}` : '',
-        r.paid_by_name,
-      ])];
+      const csvRows = [
+        header,
+        ...allRows.map((r) => [
+          r.trans_date,
+          r.order_id,
+          r.payment_name,
+          r.description,
+          r.pay_option,
+          r.amount_paid,
+          r.status,
+          CHANNEL_LABEL[r.payment_type] || r.payment_type,
+          r.wallet_account_no
+            ? `${r.wallet_account_no}${r.bank_name ? ` (${r.bank_name})` : ''}`
+            : '',
+          r.paid_by_name,
+        ]),
+      ];
       const csvContent = csvRows
         .map((row) => row.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
         .join('\n');
@@ -925,7 +1002,10 @@ const PaymentHistory = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `payment_history_${studentInfo?.admission_no || selectedUserId}.csv`);
+      link.setAttribute(
+        'download',
+        `payment_history_${studentInfo?.admission_no || selectedUserId}.csv`,
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1006,7 +1086,10 @@ const PaymentHistory = () => {
   const tabValue = payOption || 'all';
 
   return (
-    <PageContainer title="Payment History" description="Track individual bursary payment transactions">
+    <PageContainer
+      title="Payment History"
+      description="Track individual bursary payment transactions"
+    >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
         <Box
           sx={{
@@ -1042,7 +1125,12 @@ const PaymentHistory = () => {
               variant={viewMode === 'myself' ? 'contained' : 'outlined'}
               size="small"
               onClick={() => setViewMode('myself')}
-              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}
+              sx={{
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+              }}
             >
               Myself
             </Button>
@@ -1069,7 +1157,7 @@ const PaymentHistory = () => {
         </Paper>
       )}
 
-      {isBursaryStaff && (
+      {isBursaryStaff && !deepLinkedUserId && (
         <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 5 }}>
@@ -1120,10 +1208,16 @@ const PaymentHistory = () => {
                 size="small"
                 label="Session"
                 value={selectedSessionId}
-                onChange={(e) => { setSelectedSessionId(e.target.value); setSelectedTermId('all'); setPage(0); }}
+                onChange={(e) => {
+                  setSelectedSessionId(e.target.value);
+                  setSelectedTermId('all');
+                  setPage(0);
+                }}
               >
                 {sessions.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                  <MenuItem key={s.id} value={s.id}>
+                    {s.label}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -1135,10 +1229,15 @@ const PaymentHistory = () => {
                 label="Term"
                 value={selectedTermId}
                 disabled={selectedSessionId === 'all'}
-                onChange={(e) => { setSelectedTermId(e.target.value); setPage(0); }}
+                onChange={(e) => {
+                  setSelectedTermId(e.target.value);
+                  setPage(0);
+                }}
               >
                 {terms.map((t) => (
-                  <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
+                  <MenuItem key={t.id} value={t.id}>
+                    {t.label}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -1169,7 +1268,9 @@ const PaymentHistory = () => {
                 onChange={(e) => handleProgrammeChange(e.target.value)}
               >
                 {programmes.map((p) => (
-                  <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>
+                  <MenuItem key={p.value} value={p.value}>
+                    {p.label}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -1184,7 +1285,9 @@ const PaymentHistory = () => {
                 onChange={(e) => handleClassChange(e.target.value)}
               >
                 {classes.map((c) => (
-                  <MenuItem key={c.value} value={c.value}>{c.label}</MenuItem>
+                  <MenuItem key={c.value} value={c.value}>
+                    {c.label}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -1196,11 +1299,15 @@ const PaymentHistory = () => {
                 label="Student"
                 value={selectedUserId}
                 disabled={!classArmId || loadingStudents}
-                onChange={(e) => { setSelectedUserId(e.target.value); setSelectedStudentOption(null); }}
+                onChange={(e) => {
+                  setSelectedUserId(e.target.value);
+                  setSelectedStudentOption(null);
+                }}
               >
                 {students.map((s) => (
                   <MenuItem key={s.user_id} value={s.user_id}>
-                    {`${s.fname || ''} ${s.lname || ''}`.trim()} {s.admission_no ? `(${s.admission_no})` : ''}
+                    {`${s.fname || ''} ${s.lname || ''}`.trim()}{' '}
+                    {s.admission_no ? `(${s.admission_no})` : ''}
                   </MenuItem>
                 ))}
               </TextField>
@@ -1217,7 +1324,9 @@ const PaymentHistory = () => {
         </Alert>
       ) : (
         <>
-          {!showingMyself && <StudentInfoCard info={studentInfo} loading={loadingStudentInfo} isDark={isDark} />}
+          {!showingMyself && (
+            <StudentInfoCard info={studentInfo} loading={loadingStudentInfo} isDark={isDark} />
+          )}
 
           {!showingMyself && (
             <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -1264,10 +1373,16 @@ const PaymentHistory = () => {
                           size="small"
                           label="Session"
                           value={selectedSessionId}
-                          onChange={(e) => { setSelectedSessionId(e.target.value); setSelectedTermId('all'); setPage(0); }}
+                          onChange={(e) => {
+                            setSelectedSessionId(e.target.value);
+                            setSelectedTermId('all');
+                            setPage(0);
+                          }}
                         >
                           {sessions.map((s) => (
-                            <MenuItem key={s.id} value={s.id}>{s.label}</MenuItem>
+                            <MenuItem key={s.id} value={s.id}>
+                              {s.label}
+                            </MenuItem>
                           ))}
                         </TextField>
                       </Grid>
@@ -1279,10 +1394,15 @@ const PaymentHistory = () => {
                           label="Term"
                           value={selectedTermId}
                           disabled={selectedSessionId === 'all'}
-                          onChange={(e) => { setSelectedTermId(e.target.value); setPage(0); }}
+                          onChange={(e) => {
+                            setSelectedTermId(e.target.value);
+                            setPage(0);
+                          }}
                         >
                           {terms.map((t) => (
-                            <MenuItem key={t.id} value={t.id}>{t.label}</MenuItem>
+                            <MenuItem key={t.id} value={t.id}>
+                              {t.label}
+                            </MenuItem>
                           ))}
                         </TextField>
                       </Grid>
@@ -1296,11 +1416,16 @@ const PaymentHistory = () => {
                         size="small"
                         label="Payment Name"
                         value={paymentNameId}
-                        onChange={(e) => { setPaymentNameId(e.target.value); setPage(0); }}
+                        onChange={(e) => {
+                          setPaymentNameId(e.target.value);
+                          setPage(0);
+                        }}
                       >
                         <MenuItem value="">All</MenuItem>
                         {paymentNameOptions.map((p) => (
-                          <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+                          <MenuItem key={p.id} value={p.id}>
+                            {p.name}
+                          </MenuItem>
                         ))}
                       </TextField>
                     </Grid>
@@ -1312,7 +1437,10 @@ const PaymentHistory = () => {
                       size="small"
                       label="Payment Purpose"
                       value={payType}
-                      onChange={(e) => { setPayType(e.target.value); setPage(0); }}
+                      onChange={(e) => {
+                        setPayType(e.target.value);
+                        setPage(0);
+                      }}
                     >
                       <MenuItem value="">All</MenuItem>
                       <MenuItem value="bursary">Registered Students</MenuItem>
@@ -1326,7 +1454,10 @@ const PaymentHistory = () => {
                       size="small"
                       label="Status"
                       value={status}
-                      onChange={(e) => { setStatus(e.target.value); setPage(0); }}
+                      onChange={(e) => {
+                        setStatus(e.target.value);
+                        setPage(0);
+                      }}
                     >
                       <MenuItem value="">All</MenuItem>
                       <MenuItem value="APPROVED">Approved</MenuItem>
@@ -1352,12 +1483,27 @@ const PaymentHistory = () => {
                   {!showingMyself ? (
                     <Tabs
                       value={tabValue}
-                      onChange={(e, v) => { setPayOption(v === 'all' ? '' : v); setPage(0); }}
+                      onChange={(e, v) => {
+                        setPayOption(v === 'all' ? '' : v);
+                        setPage(0);
+                      }}
                       sx={{ minHeight: 40 }}
                     >
-                      <Tab value="all" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`All Transactions (${summary.counts?.all ?? 0})`} />
-                      <Tab value="compulsory" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`Compulsory Fees (${summary.counts?.compulsory ?? 0})`} />
-                      <Tab value="optional" sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }} label={`Optional Fees (${summary.counts?.optional ?? 0})`} />
+                      <Tab
+                        value="all"
+                        sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }}
+                        label={`All Transactions (${summary.counts?.all ?? 0})`}
+                      />
+                      <Tab
+                        value="compulsory"
+                        sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }}
+                        label={`Compulsory Fees (${summary.counts?.compulsory ?? 0})`}
+                      />
+                      <Tab
+                        value="optional"
+                        sx={{ minHeight: 40, textTransform: 'none', fontWeight: 700 }}
+                        label={`Optional Fees (${summary.counts?.optional ?? 0})`}
+                      />
                     </Tabs>
                   ) : (
                     <Typography variant="subtitle2" sx={{ py: 1.5, px: 1 }} fontWeight={700}>
@@ -1370,7 +1516,9 @@ const PaymentHistory = () => {
                       <Button
                         variant="outlined"
                         size="small"
-                        startIcon={exporting ? <CircularProgress size={14} /> : <FileDownloadOutlinedIcon />}
+                        startIcon={
+                          exporting ? <CircularProgress size={14} /> : <FileDownloadOutlinedIcon />
+                        }
                         onClick={handleExportCsv}
                         disabled={exporting}
                       >
@@ -1379,7 +1527,13 @@ const PaymentHistory = () => {
                       <Button
                         variant="contained"
                         size="small"
-                        startIcon={printing ? <CircularProgress size={14} color="inherit" /> : <PrintOutlinedIcon />}
+                        startIcon={
+                          printing ? (
+                            <CircularProgress size={14} color="inherit" />
+                          ) : (
+                            <PrintOutlinedIcon />
+                          )
+                        }
                         onClick={handlePrintStatement}
                         disabled={printing}
                       >
@@ -1395,7 +1549,11 @@ const PaymentHistory = () => {
                     size="small"
                     sx={{
                       '& .MuiTableCell-root': { fontSize: '12px', py: 0.75, px: 1 },
-                      '& .MuiTableCell-head': { fontSize: '11.5px', fontWeight: 700, whiteSpace: 'nowrap' },
+                      '& .MuiTableCell-head': {
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        whiteSpace: 'nowrap',
+                      },
                     }}
                   >
                     <TableHead>
@@ -1419,14 +1577,18 @@ const PaymentHistory = () => {
                         Array.from({ length: 5 }).map((_, i) => (
                           <TableRow key={i}>
                             {Array.from({ length: 12 }).map((__, j) => (
-                              <TableCell key={j}><Skeleton variant="text" /></TableCell>
+                              <TableCell key={j}>
+                                <Skeleton variant="text" />
+                              </TableCell>
                             ))}
                           </TableRow>
                         ))
                       ) : rows.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={12}>
-                            <Alert severity="info" sx={{ my: 1 }}>No transactions found.</Alert>
+                            <Alert severity="info" sx={{ my: 1 }}>
+                              No transactions found.
+                            </Alert>
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -1437,66 +1599,71 @@ const PaymentHistory = () => {
                             <TableRow key={row.id} hover>
                               <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                               <TableCell>{row.trans_date}</TableCell>
-                              <TableCell sx={{ maxWidth: 180, whiteSpace: 'normal', wordBreak: 'break-all' }}>
+                              <TableCell
+                                sx={{ maxWidth: 180, whiteSpace: 'normal', wordBreak: 'break-all' }}
+                              >
                                 {row.order_id || '—'}
                               </TableCell>
                               <TableCell>{row.payment_name}</TableCell>
                               <TableCell sx={{ maxWidth: 220 }}>
-                                {row.description ? (
-                                  (() => {
-                                    const isLong = row.description.length > 45;
-                                    const isExpanded = expandedDescriptions.has(row.id);
+                                {row.description
+                                  ? (() => {
+                                      const isLong = row.description.length > 45;
+                                      const isExpanded = expandedDescriptions.has(row.id);
 
-                                    return (
-                                      <Box>
-                                        <Typography
-                                          component="span"
-                                          sx={{
-                                            fontSize: 'inherit',
-                                            display: isExpanded || !isLong ? 'block' : '-webkit-box',
-                                            WebkitLineClamp: isExpanded || !isLong ? 'unset' : 1,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                          }}
-                                        >
-                                          {row.description}
-                                        </Typography>
-                                        {isLong && (
-                                          <Box
+                                      return (
+                                        <Box>
+                                          <Typography
                                             component="span"
-                                            onClick={() => toggleDescription(row.id)}
                                             sx={{
-                                              display: 'inline-flex',
-                                              alignItems: 'center',
-                                              color: 'primary.main',
-                                              fontWeight: 700,
-                                              fontSize: '11px',
-                                              cursor: 'pointer',
-                                              mt: 0.25,
+                                              fontSize: 'inherit',
+                                              display:
+                                                isExpanded || !isLong ? 'block' : '-webkit-box',
+                                              WebkitLineClamp: isExpanded || !isLong ? 'unset' : 1,
+                                              WebkitBoxOrient: 'vertical',
+                                              overflow: 'hidden',
                                             }}
                                           >
-                                            {isExpanded ? 'View less' : 'View more'}
-                                            {isExpanded ? (
-                                              <ExpandLessIcon sx={{ fontSize: 14 }} />
-                                            ) : (
-                                              <ExpandMoreIcon sx={{ fontSize: 14 }} />
-                                            )}
-                                          </Box>
-                                        )}
-                                      </Box>
-                                    );
-                                  })()
-                                ) : (
-                                  '—'
-                                )}
+                                            {row.description}
+                                          </Typography>
+                                          {isLong && (
+                                            <Box
+                                              component="span"
+                                              onClick={() => toggleDescription(row.id)}
+                                              sx={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                color: 'primary.main',
+                                                fontWeight: 700,
+                                                fontSize: '11px',
+                                                cursor: 'pointer',
+                                                mt: 0.25,
+                                              }}
+                                            >
+                                              {isExpanded ? 'View less' : 'View more'}
+                                              {isExpanded ? (
+                                                <ExpandLessIcon sx={{ fontSize: 14 }} />
+                                              ) : (
+                                                <ExpandMoreIcon sx={{ fontSize: 14 }} />
+                                              )}
+                                            </Box>
+                                          )}
+                                        </Box>
+                                      );
+                                    })()
+                                  : '—'}
                               </TableCell>
                               <TableCell>
                                 {row.pay_option && (
                                   <Chip
                                     size="small"
                                     variant="outlined"
-                                    color={row.pay_option === 'COMPULSORY' ? 'primary' : 'secondary'}
-                                    label={row.pay_option === 'COMPULSORY' ? 'Compulsory' : 'Optional'}
+                                    color={
+                                      row.pay_option === 'COMPULSORY' ? 'primary' : 'secondary'
+                                    }
+                                    label={
+                                      row.pay_option === 'COMPULSORY' ? 'Compulsory' : 'Optional'
+                                    }
                                   />
                                 )}
                               </TableCell>
@@ -1511,10 +1678,19 @@ const PaymentHistory = () => {
                               <TableCell>
                                 <Stack direction="row" spacing={0.5} alignItems="center">
                                   {ChannelIcon && (
-                                    <ChannelIcon sx={{ fontSize: 15, color: CHANNEL_COLOR[row.payment_type] || 'text.secondary' }} />
+                                    <ChannelIcon
+                                      sx={{
+                                        fontSize: 15,
+                                        color: CHANNEL_COLOR[row.payment_type] || 'text.secondary',
+                                      }}
+                                    />
                                   )}
                                   <Typography
-                                    sx={{ fontSize: 'inherit', fontWeight: 700, color: CHANNEL_COLOR[row.payment_type] || 'text.primary' }}
+                                    sx={{
+                                      fontSize: 'inherit',
+                                      fontWeight: 700,
+                                      color: CHANNEL_COLOR[row.payment_type] || 'text.primary',
+                                    }}
                                   >
                                     {CHANNEL_LABEL[row.payment_type] || row.payment_type}
                                   </Typography>
@@ -1526,7 +1702,8 @@ const PaymentHistory = () => {
                                   : '—'}
                               </TableCell>
                               <TableCell>
-                                {(showingMyself ? row.paid_for_name : row.paid_by_name)?.trim() || '—'}
+                                {(showingMyself ? row.paid_for_name : row.paid_by_name)?.trim() ||
+                                  '—'}
                               </TableCell>
                               <TableCell align="center">
                                 {row.status === 'APPROVED' || row.payment_type === 'ONLINE' ? (
@@ -1558,7 +1735,10 @@ const PaymentHistory = () => {
                   page={page}
                   onPageChange={(e, newPage) => setPage(newPage)}
                   rowsPerPage={rowsPerPage}
-                  onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
                   rowsPerPageOptions={[15, 30, 50, 100]}
                 />
               </Paper>

@@ -384,6 +384,16 @@ const StudentCategoryPlacementTab = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classArmId, sessionTermId, notify]);
 
+  // Fetch as soon as the preselected Programme/Class/Session/Term are
+  // ready, and again on every subsequent change to any of them — the
+  // Fetch/Refresh button still works too, it just re-fetches on demand.
+  useEffect(() => {
+    if (classArmId && sessionTermId) {
+      loadStudents();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classArmId, sessionTermId]);
+
   const handleSelectCategory = (student, category) => {
     if (student.bursary_payment_category_id === category.id || savingUserId) return;
     setPlacementConfirm({ student, category });
@@ -537,7 +547,9 @@ const StudentCategoryPlacementTab = () => {
     try {
       const results = await Promise.all(
         eligible.map((student) =>
-          clearCategory({ userId: student.user_id, sessionTermId }).catch(() => ({ status: false })),
+          clearCategory({ userId: student.user_id, sessionTermId }).catch(() => ({
+            status: false,
+          })),
         ),
       );
       const succeeded = results.filter((r) => r?.status).length;
@@ -945,7 +957,8 @@ const StudentCategoryPlacementTab = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
             {(() => {
-              const migrateDisabled = !hasFetched || migrateLoading || migrating || !lastTermReference.available;
+              const migrateDisabled =
+                !hasFetched || migrateLoading || migrating || !lastTermReference.available;
               const migrateDisabledReason = !hasFetched
                 ? 'Select a programme, class and term, then click Fetch first.'
                 : !lastTermReference.available
@@ -953,12 +966,16 @@ const StudentCategoryPlacementTab = () => {
                   : '';
 
               return (
-                <Tooltip title={migrateDisabled && migrateDisabledReason ? migrateDisabledReason : ''}>
+                <Tooltip
+                  title={migrateDisabled && migrateDisabledReason ? migrateDisabledReason : ''}
+                >
                   <span>
                     <Button
                       variant="outlined"
                       size="small"
-                      startIcon={migrateLoading ? <CircularProgress size={16} /> : <RestoreOutlinedIcon />}
+                      startIcon={
+                        migrateLoading ? <CircularProgress size={16} /> : <RestoreOutlinedIcon />
+                      }
                       onClick={handleOpenMigrate}
                       disabled={migrateDisabled}
                     >
@@ -1072,6 +1089,17 @@ const StudentCategoryPlacementTab = () => {
                       {stats.total} students
                     </Typography>
                   </TableCell>
+                  <TableCell
+                    align="center"
+                    sx={{
+                      width: PLACEMENT_COL_WIDTH,
+                      minWidth: PLACEMENT_COL_WIDTH,
+                      ...stickyHeaderSx,
+                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                    }}
+                  >
+                    Current Placement
+                  </TableCell>
                   {categories.map((cat) => {
                     const style = getCategoryStyle(cat);
                     const count =
@@ -1118,17 +1146,6 @@ const StudentCategoryPlacementTab = () => {
                       </TableCell>
                     );
                   })}
-                  <TableCell
-                    align="center"
-                    sx={{
-                      width: PLACEMENT_COL_WIDTH,
-                      minWidth: PLACEMENT_COL_WIDTH,
-                      ...stickyHeaderSx,
-                      bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
-                    }}
-                  >
-                    Current Placement
-                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -1270,6 +1287,14 @@ const StudentCategoryPlacementTab = () => {
                             </Box>
                           </Box>
                         </TableCell>
+                        <TableCell align="center">
+                          <CurrentPlacementBadge
+                            student={student}
+                            category={categories.find(
+                              (c) => c.id === student.bursary_payment_category_id,
+                            )}
+                          />
+                        </TableCell>
                         {categories.map((cat) => (
                           <TableCell key={cat.id} align="center">
                             <Tooltip title={`Place ${student.full_name} in ${cat.name}`}>
@@ -1285,14 +1310,6 @@ const StudentCategoryPlacementTab = () => {
                             </Tooltip>
                           </TableCell>
                         ))}
-                        <TableCell align="center">
-                          <CurrentPlacementBadge
-                            student={student}
-                            category={categories.find(
-                              (c) => c.id === student.bursary_payment_category_id,
-                            )}
-                          />
-                        </TableCell>
                       </TableRow>
                     );
                   })
@@ -1547,7 +1564,8 @@ const StudentCategoryPlacementTab = () => {
         <DialogTitle>Clear Placement?</DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Revert <strong>{clearConfirm?.eligible.length}</strong> student(s) back to Needs Placement?
+            Revert <strong>{clearConfirm?.eligible.length}</strong> student(s) back to Needs
+            Placement?
           </Typography>
           {clearConfirm?.skipped.length > 0 && (
             <Box
@@ -1564,8 +1582,8 @@ const StudentCategoryPlacementTab = () => {
                 payments
               </Typography>
               <Typography variant="body2" sx={{ color: isDark ? '#ffb74d' : '#7a3e00' }}>
-                A student with approved payments can&apos;t be cleared automatically — reassign their
-                payments first if their category needs to change.
+                A student with approved payments can&apos;t be cleared automatically — reassign
+                their payments first if their category needs to change.
               </Typography>
               <List
                 dense

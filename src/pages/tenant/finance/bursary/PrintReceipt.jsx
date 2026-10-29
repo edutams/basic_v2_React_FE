@@ -82,7 +82,10 @@ const PrintReceipt = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!(order_id || bulk_order_id) || !user_id) {
+    // Neither order_id nor bulk_order_id is required on its own — a
+    // session_term_id alone is enough to ask the backend for every
+    // approved payment in that term as one consolidated receipt.
+    if (!user_id || !(order_id || bulk_order_id || session_term_id)) {
       setError('Missing parameters');
       setLoading(false);
       return;

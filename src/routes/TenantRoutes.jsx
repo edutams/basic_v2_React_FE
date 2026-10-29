@@ -34,6 +34,7 @@ const ClassStructureManager = Loadable(
 const SubscriptionIndex = Loadable(
   lazy(() => import('@/pages/tenant/subcriptions/SubscriptionIndex')),
 );
+const DocsPage = Loadable(lazy(() => import('@/pages/tenant/docs/DocsPage')));
 const TenantLogin = Loadable(lazy(() => import('@/pages/tenant/auth/TenantLogin')));
 const ForgotPassword = Loadable(lazy(() => import('@/components/tenant/auth/ForgotPassword')));
 const VerifyOtp = Loadable(lazy(() => import('@/components/tenant/auth/VerifyOtp')));
@@ -351,6 +352,15 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="class.structure.index">
             <ClassStructureManager />
+          </TenantProtectedRoute>
+        ),
+      },
+
+      {
+        path: 'docs/*',
+        element: (
+          <TenantProtectedRoute permission="docs.index">
+            <DocsPage />
           </TenantProtectedRoute>
         ),
       },

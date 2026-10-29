@@ -33,6 +33,7 @@ const AgentSubscriptionManagement = Loadable(
   lazy(() => import('@/pages/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );
 const ActivityLog = Loadable(lazy(() => import('@/pages/landlord/views/activity-log/ActivityLog')));
+const DocsPage = Loadable(lazy(() => import('@/pages/landlord/docs/DocsPage')));
 const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const CommissionManagement = Loadable(
   lazy(() => import('@/pages/landlord/views/commission/CommissionManagement')),
@@ -186,6 +187,14 @@ const AgentRoutes = [
         ),
       },
       { path: 'view/:id', element: <ViewAgent /> },
+      {
+        path: 'help/*',
+        element: (
+          <LandlordProtectedRoute permission="landlord.help.index">
+            <DocsPage />
+          </LandlordProtectedRoute>
+        ),
+      },
       {
         path: 'gateway',
         element: (

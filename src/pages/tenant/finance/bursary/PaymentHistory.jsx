@@ -1158,7 +1158,7 @@ const PaymentHistory = () => {
         </Paper>
       )}
 
-      {isBursaryStaff && !deepLinkedUserId && (
+      {isBursaryStaff && (
         <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 5 }}>

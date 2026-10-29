@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Grid,
@@ -64,7 +65,8 @@ const readOnlyFieldSx = {
 };
 
 const ProcessApplicationForm = () => {
-  const { form_number } = useParams();
+  const [searchParams] = useSearchParams();
+  const { form_number: formNumber } = decodeLinkParams(searchParams.get('t'));
   const navigate = useNavigate();
   const notify = useNotification();
 
@@ -96,14 +98,14 @@ const ProcessApplicationForm = () => {
   // ─── Load admission data ──────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
-      if (!form_number) {
-        notify.error('No form number provided');
+      if (!formNumber) {
+        notify.error('No application reference provided');
         navigate('/process-applications');
         return;
       }
       setLoading(true);
       try {
-        const response = await getApplicantByFormNumber(form_number);
+        const response = await getApplicantByFormNumber(formNumber);
         const data = response?.data ?? response;
         setAdmission(data);
       } catch (err) {
@@ -115,7 +117,7 @@ const ProcessApplicationForm = () => {
       }
     };
     load();
-  }, [form_number]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [formNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Load admit form data (programmes, code format) ────────────────
   const loadAdmitFormData = useCallback(async () => {
@@ -145,7 +147,7 @@ const ProcessApplicationForm = () => {
   // ─── Refetch admission data from API ────────────────────────────────
   const refetchAdmission = useCallback(async () => {
     try {
-      const response = await getApplicantByFormNumber(form_number);
+      const response = await getApplicantByFormNumber(formNumber);
       const data = response?.data ?? response;
       setAdmission(data);
       // Reload fresh form data after status change
@@ -153,7 +155,7 @@ const ProcessApplicationForm = () => {
     } catch (err) {
       console.error('Failed to refetch admission:', err);
     }
-  }, [form_number, loadAdmitFormData]);
+  }, [formNumber, loadAdmitFormData]);
 
   // ─── Handlers ─────────────────────────────────────────────────────────
   const handleBack = () => {
@@ -1242,7 +1244,7 @@ const ProcessApplicationForm = () => {
                 setAdmitConfirmDialog({ open: false });
                 setSubmitting(true);
                 try {
-                  await updateAdmissionStatus(form_number, 'admitted', {
+                  await updateAdmissionStatus(admission?.form_number, 'admitted', {
                     programme_id: admitForm.selectedProgramme,
                     class_id: admitForm.selectedClass,
                     class_arm_id: admitForm.selectedClassArm,
@@ -1316,7 +1318,7 @@ const ProcessApplicationForm = () => {
                 setDeclineDialog({ open: false, reason: '' });
                 setSubmitting(true);
                 try {
-                  await updateAdmissionStatus(form_number, 'declined', {
+                  await updateAdmissionStatus(admission?.form_number, 'declined', {
                     rejection_reason: reason,
                   });
                   notify.success(`Application status updated to "Declined"`);
@@ -1384,7 +1386,7 @@ const ProcessApplicationForm = () => {
                 setRevokeDialog({ open: false, reason: '' });
                 setSubmitting(true);
                 try {
-                  await updateAdmissionStatus(form_number, 'revoked', { revoked_reason: reason });
+                  await updateAdmissionStatus(admission?.form_number, 'revoked', { revoked_reason: reason });
                   notify.success(`Application status updated to "Revoked"`);
                   await refetchAdmission();
                 } catch (err) {

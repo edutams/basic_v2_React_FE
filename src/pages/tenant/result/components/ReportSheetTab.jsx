@@ -494,11 +494,11 @@ const ReportSheetTab = () => {
   // be checked, so it reuses this exact handler rather than a second one.
   const openClassDossier = () => {
     setBulkAnchor(null);
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       class_arm_id: selectedClassArm,
       session_term_id: selectedSessionTerm,
     });
-    window.open(`/result-class_dossier?${params}`, '_blank', 'noopener,noreferrer');
+    window.open(`/result-class_dossier?t=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   const openClassBroadsheet = () => {

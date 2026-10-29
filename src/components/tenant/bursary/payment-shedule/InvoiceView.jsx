@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { TenantAuthContext } from 'src/context/TenantContext/auth';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import { fetchStudentInvoiceBreakdown } from '@/api/tenant/bursary/bursarySettingsApi';
 import { useReactToPrint } from 'react-to-print';
 import {
@@ -27,8 +28,8 @@ import {
 import ParentCard from '@/components/shared/ParentCard';
 
 const InvoiceView = () => {
-  const { session_term_id, class_id, category_id } = useParams();
   const [searchParams] = useSearchParams();
+  const { session_term_id, class_id, category_id } = decodeLinkParams(searchParams.get('t'));
   const navigate = useNavigate();
   const { tenantInfo } = useContext(TenantAuthContext) || {};
 
@@ -78,21 +79,24 @@ const InvoiceView = () => {
   }, [session_term_id, class_id, category_id]);
 
   const handleBack = () => {
-    navigate(`/payment-schedule/invoice/${session_term_id}/${class_id}`);
+    const token = encodeLinkParams({ session_term_id, class_id });
+    navigate(`/payment-schedule/invoice?t=${token}`);
   };
 
   const handleUpdateInvoice = (student) => {
-    window.open(
-      `/class-ledger/${student.invoice_number}/${student?.student?.user_id}/invoice`,
-      '_blank',
-    );
+    const token = encodeLinkParams({
+      invoiceId: student.invoice_number,
+      user_id: student?.student?.user_id,
+    });
+    window.open(`/class-ledger/invoice?t=${token}`, '_blank');
   };
 
   const handleProceedToPay = (student) => {
-    window.open(
-      `/class-ledger/${student.invoice_number}/${student?.student?.user_id}/pay-invoice`,
-      '_blank',
-    );
+    const token = encodeLinkParams({
+      invoiceId: student.invoice_number,
+      user_id: student?.student?.user_id,
+    });
+    window.open(`/class-ledger/pay-invoice?t=${token}`, '_blank');
   };
 
   if (loading) {

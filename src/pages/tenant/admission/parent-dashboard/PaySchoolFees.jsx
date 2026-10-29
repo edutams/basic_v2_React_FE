@@ -26,6 +26,7 @@ import { getParentPaymentWallets } from '@/api/tenant/admission/admissionApi';
 import { makePayment } from '@/utils/paymentGateway';
 import { useNotification } from '@/hooks/useNotification';
 import SelectWalletModal from '@/components/tenant/bursary/SelectWalletModal';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 
 const naira = (n) => `₦${(Number(n) || 0).toLocaleString()}`;
 
@@ -50,7 +51,7 @@ const PaySchoolFees = () => {
   // Set when this page is reached via a specific ward's own "Fund Wallet"
   // button (my-wards.jsx) — narrows everything below to just that ward's
   // own payments instead of every ward this guardian has.
-  const wardIdFilter = searchParams.get('ward_id');
+  const wardIdFilter = decodeLinkParams(searchParams.get('t')).ward_id;
 
   const [wards, setWards] = useState([]);
   const [loading, setLoading] = useState(true);

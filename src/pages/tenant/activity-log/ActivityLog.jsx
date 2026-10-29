@@ -51,6 +51,7 @@ import {
   IconFilter,
 } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import ShowTourGuideButton from '@/components/shared/ShowTourGuideButton';
 import { AclTourProvider, StepContent } from '@/context/AclTourContext';
 import UserProfileDrawer from '@/components/shared/UserProfileDrawer';
@@ -196,7 +197,7 @@ const ActivityLog = () => {
     fetchStats();
   }, []);
 
-  const activeUserId = searchParams.get('user_id') || searchParams.get('causer_id') || searchParams.get('profile_id');
+  const activeUserId = decodeLinkParams(searchParams.get('t')).user_id;
 
   const activeUser = useMemo(() => {
     if (!activeUserId) return null;
@@ -210,7 +211,7 @@ const ActivityLog = () => {
     if (!causer || !causer.id) return;
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
-      p.set('user_id', causer.id);
+      p.set('t', encodeLinkParams({ user_id: causer.id }));
       return p;
     });
   };
@@ -218,9 +219,7 @@ const ActivityLog = () => {
   const handleCloseProfileDrawer = () => {
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
-      p.delete('user_id');
-      p.delete('causer_id');
-      p.delete('profile_id');
+      p.delete('t');
       return p;
     });
   };

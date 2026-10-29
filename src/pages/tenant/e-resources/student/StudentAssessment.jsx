@@ -35,6 +35,7 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantAssessmentApi } from '@/api/tenant/e-resources/assessmentApi';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 
 const BCrumb = [
   { to: '/', title: 'Dashboard' },
@@ -81,15 +82,16 @@ const StudentAssessment = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchParams] = useSearchParams();
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
 
-  const mode = searchParams.get('mode') || 'weekly';
-  const weekId = searchParams.get('weekId');
-  const classProgId = searchParams.get('classProgId');
-  const schemeOfWorkId = searchParams.get('sow');
-  const subjectId = searchParams.get('subjectId');
-  const sessTermId = searchParams.get('sessTermId');
-  const subjectName = searchParams.get('subjectName') || '';
-  const weekName = searchParams.get('weekName') || '';
+  const mode = linkParams.mode || 'weekly';
+  const weekId = linkParams.weekId;
+  const classProgId = linkParams.classProgId;
+  const schemeOfWorkId = linkParams.sow;
+  const subjectId = linkParams.subjectId;
+  const sessTermId = linkParams.sessTermId;
+  const subjectName = linkParams.subjectName || '';
+  const weekName = linkParams.weekName || '';
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

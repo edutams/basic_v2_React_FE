@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import Radio from '@mui/material/Radio';
 
@@ -63,7 +64,8 @@ const PayInvoice = () => {
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { invoiceId, user_id } = useParams();
+  const [searchParams] = useSearchParams();
+  const { invoiceId, user_id } = decodeLinkParams(searchParams.get('t'));
   const navigate = useNavigate();
 
   /* DATA STATE */

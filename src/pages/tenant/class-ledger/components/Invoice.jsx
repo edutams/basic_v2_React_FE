@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
   Typography,
@@ -58,7 +59,13 @@ const Invoice = () => {
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { invoiceId, user_id } = useParams();
+  // class-ledger/invoice uses the opaque ?t= token; /parent-invoice/:invoiceId/:user_id
+  // (no current sender, but still a registered route) keeps working via path params.
+  const routeParams = useParams();
+  const [searchParams] = useSearchParams();
+  const tokenParams = decodeLinkParams(searchParams.get('t'));
+  const invoiceId = tokenParams.invoiceId || routeParams.invoiceId;
+  const user_id = tokenParams.user_id || routeParams.user_id;
   const navigate = useNavigate();
 
   /* DATA STATE */

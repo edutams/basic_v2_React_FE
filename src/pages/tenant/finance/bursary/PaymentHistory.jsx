@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Grid,
@@ -510,7 +511,7 @@ const PaymentHistory = () => {
   // directly on that student, no lookup widget needed since we already
   // know who we're here for.
   const [searchParams] = useSearchParams();
-  const deepLinkedUserId = searchParams.get('user_id') || '';
+  const deepLinkedUserId = decodeLinkParams(searchParams.get('t')).user_id || '';
 
   const isBursaryStaff = useMemo(
     () =>
@@ -930,13 +931,13 @@ const PaymentHistory = () => {
 
   const handleViewReceipt = (row) => {
     handleActionMenuClose();
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       bulk_order_id: row.bulk_order_id,
       user_id: row.user_id || selectedUserId,
       session_term_id: row.session_term_id,
     });
     window.open(
-      `/bursary/transactions/print_receipt?${params.toString()}`,
+      `/bursary/transactions/print_receipt?t=${token}`,
       '_blank',
       'noopener,noreferrer',
     );

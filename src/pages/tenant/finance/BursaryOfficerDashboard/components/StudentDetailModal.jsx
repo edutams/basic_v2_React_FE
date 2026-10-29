@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Dialog,
   DialogTitle,
@@ -223,13 +224,13 @@ const StudentDetailModal = ({ open, student, sessionTermId: activeSessionTermId,
   };
 
   const handlePrintReceipt = (tx) => {
-    const params = new URLSearchParams({
-      order_id: tx.order_id || '',
+    const token = encodeLinkParams({
+      order_id: tx.order_id,
       user_id: String(info?.user_id || ''),
-      session_term_id: sessionTermId || '',
+      session_term_id: sessionTermId,
     });
     window.open(
-      `/bursary/transactions/print_receipt?${params.toString()}`,
+      `/bursary/transactions/print_receipt?t=${token}`,
       '_blank',
       'noopener,noreferrer',
     );

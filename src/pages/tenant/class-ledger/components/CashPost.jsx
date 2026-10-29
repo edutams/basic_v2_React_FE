@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import {
   Typography,
@@ -37,7 +38,8 @@ const BCrumb = [
 const CashPost = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const { user_id, invoiceId } = useParams();
+  const [searchParams] = useSearchParams();
+  const { user_id, invoiceId } = decodeLinkParams(searchParams.get('t'));
   const notify = useNotification();
 
   /* DATA STATE */

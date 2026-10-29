@@ -4,6 +4,7 @@ import {
   fetchGenerateInvoiceOverview,
 } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Typography,
@@ -364,8 +365,11 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
 
   const handleGenerateInvoices = () => {
     if (!selectedClass) return;
-    const url = `/payment-schedule/invoice/${selectedSessionTermId}/${selectedClass}`;
-    window.open(url, '_blank');
+    const token = encodeLinkParams({
+      session_term_id: selectedSessionTermId,
+      class_id: selectedClass,
+    });
+    window.open(`/payment-schedule/invoice?t=${token}`, '_blank');
   };
 
   const handleExportCsv = () => {

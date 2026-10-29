@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Typography,
@@ -340,7 +341,12 @@ const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
               startIcon={<DescriptionOutlinedIcon sx={{ fontSize: 14 }} />}
               onClick={() =>
                 ward.invoice_number
-                  ? navigate(`/class-ledger/${ward.invoice_number}/${ward.id}/pay-invoice`)
+                  ? navigate(
+                      `/class-ledger/pay-invoice?t=${encodeLinkParams({
+                        invoiceId: ward.invoice_number,
+                        user_id: ward.id,
+                      })}`,
+                    )
                   : undefined
               }
               sx={{
@@ -376,7 +382,7 @@ const WardCard = ({ ward, onSelect, isSelected, onViewPayments }) => {
           size="small"
           disableElevation
           startIcon={<AddCircleOutlineIcon sx={{ fontSize: 14 }} />}
-          onClick={() => navigate(`/pay-school-fees?ward_id=${ward.id}`)}
+          onClick={() => navigate(`/pay-school-fees?t=${encodeLinkParams({ ward_id: ward.id })}`)}
           sx={{
             flex: 1,
             borderRadius: '7px',

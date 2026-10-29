@@ -702,7 +702,7 @@ const AdmissionSetup = () => {
   const handleEditBatch = (batch) => {
     setBatchMenuAnchor(null);
     setMenuBatch(null);
-    navigate(`/admission-setup/edit-batch/${batch.id}`, {
+    navigate('/admission-setup/edit-batch', {
       state: {
         batch,
         sessionId: selectedSessionId,

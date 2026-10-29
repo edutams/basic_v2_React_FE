@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Dialog,
   DialogTitle,
@@ -70,12 +71,12 @@ const WardPaymentHistoryModal = ({ open, onClose, ward }) => {
   }, [open, load]);
 
   const viewReceipt = (payment) => {
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       bulk_order_id: payment.bulk_order_id,
       user_id: payment.user_id,
       session_term_id: payment.session_term_id,
     });
-    window.open(`/bursary/transactions/print_receipt?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    window.open(`/bursary/transactions/print_receipt?t=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   return (

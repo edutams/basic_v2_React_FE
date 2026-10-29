@@ -28,6 +28,7 @@ import dayjs from 'dayjs';
 import { fetchPrintReceipt } from '@/api/tenant/bursary/transactionApi';
 import { useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 
 const BRAND_COLOR = '#1e4db7';
 const ACCENT_COLOR = '#05b2bd';
@@ -73,10 +74,8 @@ const DetailRow = ({ icon, label, value, big, sub, isLast }) => (
 
 const PrintReceipt = () => {
   const [searchParams] = useSearchParams();
-  const order_id = searchParams.get('order_id');
-  const bulk_order_id = searchParams.get('bulk_order_id');
-  const user_id = searchParams.get('user_id');
-  const session_term_id = searchParams.get('session_term_id');
+  const linkParams = decodeLinkParams(searchParams.get('t'));
+  const { order_id, bulk_order_id, user_id, session_term_id } = linkParams;
 
   const [receiptData, setReceiptData] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Grid,
@@ -37,7 +38,8 @@ const BCrumb = [
 ];
 
 const EditApplicationForm = () => {
-  const { form_number } = useParams();
+  const [searchParams] = useSearchParams();
+  const { form_number: formNumber } = decodeLinkParams(searchParams.get('t'));
   const navigate = useNavigate();
   const notify = useNotification();
 
@@ -89,15 +91,15 @@ const EditApplicationForm = () => {
   // ─── Load data on mount ──────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
-      if (!form_number) {
-        notify.error('No form number provided');
+      if (!formNumber) {
+        notify.error('No application reference provided');
         navigate('/process-applications');
         return;
       }
       setLoading(true);
       try {
         // 1. Fetch applicant
-        const res = await getApplicantByFormNumber(form_number);
+        const res = await getApplicantByFormNumber(formNumber);
         const data = res?.data ?? res;
         setAdmission(data);
 
@@ -197,7 +199,7 @@ const EditApplicationForm = () => {
       }
     };
     load();
-  }, [form_number]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [formNumber]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Handlers ────────────────────────────────────────────────────────
   const handleChange = (field) => (e) => {
@@ -238,7 +240,7 @@ const EditApplicationForm = () => {
     try {
       // Build payload — flat fields for the backend
       const payload = {
-        form_number,
+        form_number: admission?.form_number,
         lname: form.lname,
         fname: form.fname,
         mname: form.mname,

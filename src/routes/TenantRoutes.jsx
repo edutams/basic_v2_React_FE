@@ -276,7 +276,7 @@ const TenantRoutes = [
     children: [{ index: true, element: <Error /> }],
   },
   {
-    path: '/class-ledger/:invoiceId/:user_id/pay-invoice',
+    path: '/class-ledger/pay-invoice',
     element: (
       <TenantProtectedRoute>
         {/* permission="bursary_manager.ledger.pay_invoice" */}
@@ -503,7 +503,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission-setup/edit-batch/:id',
+        path: 'admission-setup/edit-batch',
         element: (
           <TenantProtectedRoute permission="admission_manager.setup.edit">
             <CreateAdmissionBatch />
@@ -527,7 +527,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/process-form/:form_number',
+        path: 'admission/process-form',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <ProcessApplicationForm />
@@ -535,7 +535,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/edit-form/:form_number',
+        path: 'admission/edit-form',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <EditApplicationForm />
@@ -543,7 +543,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/print-application/:form_number',
+        path: 'admission/print-application',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <PrintApplicationForm />
@@ -551,7 +551,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'admission/payment-history/:form_number',
+        path: 'admission/payment-history',
         element: (
           <TenantProtectedRoute permission="admission_manager.process.index">
             <ApplicantPaymentHistory />
@@ -567,7 +567,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'payment-schedule/invoice/:session_term_id/:class_id',
+        path: 'payment-schedule/invoice',
         element: (
           <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceStudentsView />
@@ -575,7 +575,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'payment-schedule/invoice/:session_term_id/:class_id/:category_id/view_class_invoice',
+        path: 'payment-schedule/invoice/view_class_invoice',
         element: (
           <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <InvoiceView />
@@ -583,7 +583,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'payment-schedule/invoice/print/:session_term_id/:class_id/:id',
+        path: 'payment-schedule/invoice/print',
         element: (
           <TenantProtectedRoute permission="bursary_manager.payment_schedule.index">
             <PrintInvoicePage />
@@ -811,7 +811,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'class-ledger/:invoiceId/:user_id/cash-post',
+        path: 'class-ledger/cash-post',
         element: (
           <TenantProtectedRoute permission="bursary_manager.ledger.index">
             <CashPost />
@@ -819,7 +819,7 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'class-ledger/:invoiceId/:user_id/invoice',
+        path: 'class-ledger/invoice',
         element: (
           <TenantProtectedRoute permission="bursary_manager.ledger.index">
             <Invoice />
@@ -873,14 +873,6 @@ const TenantRoutes = [
       },
       {
         path: 'admission_manager/my_applications',
-        element: (
-          <TenantProtectedRoute permission="admission_manager.my_applications.index">
-            <MyApplication />
-          </TenantProtectedRoute>
-        ),
-      },
-      {
-        path: 'admission_manager/my_applications/:id',
         element: (
           <TenantProtectedRoute permission="admission_manager.my_applications.index">
             <MyApplication />

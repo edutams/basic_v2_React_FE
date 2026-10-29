@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Grid,
@@ -390,13 +391,13 @@ const Overview = () => {
   };
 
   const handlePrintReceipt = (row) => {
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       order_id: row.order_id,
       user_id: row.user_id,
       session_term_id: row.session_term_id,
     });
     window.open(
-      `/bursary/transactions/print_receipt?${params.toString()}`,
+      `/bursary/transactions/print_receipt?t=${token}`,
       '_blank',
       'noopener,noreferrer',
     );

@@ -49,6 +49,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantStudentApi } from '@/api/tenant/e-resources/studentApi';
 import { tenantSharedApi } from '@/api/tenant/e-resources/browseApi';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import {
   DocxPreview,
   ForumThread,
@@ -161,16 +162,17 @@ const StudentLessonNoteView = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [searchParams] = useSearchParams();
+  const linkParams = useMemo(() => decodeLinkParams(searchParams.get('t')), [searchParams]);
 
-  const schemeOfWorkId = searchParams.get('schemeOfWorkId');
-  const subjectId = searchParams.get('subjectId');
-  const classProgId = searchParams.get('classProgId');
-  const weekId = searchParams.get('weekId');
-  const sessionTermId = searchParams.get('sessionTermId');
-  const classArmId = searchParams.get('classArmId');
-  const subjectName = searchParams.get('subjectName') || '';
-  const weekName = searchParams.get('weekName') || '';
-  const subTopicId = searchParams.get('subTopicId') || '';
+  const schemeOfWorkId = linkParams.schemeOfWorkId;
+  const subjectId = linkParams.subjectId;
+  const classProgId = linkParams.classProgId;
+  const weekId = linkParams.weekId;
+  const sessionTermId = linkParams.sessionTermId;
+  const classArmId = linkParams.classArmId;
+  const subjectName = linkParams.subjectName || '';
+  const weekName = linkParams.weekName || '';
+  const subTopicId = linkParams.subTopicId || '';
 
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
@@ -233,18 +235,18 @@ const StudentLessonNoteView = () => {
   const selectLesson = useCallback(
     (week, subtopicId) => {
       if (!week) return;
-      const params = new URLSearchParams({
-        schemeOfWorkId: String(week.scheme_of_work_id),
-        subjectId: String(subjectId || ''),
-        classProgId: String(classProgId || ''),
-        weekId: String(week.week_id ?? ''),
-        sessionTermId: String(sessionTermId || ''),
-        classArmId: String(classArmId || ''),
+      const token = encodeLinkParams({
+        schemeOfWorkId: week.scheme_of_work_id,
+        subjectId,
+        classProgId,
+        weekId: week.week_id,
+        sessionTermId,
+        classArmId,
         subjectName,
-        weekName: week.week_name ?? '',
-        subTopicId: String(subtopicId ?? ''),
+        weekName: week.week_name,
+        subTopicId: subtopicId,
       });
-      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      navigate(`${location.pathname}?t=${token}`, { replace: true });
     },
     [navigate, location.pathname, subjectId, classProgId, sessionTermId, classArmId, subjectName],
   );
@@ -462,16 +464,16 @@ const StudentLessonNoteView = () => {
   };
 
   const openAssessment = () => {
-    const params = new URLSearchParams({
+    const token = encodeLinkParams({
       mode: 'lesson',
-      sow: String(schemeOfWorkId),
-      weekId: String(weekId ?? lessonNote?.week_id ?? ''),
-      subjectId: String(subjectId ?? ''),
-      classProgId: String(classProgId ?? ''),
-      sessTermId: String(sessionTermId ?? ''),
+      sow: schemeOfWorkId,
+      weekId: weekId ?? lessonNote?.week_id,
+      subjectId,
+      classProgId,
+      sessTermId: sessionTermId,
       subjectName,
     });
-    navigate(`${ASSESSMENT_ROUTE}?${params.toString()}`);
+    navigate(`${ASSESSMENT_ROUTE}?t=${token}`);
   };
 
   const displayItems = contentItems(contentData?.content);

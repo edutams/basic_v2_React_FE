@@ -10,6 +10,7 @@ import {
   DescriptionOutlined,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import tenantApi from '@/api/tenant/tenant_api';
 
 const ACTIONS = [
@@ -96,9 +97,8 @@ const QuickActions = ({ loading = false }) => {
   };
 
   const handleResultClick = (applicant) => {
-    const formNumber = applicant.form_number || applicant.formNumber;
-    if (formNumber) {
-      navigate(`/admission/process-form/${formNumber}`);
+    if (applicant.form_number) {
+      navigate(`/admission/process-form?t=${encodeLinkParams({ form_number: applicant.form_number })}`);
     }
   };
 

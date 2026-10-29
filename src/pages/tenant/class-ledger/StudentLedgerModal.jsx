@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Dialog,
   DialogTitle,
@@ -332,7 +333,11 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                                   }}
                                   title="Pay Balance"
                                   onClick={() => {
-                                    window.open(`/class-ledger/${student?.invoice_number}/${student?.user_id}/pay-invoice`, '_blank');
+                                    const token = encodeLinkParams({
+                                      invoiceId: student?.invoice_number,
+                                      user_id: student?.user_id,
+                                    });
+                                    window.open(`/class-ledger/pay-invoice?t=${token}`, '_blank');
                                   }}
                                 >
                                   ₦

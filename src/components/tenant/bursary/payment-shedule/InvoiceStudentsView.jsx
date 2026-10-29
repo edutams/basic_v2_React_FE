@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { encodeLinkParams, decodeLinkParams } from '@/utils/scoreLinks';
 import {
   fetchStudentForInvoiceData,
   fetchActiveCategories,
@@ -132,8 +133,8 @@ const InvoiceStatCard = ({ icon: Icon, value, label, subtitle, schemeIndex = 0, 
 };
 
 const InvoiceStudentsView = () => {
-  const { session_term_id, class_id, pay_schedule_id } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { session_term_id, class_id } = decodeLinkParams(searchParams.get('t'));
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -251,7 +252,7 @@ const InvoiceStudentsView = () => {
     };
 
     loadData();
-  }, [session_term_id, class_id, pay_schedule_id, selectedCategoryId, categoriesReady]);
+  }, [session_term_id, class_id, selectedCategoryId, categoriesReady]);
 
   // ── Refetchable helper to load student data from backend ──
   const fetchAndSetStudentData = async (forcePending) => {
@@ -538,8 +539,8 @@ const InvoiceStudentsView = () => {
   const handlePrintInvoice = () => {
     if (!anchorStudent) return;
     handleMenuClose();
-    const url = `/payment-schedule/invoice/print/${session_term_id}/${class_id}/${anchorStudent.id}`;
-    window.open(url, '_blank');
+    const token = encodeLinkParams({ session_term_id, class_id, id: anchorStudent.id });
+    window.open(`/payment-schedule/invoice/print?t=${token}`, '_blank');
   };
 
   const handleRegenerateInvoice = () => {
@@ -608,11 +609,12 @@ const InvoiceStudentsView = () => {
 
   const handlePrintInvoiceForAll = () => {
     if (filteredStudents.length === 0) return;
-    // const userIds = filteredStudents.map((s) => s.id).join(',');
-    navigate(
-      // `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view?user_ids=${userIds}`,
-      `/payment-schedule/invoice/${session_term_id}/${class_id}/${selectedStudentCategory}/view_class_invoice`,
-    );
+    const token = encodeLinkParams({
+      session_term_id,
+      class_id,
+      category_id: selectedStudentCategory,
+    });
+    navigate(`/payment-schedule/invoice/view_class_invoice?t=${token}`);
   };
 
   // ── Row checkbox handlers ──

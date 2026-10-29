@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useContext } from 'react';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
@@ -1235,10 +1236,11 @@ const ClassLedger = () => {
                   if (activeRow) {
                     const sUserId =
                       activeRow?.users?.id || activeRow?.user?.id || activeRow?.user_id;
-                    window.open(
-                      `/class-ledger/${activeRow.invoice_number}/${sUserId}/pay-invoice`,
-                      '_blank',
-                    );
+                    const token = encodeLinkParams({
+                      invoiceId: activeRow.invoice_number,
+                      user_id: sUserId,
+                    });
+                    window.open(`/class-ledger/pay-invoice?t=${token}`, '_blank');
                   }
                 }}
               >
@@ -1250,10 +1252,11 @@ const ClassLedger = () => {
                 onClick={() => {
                   setAnchorEl(null);
                   if (activeRow) {
-                    window.open(
-                      `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/invoice`,
-                      '_blank',
-                    );
+                    const token = encodeLinkParams({
+                      invoiceId: activeRow.invoice_number,
+                      user_id: activeRow.user_id,
+                    });
+                    window.open(`/class-ledger/invoice?t=${token}`, '_blank');
                   }
                 }}
               >
@@ -1267,10 +1270,13 @@ const ClassLedger = () => {
                   if (activeRow) {
                     const selectedClassObj = classes.find((c) => c.value === classLevel);
                     const currentClassId = selectedClassObj?.class_id || activeRow.class_id;
-                    window.open(
-                      `/payment-schedule/invoice/print/${activeRow.session_term_id}/${currentClassId}/${activeRow.user_id}?source=class-ledger`,
-                      '_blank',
-                    );
+                    const token = encodeLinkParams({
+                      session_term_id: activeRow.session_term_id,
+                      class_id: currentClassId,
+                      id: activeRow.user_id,
+                      source: 'class-ledger',
+                    });
+                    window.open(`/payment-schedule/invoice/print?t=${token}`, '_blank');
                   }
                 }}
               >
@@ -1282,10 +1288,11 @@ const ClassLedger = () => {
                 onClick={() => {
                   setAnchorEl(null);
                   if (activeRow) {
-                    window.open(
-                      `/class-ledger/${activeRow.invoice_number}/${activeRow.user_id}/cash-post`,
-                      '_blank',
-                    );
+                    const token = encodeLinkParams({
+                      invoiceId: activeRow.invoice_number,
+                      user_id: activeRow.user_id,
+                    });
+                    window.open(`/class-ledger/cash-post?t=${token}`, '_blank');
                   }
                 }}
               >
@@ -1327,8 +1334,8 @@ const ClassLedger = () => {
                 onClick={() => {
                   setAnchorEl(null);
                   if (activeRow?.user_id) {
-                    const params = new URLSearchParams({ user_id: activeRow.user_id });
-                    window.open(`/bursary/payment-history?${params.toString()}`, '_blank');
+                    const token = encodeLinkParams({ user_id: activeRow.user_id });
+                    window.open(`/bursary/payment-history?t=${token}`, '_blank');
                   }
                 }}
               >

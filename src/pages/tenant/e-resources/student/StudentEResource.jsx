@@ -32,6 +32,7 @@ import {
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import useNotification from '@/hooks/useNotification';
 import { tenantStudentApi } from '@/api/tenant/e-resources/studentApi';
@@ -392,18 +393,18 @@ const StudentEResource = () => {
         return;
       }
 
-      const params = new URLSearchParams({
-        schemeOfWorkId: String(first.scheme_of_work_id),
-        subjectId: String(sub.subject_id ?? ''),
-        classProgId: String(hub.classProgId ?? ''),
-        weekId: String(first.week_id ?? ''),
-        sessionTermId: String(hub.termId ?? ''),
-        classArmId: String(subjectsData?.cd_id ?? ''),
-        userId: String(hub.userId ?? ''),
-        subjectName: sub.subject_name ?? '',
-        weekName: first.week_name ?? '',
+      const token = encodeLinkParams({
+        schemeOfWorkId: first.scheme_of_work_id,
+        subjectId: sub.subject_id,
+        classProgId: hub.classProgId,
+        weekId: first.week_id,
+        sessionTermId: hub.termId,
+        classArmId: subjectsData?.cd_id,
+        userId: hub.userId,
+        subjectName: sub.subject_name,
+        weekName: first.week_name,
       });
-      navigate(`${LESSON_NOTE_ROUTE}?${params.toString()}`);
+      navigate(`${LESSON_NOTE_ROUTE}?t=${token}`);
     } catch (err) {
       notify.error(err?.response?.data?.message || `Failed to open ${sub.subject_name}'s lesson content`);
     } finally {

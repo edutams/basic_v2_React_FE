@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { encodeLinkParams } from '@/utils/scoreLinks';
 import {
   Box,
   Grid,
@@ -1115,9 +1116,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
       >
         <MenuItem
           onClick={() => {
-            const form_number = activeRow?.form_number;
+            const formNumber = activeRow?.form_number;
             handleMenuClose();
-            if (form_number) navigate(`/admission/process-form/${form_number}`);
+            if (formNumber) navigate(`/admission/process-form?t=${encodeLinkParams({ form_number: formNumber })}`);
           }}
         >
           <IconNote size={18} style={{ marginRight: 12 }} />
@@ -1126,9 +1127,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
         <MenuItem
           onClick={() => {
-            const form_number = activeRow?.form_number;
+            const formNumber = activeRow?.form_number;
             handleMenuClose();
-            if (form_number) navigate(`/admission/edit-form/${form_number}`);
+            if (formNumber) navigate(`/admission/edit-form?t=${encodeLinkParams({ form_number: formNumber })}`);
           }}
         >
           <IconEdit size={18} style={{ marginRight: 12 }} />
@@ -1139,9 +1140,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
         <MenuItem
           onClick={() => {
-            const form_number = activeRow?.form_number;
+            const formNumber = activeRow?.form_number;
             handleMenuClose();
-            if (form_number) navigate(`/admission/print-application/${form_number}`);
+            if (formNumber) navigate(`/admission/print-application?t=${encodeLinkParams({ form_number: formNumber })}`);
           }}
         >
           <IconEye size={18} style={{ marginRight: 12 }} />
@@ -1155,9 +1156,9 @@ const ProcessApplicationsTable = ({ allBatches, onDataChange, stats }) => {
 
         <MenuItem
           onClick={() => {
-            const form_number = activeRow?.form_number;
+            const formNumber = activeRow?.form_number;
             handleMenuClose();
-            if (form_number) navigate(`/admission/payment-history/${form_number}`);
+            if (formNumber) navigate(`/admission/payment-history?t=${encodeLinkParams({ form_number: formNumber })}`);
           }}
         >
           <IconHistory size={18} style={{ marginRight: 12 }} />

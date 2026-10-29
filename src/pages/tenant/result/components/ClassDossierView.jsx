@@ -6,6 +6,7 @@ import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { getResultTemplate } from './templates';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
 import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
+import { decodeLinkParams } from '@/utils/scoreLinks';
 
 // Standalone, routed counterpart to the "View / Print Class Dossier" action
 // on the Student Dossier list (ReportSheetTab) — opened in its own tab via
@@ -14,8 +15,9 @@ import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
 // the dossiers; nothing is auto-printed.
 const ClassDossierView = () => {
   const [searchParams] = useSearchParams();
-  const classArmId = searchParams.get('class_arm_id');
-  const sessionTermId = searchParams.get('session_term_id');
+  const { class_arm_id: classArmId, session_term_id: sessionTermId } = decodeLinkParams(
+    searchParams.get('t'),
+  );
   const { getTemplateIndexForSample } = useResultTemplate();
   const printRef = useRef(null);
 

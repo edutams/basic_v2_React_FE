@@ -1096,6 +1096,12 @@ const StudentCategoryPlacementTab = () => {
                       minWidth: PLACEMENT_COL_WIDTH,
                       ...stickyHeaderSx,
                       bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                      ...(!isMobile && {
+                        position: 'sticky',
+                        left: CHECK_WIDTH + SN_WIDTH + STUDENT_COL_WIDTH,
+                        zIndex: 4,
+                      }),
+                      borderRight: `2px solid ${isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1'}`,
                     }}
                   >
                     Current Placement
@@ -1189,14 +1195,24 @@ const StudentCategoryPlacementTab = () => {
                           </Box>
                         </Box>
                       </TableCell>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          ...(!isMobile && {
+                            position: 'sticky',
+                            left: CHECK_WIDTH + SN_WIDTH + STUDENT_COL_WIDTH,
+                            zIndex: 2,
+                          }),
+                          bgcolor: `${isDark ? '#1e293b' : '#f1f5f9'} !important`,
+                        }}
+                      >
+                        <Skeleton variant="rounded" width={90} height={22} sx={{ mx: 'auto' }} />
+                      </TableCell>
                       {categories.map((cat) => (
                         <TableCell key={cat.id} align="center">
                           <Skeleton variant="circular" width={20} height={20} sx={{ mx: 'auto' }} />
                         </TableCell>
                       ))}
-                      <TableCell align="center">
-                        <Skeleton variant="rounded" width={90} height={22} sx={{ mx: 'auto' }} />
-                      </TableCell>
                     </TableRow>
                   ))
                 ) : !hasFetched ? (
@@ -1287,7 +1303,18 @@ const StudentCategoryPlacementTab = () => {
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell align="center">
+                        <TableCell
+                          align="center"
+                          sx={{
+                            ...(!isMobile && {
+                              position: 'sticky',
+                              left: CHECK_WIDTH + SN_WIDTH + STUDENT_COL_WIDTH,
+                              zIndex: 2,
+                            }),
+                            bgcolor: theme.palette.background.paper,
+                            borderRight: `2px solid ${isDark ? 'rgba(255,255,255,0.18)' : '#e2e8f0'}`,
+                          }}
+                        >
                           <CurrentPlacementBadge
                             student={student}
                             category={categories.find(

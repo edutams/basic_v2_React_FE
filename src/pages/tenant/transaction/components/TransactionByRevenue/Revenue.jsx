@@ -403,11 +403,11 @@ const Revenue = () => {
                       <TableCell sx={tdCell}>
                         <Link
                           component="button"
-                          underline="hover"
                           onClick={() => {
                             setActiveRow(row);
                             setViewModalOpen(true);
                           }}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
                         >
                           {row.no_of_trns}
                         </Link>

@@ -25,6 +25,8 @@ import {
   Alert,
   Link,
   CircularProgress,
+  LinearProgress,
+  Divider,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -61,6 +63,17 @@ const SettlementReconcillation = () => {
   const [rows, setRows] = useState([]);
   const [totalRows, setTotalRows] = useState(0);
   const [tableLoading, setTableLoading] = useState(false);
+  const [tableSummary, setTableSummary] = useState({
+    total_banks: 0,
+    total_expected: 0,
+    total_reconciled: 0,
+    total_balance: 0,
+    total_transactions: 0,
+    total_revenue: 0,
+    total_settlements: 0,
+    total_outstanding_transactions: 0,
+    reconciled_pct: 0,
+  });
 
   // ---------- Chart / analytics ----------
   const [period, setPeriod] = useState('this_month');
@@ -153,6 +166,7 @@ const SettlementReconcillation = () => {
         if (res?.success) {
           setRows(res.data || []);
           setTotalRows(res.total || 0);
+          if (res.summary) setTableSummary(res.summary);
         }
       } catch (err) {
         console.error('Failed to load settlement reconciliation data', err);
@@ -447,94 +461,189 @@ const SettlementReconcillation = () => {
           </Grid>
         </Grid>
 
-        {/* Table */}
-        <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={thCell}>#</TableCell>
-                <TableCell sx={thCell}>Bank Name</TableCell>
-                <TableCell sx={thCell}>Account Number</TableCell>
-                <TableCell sx={thCell}>No. of Transactions</TableCell>
-                <TableCell sx={thCell}>No. of Revenue</TableCell>
-                <TableCell sx={thCell}>No. of Settlements</TableCell>
-                <TableCell sx={thCell}>Total Settelements (₦)</TableCell>
-                <TableCell sx={thCell}>Total Reconciliations (₦)</TableCell>
-                <TableCell sx={thCell}>Total Balance (₦)</TableCell>
-                <TableCell sx={thCell} align="center">Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={`${row.bank_name}-${row.account_number}-${index}`} hover>
-                  <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
-                  <TableCell sx={tdCell}>{row.account_number}</TableCell>
-                  <TableCell sx={tdCell}>
-                    <Link
-                      component="button"
-                      variant="body2"
-                      onClick={() => handleOpenTransactions(row)}
-                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                    >
-                      {row.no_of_transactions}
-                    </Link>
-                  </TableCell>
-                  <TableCell sx={tdCell}>
-                    <Link
-                      component="button"
-                      variant="body2"
-                      onClick={() => handleOpenRevenue(row)}
-                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                    >
-                      {row.no_of_revenue}
-                    </Link>
-                  </TableCell>
-                  <TableCell sx={tdCell}>
-                    <Link
-                      component="button"
-                      variant="body2"
-                      onClick={() => handleOpenSettlements(row)}
-                      sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                    >
-                      {row.no_of_settlements}
-                    </Link>
-                  </TableCell>
-                  <TableCell sx={tdCell}>{fmtNaira(row.expected_amount)}</TableCell>
-                  <TableCell sx={tdCell}>{fmtNaira(row.reconciled_amount)}</TableCell>
-                  <TableCell
-                    sx={{ ...tdCell, color: row.balance > 0 ? '#ef4444' : '#10B981', fontWeight: 600 }}
-                  >
-                    {fmtNaira(row.balance)}
-                  </TableCell>
-                  <TableCell align="center" sx={tdCell}>
-                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
-                      <IconDotsVertical size={18} />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+        {/* Table + Search Summary */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 8.5 }}>
+            <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={thCell}>#</TableCell>
+                    <TableCell sx={thCell}>Bank Name</TableCell>
+                    <TableCell sx={thCell}>Account Number</TableCell>
+                    <TableCell sx={thCell}>No. of Transactions</TableCell>
+                    <TableCell sx={thCell}>No. of Revenue</TableCell>
+                    <TableCell sx={thCell}>No. of Settlements</TableCell>
+                    <TableCell sx={thCell}>Total Settelements (₦)</TableCell>
+                    <TableCell sx={thCell}>Total Reconciliations (₦)</TableCell>
+                    <TableCell sx={thCell}>Total Balance (₦)</TableCell>
+                    <TableCell sx={thCell} align="center">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {rows.map((row, index) => (
+                    <TableRow key={`${row.bank_name}-${row.account_number}-${index}`} hover>
+                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
+                      <TableCell sx={tdCell}>{row.account_number}</TableCell>
+                      <TableCell sx={tdCell}>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => handleOpenTransactions(row)}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {row.no_of_transactions}
+                        </Link>
+                      </TableCell>
+                      <TableCell sx={tdCell}>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => handleOpenRevenue(row)}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {row.no_of_revenue}
+                        </Link>
+                      </TableCell>
+                      <TableCell sx={tdCell}>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => handleOpenSettlements(row)}
+                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                        >
+                          {row.no_of_settlements}
+                        </Link>
+                      </TableCell>
+                      <TableCell sx={tdCell}>{fmtNaira(row.expected_amount)}</TableCell>
+                      <TableCell sx={tdCell}>{fmtNaira(row.reconciled_amount)}</TableCell>
+                      <TableCell
+                        sx={{ ...tdCell, color: row.balance > 0 ? '#ef4444' : '#10B981', fontWeight: 600 }}
+                      >
+                        {fmtNaira(row.balance)}
+                      </TableCell>
+                      <TableCell align="center" sx={tdCell}>
+                        <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
+                          <IconDotsVertical size={18} />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
 
-              {!tableLoading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                    No reconciliation records found for the selected filters.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                  {!tableLoading && rows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={10} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                        No reconciliation records found for the selected filters.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
 
-          <TablePagination
-            component="div"
-            count={totalRows}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={perPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 20, 50]}
-          />
-        </TableContainer>
+              <TablePagination
+                component="div"
+                count={totalRows}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={perPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 20, 50]}
+              />
+            </TableContainer>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3.5 }}>
+            <Box
+              sx={{
+                border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
+                borderRadius: '10px',
+                bgcolor: isDark ? theme.palette.background.paper : '#fff',
+                p: 2,
+                height: '100%',
+              }}
+            >
+              <Typography sx={{ fontSize: 12, letterSpacing: 2, fontWeight: 700, color: '#6B7280', mb: 1.5 }}>
+                SEARCH SUMMARY
+              </Typography>
+
+              <Box sx={{ mb: 2 }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 700, color: '#6B7280', mb: 0.5 }}>
+                  TOTAL EXPECTED
+                </Typography>
+                <Typography variant="h5" fontWeight={700}>
+                  {fmtNaira(tableSummary.total_expected)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {tableSummary.total_banks} bank account{tableSummary.total_banks === 1 ? '' : 's'} matched
+                </Typography>
+              </Box>
+
+              <Divider sx={{ mb: 2 }} />
+
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: 14 }}>Reconciled</Typography>
+                  <Typography sx={{ fontWeight: 700, fontSize: 14, color: '#10B981' }}>
+                    {tableSummary.reconciled_pct}%
+                  </Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate"
+                  value={tableSummary.reconciled_pct}
+                  sx={{
+                    height: 8,
+                    borderRadius: 10,
+                    bgcolor: isDark ? '#2A2A2A' : '#E5E7EB',
+                    mb: 0.75,
+                    '& .MuiLinearProgress-bar': { borderRadius: 10, bgcolor: '#10B981' },
+                  }}
+                />
+                <Typography variant="caption" fontWeight={600} color="#10B981">
+                  {fmtNaira(tableSummary.total_reconciled)}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 1 }}>
+                <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 0.5, color: '#EF4444' }}>
+                  Outstanding Balance
+                </Typography>
+                <Typography variant="h6" fontWeight={700} color="#EF4444">
+                  {fmtNaira(tableSummary.total_balance)}
+                </Typography>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Transactions
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {tableSummary.total_transactions}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Revenue Items
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {tableSummary.total_revenue}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Settlements
+                  </Typography>
+                  <Typography variant="body2" fontWeight={700}>
+                    {tableSummary.total_settlements}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </ParentCard>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>

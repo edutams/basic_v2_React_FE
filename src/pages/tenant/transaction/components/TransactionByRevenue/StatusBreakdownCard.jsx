@@ -10,6 +10,8 @@ const StatusBreakdownCard = ({
   maxType = '',
   minRevenue = 0,
   maxRevenue = 0,
+  minName = '',
+  maxName = '',
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -115,6 +117,11 @@ const StatusBreakdownCard = ({
           <Typography variant="h5" fontWeight={600} color="#EF4444">
             ₦{Number(minRevenue).toLocaleString()}
           </Typography>
+          {minName && (
+            <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">
+              {minName}
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ flex: 1 }}>
@@ -135,6 +142,11 @@ const StatusBreakdownCard = ({
           <Typography variant="h5" fontWeight={600} color="#10B981">
             ₦{Number(maxRevenue).toLocaleString()}
           </Typography>
+          {maxName && (
+            <Typography variant="caption" display="block" fontWeight={600} color="text.secondary">
+              {maxName}
+            </Typography>
+          )}
         </Box>
       </Box>
     </Box>
@@ -149,6 +161,8 @@ StatusBreakdownCard.propTypes = {
   maxRevenue: PropTypes.number,
   minType: PropTypes.string,
   maxType: PropTypes.string,
+  minName: PropTypes.string,
+  maxName: PropTypes.string,
 };
 
 export default StatusBreakdownCard;

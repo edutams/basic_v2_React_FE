@@ -35,9 +35,14 @@ import {
   fetchRevenueChartData,
   revenueTransactionAmount,
 } from '@/api/tenant/bursary/transactionApi';
-import { fetchSessions, fetchTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
+import {
+  fetchSessions,
+  fetchTerms,
+  fetchActiveSessionTerm,
+} from '@/api/tenant/curriculum/tenantCurriculumApi';
 import tenantApi from '@/api/tenant/tenant_api';
 import RevenueTransactionsModal from './RevenueTransactionsModal';
+import SearchSummaryCard from '../SearchSummaryCard';
 
 const Revenue = () => {
   const theme = useTheme();
@@ -54,6 +59,17 @@ const Revenue = () => {
 
   const [chartData, setChartData] = useState({ categories: [], series: [] });
   const [statusData, setStatusData] = useState({ title: 'Distribution', items: [], metrics: [] });
+  const [tableSummary, setTableSummary] = useState({
+    total_amount: 0,
+    total_transactions: 0,
+    revenue_count: 0,
+    compulsory_amount: 0,
+    optional_amount: 0,
+    compulsory_count: 0,
+    optional_count: 0,
+    compulsory_pct: 0,
+    optional_pct: 0,
+  });
 
   const [sessions, setSessions] = useState([]);
   const [terms, setTerms] = useState([]);
@@ -100,6 +116,7 @@ const Revenue = () => {
         if (res.success) {
           setTableData(res.data);
           setTotalCount(res.total);
+          if (res.summary) setTableSummary(res.summary);
         }
       } catch (err) {
         console.error('Failed to fetch revenue table', err);
@@ -134,7 +151,18 @@ const Revenue = () => {
     fetchSessions()
       .then((res) => setSessions(res.data || res || []))
       .catch(console.error);
+
+    // Preselect the school's real current session + term, same as the
+    // Revenue Amount table, instead of defaulting to "All Sessions".
+    fetchActiveSessionTerm()
+      .then((res) => {
+        if (res?.data?.session_id) setSessionId(res.data.session_id);
+        if (res?.data?.term_id) setTermId(res.data.term_id);
+      })
+      .catch((err) => console.error('Failed to fetch active session term', err));
+
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -364,89 +392,122 @@ const Revenue = () => {
           </Grid>
         </Grid>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" py={6}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
-            <Table size="small">
-              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
-                <TableRow>
-                  <TableCell sx={thCell}>#</TableCell>
-                  <TableCell sx={thCell}>Revenue Code</TableCell>
-                  <TableCell sx={thCell}>Revenue name</TableCell>
-                  <TableCell sx={thCell}>No of Transaction</TableCell>
-                  <TableCell sx={thCell}>Amount (₦)</TableCell>
-                  <TableCell sx={thCell}>Category</TableCell>
-                  <TableCell sx={thCell}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData?.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
-                      No revenue records found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tableData?.map((row, index) => (
-                    <TableRow key={row.bursary_payment_id} hover>
-                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
-                      <TableCell sx={tdCell}>{row.revenue_code}</TableCell>
-                      <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Link
-                          component="button"
-                          onClick={() => {
-                            setActiveRow(row);
-                            setViewModalOpen(true);
-                          }}
-                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                        >
-                          {row.no_of_trns}
-                        </Link>
-                      </TableCell>{' '}
-                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Chip
-                          label={row.category}
-                          size="small"
-                          color={row.category === 'compulsory' ? 'success' : 'warning'}
-                        />
-                      </TableCell>
-                      <TableCell align="right" sx={tdCell}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            setAnchorEl(e.currentTarget);
-                            setActiveRow(row);
-                          }}
-                        >
-                          <IconDotsVertical size={18} />
-                        </IconButton>
-                      </TableCell>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 8.5 }}>
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={6}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                variant="outlined"
+                sx={{ borderRadius: 2 }}
+              >
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
+                    <TableRow>
+                      <TableCell sx={thCell}>#</TableCell>
+                      <TableCell sx={thCell}>Revenue Code</TableCell>
+                      <TableCell sx={thCell}>Revenue name</TableCell>
+                      <TableCell sx={thCell}>No of Transaction</TableCell>
+                      <TableCell sx={thCell}>Amount (₦)</TableCell>
+                      <TableCell sx={thCell}>Category</TableCell>
+                      <TableCell sx={thCell}>Action</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={totalCount}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={perPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[10, 15, 25, 50]}
-            />
-          </TableContainer>
-        )}
+                  </TableHead>
+                  <TableBody>
+                    {tableData?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ ...tdCell, py: 4 }}>
+                          No revenue records found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      tableData?.map((row, index) => (
+                        <TableRow key={row.bursary_payment_id} hover>
+                          <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                          <TableCell sx={tdCell}>{row.revenue_code}</TableCell>
+                          <TableCell sx={tdCell}>{row.revenue_name}</TableCell>
+                          <TableCell sx={tdCell}>
+                            <Link
+                              component="button"
+                              onClick={() => {
+                                setActiveRow(row);
+                                setViewModalOpen(true);
+                              }}
+                              sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                            >
+                              {row.no_of_trns}
+                            </Link>
+                          </TableCell>
+                          <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                          <TableCell sx={tdCell}>
+                            <Chip
+                              label={row.category}
+                              size="small"
+                              color={row.category === 'compulsory' ? 'success' : 'warning'}
+                            />
+                          </TableCell>
+                          <TableCell align="right" sx={tdCell}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setAnchorEl(e.currentTarget);
+                                setActiveRow(row);
+                              }}
+                            >
+                              <IconDotsVertical size={18} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                <TablePagination
+                  component="div"
+                  count={totalCount}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  rowsPerPage={perPage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  rowsPerPageOptions={[10, 15, 25, 50]}
+                />
+              </TableContainer>
+            )}
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3.5 }}>
+            <Box
+              sx={{
+                border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
+                borderRadius: '10px',
+                bgcolor: isDark ? theme.palette.background.paper : '#fff',
+                p: 2,
+                height: '100%',
+              }}
+            >
+              <SearchSummaryCard
+                title="Search Summary"
+                totalAmount={tableSummary.total_amount}
+                totalCount={tableSummary.revenue_count}
+                compulsory={{
+                  amount: tableSummary.compulsory_amount,
+                  count: tableSummary.compulsory_count,
+                  pct: tableSummary.compulsory_pct,
+                }}
+                optional={{
+                  amount: tableSummary.optional_amount,
+                  count: tableSummary.optional_count,
+                  pct: tableSummary.optional_pct,
+                }}
+                loading={loading}
+              />
+            </Box>
+          </Grid>
+        </Grid>
 
         <Menu
           anchorEl={anchorEl}

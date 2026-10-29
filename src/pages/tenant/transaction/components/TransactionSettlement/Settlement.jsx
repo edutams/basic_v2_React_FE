@@ -40,6 +40,7 @@ import { usePermissions } from '@/context/TenantContext/permissions';
 import { useNotification } from '@/hooks/useNotification';
 import SettlementRevenueModal from './RevenueModal/SettlementRevenueModal.jsx';
 import SettlementTransactionsModal from './TransactionModal/SettlementTransactionsModal.jsx';
+import SearchSummaryCard from '../SearchSummaryCard';
 
 const Settlement = () => {
   const { can } = usePermissions();
@@ -59,6 +60,18 @@ const Settlement = () => {
 
   const [chartData, setChartData] = useState({ categories: [], series: [] });
   const [statusData, setStatusData] = useState({ title: 'Total Transaction Value', items: [] });
+  const [tableSummary, setTableSummary] = useState({
+    total_amount: 0,
+    total_settlements: 0,
+    total_revenue_count: 0,
+    total_transaction_count: 0,
+    compulsory_amount: 0,
+    optional_amount: 0,
+    compulsory_count: 0,
+    optional_count: 0,
+    compulsory_pct: 0,
+    optional_pct: 0,
+  });
 
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
@@ -136,6 +149,7 @@ const Settlement = () => {
         if (res.success) {
           setTableData(res.data);
           setTotalCount(res.total);
+          if (res.summary) setTableSummary(res.summary);
         }
       } catch (err) {
         console.error('Failed to fetch settlements', err);
@@ -469,92 +483,126 @@ const Settlement = () => {
           </Grid>
         </Grid>
 
-        {loading ? (
-          <Box display="flex" justifyContent="center" py={6}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
-            <Table size="small">
-              <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
-                <TableRow>
-                  <TableCell sx={thCell}>#</TableCell>
-                  <TableCell sx={thCell}>Bank</TableCell>
-                  <TableCell sx={thCell}>Account Number</TableCell>
-                  <TableCell sx={thCell}>No. of Revenue</TableCell>
-                  <TableCell sx={thCell}>No. of Transaction</TableCell>
-                  <TableCell sx={thCell}>Amount</TableCell>
-                  <TableCell sx={thCell}>Date Paid</TableCell>
-                  <TableCell sx={thCell}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tableData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 4 }}>
-                      No settlements found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tableData.map((row, index) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
-                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
-                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.account_number}</TableCell>
-                      <TableCell sx={tdCell}>
-                        <Link
-                          component="button"
-                          variant="body2"
-                          onClick={() => handleOpenRevenue(row)}
-                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                        >
-                          {row.revenue_count}
-                        </Link>
-                      </TableCell>
-                      <TableCell sx={tdCell}>
-                        <Link
-                          component="button"
-                          variant="body2"
-                          onClick={() => handleOpenTransactions(row)}
-                          sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
-                        >
-                          {row.transaction_count}
-                        </Link>
-                      </TableCell>
-                      <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
-                      <TableCell sx={tdCell}>{dayjs(row.date_paid).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
-                      <TableCell align="center" sx={tdCell}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            setAnchorEl(e.currentTarget);
-                            setSelectedRow(row);
-                          }}
-                        >
-                          <IconDotsVertical size={18} />
-                        </IconButton>
-                      </TableCell>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 8.5 }}>
+            {loading ? (
+              <Box display="flex" justifyContent="center" py={6}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                variant="outlined"
+                sx={{ borderRadius: 2 }}
+              >
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
+                    <TableRow>
+                      <TableCell sx={thCell}>#</TableCell>
+                      <TableCell sx={thCell}>Bank</TableCell>
+                      <TableCell sx={thCell}>Account Number</TableCell>
+                      <TableCell sx={thCell}>No. of Revenue</TableCell>
+                      <TableCell sx={thCell}>No. of Transaction</TableCell>
+                      <TableCell sx={thCell}>Amount</TableCell>
+                      <TableCell sx={thCell}>Date Paid</TableCell>
+                      <TableCell sx={thCell}>Action</TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-            <TablePagination
-              component="div"
-              count={totalCount}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={perPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              rowsPerPageOptions={[20, 40, 60, 100]}
-            />
-          </TableContainer>
-        )}
+                  </TableHead>
+                  <TableBody>
+                    {tableData.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} align="center" sx={{ ...tdCell, py: 4 }}>
+                          No settlements found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      tableData.map((row, index) => (
+                        <TableRow key={row.id} hover>
+                          <TableCell sx={tdCell}>{page * perPage + index + 1}</TableCell>
+                          <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.bank_name}</TableCell>
+                          <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.account_number}</TableCell>
+                          <TableCell sx={tdCell}>
+                            <Link
+                              component="button"
+                              variant="body2"
+                              onClick={() => handleOpenRevenue(row)}
+                              sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                            >
+                              {row.revenue_count}
+                            </Link>
+                          </TableCell>
+                          <TableCell sx={tdCell}>
+                            <Link
+                              component="button"
+                              variant="body2"
+                              onClick={() => handleOpenTransactions(row)}
+                              sx={{ fontWeight: 600, textDecoration: 'underline', cursor: 'pointer' }}
+                            >
+                              {row.transaction_count}
+                            </Link>
+                          </TableCell>
+                          <TableCell sx={tdCell}>{format(row.amount)}</TableCell>
+                          <TableCell sx={tdCell}>{dayjs(row.date_paid).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                          <TableCell align="center" sx={tdCell}>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                setAnchorEl(e.currentTarget);
+                                setSelectedRow(row);
+                              }}
+                            >
+                              <IconDotsVertical size={18} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                <TablePagination
+                  component="div"
+                  count={totalCount}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  rowsPerPage={perPage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  rowsPerPageOptions={[20, 40, 60, 100]}
+                />
+              </TableContainer>
+            )}
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 3.5 }}>
+            <Box
+              sx={{
+                border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
+                borderRadius: '10px',
+                bgcolor: isDark ? theme.palette.background.paper : '#fff',
+                p: 2,
+                height: '100%',
+              }}
+            >
+              <SearchSummaryCard
+                title="Search Summary"
+                totalAmount={tableSummary.total_amount}
+                totalCount={tableSummary.total_settlements}
+                totalCountLabel="settlement"
+                compulsory={{
+                  amount: tableSummary.compulsory_amount,
+                  count: tableSummary.compulsory_count,
+                  pct: tableSummary.compulsory_pct,
+                }}
+                optional={{
+                  amount: tableSummary.optional_amount,
+                  count: tableSummary.optional_count,
+                  pct: tableSummary.optional_pct,
+                }}
+                loading={loading}
+              />
+            </Box>
+          </Grid>
+        </Grid>
 
         <Menu
           anchorEl={anchorEl}

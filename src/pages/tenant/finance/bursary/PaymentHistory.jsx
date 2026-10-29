@@ -936,11 +936,18 @@ const PaymentHistory = () => {
       user_id: row.user_id || selectedUserId,
       session_term_id: row.session_term_id,
     });
-    window.open(
-      `/bursary/transactions/print_receipt?t=${token}`,
-      '_blank',
-      'noopener,noreferrer',
-    );
+    window.open(`/bursary/transactions/print_receipt?t=${token}`, '_blank', 'noopener,noreferrer');
+  };
+
+  // No bulk_order_id/order_id — the backend then returns every approved
+  // payment for this student in this one term as a single consolidated
+  // receipt, instead of per-checkout.
+  const handlePrintSessionReceipt = () => {
+    const token = encodeLinkParams({
+      user_id: selectedUserId,
+      session_term_id: selectedTermId,
+    });
+    window.open(`/bursary/transactions/print_receipt?t=${token}`, '_blank', 'noopener,noreferrer');
   };
 
   // Export/Print both need the full filtered list, not just the current
@@ -1158,7 +1165,7 @@ const PaymentHistory = () => {
         </Paper>
       )}
 
-      {isBursaryStaff && !deepLinkedUserId && (
+      {isBursaryStaff && (
         <Paper variant="outlined" sx={{ p: 2, mb: 3, borderRadius: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 5 }}>
@@ -1365,50 +1372,46 @@ const PaymentHistory = () => {
             <Grid size={{ xs: 12, md: 8.5 }}>
               <Paper variant="outlined" sx={{ p: 2, mb: 2, borderRadius: 2 }}>
                 <Grid container spacing={2}>
-                  {!isBursaryStaff && (
-                    <>
-                      <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Session"
-                          value={selectedSessionId}
-                          onChange={(e) => {
-                            setSelectedSessionId(e.target.value);
-                            setSelectedTermId('all');
-                            setPage(0);
-                          }}
-                        >
-                          {sessions.map((s) => (
-                            <MenuItem key={s.id} value={s.id}>
-                              {s.label}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-                        <TextField
-                          select
-                          fullWidth
-                          size="small"
-                          label="Term"
-                          value={selectedTermId}
-                          disabled={selectedSessionId === 'all'}
-                          onChange={(e) => {
-                            setSelectedTermId(e.target.value);
-                            setPage(0);
-                          }}
-                        >
-                          {terms.map((t) => (
-                            <MenuItem key={t.id} value={t.id}>
-                              {t.label}
-                            </MenuItem>
-                          ))}
-                        </TextField>
-                      </Grid>
-                    </>
-                  )}
+                  <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Session"
+                      value={selectedSessionId}
+                      onChange={(e) => {
+                        setSelectedSessionId(e.target.value);
+                        setSelectedTermId('all');
+                        setPage(0);
+                      }}
+                    >
+                      {sessions.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size="small"
+                      label="Term"
+                      value={selectedTermId}
+                      disabled={selectedSessionId === 'all'}
+                      onChange={(e) => {
+                        setSelectedTermId(e.target.value);
+                        setPage(0);
+                      }}
+                    >
+                      {terms.map((t) => (
+                        <MenuItem key={t.id} value={t.id}>
+                          {t.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
                   {!showingMyself && (
                     <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                       <TextField
@@ -1466,6 +1469,20 @@ const PaymentHistory = () => {
                       <MenuItem value="DECLINED">Declined</MenuItem>
                     </TextField>
                   </Grid>
+                  {selectedTermId !== 'all' && (
+                    <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        startIcon={<PrintOutlinedIcon />}
+                        sx={{ height: '100%' }}
+                        onClick={handlePrintSessionReceipt}
+                      >
+                        Print Term Receipt
+                      </Button>
+                    </Grid>
+                  )}
                 </Grid>
               </Paper>
 

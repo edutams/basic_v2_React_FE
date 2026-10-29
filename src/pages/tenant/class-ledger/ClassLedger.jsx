@@ -376,32 +376,6 @@ const ClassLedger = () => {
     }
   };
 
-  const fetchAnalyticsOnly = async () => {
-    if (!programme || !classLevel) return;
-    if (fetchInFlightRef.current) return;
-
-    setLoadingAnalytics(true);
-    try {
-      const payload = {
-        filters: {
-          progId: programme,
-          class_arm_id: classLevel,
-          payment_status: paymentStatusFilter || null,
-          search: search,
-          session_id: sessionId || null,
-          term_id: termId || null,
-        },
-      };
-
-      const analyticsRes = await fetchClassLedgerAnalytics(payload);
-      setAnalyticsData(analyticsRes);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingAnalytics(false);
-    }
-  };
-
   // Auto-select first Programme
   useEffect(() => {
     if (programmes.length > 0 && !programme) {
@@ -426,23 +400,17 @@ const ClassLedger = () => {
     }
   }, [programmes]);
 
-  // Auto-load Analytics when Programme or Class changes
-  useEffect(() => {
-    if (programme && classLevel) {
-      fetchAnalyticsOnly();
-    }
-  }, [programme, classLevel, paymentStatusFilter]);
-
   // Fetch the table once the preselected defaults (Programme/Class) are
   // ready, so the page isn't just showing empty filters until Apply is
-  // clicked — later filter changes still require Apply/Refresh as before.
-  const didInitialFetchRef = React.useRef(false);
+  // clicked — and again on every subsequent change to any of these
+  // dropdown filters, so Apply/Refresh is no longer required (they still
+  // work too — Apply just re-fetches with whatever is currently selected).
   useEffect(() => {
-    if (!didInitialFetchRef.current && programme && classLevel) {
-      didInitialFetchRef.current = true;
+    if (programme && classLevel) {
       fetchClassLedgerData();
     }
-  }, [programme, classLevel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [programme, classLevel, sessionId, termId, paymentStatusFilter]);
 
   useEffect(() => {
     if (programme && classLevel && ledgerData.length > 0) {

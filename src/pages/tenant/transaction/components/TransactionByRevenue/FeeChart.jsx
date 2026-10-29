@@ -126,6 +126,8 @@ const FeeChart = ({
             maxRevenue={statusData?.maxRevenue || 0}
             minType={statusData?.minType || ''}
             maxType={statusData?.maxType || ''}
+            minName={statusData?.minName || ''}
+            maxName={statusData?.maxName || ''}
           />
         </Box>
       </Grid>

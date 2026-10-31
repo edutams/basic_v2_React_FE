@@ -65,13 +65,34 @@ const toISODate = (date) => {
 };
 
 const isSameDay = (a, b) => toISODate(a) === toISODate(b);
-const formatShortDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const formatShortDate = (date) =>
+  date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
 const STATUS_META = {
-  attended: { icon: CheckCircleIcon, color: '#16A34A', label: 'Attended', description: 'The teacher confirmed this class held.' },
-  upcoming: { icon: AccessTimeIcon, color: '#D97706', label: 'Upcoming', description: "Hasn't happened yet." },
-  cancelled: { icon: CancelIcon, color: '#DC2626', label: 'Cancelled', description: 'The teacher cancelled this class.' },
-  not_scheduled: { icon: HelpOutlineIcon, color: '#9CA3AF', label: 'Not Scheduled', description: "This class's time has passed and the teacher never confirmed it." },
+  attended: {
+    icon: CheckCircleIcon,
+    color: '#16A34A',
+    label: 'Attended',
+    description: 'The teacher confirmed this class held.',
+  },
+  upcoming: {
+    icon: AccessTimeIcon,
+    color: '#D97706',
+    label: 'Upcoming',
+    description: "Hasn't happened yet.",
+  },
+  cancelled: {
+    icon: CancelIcon,
+    color: '#DC2626',
+    label: 'Cancelled',
+    description: 'The teacher cancelled this class.',
+  },
+  not_scheduled: {
+    icon: HelpOutlineIcon,
+    color: '#9CA3AF',
+    label: 'Not Scheduled',
+    description: "This class's time has passed and the teacher never confirmed it.",
+  },
 };
 
 const StatusIcon = ({ status }) => {
@@ -137,7 +158,11 @@ const TeacherTimetableView = () => {
     const fetchOptions = async () => {
       setOptionsLoading(true);
       try {
-        const res = await staffApi.getAll({ search: debouncedSearch, staff_type: 'teaching', per_page: 20 });
+        const res = await staffApi.getAll({
+          search: debouncedSearch,
+          staff_type: 'teaching',
+          per_page: 20,
+        });
         setOptions(res.data || []);
       } catch {
         notify.error('Failed to search teachers');
@@ -152,7 +177,9 @@ const TeacherTimetableView = () => {
     async (userId, weekStartParam) => {
       setLoading(true);
       try {
-        const res = await timetableApi.getTeacherScheduleOverview(userId, { week_start: weekStartParam });
+        const res = await timetableApi.getTeacherScheduleOverview(userId, {
+          week_start: weekStartParam,
+        });
         setOverview(res.data.data);
       } catch {
         notify.error('Failed to load teacher schedule');
@@ -187,14 +214,39 @@ const TeacherTimetableView = () => {
     return row ? row.slot : null;
   };
 
-  const teacherName = selectedTeacher?.user ? `${selectedTeacher.user.fname || ''} ${selectedTeacher.user.lname || ''}`.trim() : '';
-  const sparkline = stats.attendance_rate.sparkline?.length ? stats.attendance_rate.sparkline : [0, 0, 0, 0, 0];
+  const teacherName = selectedTeacher?.user
+    ? `${selectedTeacher.user.fname || ''} ${selectedTeacher.user.lname || ''}`.trim()
+    : '';
+  const sparkline = stats.attendance_rate.sparkline?.length
+    ? stats.attendance_rate.sparkline
+    : [0, 0, 0, 0, 0];
 
   return (
-    <PageContainer title="Teacher Timetable View" description="View any subject teacher's full weekly teaching schedule.">
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2} sx={{ mb: 2.5 }}>
+    <PageContainer
+      title="Teacher Timetable View"
+      description="View any subject teacher's full weekly teaching schedule."
+    >
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        spacing={2}
+        sx={{ mb: 2.5 }}
+      >
         <Stack direction="row" spacing={1.5} alignItems="center">
-          <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#2563EB', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2,
+              bgcolor: '#2563EB',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             <CalendarMonthIcon />
           </Box>
           <Box>
@@ -208,7 +260,10 @@ const TeacherTimetableView = () => {
         </Stack>
       </Stack>
 
-      <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5, mb: 2 }}>
+      <Paper
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5, mb: 2 }}
+      >
         <Autocomplete
           options={options}
           loading={optionsLoading}
@@ -224,9 +279,11 @@ const TeacherTimetableView = () => {
                 {option.user?.fname?.[0]}
               </Avatar>
               <Box>
-                <Typography variant="body2">{option.user ? `${option.user.fname} ${option.user.lname}` : '—'}</Typography>
+                <Typography variant="body2">
+                  {option.user ? `${option.user.fname} ${option.user.lname}` : '—'}
+                </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {option.user_id}
+                  {option.user?.user_id}
                 </Typography>
               </Box>
             </Box>
@@ -253,7 +310,9 @@ const TeacherTimetableView = () => {
       </Paper>
 
       {!selectedTeacher ? (
-        <Alert severity="info">Search for and select a subject teacher above to view their weekly schedule.</Alert>
+        <Alert severity="info">
+          Search for and select a subject teacher above to view their weekly schedule.
+        </Alert>
       ) : (
         <>
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -265,17 +324,40 @@ const TeacherTimetableView = () => {
             </Typography>
           </Stack>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.25, mb: 2 }}>
-            <StatCardShell icon={TodayIcon} iconColor="#16A34A" title="Today's Classes" tooltip="How many of this teacher's classes today are confirmed vs. still upcoming." loading={loading}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+              gap: 1.25,
+              mb: 2,
+            }}
+          >
+            <StatCardShell
+              icon={TodayIcon}
+              iconColor="#16A34A"
+              title="Today's Classes"
+              tooltip="How many of this teacher's classes today are confirmed vs. still upcoming."
+              loading={loading}
+            >
               <BarWithPct
-                value={stats.today.total ? Math.round((stats.today.completed / stats.today.total) * 100) : 0}
+                value={
+                  stats.today.total
+                    ? Math.round((stats.today.completed / stats.today.total) * 100)
+                    : 0
+                }
                 mainLabel={stats.today.total}
                 subLabel={`${stats.today.completed} completed · ${stats.today.upcoming} upcoming`}
                 barColor="#16A34A"
               />
             </StatCardShell>
 
-            <StatCardShell icon={FactCheckIcon} iconColor="#2563EB" title="Attendance Rate" tooltip="This teacher's confirmed-vs-cancelled rate over the last 5 school weeks, up to today." loading={loading}>
+            <StatCardShell
+              icon={FactCheckIcon}
+              iconColor="#2563EB"
+              title="Attendance Rate"
+              tooltip="This teacher's confirmed-vs-cancelled rate over the last 5 school weeks, up to today."
+              loading={loading}
+            >
               <BarWithPct
                 value={stats.attendance_rate.percent}
                 mainLabel={`${stats.attendance_rate.percent}%`}
@@ -284,14 +366,28 @@ const TeacherTimetableView = () => {
                 legend={
                   <Stack direction="row" spacing={0.5} alignItems="flex-end" sx={{ height: 16 }}>
                     {sparkline.map((v, i) => (
-                      <Box key={i} sx={{ width: 6, height: `${Math.max(v, 8)}%`, bgcolor: v >= 70 ? '#16A34A' : v > 0 ? '#DC2626' : '#E5E7EB', borderRadius: 0.5 }} />
+                      <Box
+                        key={i}
+                        sx={{
+                          width: 6,
+                          height: `${Math.max(v, 8)}%`,
+                          bgcolor: v >= 70 ? '#16A34A' : v > 0 ? '#DC2626' : '#E5E7EB',
+                          borderRadius: 0.5,
+                        }}
+                      />
                     ))}
                   </Stack>
                 }
               />
             </StatCardShell>
 
-            <StatCardShell icon={EventRepeatIcon} iconColor="#7E22CE" title="Classes This Week" tooltip="How many classes this week this teacher has confirmed vs. cancelled, out of the total scheduled." loading={loading}>
+            <StatCardShell
+              icon={EventRepeatIcon}
+              iconColor="#7E22CE"
+              title="Classes This Week"
+              tooltip="How many classes this week this teacher has confirmed vs. cancelled, out of the total scheduled."
+              loading={loading}
+            >
               <BarWithPct
                 value={stats.this_week.percent}
                 mainLabel={stats.this_week.total}
@@ -306,7 +402,13 @@ const TeacherTimetableView = () => {
               />
             </StatCardShell>
 
-            <StatCardShell icon={ScheduleIcon} iconColor="#DC2626" title="Upcoming Next" tooltip="The next class on this teacher's timetable that hasn't been confirmed or cancelled yet." loading={loading}>
+            <StatCardShell
+              icon={ScheduleIcon}
+              iconColor="#DC2626"
+              title="Upcoming Next"
+              tooltip="The next class on this teacher's timetable that hasn't been confirmed or cancelled yet."
+              loading={loading}
+            >
               {stats.upcoming_next ? (
                 <>
                   <Typography variant="body2" fontWeight={800}>
@@ -316,8 +418,13 @@ const TeacherTimetableView = () => {
                     {stats.upcoming_next.class_name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    {new Date(stats.upcoming_next.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })} ·{' '}
-                    {stats.upcoming_next.period.start_time?.slice(0, 5)}-{stats.upcoming_next.period.end_time?.slice(0, 5)}
+                    {new Date(stats.upcoming_next.date).toLocaleDateString('en-GB', {
+                      weekday: 'short',
+                      day: 'numeric',
+                      month: 'short',
+                    })}{' '}
+                    · {stats.upcoming_next.period.start_time?.slice(0, 5)}-
+                    {stats.upcoming_next.period.end_time?.slice(0, 5)}
                   </Typography>
                 </>
               ) : (
@@ -327,20 +434,38 @@ const TeacherTimetableView = () => {
               )}
             </StatCardShell>
 
-            <StatCardShell icon={EventBusyIcon} iconColor="#D97706" title="Cancelled Classes" tooltip="Classes this teacher has cancelled this week." loading={loading}>
+            <StatCardShell
+              icon={EventBusyIcon}
+              iconColor="#D97706"
+              title="Cancelled Classes"
+              tooltip="Classes this teacher has cancelled this week."
+              loading={loading}
+            >
               <Typography variant="h5" fontWeight={900} lineHeight={1}>
                 {stats.cancelled_this_week}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 0.5 }}
+              >
                 This week
               </Typography>
             </StatCardShell>
 
-            <StatCardShell icon={MenuBookIcon} iconColor="#0F766E" title={`Subjects Taught (${stats.subjects.length})`} tooltip="Every subject this teacher teaches, based on their current subject-teacher allocations." loading={loading}>
+            <StatCardShell
+              icon={MenuBookIcon}
+              iconColor="#0F766E"
+              title={`Subjects Taught (${stats.subjects.length})`}
+              tooltip="Every subject this teacher teaches, based on their current subject-teacher allocations."
+              loading={loading}
+            >
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
                 {stats.subjects.map((s) => (
                   <Stack key={s.id} direction="row" spacing={0.5} alignItems="center">
-                    <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: getSubjectColor(s) }} />
+                    <Box
+                      sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: getSubjectColor(s) }}
+                    />
                     <Typography variant="caption" fontWeight={600}>
                       {s.name}
                     </Typography>
@@ -350,15 +475,43 @@ const TeacherTimetableView = () => {
             </StatCardShell>
           </Box>
 
-          <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-              <Button size="small" startIcon={<ChevronLeftIcon fontSize="small" />} onClick={() => setSelectedDate((d) => { const n = new Date(d); n.setDate(n.getDate() - 7); return n; })}>
+          <Paper
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 1.5 }}
+            >
+              <Button
+                size="small"
+                startIcon={<ChevronLeftIcon fontSize="small" />}
+                onClick={() =>
+                  setSelectedDate((d) => {
+                    const n = new Date(d);
+                    n.setDate(n.getDate() - 7);
+                    return n;
+                  })
+                }
+              >
                 Previous Week
               </Button>
               <Typography variant="subtitle2" fontWeight={800}>
                 Week: {formatShortDate(weekDates[0].date)} – {formatShortDate(weekDates[4].date)}
               </Typography>
-              <Button size="small" endIcon={<ChevronRightIcon fontSize="small" />} onClick={() => setSelectedDate((d) => { const n = new Date(d); n.setDate(n.getDate() + 7); return n; })}>
+              <Button
+                size="small"
+                endIcon={<ChevronRightIcon fontSize="small" />}
+                onClick={() =>
+                  setSelectedDate((d) => {
+                    const n = new Date(d);
+                    n.setDate(n.getDate() + 7);
+                    return n;
+                  })
+                }
+              >
                 Next Week
               </Button>
             </Stack>
@@ -367,7 +520,12 @@ const TeacherTimetableView = () => {
               <Table
                 size="small"
                 sx={{
-                  '& .MuiTableCell-root': { py: 0.6, px: 1, fontSize: '0.78rem', whiteSpace: 'nowrap' },
+                  '& .MuiTableCell-root': {
+                    py: 0.6,
+                    px: 1,
+                    fontSize: '0.78rem',
+                    whiteSpace: 'nowrap',
+                  },
                   '& .MuiTableCell-head': { fontWeight: 800, bgcolor: '#F1F5F9' },
                 }}
               >
@@ -376,9 +534,15 @@ const TeacherTimetableView = () => {
                     <TableCell>Period</TableCell>
                     <TableCell>Time</TableCell>
                     {weekDates.map((d) => (
-                      <TableCell key={d.key} sx={{ color: isSameDay(d.date, today) ? '#2563EB' : undefined }}>
+                      <TableCell
+                        key={d.key}
+                        sx={{ color: isSameDay(d.date, today) ? '#2563EB' : undefined }}
+                      >
                         {d.label}
-                        <Typography variant="caption" sx={{ display: 'block', fontWeight: 600, color: 'text.secondary' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ display: 'block', fontWeight: 600, color: 'text.secondary' }}
+                        >
                           {formatShortDate(d.date)}
                         </Typography>
                       </TableCell>
@@ -408,8 +572,12 @@ const TeacherTimetableView = () => {
                         return (
                           <TableRow key={period.id}>
                             <TableCell sx={{ bgcolor: '#FEF3C7' }}>—</TableCell>
-                            <TableCell colSpan={6} sx={{ bgcolor: '#FEF3C7', color: '#92400E', fontWeight: 700 }}>
-                              {period.label} — {period.start_time?.slice(0, 5)}-{period.end_time?.slice(0, 5)}
+                            <TableCell
+                              colSpan={6}
+                              sx={{ bgcolor: '#FEF3C7', color: '#92400E', fontWeight: 700 }}
+                            >
+                              {period.label} — {period.start_time?.slice(0, 5)}-
+                              {period.end_time?.slice(0, 5)}
                             </TableCell>
                           </TableRow>
                         );
@@ -432,7 +600,10 @@ const TeacherTimetableView = () => {
                                 </TableCell>
                               );
                             }
-                            const subjectColor = getSubjectColor({ id: cell.subject_id, color: cell.subject_color });
+                            const subjectColor = getSubjectColor({
+                              id: cell.subject_id,
+                              color: cell.subject_color,
+                            });
                             const SubjectIcon = getSubjectIcon(cell.subject_name);
                             return (
                               <TableCell key={d.key}>
@@ -448,7 +619,12 @@ const TeacherTimetableView = () => {
                                       p: 0.6,
                                     }}
                                   >
-                                    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ minWidth: 0 }}>
+                                    <Stack
+                                      direction="row"
+                                      spacing={0.75}
+                                      alignItems="center"
+                                      sx={{ minWidth: 0 }}
+                                    >
                                       <Box
                                         sx={{
                                           width: 26,
@@ -466,10 +642,20 @@ const TeacherTimetableView = () => {
                                         <SubjectIcon sx={{ fontSize: 15 }} />
                                       </Box>
                                       <Box sx={{ minWidth: 0 }}>
-                                        <Typography variant="caption" fontWeight={800} noWrap sx={{ display: 'block', color: subjectColor }}>
+                                        <Typography
+                                          variant="caption"
+                                          fontWeight={800}
+                                          noWrap
+                                          sx={{ display: 'block', color: subjectColor }}
+                                        >
                                           {cell.subject_name}
                                         </Typography>
-                                        <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'block' }}>
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                          noWrap
+                                          sx={{ display: 'block' }}
+                                        >
                                           {cell.class_name}
                                         </Typography>
                                       </Box>

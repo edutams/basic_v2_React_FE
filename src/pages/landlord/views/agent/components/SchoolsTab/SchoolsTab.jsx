@@ -236,7 +236,8 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
                 <BusinessIcon sx={{ fontSize: 14, color: '#9ca3af' }} />
                 <Typography variant="caption" color="text.secondary">
-                  <strong>Agent:</strong> {agent.organization_name || agent.org_name || agent.name}
+                  <strong>Partner:</strong>{' '}
+                  {agent.organization_name || agent.org_name || agent.name}
                   {agent.organization_email || agent.email
                     ? ` · ${agent.organization_email || agent.email}`
                     : ''}
@@ -425,7 +426,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                     textTransform: 'none',
                   }}
                 >
-                  {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
+                  {loading ? (
+                    <Skeleton variant="text" width={120} height={18} />
+                  ) : (
+                    'Approve & Provision'
+                  )}
                 </Button>
               </>
             ) : (
@@ -587,7 +592,12 @@ const SchoolsTab = ({
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   // Subscription stats
-  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStats, setSubscriptionStats] = useState({
+    total: 0,
+    active: 0,
+    secondary: 0,
+    primary: 0,
+  });
   const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -612,22 +622,25 @@ const SchoolsTab = ({
 
   // Applications Review's own filtered fetch — search/status/date range are
   // sent to the backend, never filtered client-side.
-  const fetchProspects = useCallback(async (filters = prospectFilters) => {
-    setProspectLoading(true);
-    try {
-      const data = await getProspectiveTenants(filters);
-      const all = Array.isArray(data) ? data : [];
-      setProspectList(
-        organizationId
-          ? all.filter((p) => String(p.organization_id) === String(organizationId))
-          : all,
-      );
-    } catch (err) {
-      notify(err?.message || 'Failed to fetch applications', 'error');
-    } finally {
-      setProspectLoading(false);
-    }
-  }, [organizationId, prospectFilters]);
+  const fetchProspects = useCallback(
+    async (filters = prospectFilters) => {
+      setProspectLoading(true);
+      try {
+        const data = await getProspectiveTenants(filters);
+        const all = Array.isArray(data) ? data : [];
+        setProspectList(
+          organizationId
+            ? all.filter((p) => String(p.organization_id) === String(organizationId))
+            : all,
+        );
+      } catch (err) {
+        notify(err?.message || 'Failed to fetch applications', 'error');
+      } finally {
+        setProspectLoading(false);
+      }
+    },
+    [organizationId, prospectFilters],
+  );
 
   // Unfiltered — only feeds the analytics/summary stat cards above the tabs.
   const fetchSchools = useCallback(async () => {
@@ -649,41 +662,47 @@ const SchoolsTab = ({
 
   // Setup Approvals' own filtered fetch — always scoped server-side to
   // tenants that haven't finished onboarding approval yet.
-  const fetchSetupSchools = useCallback(async (filters = setupFilters) => {
-    setSetupLoading(true);
-    try {
-      const data = await getSchools({ ...filters, exclude_onboarding_status: 'approved' });
-      const all = Array.isArray(data) ? data : [];
-      setSetupList(
-        organizationId
-          ? all.filter((s) => String(s.organization_id) === String(organizationId))
-          : all,
-      );
-    } catch (err) {
-      notify(err?.message || 'Failed to fetch schools', 'error');
-    } finally {
-      setSetupLoading(false);
-    }
-  }, [organizationId, setupFilters]);
+  const fetchSetupSchools = useCallback(
+    async (filters = setupFilters) => {
+      setSetupLoading(true);
+      try {
+        const data = await getSchools({ ...filters, exclude_onboarding_status: 'approved' });
+        const all = Array.isArray(data) ? data : [];
+        setSetupList(
+          organizationId
+            ? all.filter((s) => String(s.organization_id) === String(organizationId))
+            : all,
+        );
+      } catch (err) {
+        notify(err?.message || 'Failed to fetch schools', 'error');
+      } finally {
+        setSetupLoading(false);
+      }
+    },
+    [organizationId, setupFilters],
+  );
 
   // Approved Schools' own filtered fetch — always scoped server-side to
   // onboarding-approved tenants.
-  const fetchApprovedSchools = useCallback(async (filters = approvedFilters) => {
-    setApprovedLoading(true);
-    try {
-      const data = await getSchools({ ...filters, onboarding_status: 'approved' });
-      const all = Array.isArray(data) ? data : [];
-      setApprovedList(
-        organizationId
-          ? all.filter((s) => String(s.organization_id) === String(organizationId))
-          : all,
-      );
-    } catch (err) {
-      notify(err?.message || 'Failed to fetch schools', 'error');
-    } finally {
-      setApprovedLoading(false);
-    }
-  }, [organizationId, approvedFilters]);
+  const fetchApprovedSchools = useCallback(
+    async (filters = approvedFilters) => {
+      setApprovedLoading(true);
+      try {
+        const data = await getSchools({ ...filters, onboarding_status: 'approved' });
+        const all = Array.isArray(data) ? data : [];
+        setApprovedList(
+          organizationId
+            ? all.filter((s) => String(s.organization_id) === String(organizationId))
+            : all,
+        );
+      } catch (err) {
+        notify(err?.message || 'Failed to fetch schools', 'error');
+      } finally {
+        setApprovedLoading(false);
+      }
+    },
+    [organizationId, approvedFilters],
+  );
 
   const handleProspectFilterApply = (filters) => {
     setProspectFilters(filters);
@@ -927,13 +946,14 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                   p:"10px !important",
+                  p: '10px !important',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
                   borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  transition:
+                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                   cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-2px)',
@@ -987,7 +1007,11 @@ const SchoolsTab = ({
                       color: isDark ? '#ffffff' : s0.color,
                     }}
                   >
-                    {analyticsLoading ? <Skeleton variant="text" width={30} /> : schoolSummary.total}
+                    {analyticsLoading ? (
+                      <Skeleton variant="text" width={30} />
+                    ) : (
+                      schoolSummary.total
+                    )}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -996,33 +1020,37 @@ const SchoolsTab = ({
                       Approved
                     </Typography>
                     <Typography fontWeight={600}>
-                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.active}
+                      {analyticsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        schoolSummary.active
+                      )}
                     </Typography>
                   </Box>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ borderColor: '#E5E7EB' }}
-                  />
+                  <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Pending
                     </Typography>
                     <Typography fontWeight={600}>
-                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.pending}
+                      {analyticsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        schoolSummary.pending
+                      )}
                     </Typography>
                   </Box>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ borderColor: '#E5E7EB' }}
-                  />
+                  <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Rejected
                     </Typography>
                     <Typography fontWeight={600}>
-                      {analyticsLoading ? <Skeleton variant="text" width={20} /> : schoolSummary.rejected}
+                      {analyticsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        schoolSummary.rejected
+                      )}
                     </Typography>
                   </Box>
                 </Box>
@@ -1032,13 +1060,14 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                   p:"10px !important",
+                  p: '10px !important',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
                   borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  transition:
+                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                   cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-2px)',
@@ -1103,33 +1132,37 @@ const SchoolsTab = ({
                       Active
                     </Typography>
                     <Typography fontWeight={600}>
-                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
+                      {subscriptionStatsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        subscriptionStats.active
+                      )}
                     </Typography>
                   </Box>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ borderColor: '#E5E7EB' }}
-                  />
+                  <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Secondary
                     </Typography>
                     <Typography fontWeight={600}>
-                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
+                      {subscriptionStatsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        subscriptionStats.secondary
+                      )}
                     </Typography>
                   </Box>
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ borderColor: '#E5E7EB' }}
-                  />
+                  <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB' }} />
                   <Box>
                     <Typography variant="caption" color="text.secondary">
                       Primary
                     </Typography>
                     <Typography fontWeight={600}>
-                      {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
+                      {subscriptionStatsLoading ? (
+                        <Skeleton variant="text" width={20} />
+                      ) : (
+                        subscriptionStats.primary
+                      )}
                     </Typography>
                   </Box>
                 </Box>
@@ -1142,13 +1175,14 @@ const SchoolsTab = ({
               <Paper
                 elevation={0}
                 sx={{
-                  p:"10px !important",
+                  p: '10px !important',
                   borderRadius: '14px',
                   bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
                   border: '1px solid',
                   borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                  transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  transition:
+                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
                   cursor: 'pointer',
                   '&:hover': {
                     transform: 'translateY(-2px)',
@@ -1183,9 +1217,7 @@ const SchoolsTab = ({
                     <IconChartBar size={18} color={s3.color} />
                   </IconButton>
                 </Box>
-                <Box
-                  sx={{ height: 130, display: 'flex', alignItems: 'center', }}
-                >
+                <Box sx={{ height: 130, display: 'flex', alignItems: 'center' }}>
                   {analyticsLoading ? (
                     <Skeleton variant="circular" width={110} height={110} sx={{ mx: 'auto' }} />
                   ) : planSeries.length > 0 ? (
@@ -1391,7 +1423,12 @@ const SchoolsTab = ({
           severity="success"
         />
 
-        <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
+        <PlanDistributionModal
+          open={openPlanModal}
+          onClose={() => setOpenPlanModal(false)}
+          planDistribution={planDistribution}
+          totalOrganizations={analytics?.totalOrganizations ?? 0}
+        />
         <TotalSchoolModal
           open={openTotalSchoolModal}
           onClose={() => setOpenTotalSchoolModal(false)}

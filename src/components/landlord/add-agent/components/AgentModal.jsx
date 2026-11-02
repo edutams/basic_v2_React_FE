@@ -16,17 +16,17 @@ import ReusableModal from '@/components/shared/ReusableModal';
 import ManageBankService from './ManageBankService';
 // Gateway management is a per-school concept (tenant_gateways.tenant_id),
 // not per-agent — kept for reference but disabled at the agent level.
-// See Agent.jsx's ActionMenuCell for the corresponding commented-out menu item.
+// See Partner.jsx's ActionMenuCell for the corresponding commented-out menu item.
 // import ManageGateway from './ManageGateway';
 
 const getModalConfig = (actionType) => {
   const configs = {
     create: {
-      title: 'Create Agent',
+      title: 'Create Partner',
       size: 'extraLarge',
     },
     update: {
-      title: 'Update Agent',
+      title: 'Update Partner',
       size: 'extraLarge',
     },
     viewSchools: {
@@ -85,31 +85,31 @@ const AgentModal = ({
     () => ({
       organizationName: shouldPrefillForm
         ? selectedAgent?.organizationName ||
-        selectedAgent?.organization_name ||
-        selectedAgent?.name ||
-        ''
+          selectedAgent?.organization_name ||
+          selectedAgent?.name ||
+          ''
         : '',
       organizationDomain: shouldPrefillForm
         ? selectedAgent?.organizationDomain || selectedAgent?.organization_domain || ''
         : '',
       contactDetails: shouldPrefillForm
         ? selectedAgent?.contactDetails ||
-        selectedAgent?.organization_email ||
-        selectedAgent?.email ||
-        ''
+          selectedAgent?.organization_email ||
+          selectedAgent?.email ||
+          ''
         : '',
       agentPhone: shouldPrefillForm
         ? selectedAgent?.phoneNumber ||
-        selectedAgent?.agentPhone ||
-        selectedAgent?.organization_phone ||
-        selectedAgent?.phone ||
-        ''
+          selectedAgent?.agentPhone ||
+          selectedAgent?.organization_phone ||
+          selectedAgent?.phone ||
+          ''
         : '',
       contactAddress: shouldPrefillForm
         ? selectedAgent?.contactAddress ||
-        selectedAgent?.organization_address ||
-        selectedAgent?.address ||
-        ''
+          selectedAgent?.organization_address ||
+          selectedAgent?.address ||
+          ''
         : '',
       stateFilter: shouldPrefillForm
         ? selectedAgent?.state_id || selectedAgent?.stateFilter || ''
@@ -184,7 +184,7 @@ const AgentModal = ({
 
         if (response.status === true) {
           handleRefresh(response.data);
-          notify.success('Agent updated successfully!');
+          notify.success('Partner updated successfully!');
           resetForm();
           onClose();
         } else {
@@ -192,7 +192,7 @@ const AgentModal = ({
           notify.error('Failed to update agent.');
         }
       } catch (error) {
-        console.error('Agent update failed:', error);
+        console.error('Partner update failed:', error);
         if (error.response && error.response.status === 422) {
           const backendErrors = error.response.data.errors;
           const mappedErrors = {};
@@ -247,7 +247,7 @@ const AgentModal = ({
         if (response.status === true) {
           const newAgent = response.data;
           handleRefresh(newAgent);
-          notify.success('Agent created successfully!');
+          notify.success('Partner created successfully!');
           resetForm();
           onClose();
         } else {
@@ -300,7 +300,7 @@ const AgentModal = ({
       const response = await agentApi.deleteOrganization(selectedAgent?.id || selectedAgent?.s_n);
       if (response.status) {
         handleRefresh(response.data);
-        notify.success('Agent deleted successfully!');
+        notify.success('Partner deleted successfully!');
         onClose();
       } else {
         notify.error('Failed to delete agent');
@@ -379,16 +379,23 @@ const AgentModal = ({
         return (
           <Box p={3}>
             <Typography variant="h6" gutterBottom>
-              Delete Agent
+              Delete Partner
             </Typography>
             <Typography variant="body1" color="textSecondary" gutterBottom>
               Are you sure you want to delete this agent?
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
-              <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-              <Button size="small" color="error" onClick={handleDeleteOrganization} disabled={loading}>
+              <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="small"
+                color="error"
+                onClick={handleDeleteOrganization}
+                disabled={loading}
+              >
                 {loading ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
-                Delete Agent
+                Delete Partner
               </Button>
             </Box>
           </Box>
@@ -400,8 +407,15 @@ const AgentModal = ({
             <Typography>Are you sure you want to delete this agent?</Typography>
           </DialogContent>
           <DialogActions>
-            <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-            <Button variant="contained" size="small" onClick={handleDeleteOrganization} color="error">
+            <Button variant="contained" size="small" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleDeleteOrganization}
+              color="error"
+            >
               Delete
             </Button>
           </DialogActions>

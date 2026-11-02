@@ -30,7 +30,7 @@ const CommissionSummaryModal = ({ open, onClose, agent }) => (
   <StandardModal
     open={open}
     onClose={onClose}
-    title={`Commissions — ${agent?.agentName || 'Agent'}`}
+    title={`Commissions — ${agent?.agentName || 'Partner'}`}
     icon={IconCoins}
     maxWidth="xs"
     actions={

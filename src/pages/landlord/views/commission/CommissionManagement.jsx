@@ -27,7 +27,11 @@ import SchoolsListModal from './components/SchoolsListModal';
 import PrimaryButton from 'src/components/shared/PrimaryButton';
 import useAuth from 'src/hooks/useAuth';
 import StatCard from 'src/components/shared/StatCard';
-import { getStats, getOrganizations, getCommissionSchools } from '@/api/landlord/commission/commissionApi';
+import {
+  getStats,
+  getOrganizations,
+  getCommissionSchools,
+} from '@/api/landlord/commission/commissionApi';
 
 const formatNaira = (value) =>
   `₦ ${Number(value ?? 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,7 +53,7 @@ const mapOrganization = (org) => ({
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { to: '/Organization', title: 'Agent' },
+  { to: '/Organization', title: 'Partner' },
   { title: 'Manage Commission' },
 ];
 
@@ -176,7 +180,7 @@ const CommissionManagement = () => {
   // wallet-view pages to just this one agent's own subtree — clicking the
   // "Schools" number on a row.
   const handleViewSchools = async (agent) => {
-    setSchoolsModalTitle(`${agent.agentName || 'Agent'}'s Schools`);
+    setSchoolsModalTitle(`${agent.agentName || 'Partner'}'s Schools`);
     setSchoolsModalOpen(true);
     setSchoolsModalLoading(true);
     try {
@@ -199,15 +203,15 @@ const CommissionManagement = () => {
   const getTitle = () => {
     switch (value) {
       case '1':
-        return 'Agent Overview';
+        return 'Partner Overview';
       case '2':
-        return 'Manage Agent Commission';
+        return 'Manage Partner Commission';
       case '3':
         return 'Commission by Subscription';
       case '4':
         return 'Commission by Transaction';
       default:
-        return 'Agent Overview';
+        return 'Partner Overview';
     }
   };
 
@@ -290,9 +294,9 @@ const CommissionManagement = () => {
               {(() => {
                 switch (value) {
                   case '1':
-                    return 'Agent Overview';
+                    return 'Partner Overview';
                   case '2':
-                    return 'Manage Agent Commission';
+                    return 'Manage Partner Commission';
                   case '3':
                     return 'Commission by Subscription';
                   case '4':

@@ -11,7 +11,7 @@ import {
   Chip,
   Divider,
   Avatar,
-  Link
+  Link,
 } from '@mui/material';
 
 const SchoolProfileModal = ({ open, onClose, school }) => {
@@ -23,7 +23,7 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
   const spaEmail = spa.admin_email || school.tenant_email || '—';
   const spaPhone = spa.admin_phone || '—';
 
-  // Extract Agent / Organisation
+  // Extract Partner / Organisation
   const org = school.organization || {};
   const agentName = org.organization_name || '—';
   const agentEmail = org.organization_email || '—';
@@ -81,14 +81,9 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
               {schoolName}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              <Link
-    href={schoolUrl}
-    target="_blank"
-    rel="noopener noreferrer"
-    underline="hover"
-  >
-    {schoolUrl}
-  </Link>
+              <Link href={schoolUrl} target="_blank" rel="noopener noreferrer" underline="hover">
+                {schoolUrl}
+              </Link>
             </Typography>
           </Box>
         </Box>
@@ -104,13 +99,13 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
             {field('Phone', spaPhone)}
           </Grid>
 
-          {/* Agent / Organisation */}
+          {/* Partner / Organisation */}
           <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-          Organisation
+              Organisation
             </Typography>
-            {field('Agent Name', agentName)}
-            {field('Agent Email', agentEmail)}
+            {field('Partner Name', agentName)}
+            {field('Partner Email', agentEmail)}
           </Grid>
 
           {/* School Details */}
@@ -135,7 +130,9 @@ const SchoolProfileModal = ({ open, onClose, school }) => {
       <Divider />
 
       <DialogActions sx={{ p: 2.5 }}>
-        <Button variant="contained" size="small" onClick={onClose}>Close</Button>
+        <Button variant="contained" size="small" onClick={onClose}>
+          Close
+        </Button>
       </DialogActions>
     </Dialog>
   );

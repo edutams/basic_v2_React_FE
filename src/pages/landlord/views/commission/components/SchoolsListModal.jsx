@@ -98,8 +98,16 @@ const SchoolsListModal = ({ open, onClose, title = 'Schools', rows = [], loading
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '16px' } }}
+      >
+        <DialogTitle
+          sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           <Typography variant="h5" fontWeight={700}>
             {title}
           </Typography>
@@ -114,15 +122,27 @@ const SchoolsListModal = ({ open, onClose, title = 'Schools', rows = [], loading
               <TableHead sx={{ bgcolor: isDarkMode ? 'rgba(255,255,255,0.02)' : '#fafafa' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>School</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Agent</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Partner</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Subscription Value</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Subscription Volume</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Subscription Commission</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Transaction Value</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Transaction Volume</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Subscription Value
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Subscription Volume
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Subscription Commission
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Transaction Value
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Transaction Volume
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700 }} align="right">
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -151,9 +171,15 @@ const SchoolsListModal = ({ open, onClose, title = 'Schools', rows = [], loading
                       <TableCell>{row.organization_name ?? '—'}</TableCell>
                       <TableCell>{parseSchoolType(row.school_type)}</TableCell>
                       <TableCell>{row.status ?? '—'}</TableCell>
-                      <TableCell align="right">{formatNaira(row.subscription_transaction_value)}</TableCell>
-                      <TableCell align="right">{row.subscription_transaction_volume ?? 0}</TableCell>
-                      <TableCell align="right">{formatNaira(row.subscription_commission)}</TableCell>
+                      <TableCell align="right">
+                        {formatNaira(row.subscription_transaction_value)}
+                      </TableCell>
+                      <TableCell align="right">
+                        {row.subscription_transaction_volume ?? 0}
+                      </TableCell>
+                      <TableCell align="right">
+                        {formatNaira(row.subscription_commission)}
+                      </TableCell>
                       <TableCell align="right">{formatNaira(row.transaction_value)}</TableCell>
                       <TableCell align="right">{row.transaction_volume ?? 0}</TableCell>
                       <TableCell align="right">
@@ -189,7 +215,11 @@ const SchoolsListModal = ({ open, onClose, title = 'Schools', rows = [], loading
         </DialogActions>
       </Dialog>
 
-      <SchoolTransactionsModal open={txnOpen} onClose={() => setTxnOpen(false)} school={selectedSchool} />
+      <SchoolTransactionsModal
+        open={txnOpen}
+        onClose={() => setTxnOpen(false)}
+        school={selectedSchool}
+      />
     </>
   );
 };

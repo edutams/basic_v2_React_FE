@@ -66,7 +66,13 @@ const TopCard = ({ label, value, colorIndex = 0, icon: Icon }) => {
           >
             {value}
           </Typography>
-          <Stack direction="row" alignItems="center" spacing={0.5} mt={0.3} justifyContent="flex-end">
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.5}
+            mt={0.3}
+            justifyContent="flex-end"
+          >
             <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: scheme.color }} />
             <Typography
               variant="caption"
@@ -204,7 +210,7 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>#</TableCell>
-              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Agent</TableCell>
+              <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Partner</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Email</TableCell>
               <TableCell sx={{ fontWeight: 700, fontSize: '12px' }}>Status</TableCell>
             </TableRow>
@@ -224,8 +230,20 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
                         textTransform: 'capitalize',
                         fontSize: '11px',
                         height: 20,
-                        bgcolor: org.status === 'active' ? (isDark ? 'rgba(34,197,94,0.2)' : '#DCFCE7') : (isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9'),
-                        color: org.status === 'active' ? (isDark ? '#4ade80' : '#166534') : theme.palette.text.secondary,
+                        bgcolor:
+                          org.status === 'active'
+                            ? isDark
+                              ? 'rgba(34,197,94,0.2)'
+                              : '#DCFCE7'
+                            : isDark
+                              ? 'rgba(255,255,255,0.08)'
+                              : '#F1F5F9',
+                        color:
+                          org.status === 'active'
+                            ? isDark
+                              ? '#4ade80'
+                              : '#166534'
+                            : theme.palette.text.secondary,
                       }}
                     />
                   </TableCell>
@@ -233,7 +251,11 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3, color: theme.palette.text.secondary }}>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  sx={{ py: 3, color: theme.palette.text.secondary }}
+                >
                   No agents on this plan.
                 </TableCell>
               </TableRow>
@@ -245,7 +267,12 @@ const PlanOrganizationsTableModal = ({ open, onClose, plan }) => {
   );
 };
 
-const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrganizations = 0 }) => {
+const PlanDistributionModal = ({
+  open,
+  onClose,
+  planDistribution = [],
+  totalOrganizations = 0,
+}) => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -257,12 +284,17 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
       fontFamily: 'inherit',
       foreColor: isDark ? '#aaa' : '#64748B',
     },
-    plotOptions: { bar: { horizontal: true, barHeight: '55%', borderRadius: 4, distributed: true } },
+    plotOptions: {
+      bar: { horizontal: true, barHeight: '55%', borderRadius: 4, distributed: true },
+    },
     dataLabels: { enabled: false },
     colors: schemeMap.map((s) => s.color),
     xaxis: {
       categories: planDistribution.map((p) => p.label),
-      title: { text: 'Agents', style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' } },
+      title: {
+        text: 'Agents',
+        style: { fontWeight: 700, fontSize: '12px', color: isDark ? '#fff' : '#333' },
+      },
       labels: { style: { colors: isDark ? '#aaa' : '#333' } },
     },
     yaxis: {
@@ -282,133 +314,168 @@ const PlanDistributionModal = ({ open, onClose, planDistribution = [], totalOrga
 
   return (
     <>
-    <StandardModal
-      open={open}
-      onClose={onClose}
-      title="Plan Distribution"
-      maxWidth="lg"
-      padding={1.5}
-      dividers={false}
-      headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
-      sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
-    >
-      {/* Top KPI cards — deliberately a FIXED count (2), not one card per
+      <StandardModal
+        open={open}
+        onClose={onClose}
+        title="Plan Distribution"
+        maxWidth="lg"
+        padding={1.5}
+        dividers={false}
+        headerBg={isDark ? theme.palette.background.paper : '#F8FAFC'}
+        sx={{ bgcolor: isDark ? theme.palette.background.default : '#fff' }}
+      >
+        {/* Top KPI cards — deliberately a FIXED count (2), not one card per
           plan. One-card-per-plan grows forever (every active plan rolls out
           to every organization automatically, so the plan list is genuinely
           unbounded) — the per-plan breakdown lives entirely in the chart and
           the "Plan per Organization" list below, both of which already
           scale/scroll. This row never grows no matter how many plans exist. */}
-      <Grid container spacing={1.5} mb={2}>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          {planDistribution.length > 0 ? (
-            <TopCard label="Total Plans" value={planDistribution.length} colorIndex={0} icon={IconBuildingBank} />
-          ) : (
-            <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
-                <Box sx={{ textAlign: 'right', flex: 1 }}>
-                  <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
-                  <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
-                </Box>
-              </Stack>
-            </Card>
-          )}
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
-          {planDistribution.length > 0 ? (
-            <TopCard label="Total Agents" value={totalOrganizations} colorIndex={1} icon={IconBuildingBank} />
-          ) : (
-            <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
-              <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
-                <Box sx={{ textAlign: 'right', flex: 1 }}>
-                  <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
-                  <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
-                </Box>
-              </Stack>
-            </Card>
-          )}
-        </Grid>
-      </Grid>
-
-      {/* Chart md:9 + side panel md:3 */}
-      <Grid container spacing={2} alignItems="flex-start">
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Box
-            sx={{
-              border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
-              borderRadius: '10px',
-              bgcolor: isDark ? '#1e1e1e' : 'white',
-              p: 1,
-            }}
-          >
+        <Grid container spacing={1.5} mb={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             {planDistribution.length > 0 ? (
-              <Chart options={chartOptions} series={chartSeries} type="bar" height={360} />
+              <TopCard
+                label="Total Plans"
+                value={planDistribution.length}
+                colorIndex={0}
+                icon={IconBuildingBank}
+              />
             ) : (
-              <Box sx={{ p: 2 }}>
-                <Skeleton variant="rounded" height={360} sx={{ borderRadius: '8px' }} />
-              </Box>
+              <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                  <Box sx={{ textAlign: 'right', flex: 1 }}>
+                    <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
+                    <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
+                  </Box>
+                </Stack>
+              </Card>
             )}
-          </Box>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            {planDistribution.length > 0 ? (
+              <TopCard
+                label="Total Agents"
+                value={totalOrganizations}
+                colorIndex={1}
+                icon={IconBuildingBank}
+              />
+            ) : (
+              <Card sx={{ p: '14px', borderRadius: '14px', height: '100%' }}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: '8px' }} />
+                  <Box sx={{ textAlign: 'right', flex: 1 }}>
+                    <Skeleton variant="text" width={60} height={28} sx={{ ml: 'auto' }} />
+                    <Skeleton variant="text" width={80} height={16} sx={{ ml: 'auto' }} />
+                  </Box>
+                </Stack>
+              </Card>
+            )}
+          </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Box
-            sx={{
-              border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
-              borderRadius: '10px',
-              bgcolor: isDark ? theme.palette.background.paper : '#fff',
-              p: 1.25,
-              maxHeight: PANEL_HEIGHT,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              fontWeight={700}
-              sx={{ mb: 1.5, color: isDark ? '#fff' : '#1a1a1a', flexShrink: 0 }}
+        {/* Chart md:9 + side panel md:3 */}
+        <Grid container spacing={2} alignItems="flex-start">
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Box
+              sx={{
+                border: `1px solid ${isDark ? '#444' : '#E2E8F0'}`,
+                borderRadius: '10px',
+                bgcolor: isDark ? '#1e1e1e' : 'white',
+                p: 1,
+              }}
             >
-              Plan per Agent
-            </Typography>
-
-            {/* Scrolls on its own — the title above stays pinned in view
-                regardless of how many plans there are. */}
-            <Box sx={{ overflowY: 'auto', flex: 1, minHeight: 0, pr: 0.5 }}>
               {planDistribution.length > 0 ? (
-                planDistribution.map((plan, i) => (
-                  <SideStatRow
-                    key={plan.label}
-                    label={plan.label}
-                    count={plan.total}
-                    colorIndex={i}
-                    icon={IconBuildingBank}
-                    organizations={plan.organizations || []}
-                    onClick={() => setSelectedPlan(plan)}
-                  />
-                ))
+                <Chart options={chartOptions} series={chartSeries} type="bar" height={360} />
               ) : (
-                [...Array(4)].map((_, i) => (
-                  <Stack key={i} direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" sx={{ py: 1.2 }}>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                      <Skeleton variant="text" width={70} height={16} />
-                    </Stack>
-                    <Skeleton variant="rounded" width={36} height={24} sx={{ borderRadius: '4px' }} />
-                  </Stack>
-                ))
+                <Box sx={{ p: 2 }}>
+                  <Skeleton variant="rounded" height={360} sx={{ borderRadius: '8px' }} />
+                </Box>
               )}
             </Box>
-          </Box>
-        </Grid>
-      </Grid>
-    </StandardModal>
+          </Grid>
 
-    <PlanOrganizationsTableModal
-      open={Boolean(selectedPlan)}
-      onClose={() => setSelectedPlan(null)}
-      plan={selectedPlan}
-    />
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Box
+              sx={{
+                border: `1px solid ${isDark ? '#444' : '#f0f0f0'}`,
+                borderRadius: '10px',
+                bgcolor: isDark ? theme.palette.background.paper : '#fff',
+                p: 1.25,
+                maxHeight: PANEL_HEIGHT,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                fontWeight={700}
+                sx={{ mb: 1.5, color: isDark ? '#fff' : '#1a1a1a', flexShrink: 0 }}
+              >
+                Plan per Partner
+              </Typography>
+
+              {/* Scrolls on its own — the title above stays pinned in view
+                regardless of how many plans there are. */}
+              <Box sx={{ overflowY: 'auto', flex: 1, minHeight: 0, pr: 0.5 }}>
+                {planDistribution.length > 0
+                  ? planDistribution.map((plan, i) => (
+                      <SideStatRow
+                        key={plan.label}
+                        label={plan.label}
+                        count={plan.total}
+                        colorIndex={i}
+                        icon={IconBuildingBank}
+                        organizations={plan.organizations || []}
+                        onClick={() => setSelectedPlan(plan)}
+                      />
+                    ))
+                  : [...Array(4)].map((_, i) => (
+                      <Stack
+                        key={i}
+                        direction="row"
+                        spacing={1.5}
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{ py: 1.2 }}
+                      >
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Skeleton
+                            variant="rounded"
+                            width={32}
+                            height={32}
+                            sx={{ borderRadius: '8px' }}
+                          />
+                          <Skeleton variant="text" width={70} height={16} />
+                        </Stack>
+                        <Skeleton
+                          variant="rounded"
+                          width={36}
+                          height={24}
+                          sx={{ borderRadius: '4px' }}
+                        />
+                      </Stack>
+                    ))}
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </StandardModal>
+
+      <PlanOrganizationsTableModal
+        open={Boolean(selectedPlan)}
+        onClose={() => setSelectedPlan(null)}
+        plan={selectedPlan}
+      />
     </>
   );
 };

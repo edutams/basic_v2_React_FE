@@ -23,22 +23,77 @@ import {
   Button,
 } from '@mui/material';
 import GetAppIcon from '@mui/icons-material/GetApp';
-import { IconUsers, IconEye, IconEdit, IconTrash, IconFilter, IconChartBar, IconHelpCircle, IconDotsVertical, IconDownload, IconUser, IconSchool, IconUsersGroup } from '@tabler/icons-react';
+import {
+  IconUsers,
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconFilter,
+  IconChartBar,
+  IconHelpCircle,
+  IconDotsVertical,
+  IconDownload,
+  IconUser,
+  IconSchool,
+  IconUsersGroup,
+} from '@tabler/icons-react';
 import ReusableModal from '@/components/shared/ReusableModal';
 import StatCard from 'src/components/shared/StatCard';
 
 const predefinedStats = [
-  { label: 'Teacher', searchLabels: ['Teacher', 'Staff', 'Staffs'], icon: IconUser, color: '#3B82F6' },
-  { label: 'Student', searchLabels: ['Student', 'Learner', 'Students', 'Learners'], icon: IconSchool, color: '#10B981' },
+  {
+    label: 'Teacher',
+    searchLabels: ['Teacher', 'Staff', 'Staffs'],
+    icon: IconUser,
+    color: '#3B82F6',
+  },
+  {
+    label: 'Student',
+    searchLabels: ['Student', 'Learner', 'Students', 'Learners'],
+    icon: IconSchool,
+    color: '#10B981',
+  },
   { label: 'SPA', searchLabels: ['SPA'], icon: IconUsers, color: '#F59E0B' },
   { label: 'Agents', searchLabels: ['Agents'], icon: IconUsers, color: '#8B5CF6' },
 ];
 
 const defaultUsersData = [
-  { id: '1', school: 'Evergreen High School', url: 'evergreen.edutams.net', number: '12', agent: 'Agent 1', userType: 'Teacher', date: '2026-07-01' },
-  { id: '2', school: 'Oakville Primary', url: 'oakville.edutams.net', number: '5', agent: 'Agent 2', userType: 'Student', date: '2026-07-02' },
-  { id: '3', school: 'Springfield Elementary', url: 'springfield.edutams.net', number: '8', agent: 'Agent 1', userType: 'SPA', date: '2026-07-03' },
-  { id: '4', school: 'Lincoln Tech Academy', url: 'lincoln.edutams.net', number: '15', agent: 'Agent 2', userType: 'Teacher', date: '2026-07-04' },
+  {
+    id: '1',
+    school: 'Evergreen High School',
+    url: 'evergreen.edutams.net',
+    number: '12',
+    agent: 'Partner 1',
+    userType: 'Teacher',
+    date: '2026-07-01',
+  },
+  {
+    id: '2',
+    school: 'Oakville Primary',
+    url: 'oakville.edutams.net',
+    number: '5',
+    agent: 'Partner 2',
+    userType: 'Student',
+    date: '2026-07-02',
+  },
+  {
+    id: '3',
+    school: 'Springfield Elementary',
+    url: 'springfield.edutams.net',
+    number: '8',
+    agent: 'Partner 1',
+    userType: 'SPA',
+    date: '2026-07-03',
+  },
+  {
+    id: '4',
+    school: 'Lincoln Tech Academy',
+    url: 'lincoln.edutams.net',
+    number: '15',
+    agent: 'Partner 2',
+    userType: 'Teacher',
+    date: '2026-07-04',
+  },
 ];
 
 const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersData = [] }) => {
@@ -54,18 +109,18 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
     agent: 'All',
     userType: 'All',
     from: '',
-    to: ''
+    to: '',
   });
 
   const [appliedFilters, setAppliedFilters] = useState({
     agent: 'All',
     userType: 'All',
     from: '',
-    to: ''
+    to: '',
   });
 
   const handleFilterChange = (field, value) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+    setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleApplyFilter = () => {
@@ -74,10 +129,11 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
   };
 
   const dataToUse = usersData.length > 0 ? usersData : defaultUsersData;
-  const filteredData = dataToUse.filter(row => {
+  const filteredData = dataToUse.filter((row) => {
     let match = true;
     if (appliedFilters.agent !== 'All' && row.agent !== appliedFilters.agent) match = false;
-    if (appliedFilters.userType !== 'All' && row.userType !== appliedFilters.userType) match = false;
+    if (appliedFilters.userType !== 'All' && row.userType !== appliedFilters.userType)
+      match = false;
     if (appliedFilters.from && row.date && row.date < appliedFilters.from) match = false;
     if (appliedFilters.to && row.date && row.date > appliedFilters.to) match = false;
     return match;
@@ -117,15 +173,10 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
       {/* Top Stat Cards */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 2, sm: 3 }} mb={3} mt={2}>
         {predefinedStats.map((stat, idx) => {
-          const statValue = stats?.find(s => stat.searchLabels.includes(s.label))?.value || 0;
+          const statValue = stats?.find((s) => stat.searchLabels.includes(s.label))?.value || 0;
           return (
             <Box key={idx} sx={{ width: { xs: '100%', sm: '25%' } }}>
-              <StatCard
-                label={stat.label}
-                count={statValue}
-                icon={stat.icon}
-                colorIndex={idx}
-              />
+              <StatCard label={stat.label} count={statValue} icon={stat.icon} colorIndex={idx} />
             </Box>
           );
         })}
@@ -179,49 +230,81 @@ const LoggedInUsersModal = ({ open, onClose, onViewUserList, stats = [], usersDa
             borderTop: theme.palette.mode === 'dark' ? '1px solid #444' : '1px solid #e2e8f0',
           }}
         >
-          {/* Agent Filter */}
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: '6px',
-            bgcolor: theme.palette.background.paper,
-            overflow: 'hidden',
-            flex: { xs: '1 1 auto', sm: '0 0 auto' }
-          }}>
-            <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-              <Typography variant="body2" fontWeight="600" color="textPrimary">Agent</Typography>
+          {/* Partner Filter */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+            }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 0.8,
+                bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              <Typography variant="body2" fontWeight="600" color="textPrimary">
+                Partner
+              </Typography>
             </Box>
             <Select
               size="small"
               value={filters.agent}
               onChange={(e) => handleFilterChange('agent', e.target.value)}
-              sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
+              sx={{
+                border: 'none',
+                '& fieldset': { border: 'none' },
+                minWidth: { xs: 'auto', sm: 120 },
+                flexGrow: 1,
+              }}
             >
               <MenuItem value="All">All Agents</MenuItem>
-              <MenuItem value="Agent 1">Agent 1</MenuItem>
-              <MenuItem value="Agent 2">Agent 2</MenuItem>
+              <MenuItem value="Partner 1">Partner 1</MenuItem>
+              <MenuItem value="Partner 2">Partner 2</MenuItem>
             </Select>
           </Box>
 
           {/* User Type Filter */}
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'center',
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: '6px',
-            bgcolor: theme.palette.background.paper,
-            overflow: 'hidden',
-            flex: { xs: '1 1 auto', sm: '0 0 auto' }
-          }}>
-            <Box sx={{ px: 2, py: 0.8, bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa', borderRight: `1px solid ${theme.palette.divider}` }}>
-              <Typography variant="body2" fontWeight="600" color="textPrimary">User Type</Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: '6px',
+              bgcolor: theme.palette.background.paper,
+              overflow: 'hidden',
+              flex: { xs: '1 1 auto', sm: '0 0 auto' },
+            }}
+          >
+            <Box
+              sx={{
+                px: 2,
+                py: 0.8,
+                bgcolor: isDarkMode ? 'rgba(0, 188, 212, 0.1)' : '#e0f7fa',
+                borderRight: `1px solid ${theme.palette.divider}`,
+              }}
+            >
+              <Typography variant="body2" fontWeight="600" color="textPrimary">
+                User Type
+              </Typography>
             </Box>
             <Select
               size="small"
               value={filters.userType}
               onChange={(e) => handleFilterChange('userType', e.target.value)}
-              sx={{ border: 'none', '& fieldset': { border: 'none' }, minWidth: { xs: 'auto', sm: 120 }, flexGrow: 1 }}
+              sx={{
+                border: 'none',
+                '& fieldset': { border: 'none' },
+                minWidth: { xs: 'auto', sm: 120 },
+                flexGrow: 1,
+              }}
             >
               <MenuItem value="All">All Users</MenuItem>
               <MenuItem value="Teacher">Teacher</MenuItem>

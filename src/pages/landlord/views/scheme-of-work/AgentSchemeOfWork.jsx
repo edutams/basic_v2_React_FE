@@ -72,7 +72,7 @@ import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 const BCrumb = [
   {
     to: '/dashboard',
-    title: 'Agent Dashboard',
+    title: 'Partner Dashboard',
   },
   { title: 'Scheme Of Work' },
 ];
@@ -207,28 +207,31 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     }
   };
 
-  const handleFilterChange = React.useCallback(async (key, val) => {
-    if (key === 'programme') {
-      try {
-        const classesRes = await fetchClassesByProgramme(val);
-        setClasses(classesRes.data.map((c) => ({ value: c.id, label: c.class_name })));
-        setSubjects([]); // Clear subjects until a class is selected
-      } catch (error) {
-        console.error('Failed to fetch classes', error);
+  const handleFilterChange = React.useCallback(
+    async (key, val) => {
+      if (key === 'programme') {
+        try {
+          const classesRes = await fetchClassesByProgramme(val);
+          setClasses(classesRes.data.map((c) => ({ value: c.id, label: c.class_name })));
+          setSubjects([]); // Clear subjects until a class is selected
+        } catch (error) {
+          console.error('Failed to fetch classes', error);
+        }
+      } else if (key === 'classLevel') {
+        try {
+          // Scope subjects to the selected class + programme, not the whole
+          // curriculum — two different programmes under the same curriculum
+          // can each have their own "Math", and a class can now have a
+          // different curriculum assigned per programme too.
+          const subjectsRes = await fetchSubjectsByClass(val, programme);
+          setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
+        } catch (error) {
+          console.error('Failed to fetch subjects', error);
+        }
       }
-    } else if (key === 'classLevel') {
-      try {
-        // Scope subjects to the selected class + programme, not the whole
-        // curriculum — two different programmes under the same curriculum
-        // can each have their own "Math", and a class can now have a
-        // different curriculum assigned per programme too.
-        const subjectsRes = await fetchSubjectsByClass(val, programme);
-        setSubjects(subjectsRes.data.map((s) => ({ value: s.id, label: s.subject_name })));
-      } catch (error) {
-        console.error('Failed to fetch subjects', error);
-      }
-    }
-  }, [programme]);
+    },
+    [programme],
+  );
 
   const handleApplyFilters = async (vals) => {
     setActiveFilters(vals);
@@ -257,8 +260,8 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     } catch (error) {
       notify.error(
         error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Failed to fetch scheme of work',
+          error.response?.data?.message ||
+          'Failed to fetch scheme of work',
       );
     } finally {
       setLoading(false);
@@ -552,7 +555,7 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
     } catch (e) {
       notify.error(
         e.response?.data?.message ||
-        'Upload failed. Check that the file matches the selected filters.',
+          'Upload failed. Check that the file matches the selected filters.',
       );
     } finally {
       setUploading(false);
@@ -815,7 +818,13 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
               </TextField>
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
-              <Button variant="contained" size="small" fullWidth onClick={handleFetch} sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}>
+              <Button
+                variant="contained"
+                size="small"
+                fullWidth
+                onClick={handleFetch}
+                sx={{ textTransform: 'none', fontWeight: 600, px: 3 }}
+              >
                 Fetch
               </Button>
             </Grid>
@@ -1148,8 +1157,16 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
             defaultValue={selectedSubtopic?.subtopic_description || ''}
             sx={{ mb: 2 }}
           />
-          <Button variant="contained" size="small" type="submit" fullWidth disabled={savingSubtopic}>
-            {savingSubtopic ? <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} /> : null}
+          <Button
+            variant="contained"
+            size="small"
+            type="submit"
+            fullWidth
+            disabled={savingSubtopic}
+          >
+            {savingSubtopic ? (
+              <Skeleton variant="text" width={20} height={20} sx={{ mr: 1 }} />
+            ) : null}
             Save Subtopic
           </Button>
         </Box>
@@ -1434,10 +1451,18 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setDlTemplateOpen(false)} sx={{ textTransform: 'none' }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setDlTemplateOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleDownloadTemplate} startIcon={<IconDownload />}
+          <Button
+            size="small"
+            onClick={handleDownloadTemplate}
+            startIcon={<IconDownload />}
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             Download Template
@@ -1573,14 +1598,26 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setUploadOpen(false)}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setUploadOpen(false)}
             disabled={uploading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleUploadTemplate} disabled={uploading} startIcon={uploading ? <Skeleton variant="text" width={16} height={16} /> : <IconUpload size={16} />
-          }
+          <Button
+            size="small"
+            onClick={handleUploadTemplate}
+            disabled={uploading}
+            startIcon={
+              uploading ? (
+                <Skeleton variant="text" width={16} height={16} />
+              ) : (
+                <IconUpload size={16} />
+              )
+            }
             sx={{ textTransform: 'none' }}
           >
             {uploading ? 'Uploading…' : 'Upload'}
@@ -1681,17 +1718,26 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setDlSchemeOpen(false)}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setDlSchemeOpen(false)}
             disabled={downloading}
             sx={{ textTransform: 'none' }}
           >
             Cancel
           </Button>
-          <Button size="small" onClick={handleDownloadScheme} disabled={downloading} startIcon={downloading ? (<Skeleton variant="text" width={16} height={16} />
-          ) : (
-            <IconDownload size={16} />
-          )
-          }
+          <Button
+            size="small"
+            onClick={handleDownloadScheme}
+            disabled={downloading}
+            startIcon={
+              downloading ? (
+                <Skeleton variant="text" width={16} height={16} />
+              ) : (
+                <IconDownload size={16} />
+              )
+            }
             sx={{ textTransform: 'none', bgcolor: '#7cb342', '&:hover': { bgcolor: '#689f38' } }}
           >
             {downloading ? 'Downloading…' : 'Download'}
@@ -1715,7 +1761,11 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           }}
         >
           <Box sx={{ fontWeight: 700 }}>Scheme of Work Details</Box>
-          <Button variant="contained" size="small" onClick={handlePrint} startIcon={<IconDownload />}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handlePrint}
+            startIcon={<IconDownload />}
             sx={{ textTransform: 'none' }}
           >
             Print
@@ -2016,7 +2066,10 @@ const AgentSchemeOfWork = ({ isTab = false }) => {
           ) : null}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setViewDetailsModalOpen(false)}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setViewDetailsModalOpen(false)}
             sx={{
               textTransform: 'none',
               bgcolor: '#d8b4fe',

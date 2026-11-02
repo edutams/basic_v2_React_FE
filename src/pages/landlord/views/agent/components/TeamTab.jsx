@@ -34,7 +34,14 @@ import {
   Tooltip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { IconUsers, IconEye, IconLogin, IconEdit, IconBuilding, IconCoins } from '@tabler/icons-react';
+import {
+  IconUsers,
+  IconEye,
+  IconLogin,
+  IconEdit,
+  IconBuilding,
+  IconCoins,
+} from '@tabler/icons-react';
 import agentApi from '@/api/landlord/organizations/agent';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '@/context/AgentContext/auth.jsx';
@@ -81,7 +88,7 @@ const ActionMenuCell = ({
         PaperProps={{ sx: { borderRadius: '8px', minWidth: 160 } }}
       >
         {isViewingProfile ? (
-          // When viewing profile, only show "Login As Agent"
+          // When viewing profile, only show "Login As Partner"
           <MenuItem
             onClick={() => {
               handleClose();
@@ -175,7 +182,10 @@ const ActionMenuCell = ({
               // Disabled MenuItems block pointer events, so the Tooltip
               // needs a wrapping span to still receive hover.
               return hasSchools ? (
-                <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+                <Tooltip
+                  title="This agent already has schools attached — remove them first."
+                  placement="left"
+                >
                   <span>{deleteItem}</span>
                 </Tooltip>
               ) : (
@@ -463,7 +473,7 @@ const TeamTab = ({
       {/* Header */}
       <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between" mb={2}>
         {/* Level 5 is the last level — it can't create a level 6, so it
-            never gets an "Add New Agent" button (matches the backend's own
+            never gets an "Add New Partner" button (matches the backend's own
             OrganizationService::createOrganization() abort for
             access_level >= 5). */}
         {!isViewingProfile && !hideAddButton && userAccessLevel < 5 && (
@@ -828,7 +838,7 @@ const TeamTab = ({
 
       {/* Delete Confirmation */}
       <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600 }}>Delete Partner</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary">
             Are you sure you want to delete {agentToDelete?.organizationName || 'this agent'}? This
@@ -836,7 +846,12 @@ const TeamTab = ({
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCancelDelete} disabled={deleteLoading}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleCancelDelete}
+            disabled={deleteLoading}
+          >
             Cancel
           </Button>
           <Button size="small" onClick={handleConfirmDelete} color="error" disabled={deleteLoading}>

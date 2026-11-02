@@ -53,7 +53,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { IconSchool, IconChartBar, IconAdjustmentsHorizontal } from '@tabler/icons-react';
-import { IconEye, IconLogin, IconEdit, IconBuilding, IconBuildingBank, IconCoins } from '@tabler/icons-react';
+import {
+  IconEye,
+  IconLogin,
+  IconEdit,
+  IconBuilding,
+  IconBuildingBank,
+  IconCoins,
+} from '@tabler/icons-react';
 // import { IconCreditCard } from '@tabler/icons-react'; // Manage Payment Gateway — disabled, see ActionMenuCell
 import { usePermissions } from '@/context/AgentContext/permissions';
 import PlanDistributionModal from './components/PlanDistributionModal';
@@ -267,7 +274,10 @@ const ActionMenuCell = ({
           // wrapping span to still receive hover — bare disabled elements
           // don't fire mouse events for MUI's Tooltip to anchor to.
           return hasSchools ? (
-            <Tooltip title="This partner already has schools attached — remove them first." placement="left">
+            <Tooltip
+              title="This partner already has schools attached — remove them first."
+              placement="left"
+            >
               <span>{deleteItem}</span>
             </Tooltip>
           ) : (
@@ -300,7 +310,7 @@ import locationApi from '@/api/landlord/location/location';
 import useNotification from '@/hooks/useNotification';
 import { fetchBankServices } from '@/api/landlord/bank-service/bankService';
 
-const Agent = () => {
+const Partner = () => {
   const { user, impersonateAgent } = useContext(AuthContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -333,7 +343,12 @@ const Agent = () => {
   });
 
   // Subscription stats
-  const [subscriptionStats, setSubscriptionStats] = useState({ total: 0, active: 0, secondary: 0, primary: 0 });
+  const [subscriptionStats, setSubscriptionStats] = useState({
+    total: 0,
+    active: 0,
+    secondary: 0,
+    primary: 0,
+  });
   const [subscriptionStatsLoading, setSubscriptionStatsLoading] = useState(true);
 
   // Revenue Trend Mock Data
@@ -690,7 +705,8 @@ const Agent = () => {
     filterDescription:
       'No partners match your current filters. Try adjusting your search criteria or clearing the filters.',
     searchMessage: `No partners found for "${search}"`,
-    searchDescription: 'Try adjusting your search terms or clearing the search to see all partners.',
+    searchDescription:
+      'Try adjusting your search terms or clearing the search to see all partners.',
   });
 
   const handleAddAgent = (newAgent) => {
@@ -915,8 +931,24 @@ const Agent = () => {
       >
         {analyticsLoading ? (
           [...Array(4)].map((_, i) => (
-            <Paper key={i} elevation={0} sx={{ p: '10px', borderRadius: '14px', border: '1px solid', borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Paper
+              key={i}
+              elevation={0}
+              sx={{
+                p: '10px',
+                borderRadius: '14px',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
                 <Skeleton variant="text" width={120} height={24} />
                 <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
               </Box>
@@ -932,316 +964,312 @@ const Agent = () => {
             </Paper>
           ))
         ) : (
-        <>
-        {/* Total School */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: '10px !important',
-            borderRadius: '14px',
-            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-            border: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700}>
-              Total School
-            </Typography>
-
-            <Box
+          <>
+            {/* Total School */}
+            <Paper
+              elevation={0}
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-                color: isDark ? '#fff' : s0.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onClick={() => setIsSchoolModalOpen(true)}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
-              borderRadius: 1,
-              px: 2,
-              py: 0.75,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: isDark ? '#ffffff' : s0.color,
+                p: '10px !important',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              {analytics.totalSchools ?? 0}
-            </Typography>
-          </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Total School
+                </Typography>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Approved
-              </Typography>
-              <Typography fontWeight={600}>{analytics.activeSchools ?? 0}</Typography>
-            </Box>
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
-            />
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Pending
-              </Typography>
-              <Typography fontWeight={600}>{analytics.pendingSchools ?? 0}</Typography>
-            </Box>
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: '#E5E7EB', mx: 1.5 }}
-            />
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Rejected
-              </Typography>
-              <Typography fontWeight={600}>{analytics.rejectedSchools ?? 0}</Typography>
-            </Box>
-          </Box>
-        </Paper>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                    color: isDark ? '#fff' : s0.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onClick={() => setIsSchoolModalOpen(true)}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+              </Box>
 
-        {/* Subscriptions */}
-        <Paper
-          elevation={0}
-          sx={{
-                  p: '10px !important',
-            borderRadius: '14px',
-            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-            border: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700}>
-              Subscriptions
-            </Typography>
+              <Box
+                sx={{
+                  background: isDark ? 'rgba(255,255,255,0.08)' : s0.bg,
+                  borderRadius: 1,
+                  px: 2,
+                  py: 0.75,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: isDark ? '#ffffff' : s0.color,
+                  }}
+                >
+                  {analytics.totalSchools ?? 0}
+                </Typography>
+              </Box>
 
-            <Box
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Approved
+                  </Typography>
+                  <Typography fontWeight={600}>{analytics.activeSchools ?? 0}</Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', mx: 1.5 }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Pending
+                  </Typography>
+                  <Typography fontWeight={600}>{analytics.pendingSchools ?? 0}</Typography>
+                </Box>
+                <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', mx: 1.5 }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Rejected
+                  </Typography>
+                  <Typography fontWeight={600}>{analytics.rejectedSchools ?? 0}</Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* Subscriptions */}
+            <Paper
+              elevation={0}
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
-                color: isDark ? '#fff' : s1.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onClick={() => setOpenSubscriptionModal(true)}
-            >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
-              borderRadius: 1,
-              px: 2,
-              py: 0.75,
-              display: 'inline-flex',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: isDark ? '#ffffff' : s1.color,
+                p: '10px !important',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
             >
-              {subscriptionStatsLoading ? (
-                <Skeleton variant="text" width={30} />
-              ) : (
-                subscriptionStats.total
-              )}
-            </Typography>
-          </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Subscriptions
+                </Typography>
 
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Active
-              </Typography>
-              <Typography fontWeight={600}>
-                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.active}
-              </Typography>
-            </Box>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                    color: isDark ? '#fff' : s1.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onClick={() => setOpenSubscriptionModal(true)}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+              </Box>
 
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: '#E5E7EB', mx: 2 }}
-            />
+              <Box
+                sx={{
+                  background: isDark ? 'rgba(255,255,255,0.08)' : s1.bg,
+                  borderRadius: 1,
+                  px: 2,
+                  py: 0.75,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: isDark ? '#ffffff' : s1.color,
+                  }}
+                >
+                  {subscriptionStatsLoading ? (
+                    <Skeleton variant="text" width={30} />
+                  ) : (
+                    subscriptionStats.total
+                  )}
+                </Typography>
+              </Box>
 
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Secondary
-              </Typography>
-              <Typography fontWeight={600}>
-                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.secondary}
-              </Typography>
-            </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Active
+                  </Typography>
+                  <Typography fontWeight={600}>
+                    {subscriptionStatsLoading ? (
+                      <Skeleton variant="text" width={20} />
+                    ) : (
+                      subscriptionStats.active
+                    )}
+                  </Typography>
+                </Box>
 
-            <Divider
-              orientation="vertical"
-              flexItem
-              sx={{ borderColor: '#E5E7EB', mx: 2 }}
-            />
+                <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', mx: 2 }} />
 
-            <Box>
-              <Typography variant="caption" color="text.secondary">
-                Primary
-              </Typography>
-              <Typography fontWeight={600}>
-                {subscriptionStatsLoading ? <Skeleton variant="text" width={20} /> : subscriptionStats.primary}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Secondary
+                  </Typography>
+                  <Typography fontWeight={600}>
+                    {subscriptionStatsLoading ? (
+                      <Skeleton variant="text" width={20} />
+                    ) : (
+                      subscriptionStats.secondary
+                    )}
+                  </Typography>
+                </Box>
 
-        {/* Login Activities */}
-        <LoginActivitiesCard />
+                <Divider orientation="vertical" flexItem sx={{ borderColor: '#E5E7EB', mx: 2 }} />
 
-        {/* Plan Distribution */}
-        <Paper
-          elevation={0}
-          sx={{
-                  p: '10px !important',
-            borderRadius: '14px',
-            bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-            border: '1px solid',
-            borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-            transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              borderColor: '#94a3b8',
-              boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 1,
-            }}
-          >
-            <Typography variant="subtitle1" fontWeight={700}>
-              Plan Distribution
-            </Typography>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    Primary
+                  </Typography>
+                  <Typography fontWeight={600}>
+                    {subscriptionStatsLoading ? (
+                      <Skeleton variant="text" width={20} />
+                    ) : (
+                      subscriptionStats.primary
+                    )}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
 
-            <Box
+            {/* Login Activities */}
+            <LoginActivitiesCard />
+
+            {/* Plan Distribution */}
+            <Paper
+              elevation={0}
               sx={{
-                width: 32,
-                height: 32,
-                borderRadius: '8px',
-                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
-                color: isDark ? '#fff' : s3.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                p: '10px !important',
+                borderRadius: '14px',
+                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  borderColor: '#94a3b8',
+                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                },
               }}
-              onClick={() => setIsPlanModalOpen(true)}
             >
-              <IconChartBar size={18} color="currentColor" />
-            </Box>
-          </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Plan Distribution
+                </Typography>
 
-          <Box sx={{ width: '100%' }}>
-            <Box
-              sx={{
-                height: 150,
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              {analyticsLoading ? (
-                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
-              ) : planDistribution.length > 0 ? (
-                <ReusablePieChart
-                  series={planDistribution.map((p) => p.total)}
-                  colors={PLAN_DISTRIBUTION_COLORS}
-                  labels={planDistribution.map((p) => p.label)}
-                  height={150}
-                  width="100%"
-                  hideCard
-                />
-              ) : (
-                <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
-              )}
-            </Box>
-          </Box>
-        </Paper>  
-        </>
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : s3.bg,
+                    color: isDark ? '#fff' : s3.color,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  onClick={() => setIsPlanModalOpen(true)}
+                >
+                  <IconChartBar size={18} color="currentColor" />
+                </Box>
+              </Box>
+
+              <Box sx={{ width: '100%' }}>
+                <Box
+                  sx={{
+                    height: 150,
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {analyticsLoading ? (
+                    <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+                  ) : planDistribution.length > 0 ? (
+                    <ReusablePieChart
+                      series={planDistribution.map((p) => p.total)}
+                      colors={PLAN_DISTRIBUTION_COLORS}
+                      labels={planDistribution.map((p) => p.label)}
+                      height={150}
+                      width="100%"
+                      hideCard
+                    />
+                  ) : (
+                    <Skeleton variant="circular" width={130} height={130} sx={{ mx: 'auto' }} />
+                  )}
+                </Box>
+              </Box>
+            </Paper>
+          </>
         )}
       </Box>
 
-      <Box >
+      <Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
             value={tab}
@@ -1271,7 +1299,6 @@ const Agent = () => {
                 justifyContent="flex-end"
                 sx={{ width: '100%' }}
               >
-               
                 <Button
                   variant="contained"
                   size="small"
@@ -1293,7 +1320,7 @@ const Agent = () => {
                 >
                   Add New Partner
                 </Button>
-                 <Button
+                <Button
                   variant="contained"
                   size="small"
                   startIcon={<IconAdjustmentsHorizontal />}
@@ -1328,8 +1355,8 @@ const Agent = () => {
                 </Button>
               </Stack>
             }
-              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
-            >
+            sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
+          >
             <TableContainer>
               <Table size="small" stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
                 <TableHead>
@@ -1563,7 +1590,9 @@ const Agent = () => {
                           </TableCell>
                           <TableCell>
                             <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>
-                              {agent.bank_service_id ? (bankServiceName(agent.bank_service_id) || 'Configured') : '—'}
+                              {agent.bank_service_id
+                                ? bankServiceName(agent.bank_service_id) || 'Configured'
+                                : '—'}
                             </Typography>
                           </TableCell>
                           <TableCell>
@@ -1722,8 +1751,8 @@ const Agent = () => {
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{agentToDelete?.organizationName || 'this partner'}</strong>? This action cannot
-              be undone.
+              <strong>{agentToDelete?.organizationName || 'this partner'}</strong>? This action
+              cannot be undone.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -1748,8 +1777,7 @@ const Agent = () => {
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
               <strong>{selectedAgent?.organizationName || 'this partner'}</strong>? This action
-              cannot be undone. This can only be done if no schools are attached to this
-              partner.
+              cannot be undone. This can only be done if no schools are attached to this partner.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
@@ -1776,8 +1804,16 @@ const Agent = () => {
           open={isTransactionModalOpen}
           onClose={() => setIsTransactionModalOpen(false)}
         />
-        <PlanDistributionModal open={isPlanModalOpen} onClose={() => setIsPlanModalOpen(false)} planDistribution={planDistribution} totalOrganizations={analytics?.totalOrganizations ?? 0} />
-        <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
+        <PlanDistributionModal
+          open={isPlanModalOpen}
+          onClose={() => setIsPlanModalOpen(false)}
+          planDistribution={planDistribution}
+          totalOrganizations={analytics?.totalOrganizations ?? 0}
+        />
+        <SubscriptionModal
+          open={openSubscriptionModal}
+          onClose={() => setOpenSubscriptionModal(false)}
+        />
 
         {/* Filter Side Drawer */}
         <FilterSideDrawer
@@ -1794,4 +1830,4 @@ const Agent = () => {
   );
 };
 
-export default Agent;
+export default Partner;

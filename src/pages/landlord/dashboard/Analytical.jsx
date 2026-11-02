@@ -39,11 +39,11 @@ import {
 // Shared reusable stat card
 import DashboardStatCard from '@/components/shared/cards/DashboardStatCard';
 
-// Agent Analytics Components
+// Partner Analytics Components
 import { IconSchool, IconListTree, IconSearch } from '@tabler/icons-react';
 import { IconChartBar } from '@tabler/icons-react';
 
-// Agent Modals
+// Partner Modals
 import PlanDistributionModal from '@/pages/landlord/views/agent/components/PlanDistributionModal';
 import LoggedInUsersModal from '@/pages/landlord/views/agent/components/LoggedInUsersModal';
 import ViewUsersListModal from '@/pages/landlord/views/agent/components/ViewUsersListModal';
@@ -172,7 +172,7 @@ export default function Dashboard() {
         ),
       }),
       columnHelper.accessor('agentDetails', {
-        header: () => 'Agent Details',
+        header: () => 'Partner Details',
         cell: (info) => {
           const agent = info.row.original;
           const initials = (agent.organizationName || 'NA')
@@ -321,331 +321,234 @@ export default function Dashboard() {
 
   return (
     <PageContainer title="Analytical Dashboard" description="this is Dashboard">
-        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Total School"
-              value={String(analytics?.totalSchools ?? 0)}
-              colorIndex={0}
-              loading={analyticsLoading}
-              subStats={[
-                {
-                  label: 'Approved',
-                  value: String(analytics?.activeSchools ?? 0),
-                },
-                {
-                  label: 'Pending',
-                  value: String(analytics?.pendingSchools ?? 0),
-                },
-                {
-                  label: 'Rejected',
-                  value: String(analytics?.rejectedSchools ?? 0),
-                },
-              ]}
-              onIconClick={() => setIsSchoolModalOpen(true)}
-              onClick={() => setIsSchoolModalOpen(true)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Total Transaction Value"
-              value={formatNaira(analytics?.transactionVolume)}
-              colorIndex={1}
-              loading={analyticsLoading}
-              subStats={[
-                {
-                  label: 'Collected',
-                  value: formatNaira(analytics?.transactionVolume),
-                },
-                {
-                  label: 'Pending',
-                  value: formatNaira(analytics?.transactionPending),
-                },
-              ]}
-              onIconClick={() => setIsTransactionModalOpen(true)}
-              onClick={() => setIsTransactionModalOpen(true)}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <DashboardStatCard
-              title="Total Agents"
-              value={String(analytics?.totalSubAgents ?? 0)}
-              colorIndex={2}
-              loading={analyticsLoading}
-              subStats={[
-                {
-                  label: 'Lv2',
-                  value: String(analytics?.subAgentLevels?.lv2 ?? 0),
-                },
-                {
-                  label: 'Lv3',
-                  value: String(analytics?.subAgentLevels?.lv3 ?? 0),
-                },
-                {
-                  label: 'Lv4',
-                  value: String(analytics?.subAgentLevels?.lv4 ?? 0),
-                },
-                {
-                  label: 'Lv5',
-                  value: String(analytics?.subAgentLevels?.lv5 ?? 0),
-                },
-              ]}
-              onIconClick={() => setIsSubAgentModalOpen(true)}
-              onClick={() => setIsSubAgentModalOpen(true)}
-            />
-          </Grid>
+      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <DashboardStatCard
+            title="Total School"
+            value={String(analytics?.totalSchools ?? 0)}
+            colorIndex={0}
+            loading={analyticsLoading}
+            subStats={[
+              {
+                label: 'Approved',
+                value: String(analytics?.activeSchools ?? 0),
+              },
+              {
+                label: 'Pending',
+                value: String(analytics?.pendingSchools ?? 0),
+              },
+              {
+                label: 'Rejected',
+                value: String(analytics?.rejectedSchools ?? 0),
+              },
+            ]}
+            onIconClick={() => setIsSchoolModalOpen(true)}
+            onClick={() => setIsSchoolModalOpen(true)}
+          />
         </Grid>
 
-        {/* Row 2: Charts and Login Activities — cards stay equal height
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <DashboardStatCard
+            title="Total Transaction Value"
+            value={formatNaira(analytics?.transactionVolume)}
+            colorIndex={1}
+            loading={analyticsLoading}
+            subStats={[
+              {
+                label: 'Collected',
+                value: formatNaira(analytics?.transactionVolume),
+              },
+              {
+                label: 'Pending',
+                value: formatNaira(analytics?.transactionPending),
+              },
+            ]}
+            onIconClick={() => setIsTransactionModalOpen(true)}
+            onClick={() => setIsTransactionModalOpen(true)}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <DashboardStatCard
+            title="Total Agents"
+            value={String(analytics?.totalSubAgents ?? 0)}
+            colorIndex={2}
+            loading={analyticsLoading}
+            subStats={[
+              {
+                label: 'Lv2',
+                value: String(analytics?.subAgentLevels?.lv2 ?? 0),
+              },
+              {
+                label: 'Lv3',
+                value: String(analytics?.subAgentLevels?.lv3 ?? 0),
+              },
+              {
+                label: 'Lv4',
+                value: String(analytics?.subAgentLevels?.lv4 ?? 0),
+              },
+              {
+                label: 'Lv5',
+                value: String(analytics?.subAgentLevels?.lv5 ?? 0),
+              },
+            ]}
+            onIconClick={() => setIsSubAgentModalOpen(true)}
+            onClick={() => setIsSubAgentModalOpen(true)}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Row 2: Charts and Login Activities — cards stay equal height
             (default stretch) so the row reads as one aligned unit; each
             card centers its own shorter content vertically instead, rather
             than leaving a blank gap anchored to the bottom. */}
-        <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-          <Grid size={{ xs: 12, lg: 5 }}>
-            <Card
+      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card
+            sx={{
+              p: 0,
+              height: '100%',
+              borderRadius: '14px',
+              bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }}
+          >
+            <Box
               sx={{
-                p: 0,
-                height: '100%',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: 'transparent',
-                }}
-              >
-                <Typography
-                  variant="h5"
-                  fontWeight="600"
-                  sx={{ color: 'text.secondary' }}
-                >
-                  Transaction — Collected vs Pending
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  background: 'transparent',
-                  '& .apexcharts-canvas': {
-                    background: 'transparent !important',
-                  },
-                  '& .apexcharts-svg': {
-                    background: 'transparent !important',
-                  },
-                }}
-              >
-                <Chart
-                  options={{
-                    chart: {
-                      type: 'bar',
-                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
-                      foreColor: '#adb0bb',
-                      toolbar: { show: false },
-                      zoom: { enabled: false },
-                      background: 'transparent',
-                    },
-                    colors: ['#16a34a', '#e11d48'],
-                    plotOptions: {
-                      bar: {
-                        borderRadius: 4,
-                        columnWidth: '35%',
-                        distributed: true,
-                      },
-                    },
-                    dataLabels: { enabled: false },
-                    legend: { show: false },
-                    grid: {
-                      borderColor: 'rgba(0,0,0,0.1)',
-                      strokeDashArray: 3,
-                      xaxis: { lines: { show: false } },
-                      yaxis: { lines: { show: true } }
-                    },
-                    xaxis: {
-                      categories: ['Collected', 'Pending'],
-                      axisBorder: { show: false },
-                    },
-                    yaxis: {
-                      labels: {
-                        show: true,
-                        formatter: (val) => formatNaira(val),
-                      },
-                    },
-                    tooltip: {
-                      theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
-                      y: { formatter: (val) => formatNaira(val) },
-                    },
-                  }}
-                  series={[
-                    {
-                      name: 'Amount',
-                      data: [analytics?.transactionVolume ?? 0, analytics?.transactionPending ?? 0],
-                    },
-                  ]}
-                  type="bar"
-                  height={250}
-                  width="100%"
-                />
-              </Box>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <Card
-              sx={{
-                p: 0,
-                height: '100%',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                position: 'relative',
-                overflow: 'hidden',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-              }}
-            >
-              <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight="600"
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      Login Activities (30 days)
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
-                    >
-                      Staff, learner, and agent sign-ins across all your schools.
-                    </Typography>
-                  </Box>
-                  <Box
-                    onClick={() => setIsLoggedInUsersModalOpen(true)}
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '8px',
-                      bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F3E8FF',
-                      color: isDark ? '#ffffff' : '#9333EA',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      '&:hover': { opacity: 0.85 },
-                    }}
-                  >
-                    <IconChartBar size={18} color="currentColor" />
-                  </Box>
-                </Box>
-
-                <Stack spacing={1} justifyContent="center" sx={{ flex: 1 }}>
-                  {loginActivitiesLoading
-                    ? [...Array(3)].map((_, i) => (
-                        <Stack key={i} direction="row" justifyContent="space-between" alignItems="center">
-                          <Skeleton variant="text" width={120} height={24} />
-                          <Skeleton variant="text" width={60} height={24} />
-                        </Stack>
-                      ))
-                    : loginActivities?.map((activity, index) => (
-                    <Stack key={index} direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight="700"
-                        sx={{ color: 'text.secondary', fontSize: '12px' }}
-                      >
-                        {activity.label}:
-                      </Typography>
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight="700"
-                        sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}
-                      >
-                        {activity.value}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              </Box>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Card
-              sx={{
-                p: '10px !important',
-                height: '100%',
+                p: 1,
                 display: 'flex',
-                flexDirection: 'column',
-                borderRadius: '14px',
-                bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                position: 'relative',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'transparent',
+              }}
+            >
+              <Typography variant="h5" fontWeight="600" sx={{ color: 'text.secondary' }}>
+                Transaction — Collected vs Pending
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                background: 'transparent',
+                '& .apexcharts-canvas': {
+                  background: 'transparent !important',
+                },
+                '& .apexcharts-svg': {
+                  background: 'transparent !important',
                 },
               }}
             >
+              <Chart
+                options={{
+                  chart: {
+                    type: 'bar',
+                    fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                    foreColor: '#adb0bb',
+                    toolbar: { show: false },
+                    zoom: { enabled: false },
+                    background: 'transparent',
+                  },
+                  colors: ['#16a34a', '#e11d48'],
+                  plotOptions: {
+                    bar: {
+                      borderRadius: 4,
+                      columnWidth: '35%',
+                      distributed: true,
+                    },
+                  },
+                  dataLabels: { enabled: false },
+                  legend: { show: false },
+                  grid: {
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    strokeDashArray: 3,
+                    xaxis: { lines: { show: false } },
+                    yaxis: { lines: { show: true } },
+                  },
+                  xaxis: {
+                    categories: ['Collected', 'Pending'],
+                    axisBorder: { show: false },
+                  },
+                  yaxis: {
+                    labels: {
+                      show: true,
+                      formatter: (val) => formatNaira(val),
+                    },
+                  },
+                  tooltip: {
+                    theme: theme.palette.mode === 'dark' ? 'dark' : 'light',
+                    y: { formatter: (val) => formatNaira(val) },
+                  },
+                }}
+                series={[
+                  {
+                    name: 'Amount',
+                    data: [analytics?.transactionVolume ?? 0, analytics?.transactionPending ?? 0],
+                  },
+                ]}
+                type="bar"
+                height={250}
+                width="100%"
+              />
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <Card
+            sx={{
+              p: 0,
+              height: '100%',
+              borderRadius: '14px',
+              bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+              position: 'relative',
+              overflow: 'hidden',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }}
+          >
+            <Box sx={{ p: '10px', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Box
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
                   mb: 2,
-                  flexShrink: 0,
                 }}
               >
                 <Box>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="600"
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    Plan Distribution
+                  <Typography variant="subtitle2" fontWeight="600" sx={{ color: 'text.secondary' }}>
+                    Login Activities (30 days)
                   </Typography>
                   <Typography
                     variant="caption"
                     color="text.secondary"
                     sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
                   >
-                    Breakdown of active subscriptions by plan type across all schools.
+                    Staff, learner, and agent sign-ins across all your schools.
                   </Typography>
                 </Box>
                 <Box
-                  onClick={() => setIsPlanModalOpen(true)}
+                  onClick={() => setIsLoggedInUsersModalOpen(true)}
                   sx={{
                     width: 32,
                     height: 32,
                     borderRadius: '8px',
-                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#FEF3C7',
-                    color: isDark ? '#ffffff' : '#D97706',
+                    bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#F3E8FF',
+                    color: isDark ? '#ffffff' : '#9333EA',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -656,146 +559,251 @@ export default function Dashboard() {
                   <IconChartBar size={18} color="currentColor" />
                 </Box>
               </Box>
-              {/* flex:1 + centered — so on a row where the Transaction chart
-                  card ends up taller, the donut centers in the leftover
-                  space instead of sitting flush at the top with a gap
-                  below it. */}
+
+              <Stack spacing={1} justifyContent="center" sx={{ flex: 1 }}>
+                {loginActivitiesLoading
+                  ? [...Array(3)].map((_, i) => (
+                      <Stack
+                        key={i}
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Skeleton variant="text" width={120} height={24} />
+                        <Skeleton variant="text" width={60} height={24} />
+                      </Stack>
+                    ))
+                  : loginActivities?.map((activity, index) => (
+                      <Stack
+                        key={index}
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="700"
+                          sx={{ color: 'text.secondary', fontSize: '12px' }}
+                        >
+                          {activity.label}:
+                        </Typography>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="700"
+                          sx={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: '15px' }}
+                        >
+                          {activity.value}
+                        </Typography>
+                      </Stack>
+                    ))}
+              </Stack>
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Card
+            sx={{
+              p: '10px !important',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '14px',
+              bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
+              border: '1px solid',
+              borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+              position: 'relative',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: '#94a3b8',
+                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+              },
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                mb: 2,
+                flexShrink: 0,
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle2" fontWeight="600" sx={{ color: 'text.secondary' }}>
+                  Plan Distribution
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                >
+                  Breakdown of active subscriptions by plan type across all schools.
+                </Typography>
+              </Box>
               <Box
+                onClick={() => setIsPlanModalOpen(true)}
                 sx={{
-                  flex: 1,
+                  width: 32,
+                  height: 32,
+                  borderRadius: '8px',
+                  bgcolor: isDark ? 'rgba(255,255,255,0.08)' : '#FEF3C7',
+                  color: isDark ? '#ffffff' : '#D97706',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  '& .apexcharts-canvas': {
-                    background: 'transparent !important',
-                  },
-                  '& .apexcharts-svg': {
-                    background: 'transparent !important',
-                  },
+                  cursor: 'pointer',
+                  '&:hover': { opacity: 0.85 },
                 }}
               >
-                {analyticsLoading ? (
-                  <Skeleton variant="circular" width={160} height={160} sx={{ mx: 'auto' }} />
-                ) : (analytics?.planDistribution ?? []).length === 0 ? (
-                  <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No active plan assignments yet.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Chart
-                    // Remounts once the real labels/series arrive instead of
-                    // reusing the initial empty-array mount — ApexCharts
-                    // donut charts don't reliably pick up a change in the
-                    // number of series/labels on an existing instance.
-                    key={analytics.planDistribution.map((p) => p.label).join('|')}
-                    options={{
-                      chart: {
-                        type: 'donut',
-                        fontFamily: "'Plus Jakarta Sans', sans-serif;",
-                        foreColor: theme.palette.text.secondary,
-                        toolbar: { show: false },
-                        background: 'transparent',
-                      },
-                      labels: analytics.planDistribution.map((p) => p.label),
-                      colors: PLAN_DISTRIBUTION_COLORS,
-                      plotOptions: {
-                        pie: {
-                          donut: {
-                            size: '50%',
-                            background: 'transparent',
-                          },
-                        },
-                      },
-                      dataLabels: {
-                        enabled: true,
-                        formatter: function (val) {
-                          return val.toFixed(0) + '%';
-                        },
-                        style: {
-                          fontSize: '10px',
-                          fontWeight: '600',
-                          colors: ['#ffffff'],
-                        },
-                        dropShadow: { enabled: false },
-                      },
-                      stroke: { show: false },
-                      legend: {
-                        show: true,
-                        position: 'right',
-                        horizontalAlign: 'center',
-                        floating: false,
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        labels: { colors: theme.palette.text.secondary },
-                        itemMargin: { horizontal: 5, vertical: 5 },
-                      },
-                      tooltip: {
-                        theme: theme.palette.mode,
-                        fillSeriesColor: false,
-                      },
-                    }}
-                    series={analytics.planDistribution.map((p) => p.total)}
-                    type="donut"
-                    height={200}
-                    width="100%"
-                  />
-                )}
+                <IconChartBar size={18} color="currentColor" />
               </Box>
-            </Card>
-          </Grid>
+            </Box>
+            {/* flex:1 + centered — so on a row where the Transaction chart
+                  card ends up taller, the donut centers in the leftover
+                  space instead of sitting flush at the top with a gap
+                  below it. */}
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                '& .apexcharts-canvas': {
+                  background: 'transparent !important',
+                },
+                '& .apexcharts-svg': {
+                  background: 'transparent !important',
+                },
+              }}
+            >
+              {analyticsLoading ? (
+                <Skeleton variant="circular" width={160} height={160} sx={{ mx: 'auto' }} />
+              ) : (analytics?.planDistribution ?? []).length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No active plan assignments yet.
+                  </Typography>
+                </Box>
+              ) : (
+                <Chart
+                  // Remounts once the real labels/series arrive instead of
+                  // reusing the initial empty-array mount — ApexCharts
+                  // donut charts don't reliably pick up a change in the
+                  // number of series/labels on an existing instance.
+                  key={analytics.planDistribution.map((p) => p.label).join('|')}
+                  options={{
+                    chart: {
+                      type: 'donut',
+                      fontFamily: "'Plus Jakarta Sans', sans-serif;",
+                      foreColor: theme.palette.text.secondary,
+                      toolbar: { show: false },
+                      background: 'transparent',
+                    },
+                    labels: analytics.planDistribution.map((p) => p.label),
+                    colors: PLAN_DISTRIBUTION_COLORS,
+                    plotOptions: {
+                      pie: {
+                        donut: {
+                          size: '50%',
+                          background: 'transparent',
+                        },
+                      },
+                    },
+                    dataLabels: {
+                      enabled: true,
+                      formatter: function (val) {
+                        return val.toFixed(0) + '%';
+                      },
+                      style: {
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        colors: ['#ffffff'],
+                      },
+                      dropShadow: { enabled: false },
+                    },
+                    stroke: { show: false },
+                    legend: {
+                      show: true,
+                      position: 'right',
+                      horizontalAlign: 'center',
+                      floating: false,
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      labels: { colors: theme.palette.text.secondary },
+                      itemMargin: { horizontal: 5, vertical: 5 },
+                    },
+                    tooltip: {
+                      theme: theme.palette.mode,
+                      fillSeriesColor: false,
+                    },
+                  }}
+                  series={analytics.planDistribution.map((p) => p.total)}
+                  type="donut"
+                  height={200}
+                  width="100%"
+                />
+              )}
+            </Box>
+          </Card>
         </Grid>
+      </Grid>
 
-        {/* Row 3: Top Agents Table */}
-        <Grid container spacing={1.5}>
-          <Grid size={12}>
-            <ParentCard
-              title={
-                <Stack
-                  direction="row"
-                  // spacing={1}
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ width: '100%',py:"0px",px:"0px" }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Box
-                      sx={{
-                        width: 24,
-                        height: 24,
-                        bgcolor: '#2ca87f',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                      }}
-                    >
-                      <IconSchool size={16} />
-                    </Box>
-                    <Typography variant="h5">Agent Performance</Typography>
-                  </Stack>
-                  <Button variant="contained" size="small" onClick={() => navigate('/organization')}
+      {/* Row 3: Top Agents Table */}
+      <Grid container spacing={1.5}>
+        <Grid size={12}>
+          <ParentCard
+            title={
+              <Stack
+                direction="row"
+                // spacing={1}
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ width: '100%', py: '0px', px: '0px' }}
+              >
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Box
                     sx={{
-                      borderRadius: '8px',
-                      textTransform: 'none',
-                      bgcolor: theme.palette.primary.light,
-                      color: theme.palette.primary.main,
+                      width: 24,
+                      height: 24,
+                      bgcolor: '#2ca87f',
+                      borderRadius: '4px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
-                      boxShadow: 'none',
-                      '&:hover': { bgcolor: theme.palette.primary.light, boxShadow: 'none' },
+                      justifyContent: 'center',
+                      color: 'white',
                     }}
                   >
-                    <IconListTree size={16} />
-                    View All
-                  </Button>
+                    <IconSchool size={16} />
+                  </Box>
+                  <Typography variant="h5">Partner Performance</Typography>
                 </Stack>
-              }
-              sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3,py:0 } }}
-            >
-              {/* <Box
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => navigate('/organization')}
+                  sx={{
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    bgcolor: theme.palette.primary.light,
+                    color: theme.palette.primary.main,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    boxShadow: 'none',
+                    '&:hover': { bgcolor: theme.palette.primary.light, boxShadow: 'none' },
+                  }}
+                >
+                  <IconListTree size={16} />
+                  View All
+                </Button>
+              </Stack>
+            }
+            sx={{ px: 0, py: 0, '& .MuiCardContent-root': { px: 3, py: 0 } }}
+          >
+            {/* <Box
                 sx={{
                   borderRadius: '8px',
                   bgcolor: isDark ? theme.palette.background.default : '#f8fafc',
@@ -828,7 +836,7 @@ export default function Dashboard() {
                     onChange={(e) => setFilterLevel(e.target.value)}
                     sx={{ minWidth: 140 }}
                   >
-                    <MenuItem value="">Agent Levels</MenuItem>
+                    <MenuItem value="">Partner Levels</MenuItem>
                     <MenuItem value="1">Level 1</MenuItem>
                     <MenuItem value="2">Level 2</MenuItem>
                     <MenuItem value="3">Level 3</MenuItem>
@@ -855,114 +863,120 @@ export default function Dashboard() {
                   </Button>
                 </Stack>
               </Box> */}
-               <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={1}
-                  alignItems={{ xs: 'stretch', sm: 'center' }}
-                  flexWrap="wrap"
-                >
-                  <TextField
-                    size="small"
-                    placeholder="Search by Name"
-                    value={searchName}
-                    onChange={(e) => setSearchName(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <IconSearch size={16} color="#888" />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{ minWidth: 200, flex: 1 }}
-                  />
-                  <Select
-                    size="small"
-                    displayEmpty
-                    value={filterLevel}
-                    onChange={(e) => setFilterLevel(e.target.value)}
-                    sx={{ minWidth: 140 }}
-                  >
-                    <MenuItem value="">Agent Levels</MenuItem>
-                    <MenuItem value="1">Level 1</MenuItem>
-                    <MenuItem value="2">Level 2</MenuItem>
-                    <MenuItem value="3">Level 3</MenuItem>
-                  </Select>
-                  <Select
-                    size="small"
-                    displayEmpty
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    sx={{ minWidth: 120 }}
-                  >
-                    <MenuItem value="">Status</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="inactive">Inactive</MenuItem>
-                  </Select>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleFilterClick}
-                    disabled={tableLoading}
-                    sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
-                  >
-                    Filter
-                  </Button>
-                </Stack>
-              <Box sx={{ overflowX: 'auto' }}>
-                <Table stickyHeader size="small" sx={{ minWidth: 700, mt: 1 }}>
-                  <TableHead>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow sx={{ bgcolor: '#f8f9fa' }} key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => (
-                          <TableCell key={header.id} sx={{ py: 0.5, px: 1.5 }}>
-                            <Typography
-                              sx={{ fontSize: '11.5px', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.4 }}
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(header.column.columnDef.header, header.getContext())}
-                            </Typography>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              flexWrap="wrap"
+            >
+              <TextField
+                size="small"
+                placeholder="Search by Name"
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IconSearch size={16} color="#888" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ minWidth: 200, flex: 1 }}
+              />
+              <Select
+                size="small"
+                displayEmpty
+                value={filterLevel}
+                onChange={(e) => setFilterLevel(e.target.value)}
+                sx={{ minWidth: 140 }}
+              >
+                <MenuItem value="">Partner Levels</MenuItem>
+                <MenuItem value="1">Level 1</MenuItem>
+                <MenuItem value="2">Level 2</MenuItem>
+                <MenuItem value="3">Level 3</MenuItem>
+              </Select>
+              <Select
+                size="small"
+                displayEmpty
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                sx={{ minWidth: 120 }}
+              >
+                <MenuItem value="">Status</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleFilterClick}
+                disabled={tableLoading}
+                sx={{ borderRadius: '8px', textTransform: 'none', px: 3, boxShadow: 'none' }}
+              >
+                Filter
+              </Button>
+            </Stack>
+            <Box sx={{ overflowX: 'auto' }}>
+              <Table stickyHeader size="small" sx={{ minWidth: 700, mt: 1 }}>
+                <TableHead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow sx={{ bgcolor: '#f8f9fa' }} key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableCell key={header.id} sx={{ py: 0.5, px: 1.5 }}>
+                          <Typography
+                            sx={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: 'text.secondary',
+                              textTransform: 'uppercase',
+                              letterSpacing: 0.4,
+                            }}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(header.column.columnDef.header, header.getContext())}
+                          </Typography>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHead>
+                <TableBody>
+                  {tableLoading ? (
+                    [...Array(5)].map((_, i) => (
+                      <TableRow key={i}>
+                        {[...Array(6)].map((_, j) => (
+                          <TableCell key={j} sx={{ py: 0.5, px: 1.5 }}>
+                            <Skeleton variant="text" width={j === 0 ? 40 : 100} />
                           </TableCell>
                         ))}
                       </TableRow>
-                    ))}
-                  </TableHead>
-                  <TableBody>
-                    {tableLoading ? (
-                      [...Array(5)].map((_, i) => (
-                        <TableRow key={i}>
-                          {[...Array(6)].map((_, j) => (
-                            <TableCell key={j} sx={{ py: 0.5, px: 1.5 }}>
-                              <Skeleton variant="text" width={j === 0 ? 40 : 100} />
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : table.getRowModel().rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                          No agents found
-                        </TableCell>
+                    ))
+                  ) : table.getRowModel().rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                        No agents found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow key={row.id} hover>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell key={cell.id} sx={{ py: 0.5, px: 1.5 }}>
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
                       </TableRow>
-                    ) : (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id} hover>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} sx={{ py: 0.5, px: 1.5 }}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </Box>
-            </ParentCard>
-          </Grid>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </Box>
+          </ParentCard>
         </Grid>
+      </Grid>
 
-      {/* Agent Modals */}
+      {/* Partner Modals */}
       <PlanDistributionModal
         open={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}

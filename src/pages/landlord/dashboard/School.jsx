@@ -311,7 +311,7 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
                 <BusinessIcon sx={{ fontSize: 14, color: '#9ca3af' }} />
                 <Typography variant="caption" color="text.secondary">
-                  <strong>Agent:</strong> {agent.org_name || agent.name}
+                  <strong>Partner:</strong> {agent.org_name || agent.name}
                   {agent.email ? ` · ${agent.email}` : ''}
                 </Typography>
               </Stack>
@@ -419,13 +419,22 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
 
       <Divider />
       <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-        <Button variant="contained" size="small" onClick={onClose} color="inherit" sx={{ borderRadius: 2, textTransform: 'none' }}>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={onClose}
+          color="inherit"
+          sx={{ borderRadius: 2, textTransform: 'none' }}
+        >
           Close
         </Button>
         {prospect.status === 'pending' && (
           <>
             {!showRejectInput ? (
-              <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+              <Button
+                size="small"
+                color="error"
+                startIcon={<CancelOutlinedIcon />}
                 onClick={() => setShowRejectInput(true)}
                 disabled={loading}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -434,14 +443,21 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
               </Button>
             ) : (
               <>
-                <Button variant="contained" size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  variant="contained"
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => setShowRejectInput(false)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >
                   Cancel Rejection
                 </Button>
-                <Button size="small" color="error" startIcon={<CancelOutlinedIcon />}
+                <Button
+                  size="small"
+                  color="error"
+                  startIcon={<CancelOutlinedIcon />}
                   onClick={() => onReject(prospect.id, rejectReason)}
                   disabled={loading}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
@@ -450,7 +466,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 </Button>
               </>
             )}
-            <Button variant="contained" size="small" color="success" startIcon={<CheckCircleOutlineIcon />}
+            <Button
+              variant="contained"
+              size="small"
+              color="success"
+              startIcon={<CheckCircleOutlineIcon />}
               onClick={() => onApprove(prospect.id)}
               disabled={loading || showRejectInput}
               sx={{
@@ -460,7 +480,11 @@ const ReviewModal = ({ open, onClose, prospect, onApprove, onReject, loading }) 
                 '&:hover': { bgcolor: '#1b5e20' },
               }}
             >
-              {loading ? <Skeleton variant="text" width={120} height={18} /> : 'Approve & Provision'}
+              {loading ? (
+                <Skeleton variant="text" width={120} height={18} />
+              ) : (
+                'Approve & Provision'
+              )}
             </Button>
           </>
         )}
@@ -572,7 +596,10 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
       </TableCell>
       <TableCell align="right">
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Button variant="contained" size="small" startIcon={<IconEye />}
+          <Button
+            variant="contained"
+            size="small"
+            startIcon={<IconEye />}
             onClick={() => onReview(row)}
             sx={{
               textTransform: 'none',
@@ -586,7 +613,11 @@ const ProspectRow = ({ row, index, onReview, onDelete, showDelete = false }) => 
             {row.status?.toLowerCase() === 'approved' ? 'View' : 'Review'}
           </Button>
           {showDelete && (
-            <Button variant="contained" size="small" color="error" onClick={() => onDelete(row)}
+            <Button
+              variant="contained"
+              size="small"
+              color="error"
+              onClick={() => onDelete(row)}
               sx={{ textTransform: 'none', borderRadius: '8px', fontSize: '12px' }}
             >
               Delete
@@ -905,8 +936,8 @@ const SchoolDashboard = () => {
     !nameValue
       ? arr
       : arr.filter((r) =>
-        (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
-      );
+          (r[key] || r.institutionName || '').toLowerCase().includes(nameValue.toLowerCase()),
+        );
 
   const paginate = (arr) => arr.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -985,7 +1016,9 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}>
+            <Typography
+              sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s0.color }}
+            >
               {schoolSummary.total}
             </Typography>
           </Box>
@@ -1058,7 +1091,9 @@ const SchoolDashboard = () => {
               mb: 3,
             }}
           >
-            <Typography sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}>
+            <Typography
+              sx={{ fontSize: 22, fontWeight: 700, color: isDark ? '#ffffff' : s1.color }}
+            >
               {schoolSummary.subscriptions}
             </Typography>
           </Box>
@@ -1140,7 +1175,11 @@ const SchoolDashboard = () => {
                 <Typography variant="body2" color="text.secondary">
                   {label}
                 </Typography>
-                <Typography variant="body2" fontWeight={600} sx={{ color: isDark ? '#ffffff' : s2.color }}>
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{ color: isDark ? '#ffffff' : s2.color }}
+                >
                   {val}
                 </Typography>
               </Box>
@@ -1297,7 +1336,7 @@ const SchoolDashboard = () => {
                       <TableCell sx={thSx}>#</TableCell>
                       <TableCell sx={thSx}>School</TableCell>
                       <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                      <TableCell sx={thSx}>Agent</TableCell>
+                      <TableCell sx={thSx}>Partner</TableCell>
                       <TableCell sx={thSx}>Submitted</TableCell>
                       <TableCell sx={thSx}>Approved By</TableCell>
                       <TableCell sx={thSx}>Status</TableCell>
@@ -1357,7 +1396,7 @@ const SchoolDashboard = () => {
                     <TableCell sx={thSx}>#</TableCell>
                     <TableCell sx={thSx}>School</TableCell>
                     <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                    <TableCell sx={thSx}>Agent</TableCell>
+                    <TableCell sx={thSx}>Partner</TableCell>
                     <TableCell sx={thSx}>Submitted</TableCell>
                     <TableCell sx={thSx}>Approved By</TableCell>
                     <TableCell sx={thSx}>Status</TableCell>
@@ -1424,7 +1463,7 @@ const SchoolDashboard = () => {
                       <TableCell sx={thSx}>#</TableCell>
                       <TableCell sx={thSx}>School</TableCell>
                       <TableCell sx={thSx}>Admin Contact (SPA)</TableCell>
-                      <TableCell sx={thSx}>Agent</TableCell>
+                      <TableCell sx={thSx}>Partner</TableCell>
                       <TableCell sx={thSx}>Approved By</TableCell>
                       <TableCell sx={thSx}>Status</TableCell>
                       <TableCell sx={thSx} align="right">
@@ -1704,8 +1743,16 @@ const SchoolDashboard = () => {
         </Snackbar>
       </Portal>
 
-      <PlanDistributionModal open={openPlanModal} onClose={() => setOpenPlanModal(false)} planDistribution={analytics?.planDistribution ?? []} totalOrganizations={analytics?.totalOrganizations ?? 0} />
-      <SubscriptionModal open={openSubscriptionModal} onClose={() => setOpenSubscriptionModal(false)} />
+      <PlanDistributionModal
+        open={openPlanModal}
+        onClose={() => setOpenPlanModal(false)}
+        planDistribution={analytics?.planDistribution ?? []}
+        totalOrganizations={analytics?.totalOrganizations ?? 0}
+      />
+      <SubscriptionModal
+        open={openSubscriptionModal}
+        onClose={() => setOpenSubscriptionModal(false)}
+      />
       <LoginActivities open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
       <TotalSchoolModal
         open={openTotalSchoolModal}

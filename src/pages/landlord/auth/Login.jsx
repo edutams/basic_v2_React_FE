@@ -26,8 +26,8 @@ const Login = () => {
 
   return (
     <PageContainer
-      title="Agent Portal Login - EduTams Private School Management"
-      description="Login page for EduTams Agent & Partner Portal"
+      title="Partner Portal Login - EduTams Private School Management"
+      description="Login page for EduTams Partner & Partner Portal"
     >
       <Grid container spacing={0} sx={{ minHeight: '100vh', overflowX: 'hidden' }}>
         {/* Left Hero Panel (Tablet md: 6, Desktop lg: 7, xl: 8) */}
@@ -72,7 +72,9 @@ const Login = () => {
           {/* Center Hero Content */}
           <Box sx={{ position: 'relative', zIndex: 2, my: 'auto', maxWidth: 680 }}>
             <Chip
-              icon={<BusinessCenter sx={{ fontSize: '16px !important', color: '#818cf8 !important' }} />}
+              icon={
+                <BusinessCenter sx={{ fontSize: '16px !important', color: '#818cf8 !important' }} />
+              }
               label="EDUTAMS AGENT & PARTNER PORTAL"
               sx={{
                 bgcolor: 'rgba(255, 255, 255, 0.08)',
@@ -109,15 +111,28 @@ const Login = () => {
                 fontWeight: 400,
               }}
             >
-              Your central portal to register private schools, track SkoolPay transactions, manage sub-agent networks, and monitor commission payouts in real time.
+              Your central portal to register private schools, track SkoolPay transactions, manage
+              sub-agent networks, and monitor commission payouts in real time.
             </Typography>
 
             {/* Feature Highlights Grid */}
             <Grid container spacing={2} sx={{ mb: 4 }}>
               {[
-                { icon: School, title: 'School Onboarding', desc: 'Register primary & secondary private schools' },
-                { icon: AccountBalanceWallet, title: 'Commission Payouts', desc: 'Real-time revenue tracking & payouts' },
-                { icon: TrendingUp, title: 'Sub-Agent Network', desc: 'Multi-level organization hierarchy' },
+                {
+                  icon: School,
+                  title: 'School Onboarding',
+                  desc: 'Register primary & secondary private schools',
+                },
+                {
+                  icon: AccountBalanceWallet,
+                  title: 'Commission Payouts',
+                  desc: 'Real-time revenue tracking & payouts',
+                },
+                {
+                  icon: TrendingUp,
+                  title: 'Sub-Partner Network',
+                  desc: 'Multi-level organization hierarchy',
+                },
               ].map((item, idx) => (
                 <Grid size={{ xs: 12, sm: 4, md: 12, lg: 4 }} key={idx}>
                   <Paper
@@ -132,10 +147,14 @@ const Login = () => {
                     }}
                   >
                     <item.icon sx={{ fontSize: 26, color: '#a5b4fc', mb: 1.5 }} />
-                    <Typography sx={{ fontSize: '13.5px', fontWeight: 700, color: '#ffffff', mb: 0.5 }}>
+                    <Typography
+                      sx={{ fontSize: '13.5px', fontWeight: 700, color: '#ffffff', mb: 0.5 }}
+                    >
                       {item.title}
                     </Typography>
-                    <Typography sx={{ fontSize: '11px', color: 'rgba(203, 213, 225, 0.8)', lineHeight: 1.35 }}>
+                    <Typography
+                      sx={{ fontSize: '11px', color: 'rgba(203, 213, 225, 0.8)', lineHeight: 1.35 }}
+                    >
                       {item.desc}
                     </Typography>
                   </Paper>
@@ -157,8 +176,10 @@ const Login = () => {
             }}
           >
             <CheckCircle sx={{ fontSize: 18, color: '#34d399' }} />
-            <Typography sx={{ fontSize: '12px', color: 'rgba(226, 232, 240, 0.85)', fontWeight: 500 }}>
-              Authorized Agent & Partner Access • Secure Encrypted Connection
+            <Typography
+              sx={{ fontSize: '12px', color: 'rgba(226, 232, 240, 0.85)', fontWeight: 500 }}
+            >
+              Authorized Partner & Partner Access • Secure Encrypted Connection
             </Typography>
           </Box>
         </Grid>
@@ -194,15 +215,12 @@ const Login = () => {
               {view === 'login' && (
                 <Box>
                   <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
-                    Agent Portal Sign In 👋
+                    Partner Portal Sign In 👋
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
                     Sign in with your agent credentials to access your partner dashboard
                   </Typography>
-                  <AuthLogin
-                    title=""
-                    onForgotPassword={() => setView('forgot-password')}
-                  />
+                  <AuthLogin title="" onForgotPassword={() => setView('forgot-password')} />
                 </Box>
               )}
 
@@ -212,7 +230,8 @@ const Login = () => {
                     Forgot Password? 🔒
                   </Typography>
                   <Typography color="#64748b" variant="subtitle2" fontWeight="400" mb={3}>
-                    Enter your registered agent email address and we will send you an OTP to reset your password.
+                    Enter your registered agent email address and we will send you an OTP to reset
+                    your password.
                   </Typography>
                   <AuthForgotPassword
                     onBackToLogin={handleBackToLogin}
@@ -246,7 +265,12 @@ const Login = () => {
                       size="small"
                       fullWidth
                       onClick={handleBackToLogin}
-                      sx={{ textTransform: 'none', borderRadius: '8px', color: '#475569', borderColor: '#cbd5e1' }}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: '#475569',
+                        borderColor: '#cbd5e1',
+                      }}
                     >
                       ← Back to Login
                     </Button>
@@ -275,7 +299,12 @@ const Login = () => {
                       size="small"
                       fullWidth
                       onClick={handleBackToLogin}
-                      sx={{ textTransform: 'none', borderRadius: '8px', color: '#475569', borderColor: '#cbd5e1' }}
+                      sx={{
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: '#475569',
+                        borderColor: '#cbd5e1',
+                      }}
                     >
                       ← Back to Login
                     </Button>

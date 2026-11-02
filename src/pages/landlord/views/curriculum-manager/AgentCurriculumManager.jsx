@@ -70,7 +70,7 @@ import {
 
 const BCrumb = [
   { to: '/', title: 'Home' },
-  { title: 'Agent Dashboard' },
+  { title: 'Partner Dashboard' },
   { title: 'Curriculum Manager' },
 ];
 
@@ -555,375 +555,379 @@ const AgentCurriculumManager = () => {
 
         {/* CONTENT */}
         {/* <ParentCard > */}
-          <TabPanel value={tab} index={0}>
-            <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StatCard
-                  icon={IconBooks}
-                  count={stats?.total_curricula ?? 0}
-                  label="Active Curricula"
-                  colorIndex={1}
-                  loading={statsLoading}
-                  sx={{ height: '100%' }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StatCard
-                  icon={IconStack2}
-                  count={stats?.total_subjects ?? 0}
-                  label="Total Subjects"
-                  subtitle={
-                    stats?.subjects_missing_programme_mapping > 0
-                      ? `${stats.subjects_missing_programme_mapping} missing a programme`
-                      : 'All mapped to a programme'
-                  }
-                  colorIndex={stats?.subjects_missing_programme_mapping > 0 ? 4 : 0}
-                  loading={statsLoading}
-                  tooltip="A subject with no programme mapping silently disappears from every programme-scoped subject list."
-                  sx={{ height: '100%' }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StatCard
-                  icon={IconSchool}
-                  count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
-                  label="Classes With Curriculum"
-                  subtitle={
-                    stats?.classes_without_curriculum > 0
-                      ? `${stats.classes_without_curriculum} still need one`
-                      : 'All classes covered'
-                  }
-                  colorIndex={2}
-                  loading={statsLoading}
-                  sx={{ height: '100%' }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <StatCard
-                  icon={IconAlertCircle}
-                  count={stats?.curricula_never_assigned ?? 0}
-                  label="Curricula Never Assigned"
-                  subtitle={
-                    stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
-                  }
-                  colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
-                  loading={statsLoading}
-                  tooltip="A curriculum that has never been assigned to a single class in any session/term — likely worth reviewing or removing."
-                  sx={{ height: '100%' }}
-                />
-              </Grid>
+        <TabPanel value={tab} index={0}>
+          <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <StatCard
+                icon={IconBooks}
+                count={stats?.total_curricula ?? 0}
+                label="Active Curricula"
+                colorIndex={1}
+                loading={statsLoading}
+                sx={{ height: '100%' }}
+              />
             </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <StatCard
+                icon={IconStack2}
+                count={stats?.total_subjects ?? 0}
+                label="Total Subjects"
+                subtitle={
+                  stats?.subjects_missing_programme_mapping > 0
+                    ? `${stats.subjects_missing_programme_mapping} missing a programme`
+                    : 'All mapped to a programme'
+                }
+                colorIndex={stats?.subjects_missing_programme_mapping > 0 ? 4 : 0}
+                loading={statsLoading}
+                tooltip="A subject with no programme mapping silently disappears from every programme-scoped subject list."
+                sx={{ height: '100%' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <StatCard
+                icon={IconSchool}
+                count={`${stats?.classes_with_curriculum ?? 0}/${stats?.total_classes ?? 0}`}
+                label="Classes With Curriculum"
+                subtitle={
+                  stats?.classes_without_curriculum > 0
+                    ? `${stats.classes_without_curriculum} still need one`
+                    : 'All classes covered'
+                }
+                colorIndex={2}
+                loading={statsLoading}
+                sx={{ height: '100%' }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <StatCard
+                icon={IconAlertCircle}
+                count={stats?.curricula_never_assigned ?? 0}
+                label="Curricula Never Assigned"
+                subtitle={
+                  stats?.curricula_never_assigned > 0 ? 'Not used by any class yet' : 'All in use'
+                }
+                colorIndex={stats?.curricula_never_assigned > 0 ? 4 : 1}
+                loading={statsLoading}
+                tooltip="A curriculum that has never been assigned to a single class in any session/term — likely worth reviewing or removing."
+                sx={{ height: '100%' }}
+              />
+            </Grid>
+          </Grid>
 
-            <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: { xs: '1fr', md: 'minmax(420px, 5fr) minmax(500px, 7fr)' },
-                width: '100%',
-                mb: 3,
-              }}
-            >
-              {/* LEFT - Curriculum Table */}
-              <Box >
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 3,
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(420px, 5fr) minmax(500px, 7fr)' },
+              width: '100%',
+              mb: 3,
+            }}
+          >
+            {/* LEFT - Curriculum Table */}
+            <Box>
+              <ParentCard
+                title={
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h5">Curriculum</Typography>
+                    <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
+                      Create Curriculum
+                    </Button>
+                  </Box>
+                }
+                sx={{ mb: 1, px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0 } }}
+              >
+                <Box>
+                  <TableContainer sx={{ overflowX: 'auto' }}>
+                    <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
+                            Curriculum Name
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold', width: '20%' }}>
+                            Actions
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {loadingCurriculums ? (
+                          [...Array(4)].map((_, i) => (
+                            <TableRow key={i}>
+                              {[...Array(4)].map((_, j) => (
+                                <TableCell key={j}>
+                                  <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : curriculumData.length > 0 ? (
+                          curriculumData.map((item, i) => (
+                            <TableRow key={item.id} hover>
+                              <TableCell>
+                                <Radio
+                                  size="small"
+                                  checked={selectedCurriculum === item.id}
+                                  onChange={() => setSelectedCurriculum(item.id)}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#f1f5f9',
+                                    borderRadius: 2,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.curriculum_name}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={item.status}
+                                  size="small"
+                                  sx={{
+                                    bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
+                                    color: item.status === 'active' ? '#166534' : '#991b1b',
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell
+                                align="center"
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                }}
+                              >
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleActionMenuOpen(e, item)}
+                                >
+                                  <MoreVertIcon fontSize="small" />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                              <Alert
+                                severity="info"
+                                sx={{ width: '100%', justifyContent: 'center' }}
+                              >
+                                No curriculums found
+                              </Alert>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              </ParentCard>
+            </Box>
+
+            {/* RIGHT - Side Panels */}
+            <Box>
+              {/* Subject Bank Panel */}
+              {showSubjectBank && (
                 <ParentCard
                   title={
                     <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h5">Curriculum</Typography>
-                      <Button variant="contained" size="small" onClick={handleOpenCreateModal}>
-                        Create Curriculum
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        Subject Bank for{' '}
+                        <strong>
+                          {curriculumData.find((c) => c.id === selectedCurriculum)
+                            ?.curriculum_name || 'Selected Curriculum'}
+                        </strong>
+                      </Typography>
+
+                      <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal}>
+                        Add Subject
                       </Button>
                     </Box>
                   }
-                    sx={{ mb: 1, px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0 } }}
-                  
+                  sx={{ px: 0, py: 0, '& .MuiCardContent-root': { py: 0, px: 0 } }}
                 >
-                  <Box>
-                    <TableContainer sx={{ overflowX: 'auto' }}>
-                      <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}></TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>
-                              Curriculum Name
-                            </TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '30%' }}>Status</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 'bold', width: '20%' }}>
-                              Actions
-                            </TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {loadingCurriculums ? (
-                            [...Array(4)].map((_, i) => (
-                              <TableRow key={i}>
-                                {[...Array(4)].map((_, j) => (
-                                  <TableCell key={j}>
-                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          ) : curriculumData.length > 0 ? (
-                            curriculumData.map((item, i) => (
-                              <TableRow key={item.id} hover>
-                                <TableCell>
-                                  <Radio
-                                    size="small"
-                                    checked={selectedCurriculum === item.id}
-                                    onChange={() => setSelectedCurriculum(item.id)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#f1f5f9',
-                                      borderRadius: 2,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.curriculum_name}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Chip
-                                    label={item.status}
-                                    size="small"
-                                    sx={{
-                                      bgcolor: item.status === 'active' ? '#dcfce7' : '#fee2e2',
-                                      color: item.status === 'active' ? '#166534' : '#991b1b',
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell
-                                  align="center"
-                                  sx={{
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                  }}
-                                >
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => handleActionMenuOpen(e, item)}
-                                  >
-                                    <MoreVertIcon fontSize="small" />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                                <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                                  No curriculums found
-                                </Alert>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                  <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <TextField
+                      size="small"
+                      placeholder="Search subjects..."
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleSearch();
+                      }}
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                      sx={{ width: 300 }}
+                    />
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<IconFilter size={16} />}
+                      onClick={handleSearch}
+                    >
+                      Filter
+                    </Button>
                   </Box>
-                </ParentCard>
-              </Box>
-
-              {/* RIGHT - Side Panels */}
-              <Box>
-                {/* Subject Bank Panel */}
-                {showSubjectBank && (
-                  <ParentCard
-                    title={
-                      <Box display="flex" justifyContent="space-between" alignItems="center">
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          Subject Bank for{' '}
-                          <strong>
-                            {curriculumData.find((c) => c.id === selectedCurriculum)
-                              ?.curriculum_name || 'Selected Curriculum'}
-                          </strong>
-                        </Typography>
-
-                        <Button variant="contained" size="small" onClick={handleOpenAddSubjectModal}>
-                          Add Subject
-                        </Button>
-                      </Box>
-                    }
-                    sx={{  px: 0, py: 0, '& .MuiCardContent-root': { py: 0,px:0 } }}
+                  <TableContainer
+                    sx={{
+                      maxHeight: 600,
+                      overflowX: 'auto',
+                      overflowY: 'auto',
+                      width: '100%',
+                    }}
                   >
-                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <TextField
-                        size="small"
-                        placeholder="Search subjects..."
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSearch();
-                        }}
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                        sx={{ width: 300 }}
-                      />
-                      <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<IconFilter size={16} />}
-                        onClick={handleSearch}
-                      >
-                        Filter
-                      </Button>
-                    </Box>
-                    <TableContainer
+                    <Table
+                      stickyHeader
                       sx={{
-                        maxHeight: 600,
-                        overflowX: 'auto',
-                        overflowY: 'auto',
-                        width: '100%',
+                        tableLayout: 'auto',
+                        '& .MuiTableCell-root': { py: 0.5, px: 1 },
                       }}
                     >
-                      <Table
-                      stickyHeader
-                        sx={{
-                          tableLayout: 'auto',
-                          '& .MuiTableCell-root': { py: 0.5, px: 1 },
-                        }}
-                      >
-                        <TableHead>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>S/N</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Subject</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Code</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Program</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Unit</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Pass Mark</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
+                          <TableCell sx={{ whiteSpace: 'nowrap' }}>Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {loadingSubjects ? (
+                          [...Array(4)].map((_, i) => (
+                            <TableRow key={i}>
+                              {[...Array(7)].map((_, j) => (
+                                <TableCell key={j}>
+                                  <Skeleton variant="text" width={j === 0 ? 30 : 80} />
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : subjectsList.length > 0 ? (
+                          subjectsList.map((item, i) => (
+                            <TableRow key={item.id} hover>
+                              <TableCell>{i + 1}</TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#f5f7fa',
+                                    borderRadius: 2,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.subject_name}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#eef2f7',
+                                    borderRadius: 2,
+                                    fontWeight: 600,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.subject_code || '-'}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#f5f7fa',
+                                    borderRadius: 2,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.program_name}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#eef2f7',
+                                    borderRadius: 2,
+                                    fontWeight: 600,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.unit || '-'}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Box
+                                  sx={{
+                                    px: 2,
+                                    py: 0.5,
+                                    bgcolor: '#eef2f7',
+                                    borderRadius: 2,
+                                    fontWeight: 600,
+                                    display: 'inline-block',
+                                  }}
+                                >
+                                  {item.pass_mark || '-'}
+                                </Box>
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={item.prog_subject_status || '-'}
+                                  size="small"
+                                  sx={{
+                                    bgcolor:
+                                      item.prog_subject_status === 'compulsory'
+                                        ? '#dcfce7'
+                                        : '#fef3c7',
+                                    color:
+                                      item.prog_subject_status === 'compulsory'
+                                        ? '#166534'
+                                        : '#92400e',
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell align="right">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleOpenSubjectMenu(e, item)}
+                                  aria-controls={
+                                    Boolean(subjectMenuAnchor) ? 'subject-menu' : undefined
+                                  }
+                                  aria-haspopup="true"
+                                  aria-expanded={Boolean(subjectMenuAnchor) ? 'true' : undefined}
+                                >
+                                  <MoreVertIcon />
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
                           <TableRow>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>S/N</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Subject</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Code</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Program</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Unit</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Pass Mark</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Status</TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap' }}>Action</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {loadingSubjects ? (
-                            [...Array(4)].map((_, i) => (
-                              <TableRow key={i}>
-                                {[...Array(7)].map((_, j) => (
-                                  <TableCell key={j}>
-                                    <Skeleton variant="text" width={j === 0 ? 30 : 80} />
-                                  </TableCell>
-                                ))}
-                              </TableRow>
-                            ))
-                          ) : subjectsList.length > 0 ? (
-                            subjectsList.map((item, i) => (
-                              <TableRow key={item.id} hover>
-                                <TableCell>{i + 1}</TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#f5f7fa',
-                                      borderRadius: 2,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.subject_name}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#eef2f7',
-                                      borderRadius: 2,
-                                      fontWeight: 600,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.subject_code || '-'}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#f5f7fa',
-                                      borderRadius: 2,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.program_name}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#eef2f7',
-                                      borderRadius: 2,
-                                      fontWeight: 600,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.unit || '-'}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      px: 2,
-                                      py: 0.5,
-                                      bgcolor: '#eef2f7',
-                                      borderRadius: 2,
-                                      fontWeight: 600,
-                                      display: 'inline-block',
-                                    }}
-                                  >
-                                    {item.pass_mark || '-'}
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Chip
-                                    label={item.prog_subject_status || '-'}
-                                    size="small"
-                                    sx={{
-                                      bgcolor:
-                                        item.prog_subject_status === 'compulsory'
-                                          ? '#dcfce7'
-                                          : '#fef3c7',
-                                      color:
-                                        item.prog_subject_status === 'compulsory'
-                                          ? '#166534'
-                                          : '#92400e',
-                                    }}
-                                  />
-                                </TableCell>
-                                <TableCell align="right">
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => handleOpenSubjectMenu(e, item)}
-                                    aria-controls={
-                                      Boolean(subjectMenuAnchor) ? 'subject-menu' : undefined
-                                    }
-                                    aria-haspopup="true"
-                                    aria-expanded={Boolean(subjectMenuAnchor) ? 'true' : undefined}
-                                  >
-                                    <MoreVertIcon />
-                                  </IconButton>
-                                </TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>                                <TableCell colSpan={7} sx={{ p: 0 }}>
+                            {' '}
+                            <TableCell colSpan={7} sx={{ p: 0 }}>
                               <Alert
                                 severity="info"
                                 sx={{
@@ -936,20 +940,20 @@ const AgentCurriculumManager = () => {
                                 No subjects found. Please add a subject.
                               </Alert>
                             </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </ParentCard>
-                )}
-              </Box>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </ParentCard>
+              )}
             </Box>
-          </TabPanel>
+          </Box>
+        </TabPanel>
 
-          <TabPanel value={tab} index={1}>
-            <AgentSchemeOfWork isTab={true} />
-          </TabPanel>
+        <TabPanel value={tab} index={1}>
+          <AgentSchemeOfWork isTab={true} />
+        </TabPanel>
         {/* </ParentCard> */}
       </Box>
 
@@ -1042,7 +1046,9 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseCreateModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCloseCreateModal}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleCreateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Create'}
           </Button>
@@ -1076,7 +1082,9 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCloseEditModal}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleUpdateCurriculum} disabled={loadingMutation}>
             {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Update'}
           </Button>
@@ -1096,10 +1104,17 @@ const AgentCurriculumManager = () => {
           <Button
             variant="contained"
             size="small"
-            color="inherit" onClick={handleCloseDeleteDialog}>
+            color="inherit"
+            onClick={handleCloseDeleteDialog}
+          >
             Cancel
           </Button>
-          <Button size="small" onClick={handleDeleteCurriculum} color="error" disabled={loadingMutation}>
+          <Button
+            size="small"
+            onClick={handleDeleteCurriculum}
+            color="error"
+            disabled={loadingMutation}
+          >
             {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>
@@ -1244,7 +1259,14 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" color='inherit' onClick={handleCloseAddSubjectModal}>Cancel</Button>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleCloseAddSubjectModal}
+          >
+            Cancel
+          </Button>
           <Button size="small" onClick={handleCreateSubject} disabled={loadingMutation}>
             {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Save Subject'}
           </Button>
@@ -1387,9 +1409,15 @@ const AgentCurriculumManager = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal}>Cancel</Button>
+          <Button variant="contained" size="small" onClick={handleCloseEditSubjectModal}>
+            Cancel
+          </Button>
           <Button size="small" onClick={handleUpdateSubject} disabled={loadingMutation}>
-            {loadingMutation ? <Skeleton variant="text" width={80} height={20} /> : 'Update Subject'}
+            {loadingMutation ? (
+              <Skeleton variant="text" width={80} height={20} />
+            ) : (
+              'Update Subject'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1413,8 +1441,16 @@ const AgentCurriculumManager = () => {
             variant="contained"
             size="small"
             color="inherit"
-            onClick={handleCloseDeleteSubjectDialog}>Cancel</Button>
-          <Button size="small" onClick={handleDeleteSubject} color="error" disabled={loadingMutation}>
+            onClick={handleCloseDeleteSubjectDialog}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="small"
+            onClick={handleDeleteSubject}
+            color="error"
+            disabled={loadingMutation}
+          >
             {loadingMutation ? <Skeleton variant="text" width={60} height={20} /> : 'Delete'}
           </Button>
         </DialogActions>

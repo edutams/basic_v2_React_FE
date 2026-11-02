@@ -116,7 +116,7 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
           </Typography>
           {agent && (
             <Typography variant="body2" color="text.secondary">
-              Agent: {agent.agentName} ({agent.email})
+              Partner: {agent.agentName} ({agent.email})
             </Typography>
           )}
         </Box>
@@ -216,7 +216,9 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
                         key={row.id ?? row.trans_id ?? index}
                         sx={{
                           '&:hover': {
-                            bgcolor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                            bgcolor: isDarkMode
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(0, 0, 0, 0.02)',
                           },
                         }}
                       >
@@ -233,7 +235,9 @@ const CommissionDetailsModal = ({ open, onClose, agent }) => {
                             ₦{Number(row.amount ?? 0).toLocaleString()}
                           </Typography>
                         </TableCell>
-                        <TableCell>{row.credit_type ?? row.creditType ?? row.payment_type ?? '—'}</TableCell>
+                        <TableCell>
+                          {row.credit_type ?? row.creditType ?? row.payment_type ?? '—'}
+                        </TableCell>
                         <TableCell>{row.created_at ?? row.transaction_date ?? '—'}</TableCell>
                       </TableRow>
                     ))}

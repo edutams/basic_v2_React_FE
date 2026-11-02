@@ -256,7 +256,7 @@ const SchoolsOverviewModal = ({ open, onClose, stats, organizationId }) => {
                 value={1}
                 icon={<IconUsers size={18} />}
                 iconPosition="start"
-                label="Agent Performance"
+                label="Partner Performance"
                 sx={{ textTransform: 'none', minHeight: 42 }}
               />
             </Tabs>

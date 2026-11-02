@@ -128,7 +128,9 @@ const MyCommissionStatCards = ({
   if (loading) {
     return (
       <Box sx={{ mb: 1.5 }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' }, gap: 2 }}>
+        <Box
+          sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4,1fr)' }, gap: 2 }}
+        >
           {[0, 1, 2, 3].map((i) => (
             <Skeleton key={i} variant="rounded" height={150} sx={{ borderRadius: '14px' }} />
           ))}
@@ -152,7 +154,7 @@ const MyCommissionStatCards = ({
         <Paper sx={cardSx(false)}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Typography variant="h6" fontWeight={600} noWrap>
-              {organizationName || 'My Agent'}
+              {organizationName || 'My Partner'}
             </Typography>
             <CardIcon scheme={s0} isDarkMode={isDarkMode} icon={IconWallet} />
           </Box>

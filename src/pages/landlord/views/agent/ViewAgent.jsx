@@ -128,7 +128,7 @@ const ViewAgent = () => {
               id: data.id,
               name: data.organization_name,
               handle: data.organization_email,
-              level: `Level ${data.access_level} Agent`,
+              level: `Level ${data.access_level} Partner`,
               status: data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'Inactive',
@@ -252,15 +252,12 @@ const ViewAgent = () => {
   );
   const BCrumb = [
     { to: '/dashboard', title: 'Home' },
-    { to: '/organization', title: 'Agent' },
+    { to: '/organization', title: 'Partner' },
     { title: 'View Profile' },
   ];
 
   return (
-    <PageContainer
-      title="View Agent Profile"
-      description="Detailed agent profile view"
-    >
+    <PageContainer title="View Partner Profile" description="Detailed agent profile view">
       <Breadcrumb title="View Profile" items={BCrumb} />
 
       <Grid container spacing={2} mb={3}>

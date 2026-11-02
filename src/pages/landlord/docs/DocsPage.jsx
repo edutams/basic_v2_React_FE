@@ -3,7 +3,7 @@ import { fetchDocsManifest, fetchDocsPage, fetchDocsImage } from '@/api/landlord
 
 const DocsPage = () => (
   <DocsLayout
-    title="Agent Manual"
+    title="Partner Manual"
     basePath="/help"
     fetchManifest={fetchDocsManifest}
     fetchPage={fetchDocsPage}

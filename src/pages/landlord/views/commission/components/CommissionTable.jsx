@@ -24,16 +24,22 @@ import { IconDotsVertical, IconCoins, IconReceipt } from '@tabler/icons-react';
 // agent-creation time (see add-agent's AgentFormFields.jsx) and never
 // edited from here, so the only row actions are the two "go look at this
 // agent's numbers" views.
-const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransactions, onViewSchools }) => {
+const CommissionTable = ({
+  data,
+  activeTab,
+  onViewCommissions,
+  onViewTransactions,
+  onViewSchools,
+}) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [selectedItem, setSelectedItem] = React.useState(null);
 
-  const handleViewCommissions = onViewCommissions || (() => { });
-  const handleViewTransactions = onViewTransactions || (() => { });
-  const handleViewSchools = onViewSchools || (() => { });
+  const handleViewCommissions = onViewCommissions || (() => {});
+  const handleViewTransactions = onViewTransactions || (() => {});
+  const handleViewSchools = onViewSchools || (() => {});
 
   const handleClick = (event, item) => {
     setAnchorEl(event.currentTarget);
@@ -78,11 +84,14 @@ const CommissionTable = ({ data, activeTab, onViewCommissions, onViewTransaction
   return (
     <Box sx={{ width: '100%' }}>
       <TableContainer sx={{ borderRadius: 2 }}>
-        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+        <Table
+          stickyHeader
+          sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}
+        >
           {/* HEADER */}
           <TableHead>
             <TableRow>
-              <TableCell>Agent</TableCell>
+              <TableCell>Partner</TableCell>
               {showCommissionType && <TableCell>Commission Type</TableCell>}
               {showSchools && <TableCell>Schools</TableCell>}
               {showPayoutDate && <TableCell>Payout Date</TableCell>}

@@ -211,15 +211,23 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
               ),
             }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSearch}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
             Search
           </Button>
           {search && (
-            <Button variant="contained" size="small" onClick={() => {
-              setSearch('');
-              setSearchInput('');
-              setPage(0);
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setSearch('');
+                setSearchInput('');
+                setPage(0);
+              }}
               sx={{ minWidth: 'auto', px: 2 }}
             >
               Clear
@@ -238,8 +246,8 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
             <TableHead>
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
-                <TableCell sx={{ width: '33%' }}>Agent Name</TableCell>
-                <TableCell sx={{ width: '22%' }}>Agent</TableCell>
+                <TableCell sx={{ width: '33%' }}>Partner Name</TableCell>
+                <TableCell sx={{ width: '22%' }}>Partner</TableCell>
                 <TableCell sx={{ width: '18%' }}>Email</TableCell>
                 <TableCell sx={{ width: '12%' }} align="center">
                   Status
@@ -389,8 +397,9 @@ const PermissionOrganizationsModal = ({ open, onClose, permissionId, onUserRemov
         onClose={() => setConfirmOpen(false)}
         onConfirm={handleRemovePermission}
         title="Remove permission from user?"
-        message={`Are you sure you want to remove this permission from ${selectedUser?.full_name ?? ''
-          }?`}
+        message={`Are you sure you want to remove this permission from ${
+          selectedUser?.full_name ?? ''
+        }?`}
         confirmText="Remove"
         cancelText="Cancel"
         severity="error"

@@ -2,7 +2,7 @@ export const mockAgentData = {
   profile: {
     name: 'Toluwalope',
     handle: 'sampleagent@gmail.com',
-    level: 'Level 2 Agent',
+    level: 'Level 2 Partner',
     status: 'Active',
     image: '/assets/images/profile/user-1.jpg', // Placeholder
   },
@@ -19,12 +19,12 @@ export const mockAgentData = {
       lv5: 43,
     },
     stats: {
-        totalTransaction: '70,234.00',
-        transactionCount: '1,3443',
-        totalSchool: 70,
-        totalSubAgents: 36,
-        commission: '100,000,000,000',
-        volume: '110,344,300'
+      totalTransaction: '70,234.00',
+      transactionCount: '1,3443',
+      totalSchool: 70,
+      totalSubAgents: 36,
+      commission: '100,000,000,000',
+      volume: '110,344,300'
     },
   },
   revenueData: [

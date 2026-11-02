@@ -293,7 +293,13 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
   const headerContent = (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%' }}>
       {!hideAddButton && !(accessLevel === 1 && isViewingProfile) && (
-        <Button variant="contained" size="small" color="primary" onClick={handleOpenAddModal} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+        <Button
+          variant="contained"
+          size="small"
+          color="primary"
+          onClick={handleOpenAddModal}
+          sx={{ textTransform: 'none', borderRadius: '8px' }}
+        >
           Add Team Member
         </Button>
       )}
@@ -302,66 +308,67 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
 
   const content = (
     <>
-
       <TableContainer component={Paper} elevation={0} sx={{ bgcolor: 'transparent' }}>
-          <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
-            <TableHead>
+        <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 } }}>
+          <TableHead>
+            <TableRow>
+              <TableCell
+                sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+              >
+                S/N
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+              >
+                Member Details
+              </TableCell>
+              {isLevelOne && (
+                <TableCell
+                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+                >
+                  Partner
+                </TableCell>
+              )}
+              <TableCell
+                sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+              >
+                Permissions
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+              >
+                Status
+              </TableCell>
+              <TableCell
+                sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
+              >
+                Action
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(isLevelOne ? 6 : 5)].map((_, j) => (
+                    <TableCell key={j} sx={{ py: 1.5 }}>
+                      <Skeleton variant="text" width={j === 0 ? 30 : 100} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : members.length === 0 ? (
               <TableRow>
-                <TableCell
-                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                >
-                  S/N
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                >
-                  Member Details
-                </TableCell>
-                {isLevelOne && (
-                  <TableCell
-                    sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                  >
-                    Agent
-                  </TableCell>
-                )}
-                <TableCell
-                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                >
-                  Permissions
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                >
-                  Status
-                </TableCell>
-                <TableCell
-                  sx={{ fontWeight: 700, fontSize: '12px', color: theme.palette.text.secondary }}
-                >
-                  Action
+                <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 3 }}>
+                  <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
+                    No team members found.
+                  </Alert>
                 </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                [...Array(4)].map((_, i) => (
-                  <TableRow key={i}>
-                    {[...Array(isLevelOne ? 6 : 5)].map((_, j) => (
-                      <TableCell key={j} sx={{ py: 1.5 }}>
-                        <Skeleton variant="text" width={j === 0 ? 30 : 100} />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : members.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={isLevelOne ? 6 : 5} align="center" sx={{ py: 3 }}>
-                    <Alert severity="info" sx={{ width: '100%', justifyContent: 'center' }}>
-                      No team members found.
-                    </Alert>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                members.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => {
+            ) : (
+              members
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row, index) => {
                   const initials = (row.full_name || 'NA')
                     .split(' ')
                     .slice(0, 2)
@@ -539,24 +546,24 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
                     </TableRow>
                   );
                 })
-              )}
-            </TableBody>
-          </Table>
-          {members.length > 0 && (
-            <TablePagination
-              component="div"
-              count={members.length}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              rowsPerPageOptions={[5, 10, 25]}
-            />
-          )}
-        </TableContainer>
+            )}
+          </TableBody>
+        </Table>
+        {members.length > 0 && (
+          <TablePagination
+            component="div"
+            count={members.length}
+            page={page}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[5, 10, 25]}
+          />
+        )}
+      </TableContainer>
 
       <Menu
         anchorEl={anchorEl}
@@ -680,10 +687,22 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setOpenAddModal(false)} color="inherit" disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setOpenAddModal(false)}
+            color="inherit"
+            disabled={submitting}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleAddMember} disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={handleAddMember}
+            disabled={submitting}
+          >
             {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Add Member'}
           </Button>
         </DialogActions>
@@ -798,22 +817,31 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
               {availablePermissions.filter((perm) =>
                 perm.label.toLowerCase().includes(permissionSearch.toLowerCase()),
               ).length === 0 && (
-                  <Alert severity="info" sx={{ my: 2, justifyContent: 'center' }}>
-                    No permissions found.
-                  </Alert>
-                )}
+                <Alert severity="info" sx={{ my: 2, justifyContent: 'center' }}>
+                  No permissions found.
+                </Alert>
+              )}
             </Box>
           </Box>
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setOpenPermissionModal(false)}
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setOpenPermissionModal(false)}
             color="inherit"
             disabled={submitting}
           >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleSavePermissions} disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={handleSavePermissions}
+            disabled={submitting}
+          >
             {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Save Changes'}
           </Button>
         </DialogActions>
@@ -861,10 +889,22 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setOpenEditModal(false)} color="inherit" disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setOpenEditModal(false)}
+            color="inherit"
+            disabled={submitting}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="primary" onClick={handleEditMember} disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            color="primary"
+            onClick={handleEditMember}
+            disabled={submitting}
+          >
             {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Update Changes'}
           </Button>
         </DialogActions>
@@ -887,10 +927,22 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
         </DialogContent>
         <Divider />
         <DialogActions sx={{ p: 2 }}>
-          <Button variant="contained" size="small" onClick={() => setOpenRemoveConfirm(false)} color="error" disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setOpenRemoveConfirm(false)}
+            color="error"
+            disabled={submitting}
+          >
             Cancel
           </Button>
-          <Button variant="contained" size="small" color='inherit' onClick={handleRemoveMember} disabled={submitting}>
+          <Button
+            variant="contained"
+            size="small"
+            color="inherit"
+            onClick={handleRemoveMember}
+            disabled={submitting}
+          >
             {submitting ? <Skeleton variant="text" width={80} height={20} /> : 'Remove'}
           </Button>
         </DialogActions>
@@ -902,16 +954,15 @@ const ManageTeamTab = forwardRef(function ManageTeamTab(
     return (
       <Box>
         {headerContent}
-        <Box sx={{ mt: 2 }}>
-          {content}
-        </Box>
+        <Box sx={{ mt: 2 }}>{content}</Box>
       </Box>
     );
   }
 
   return (
-    <ParentCard title={headerContent}
-              sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
+    <ParentCard
+      title={headerContent}
+      sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
     >
       {content}
     </ParentCard>

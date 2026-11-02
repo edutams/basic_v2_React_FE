@@ -24,7 +24,7 @@ const transactions = [
   {
     id: 2,
     time: '11:00 AM',
-    message: 'Message from Agent Michael: "Support needed"',
+    message: 'Message from Partner Michael: "Support needed"',
     status: 'Pending',
     color: 'warning',
   },

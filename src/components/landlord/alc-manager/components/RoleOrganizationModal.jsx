@@ -218,15 +218,23 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
               ),
             }}
           />
-          <Button variant="contained" size="small" onClick={handleSearch} sx={{ minWidth: 'auto', px: 2 }}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSearch}
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
             Search
           </Button>
           {search && (
-            <Button variant="contained" size="small" onClick={() => {
-              setSearch('');
-              setSearchInput('');
-              setPage(0);
-            }}
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setSearch('');
+                setSearchInput('');
+                setPage(0);
+              }}
               sx={{ minWidth: 'auto', px: 2 }}
             >
               Clear
@@ -246,7 +254,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
               <TableRow>
                 <TableCell sx={{ width: '5%' }}>#</TableCell>
                 <TableCell sx={{ width: '33%' }}>Team Name</TableCell>
-                <TableCell sx={{ width: '25%' }}>Agent</TableCell>
+                <TableCell sx={{ width: '25%' }}>Partner</TableCell>
                 <TableCell sx={{ width: '13%' }} align="center">
                   Status
                 </TableCell>
@@ -370,9 +378,7 @@ const RoleOrganizationsModal = ({ open, onClose, roleId, roleName, onUserRemoved
                         '& .MuiAlert-icon': { mr: 1 },
                       }}
                     >
-                      {search
-                        ? 'No agents match your search.'
-                        : 'No agents have this role yet.'}
+                      {search ? 'No agents match your search.' : 'No agents have this role yet.'}
                     </Alert>
                   </TableCell>
                 </TableRow>

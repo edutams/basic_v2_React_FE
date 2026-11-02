@@ -62,8 +62,6 @@ const schemeMap = [
   { bg: '#FEE2E2', color: '#DC2626' },
 ];
 
-
-
 const agentColumnHelper = createColumnHelper();
 const schoolColumnHelper = createColumnHelper();
 
@@ -242,7 +240,7 @@ const OverviewTab = ({ data }) => {
         ),
       }),
       schoolColumnHelper.accessor('agent', {
-        header: () => 'Agent Detail',
+        header: () => 'Partner Detail',
         cell: (info) => {
           const row = info.row.original;
           const initials = (row.agent || 'NA')
@@ -319,44 +317,47 @@ const OverviewTab = ({ data }) => {
     getCoreRowModel: getCoreRowModel(),
   });
 
-  const revenueOptions = useMemo(() => ({
-    chart: {
-      type: 'bar',
-      toolbar: { show: false },
-      stacked: false,
-      fontFamily: "'DM Sans', sans-serif",
-      background: 'transparent',
-    },
-    plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
-    dataLabels: { enabled: false },
-    stroke: { show: true, width: 2, colors: ['transparent'] },
-    xaxis: {
-      categories: chartData.categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      labels: { style: { colors: theme.palette.text.secondary, fontSize: '12px' } },
-    },
-    yaxis: {
-      labels: {
-        style: { colors: theme.palette.text.secondary, fontSize: '12px' },
-        formatter: (val) => {
-          if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
-          if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
-          return val.toLocaleString();
+  const revenueOptions = useMemo(
+    () => ({
+      chart: {
+        type: 'bar',
+        toolbar: { show: false },
+        stacked: false,
+        fontFamily: "'DM Sans', sans-serif",
+        background: 'transparent',
+      },
+      plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+      dataLabels: { enabled: false },
+      stroke: { show: true, width: 2, colors: ['transparent'] },
+      xaxis: {
+        categories: chartData.categories,
+        axisBorder: { show: false },
+        axisTicks: { show: false },
+        labels: { style: { colors: theme.palette.text.secondary, fontSize: '12px' } },
+      },
+      yaxis: {
+        labels: {
+          style: { colors: theme.palette.text.secondary, fontSize: '12px' },
+          formatter: (val) => {
+            if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`;
+            if (val >= 1000) return `${(val / 1000).toFixed(1)}K`;
+            return val.toLocaleString();
+          },
         },
       },
-    },
-    colors: ['#2563EB', '#F59E0B'],
-    fill: { opacity: 1 },
-    legend: { show: true, position: 'top', horizontalAlign: 'right' },
-    tooltip: {
-      shared: true,
-      intersect: false,
-      theme: isDarkMode ? 'dark' : 'light',
-      y: { formatter: (val) => `₦${val.toLocaleString()}` },
-    },
-    grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
-  }), [chartData.categories, theme.palette.text.secondary, theme.palette.divider, isDarkMode]);
+      colors: ['#2563EB', '#F59E0B'],
+      fill: { opacity: 1 },
+      legend: { show: true, position: 'top', horizontalAlign: 'right' },
+      tooltip: {
+        shared: true,
+        intersect: false,
+        theme: isDarkMode ? 'dark' : 'light',
+        y: { formatter: (val) => `₦${val.toLocaleString()}` },
+      },
+      grid: { borderColor: theme.palette.divider, strokeDashArray: 4 },
+    }),
+    [chartData.categories, theme.palette.text.secondary, theme.palette.divider, isDarkMode],
+  );
 
   const revenueSeries = useMemo(() => chartData.series, [chartData.series]);
 
@@ -398,7 +399,13 @@ const OverviewTab = ({ data }) => {
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <Select value={period} onChange={(e) => { setPeriod(e.target.value); setPeriodValue(null); }}>
+                  <Select
+                    value={period}
+                    onChange={(e) => {
+                      setPeriod(e.target.value);
+                      setPeriodValue(null);
+                    }}
+                  >
                     <MenuItem value="today">Today</MenuItem>
                     <MenuItem value="this_week">This Week</MenuItem>
                     <MenuItem value="this_month">This Month</MenuItem>
@@ -435,367 +442,385 @@ const OverviewTab = ({ data }) => {
           <Grid container spacing={1.5}>
             {/* Credit Facilities Card */}
             <Grid size={{ xs: 12, sm: 6 }}>
-            <Card
-              sx={{
-                px: '3px',
-                py: '3px',
-                borderRadius: '14px',
-                bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-                overflow: 'hidden',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              {/* Header Section */}
-              <Box
+              <Card
                 sx={{
+                  px: '3px',
+                  py: '3px',
+                  borderRadius: '14px',
+                  bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition:
+                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
+                  overflow: 'hidden',
+                  height: '100%',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+                  flexDirection: 'column',
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      color: theme.palette.text.primary,
-                      fontSize: '14px',
-                      letterSpacing: '0.2px',
-                    }}
-                  >
-                    Credit Facilities
-                  </Typography>
-                </Box>
+                {/* Header Section */}
                 <Box
                   sx={{
-                    p: 0.6,
-                    background: schemeMap[1].bg,
-                    borderRadius: '4px',
                     display: 'flex',
-                    color: schemeMap[1].color,
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                   }}
                 >
-                  <IconChartBar size={18} strokeWidth={2.5} />
-                </Box>
-              </Box>
-
-              {/* Content Section */}
-              <Box sx={{  display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    flex: 1.8,
-                    bgcolor: schemeMap[1].bg,
-                    borderRadius: '4px',
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    height: '100px',
-                    minWidth: 0,
-                  }}
-                >
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight={800}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        color: theme.palette.text.primary,
+                        fontSize: '14px',
+                        letterSpacing: '0.2px',
+                      }}
+                    >
+                      Credit Facilities
+                    </Typography>
+                  </Box>
+                  <Box
                     sx={{
-                      color: theme.palette.text.primary,
-                      mb: 1,
-                      fontSize: '12px',
-                      letterSpacing: '0.1px',
-                    }}
-                  >
-                    Total Credit
-                  </Typography>
-                  <Typography
-                    fontWeight={800}
-                    sx={{
+                      p: 0.6,
+                      background: schemeMap[1].bg,
+                      borderRadius: '4px',
+                      display: 'flex',
                       color: schemeMap[1].color,
-                      fontSize: '18px',
-                      lineHeight: 1,
-                      wordBreak: 'break-word',
                     }}
                   >
-                    ₦ 100,000,000
-                  </Typography>
+                    <IconChartBar size={18} strokeWidth={2.5} />
+                  </Box>
                 </Box>
-                <Box
-                  sx={{
-                    flex: 1,
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography
-                    fontWeight={800}
-                    sx={{ color: theme.palette.text.primary, fontSize: '28px', lineHeight: 1 }}
-                  >
-                    1,000
-                  </Typography>
-                  <Typography
+
+                {/* Content Section */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box
                     sx={{
-                      fontWeight: 700,
-                      color: theme.palette.text.secondary,
-                      fontSize: '14px',
-                      mt: 0.5,
+                      flex: 1.8,
+                      bgcolor: schemeMap[1].bg,
+                      borderRadius: '4px',
+                      p: 2,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      height: '100px',
+                      minWidth: 0,
                     }}
                   >
-                    Schools
-                  </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight={800}
+                      sx={{
+                        color: theme.palette.text.primary,
+                        mb: 1,
+                        fontSize: '12px',
+                        letterSpacing: '0.1px',
+                      }}
+                    >
+                      Total Credit
+                    </Typography>
+                    <Typography
+                      fontWeight={800}
+                      sx={{
+                        color: schemeMap[1].color,
+                        fontSize: '18px',
+                        lineHeight: 1,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      ₦ 100,000,000
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      textAlign: 'center',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Typography
+                      fontWeight={800}
+                      sx={{ color: theme.palette.text.primary, fontSize: '28px', lineHeight: 1 }}
+                    >
+                      1,000
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        color: theme.palette.text.secondary,
+                        fontSize: '14px',
+                        mt: 0.5,
+                      }}
+                    >
+                      Schools
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
+              </Card>
             </Grid>
 
             {/* Plan Distribution Card */}
             <Grid size={{ xs: 12, sm: 6 }}>
-            <Card
-              sx={{
-                px: '3px',
-                py: '3px',
-                borderRadius: '14px',
-                bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-                border: '1px solid',
-                borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  borderColor: '#94a3b8',
-                  boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
-                },
-                height: '100%',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
-              }}
-            >
-              {/* Header Section */}
-              <Box
+              <Card
                 sx={{
+                  px: '3px',
+                  py: '3px',
+                  borderRadius: '14px',
+                  bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  transition:
+                    'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    borderColor: '#94a3b8',
+                    boxShadow: '0 4px 12px rgba(15, 23, 42, 0.08)',
+                  },
+                  height: '100%',
+                  overflow: 'hidden',
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+                  flexDirection: 'column',
+                  color: theme.palette.mode === 'dark' ? '#fff' : '#1E3A5F',
                 }}
               >
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      color: theme.palette.text.primary,
-                      fontSize: '14px',
-                      letterSpacing: '0.2px',
-                    }}
-                  >
-                    Plan Distribution
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
-                  >
-                    Breakdown of active subscriptions by plan type across all schools.
-                  </Typography>
-                </Box>
+                {/* Header Section */}
                 <Box
                   sx={{
-                    p: 0.6,
-                    background: schemeMap[3].bg,
-                    borderRadius: '4px',
                     display: 'flex',
-                    color: schemeMap[3].color,
-                    flexShrink: 0,
-                    cursor: 'pointer',
-                    '&:hover': { opacity: 0.85 },
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
                   }}
-                  onClick={() => setIsPlanModalOpen(true)}
                 >
-                  <IconChartBar size={18} strokeWidth={2.5} />
-                </Box>
-              </Box>
-
-              {/* Chart Section */}
-              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
-                {planSeries.length > 0 ? (
-                  <ReusablePieChart
-                    series={planSeries}
-                    colors={planColors}
-                    labels={planLabels}
-                    height={140}
-                    hideCard
-                  />
-                ) : (
-                  <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-                    <Skeleton variant="circular" width={120} height={120} />
-                    <Skeleton variant="text" width="60%" height={14} />
-                    <Skeleton variant="text" width="40%" height={14} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      sx={{
+                        fontWeight: 700,
+                        color: theme.palette.text.primary,
+                        fontSize: '14px',
+                        letterSpacing: '0.2px',
+                      }}
+                    >
+                      Plan Distribution
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: 'block', mt: 0.3, lineHeight: 1.3 }}
+                    >
+                      Breakdown of active subscriptions by plan type across all schools.
+                    </Typography>
                   </Box>
-                )}
-              </Box>
-            </Card>
+                  <Box
+                    sx={{
+                      p: 0.6,
+                      background: schemeMap[3].bg,
+                      borderRadius: '4px',
+                      display: 'flex',
+                      color: schemeMap[3].color,
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      '&:hover': { opacity: 0.85 },
+                    }}
+                    onClick={() => setIsPlanModalOpen(true)}
+                  >
+                    <IconChartBar size={18} strokeWidth={2.5} />
+                  </Box>
+                </Box>
+
+                {/* Chart Section */}
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mt: 1,
+                  }}
+                >
+                  {planSeries.length > 0 ? (
+                    <ReusablePieChart
+                      series={planSeries}
+                      colors={planColors}
+                      labels={planLabels}
+                      height={140}
+                      hideCard
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1.5,
+                      }}
+                    >
+                      <Skeleton variant="circular" width={120} height={120} />
+                      <Skeleton variant="text" width="60%" height={14} />
+                      <Skeleton variant="text" width="40%" height={14} />
+                    </Box>
+                  )}
+                </Box>
+              </Card>
             </Grid>
 
             {/* Recent Onboarding School — spans the full width beneath both
                 cards above, with its own internal scroll since this list
                 only grows over time. */}
             <Grid size={{ xs: 12 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: '14px',
-              bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
-              border: '1px solid',
-              borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-              px: "3px",
-              py: "3px",
-            }}
-          >
-            <Box sx={{ px: 1, pt: 1 }}>
-              <Typography variant="subtitle2" fontWeight={800} color="textPrimary">
-                Recent Onboarding School
-              </Typography>
-            </Box>
-            {/* Fixed height + internal scroll — this list only grows, and we
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: '14px',
+                  bgcolor: isDarkMode ? theme.palette.background.paper : '#ffffff',
+                  border: '1px solid',
+                  borderColor: isDarkMode ? 'rgba(255,255,255,0.12)' : '#E5E7EB',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                  px: '3px',
+                  py: '3px',
+                }}
+              >
+                <Box sx={{ px: 1, pt: 1 }}>
+                  <Typography variant="subtitle2" fontWeight={800} color="textPrimary">
+                    Recent Onboarding School
+                  </Typography>
+                </Box>
+                {/* Fixed height + internal scroll — this list only grows, and we
                 don't want the card itself to keep growing with it. */}
-            <TableContainer sx={{ maxHeight: 260, overflowY: 'auto' }}>
-              <Table size="small" stickyHeader>
-                <TableHead
-                  sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
-                >
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        color: theme.palette.text.secondary,
-                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
-                        width: '45%',
-                      }}
+                <TableContainer sx={{ maxHeight: 260, overflowY: 'auto' }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead
+                      sx={{ bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC' }}
                     >
-                      School
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        color: theme.palette.text.secondary,
-                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
-                      }}
-                    >
-                      Agent
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        color: theme.palette.text.secondary,
-                        bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
-                      }}
-                    >
-                      Date
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {data.recentOnboarding.length > 0 ? (
-                    data.recentOnboarding.map((row, idx) => (
-                      <TableRow
-                        key={idx}
-                        sx={{
-                          '&:nth-of-type(odd)': {
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '11px',
+                            color: theme.palette.text.secondary,
                             bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
-                          },
-                          '& td': { borderBottom: `1px solid ${theme.palette.divider}` },
-                        }}
-                      >
-                        <TableCell sx={{ whiteSpace: 'normal' }}>
-                          <Typography
-                            variant="caption"
-                            fontWeight={800}
+                            width: '45%',
+                          }}
+                        >
+                          School
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '11px',
+                            color: theme.palette.text.secondary,
+                            bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
+                          }}
+                        >
+                          Partner
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '11px',
+                            color: theme.palette.text.secondary,
+                            bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
+                          }}
+                        >
+                          Date
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {data.recentOnboarding.length > 0 ? (
+                        data.recentOnboarding.map((row, idx) => (
+                          <TableRow
+                            key={idx}
                             sx={{
-                              color: theme.palette.text.primary,
-                              fontSize: '11px',
-                              wordBreak: 'break-word',
+                              '&:nth-of-type(odd)': {
+                                bgcolor: isDarkMode ? theme.palette.background.default : '#F8FAFC',
+                              },
+                              '& td': { borderBottom: `1px solid ${theme.palette.divider}` },
                             }}
                           >
-                            {row.school}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            gap={1}
-                          >
-                            <Box>
+                            <TableCell sx={{ whiteSpace: 'normal' }}>
                               <Typography
                                 variant="caption"
                                 fontWeight={800}
                                 sx={{
                                   color: theme.palette.text.primary,
-                                  fontSize: '10px',
-                                  display: 'block',
+                                  fontSize: '11px',
+                                  wordBreak: 'break-word',
                                 }}
                               >
-                                {row.agent}
+                                {row.school}
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{ color: theme.palette.text.secondary, fontSize: '9px' }}
+                            </TableCell>
+                            <TableCell>
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                gap={1}
                               >
-                                {row.handle}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={row.created_at}
-                            size="small"
-                            sx={{
-                              height: 18,
-                              fontSize: '9px',
-                              fontWeight: 700,
-                              bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7',
-                              color: isDarkMode ? '#4ade80' : '#166534',
-                            }}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
-                        <Alert
-                          severity="info"
-                          sx={{ justifyContent: 'center', textAlign: 'center' }}
-                        >
-                          No schools onboarded yet.
-                        </Alert>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
+                                <Box>
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight={800}
+                                    sx={{
+                                      color: theme.palette.text.primary,
+                                      fontSize: '10px',
+                                      display: 'block',
+                                    }}
+                                  >
+                                    {row.agent}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ color: theme.palette.text.secondary, fontSize: '9px' }}
+                                  >
+                                    {row.handle}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.created_at}
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '9px',
+                                  fontWeight: 700,
+                                  bgcolor: isDarkMode ? 'rgba(34, 197, 94, 0.2)' : '#DCFCE7',
+                                  color: isDarkMode ? '#4ade80' : '#166534',
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ py: 2 }}>
+                            <Alert
+                              severity="info"
+                              sx={{ justifyContent: 'center', textAlign: 'center' }}
+                            >
+                              No schools onboarded yet.
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
             </Grid>
           </Grid>
         </Grid>
@@ -812,7 +837,7 @@ const OverviewTab = ({ data }) => {
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
             }}
           >
-            <Box sx={{ px: "2px" }}>
+            <Box sx={{ px: '2px' }}>
               <Typography variant="subtitle1" fontWeight={800} color="textPrimary">
                 TOP 10 AGENT BY REVENUE
               </Typography>
@@ -887,8 +912,8 @@ const OverviewTab = ({ data }) => {
           >
             <Box
               sx={{
-                px: "3px",
-                py: "3px",
+                px: '3px',
+                py: '3px',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',

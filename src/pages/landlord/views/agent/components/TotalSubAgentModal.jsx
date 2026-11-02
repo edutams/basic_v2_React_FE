@@ -150,7 +150,7 @@ const TotalSubAgentModal = ({ open, onClose, orgId, accessLevel }) => {
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 'bold' }}>S/N</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Agent Details</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Partner Details</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }} align="center">
                 Access Level
               </TableCell>

@@ -26,7 +26,7 @@ import {
   Avatar,
   MenuItem as SelectMenuItem,
   ListItemIcon,
-  Grid
+  Grid,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -96,7 +96,8 @@ const AssignmentManagement = () => {
       const params = {};
       if (customFilters.name) params.search = customFilters.name;
       if (customFilters.role && customFilters.role !== 'all') params.role = customFilters.role;
-      if (customFilters.status && customFilters.status !== 'all') params.status = customFilters.status;
+      if (customFilters.status && customFilters.status !== 'all')
+        params.status = customFilters.status;
       if (customFilters.level) params.level = customFilters.level;
 
       const res = await aclApi.getAgents(params);
@@ -197,13 +198,17 @@ const AssignmentManagement = () => {
       const params = {};
       if (appliedFilters.name) params.search = appliedFilters.name;
       if (appliedFilters.role && appliedFilters.role !== 'all') params.role = appliedFilters.role;
-      if (appliedFilters.status && appliedFilters.status !== 'all') params.status = appliedFilters.status;
+      if (appliedFilters.status && appliedFilters.status !== 'all')
+        params.status = appliedFilters.status;
 
       const res = await aclApi.exportAssignmentsExcel(params);
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      link.setAttribute(
+        'download',
+        `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -221,13 +226,17 @@ const AssignmentManagement = () => {
       const params = {};
       if (appliedFilters.name) params.search = appliedFilters.name;
       if (appliedFilters.role && appliedFilters.role !== 'all') params.role = appliedFilters.role;
-      if (appliedFilters.status && appliedFilters.status !== 'all') params.status = appliedFilters.status;
+      if (appliedFilters.status && appliedFilters.status !== 'all')
+        params.status = appliedFilters.status;
 
       const res = await aclApi.exportAssignmentsPdf(params);
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.pdf`);
+      link.setAttribute(
+        'download',
+        `landlord_agent_assignments_${new Date().toISOString().slice(0, 10)}.pdf`,
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -241,7 +250,10 @@ const AssignmentManagement = () => {
 
   const getRoleSx = (role) => {
     const rawRole = role?.toString() || '';
-    const normalizedRole = rawRole.toLowerCase().trim().replace(/[\s_]+/g, '_');
+    const normalizedRole = rawRole
+      .toLowerCase()
+      .trim()
+      .replace(/[\s_]+/g, '_');
 
     const roleStyles = {
       super_admin: {
@@ -264,12 +276,30 @@ const AssignmentManagement = () => {
 
     // Theme palette generator for ANY newly created role
     const themePalettes = [
-      { backgroundColor: (theme) => theme.palette.primary.light, color: (theme) => theme.palette.primary.dark },
-      { backgroundColor: (theme) => theme.palette.secondary.light, color: (theme) => theme.palette.secondary.dark },
-      { backgroundColor: (theme) => theme.palette.success.light, color: (theme) => theme.palette.success.dark },
-      { backgroundColor: (theme) => theme.palette.info.light, color: (theme) => theme.palette.info.dark },
-      { backgroundColor: (theme) => theme.palette.warning.light, color: (theme) => theme.palette.warning.dark },
-      { backgroundColor: (theme) => theme.palette.error.light, color: (theme) => theme.palette.error.dark },
+      {
+        backgroundColor: (theme) => theme.palette.primary.light,
+        color: (theme) => theme.palette.primary.dark,
+      },
+      {
+        backgroundColor: (theme) => theme.palette.secondary.light,
+        color: (theme) => theme.palette.secondary.dark,
+      },
+      {
+        backgroundColor: (theme) => theme.palette.success.light,
+        color: (theme) => theme.palette.success.dark,
+      },
+      {
+        backgroundColor: (theme) => theme.palette.info.light,
+        color: (theme) => theme.palette.info.dark,
+      },
+      {
+        backgroundColor: (theme) => theme.palette.warning.light,
+        color: (theme) => theme.palette.warning.dark,
+      },
+      {
+        backgroundColor: (theme) => theme.palette.error.light,
+        color: (theme) => theme.palette.error.dark,
+      },
     ];
 
     let hash = 0;
@@ -472,7 +502,9 @@ const AssignmentManagement = () => {
 
       let matchesStatus = true;
       if (appliedFilters.status && appliedFilters.status !== 'all') {
-        const uStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase();
+        const uStatus = (
+          user.status || (user.is_active === false ? 'inactive' : 'active')
+        ).toLowerCase();
         matchesStatus = uStatus === appliedFilters.status.toLowerCase();
       }
 
@@ -587,17 +619,21 @@ const AssignmentManagement = () => {
 
       <ParentCard
         title={
-          <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            flexWrap="wrap"
+            gap={1}
+          >
             <Typography variant="h5" data-tour="acl-assign-heading">
               Assign Roles/Permission to Agents
             </Typography>
             <ShowTourGuideButton />
           </Box>
         }
-               sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
-
+        sx={{ px: 0.5, py: 0, '& .MuiCardContent-root': { p: 0, pt: 0 } }}
       >
-
         <Grid container spacing={1.5} mb={3} alignItems="center">
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
@@ -622,8 +658,11 @@ const AssignmentManagement = () => {
               >
                 <SelectMenuItem value="all">All Roles</SelectMenuItem>
                 {availableRoles.map((r) => (
-                  <SelectMenuItem key={typeof r === 'object' ? (r.id || r.name) : r} value={typeof r === 'object' ? (r.name || r.id) : r}>
-                    {formatRoleName(typeof r === 'object' ? (r.name || r.role || r) : r)}
+                  <SelectMenuItem
+                    key={typeof r === 'object' ? r.id || r.name : r}
+                    value={typeof r === 'object' ? r.name || r.id : r}
+                  >
+                    {formatRoleName(typeof r === 'object' ? r.name || r.role || r : r)}
                   </SelectMenuItem>
                 ))}
               </Select>
@@ -649,11 +688,11 @@ const AssignmentManagement = () => {
           {currentUserLevel === 1 && (
             <Grid size={{ xs: 12, md: 2.5 }}>
               <FormControl fullWidth size="small">
-                <InputLabel id="level-filter-label">Agent Level</InputLabel>
+                <InputLabel id="level-filter-label">Partner Level</InputLabel>
                 <Select
                   labelId="level-filter-label"
                   value={levelFilter}
-                  label="Agent Level"
+                  label="Partner Level"
                   onChange={(e) => setLevelFilter(e.target.value)}
                 >
                   <SelectMenuItem value="">All Levels</SelectMenuItem>
@@ -668,14 +707,14 @@ const AssignmentManagement = () => {
           )}
 
           <Grid size="auto">
-            <Button variant="contained" size="small" onClick={handleSearch} >
+            <Button variant="contained" size="small" onClick={handleSearch}>
               Search
             </Button>
           </Grid>
 
           {hasFilters && (
             <Grid size="auto">
-              <Button variant="outlined" color="error" size="small" onClick={resetFilters} >
+              <Button variant="outlined" color="error" size="small" onClick={resetFilters}>
                 Clear Filters
               </Button>
             </Grid>
@@ -689,7 +728,6 @@ const AssignmentManagement = () => {
               startIcon={<ExportIcon fontSize="small" />}
               endIcon={<ArrowDropDownIcon />}
               onClick={(e) => setExportAnchorEl(e.currentTarget)}
-              
             >
               Export
             </Button>
@@ -713,12 +751,15 @@ const AssignmentManagement = () => {
         <Box sx={{ p: 0 }}>
           {/* <Paper> */}
           <TableContainer sx={{ maxHeight: 600, overflowX: 'auto' }}>
-            <Table stickyHeader sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap'  }}>
+            <Table
+              stickyHeader
+              sx={{ '& .MuiTableCell-root': { py: 0.5, px: 1 }, whiteSpace: 'nowrap' }}
+            >
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: '5%' }}>#</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>User Details</TableCell>
-                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Agent</TableCell>
+                  <TableCell sx={{ width: { xs: '18%', md: '16%' } }}>Partner</TableCell>
                   <TableCell sx={{ width: { xs: '20%', md: '18%' } }}>Assigned Role</TableCell>
                   <TableCell sx={{ width: '10%' }}>Status</TableCell>
                   <TableCell sx={{ width: { xs: '15%', md: '15%' } }}>Last Active</TableCell>
@@ -740,13 +781,25 @@ const AssignmentManagement = () => {
                   ))
                 ) : paginatedFilteredUsers.length > 0 ? (
                   paginatedFilteredUsers.map((user, index) => {
-                    const userStatus = (user.status || (user.is_active === false ? 'inactive' : 'active')).toLowerCase() === 'inactive' ? 'Inactive' : 'Active';
+                    const userStatus =
+                      (
+                        user.status || (user.is_active === false ? 'inactive' : 'active')
+                      ).toLowerCase() === 'inactive'
+                        ? 'Inactive'
+                        : 'Active';
                     const lastActiveRaw = user.last_active_at;
                     const lastActiveDate = lastActiveRaw
-                      ? new Date(lastActiveRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      ? new Date(lastActiveRaw).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
                       : 'No activity yet';
                     const lastActiveTime = lastActiveRaw
-                      ? new Date(lastActiveRaw).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                      ? new Date(lastActiveRaw).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                       : '';
 
                     return (
@@ -882,12 +935,23 @@ const AssignmentManagement = () => {
                             {can('landlord.acl.user.toggle_status') && (
                               <MenuItem
                                 onClick={() => handleToggleStatus(user)}
-                                sx={{ color: user.status?.toLowerCase() === 'active' ? 'error.main' : 'success.main' }}
+                                sx={{
+                                  color:
+                                    user.status?.toLowerCase() === 'active'
+                                      ? 'error.main'
+                                      : 'success.main',
+                                }}
                               >
                                 <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                  {user.status?.toLowerCase() === 'active' ? <IconUserOff size={18} /> : <IconUserCheck size={18} />}
+                                  {user.status?.toLowerCase() === 'active' ? (
+                                    <IconUserOff size={18} />
+                                  ) : (
+                                    <IconUserCheck size={18} />
+                                  )}
                                 </ListItemIcon>
-                                {user.status?.toLowerCase() === 'active' ? 'Deactivate User' : 'Activate User'}
+                                {user.status?.toLowerCase() === 'active'
+                                  ? 'Deactivate User'
+                                  : 'Activate User'}
                               </MenuItem>
                             )}
                           </Menu>

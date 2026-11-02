@@ -320,7 +320,7 @@ const TotalSchoolModal = ({ open, onClose, stats, organizationId }) => {
             label={
               <Stack direction="row" spacing={1} alignItems="center">
                 <IconSchool size={16} />
-                <span>Agent Performance</span>
+                <span>Partner Performance</span>
               </Stack>
             }
             value="2"
@@ -344,7 +344,7 @@ const TotalSchoolModal = ({ open, onClose, stats, organizationId }) => {
                 size="small"
                 value={agent}
                 onChange={(e) => setAgent(e.target.value)}
-                renderValue={(v) => (v === 'All' ? 'All Agents' : `Agent ${v}`)}
+                renderValue={(v) => (v === 'All' ? 'All Agents' : `Partner ${v}`)}
                 sx={{
                   '& fieldset': { border: 'none' },
                   minWidth: 140,

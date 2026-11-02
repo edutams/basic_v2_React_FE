@@ -15,9 +15,9 @@ import {
 } from '@mui/material';
 
 const permissionCategories = {
-  'Agent Management': [
-    { id: 'add_agent', label: 'Add Agent', description: 'Can create new agents' },
-    { id: 'edit_agent', label: 'Edit Agent', description: 'Can modify agent information' },
+  'Partner Management': [
+    { id: 'add_agent', label: 'Add Partner', description: 'Can create new agents' },
+    { id: 'edit_agent', label: 'Edit Partner', description: 'Can modify agent information' },
   ],
   'Package Management': [
     {
@@ -74,13 +74,13 @@ const permissionCategories = {
 const agentLevels = [
   {
     value: 'Level 1',
-    label: 'Level 1 - Basic Agent',
+    label: 'Level 1 - Basic Partner',
     description: 'Basic permissions for new agents',
     defaultPermissions: ['view_schools', 'view_users', 'view_reports'],
   },
   {
     value: 'Level 2',
-    label: 'Level 2 - Senior Agent',
+    label: 'Level 2 - Senior Partner',
     description: 'Enhanced permissions for experienced agents',
     defaultPermissions: [
       'view_schools',
@@ -94,7 +94,7 @@ const agentLevels = [
   },
   {
     value: 'Level 3',
-    label: 'Level 3 - Manager Agent',
+    label: 'Level 3 - Manager Partner',
     description: 'Full permissions for management level agents',
     defaultPermissions: [
       'create_school',
@@ -196,7 +196,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
               <InputLabel>Access Level</InputLabel>
               <Select
                 value={agentLevel}
-                label="Agent Level"
+                label="Partner Level"
                 onChange={(e) => handleAgentLevelChange(e.target.value)}
               >
                 <MenuItem value="">-- Select Level --</MenuItem>
@@ -286,10 +286,13 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
                       label={`${selectedCount}/${permissions.length}`}
                       size="small"
                       color={selectedCount > 0 ? 'primary' : 'default'}
-                    // variant={selectedCount > 0 ? 'filled' : 'outlined'}
+                      // variant={selectedCount > 0 ? 'filled' : 'outlined'}
                     />
                   </Box>
-                  <Button variant="contained" size="small" onClick={() => handleSelectAll(permissions)}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => handleSelectAll(permissions)}
                     // variant={allSelected ? 'contained' : 'outlined'}
                     color="primary"
                     sx={{ minWidth: 120 }}
@@ -372,7 +375,7 @@ const PermissionManager = ({ selectedAgent, onSave, onCancel }) => {
       <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="body2" color="textSecondary">
-            Agent Level: <strong>{agentLevel || 'Not selected'}</strong>
+            Partner Level: <strong>{agentLevel || 'Not selected'}</strong>
           </Typography>
           <Typography variant="body2" color="textSecondary">
             Total permissions selected: <strong>{selectedPermissions.length}</strong>

@@ -413,7 +413,7 @@ const CommissionWalletView = ({ pageTitle, tableTitle, emptyMessage, commissionT
         loading={subOrgsLoading}
         rows={subOrgsRows}
         columns={[
-          { key: 'organization_name', label: 'Agent' },
+          { key: 'organization_name', label: 'Partner' },
           { key: 'schools_count', label: 'Schools', align: 'right' },
           {
             key: 'commission',

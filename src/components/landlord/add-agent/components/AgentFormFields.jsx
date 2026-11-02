@@ -155,7 +155,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
       {/* Section 1: Organization Information */}
       <Grid item size={{ xs: 12 }}>
         <Typography variant="h6" fontWeight="600" color="primary" sx={{ mb: 1 }}>
-          Agent Information
+          Partner Information
         </Typography>
       </Grid>
 
@@ -163,7 +163,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
         {/* Organization Logo Column (3) */}
         <Grid size={{ xs: 12, md: 3 }}>
           <ImageUpload
-            label="Agent Logo"
+            label="Partner Logo"
             value={formik.values.organizationLogo}
             onChange={(val) => formik.setFieldValue('organizationLogo', val)}
             error={formik.touched.organizationLogo && Boolean(formik.errors.organizationLogo)}
@@ -179,7 +179,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             <Grid size={{ xs: 12, md: canEditDomain ? 6 : 12 }}>
               <TextField
                 key="organizationName"
-                label="Agent Name"
+                label="Partner Name"
                 fullWidth
                 name="organizationName"
                 value={formik.values.organizationName}
@@ -193,7 +193,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   key="organizationDomain"
-                  label="Agent Domain"
+                  label="Partner Domain"
                   placeholder="e.g. acme.com"
                   fullWidth
                   name="organizationDomain"
@@ -212,7 +212,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 key="contactDetails"
-                label="Agent Mail"
+                label="Partner Mail"
                 fullWidth
                 name="contactDetails"
                 type="email"
@@ -226,7 +226,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 key="agentPhone"
-                label="Agent Phone No:"
+                label="Partner Phone No:"
                 placeholder="08000000000"
                 fullWidth
                 name="agentPhone"
@@ -251,7 +251,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 <Select
                   name="stateFilter"
                   value={formik.values.stateFilter}
-                  label="Agent State"
+                  label="Partner State"
                   onChange={handleStateChange}
                   onBlur={formik.handleBlur}
                 >
@@ -277,7 +277,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
                 <Select
                   name="lga"
                   value={formik.values.lga}
-                  label="Agent LGA"
+                  label="Partner LGA"
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                 >
@@ -365,7 +365,7 @@ const AgentFormFields = ({ formik, canSelectColor = true, canEditDomain = true }
             <Grid size={{ xs: 12, md: canSelectColor ? 6 : 12 }}>
               <TextField
                 key="contactAddress"
-                label="Agent Address"
+                label="Partner Address"
                 fullWidth
                 name="contactAddress"
                 multiline

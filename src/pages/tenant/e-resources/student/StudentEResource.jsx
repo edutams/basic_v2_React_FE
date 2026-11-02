@@ -16,9 +16,11 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   IconActivity,
   IconBolt,
+  IconBook,
   IconBooks,
   IconBulb,
   IconCheck,
@@ -89,118 +91,195 @@ const SectionHeader = ({ icon: Icon, title, subtitle, accent = '#2563EB', accent
   </Box>
 );
 
-// Subject card — mirrors the teacher workspace's SubjectCard (tinted status
-// header + accent left border + progress block + status banner + footer
-// action) so the student and teacher lesson-note experiences read as one
-// product instead of two different styles.
-const StudentSubjectCard = ({ sub, opening, onOpen }) => {
+// Subject card — the exact same shell as the teacher workspace's SubjectCard
+// (StaffLessonNoteIndex): tinted status header with a colored subject
+// initial badge, a class/arm chip, a topic-count + status-chip row,
+// progress block, status banner, flat 2px border (no left accent), and a
+// full-width gradient footer action — so the student and teacher lesson-note
+// experiences read as one product. The teacher card's "taught by" / learner
+// rows are dropped here since a student's subject list carries no teacher
+// or roster data; the per-subject class/arm chip instead reuses the
+// student's own class/arm, which is the same for every card.
+const StudentSubjectCard = ({ sub, className, armName, opening, onOpen }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
   const noteReads = sub.report_counts?.['lesson-note'] ?? 0;
-  const videoViews = sub.report_counts?.['video-content'] ?? 0;
   const topicCount = sub.topic_count || 0;
-  const weeksCovered = (sub.lesson_contents ?? []).length;
   const percent = topicCount > 0 ? Math.min(100, Math.round((noteReads / topicCount) * 100)) : 0;
   const isComplete = percent >= 100;
   const isStarted = percent > 0;
 
-  const accentColor = isComplete ? '#2E7D32' : isStarted ? '#1565C0' : '#E67E22';
-  const headerTint = isComplete
-    ? isDark ? 'rgba(46,125,50,0.14)' : '#DCEFDC'
-    : isStarted
-      ? isDark ? 'rgba(21,101,192,0.14)' : '#DCEAFB'
-      : isDark ? 'rgba(230,126,34,0.16)' : '#FDF0E1';
   const statusLabel = isComplete ? 'Fully read' : isStarted ? 'In progress' : 'Not started';
-  const statusColor = isComplete ? 'success' : isStarted ? 'primary' : 'warning';
+  // Same trio as the teacher card's SubjectCard — keeps both lesson-note
+  // experiences on one palette instead of two different ones.
+  const accentColor = isComplete ? '#059669' : isStarted ? '#7C3AED' : '#F59E0B';
+
+  const headerTint = isComplete
+    ? isDark
+      ? 'rgba(5,150,105,0.16)'
+      : '#D1FAE5'
+    : isStarted
+      ? isDark
+        ? 'rgba(124,58,237,0.16)'
+        : '#EDE9FE'
+      : isDark
+        ? 'rgba(245,158,11,0.16)'
+        : '#FEF3C7';
+
+  const classLabel = [className, armName].filter(Boolean).join(' - ');
 
   return (
     <Paper
       elevation={0}
-      onClick={() => onOpen(sub)}
       sx={{
-        borderRadius: '14px',
-        border: '1px solid',
-        borderLeft: '4px solid',
+        borderRadius: '16px',
+        border: '2px solid',
         borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#e2e8f0',
-        borderLeftColor: accentColor,
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        cursor: 'pointer',
-        boxShadow: isDark ? '0 1px 4px rgba(0,0,0,0.35)' : '0 1px 3px rgba(0,0,0,0.04)',
+        boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.45)' : '0 4px 14px rgba(15,23,42,0.08)',
         transition: 'transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: isDark ? '0 4px 16px rgba(0,0,0,0.4)' : '0 8px 20px rgba(15,23,42,0.1)',
+          transform: 'translateY(-3px)',
+          boxShadow: isDark ? '0 6px 20px rgba(0,0,0,0.45)' : `0 10px 24px ${accentColor}26`,
+          borderColor: accentColor,
         },
       }}
     >
-      {/* ── Top header — tinted by reading status ── */}
+      {/* ── Top Header Section — gradient tint by reading status ── */}
       <Box
         sx={{
           p: 1.5,
           backgroundColor: headerTint,
+          backgroundImage: `linear-gradient(135deg, ${headerTint} 0%, transparent 115%)`,
           borderBottom: '1px solid',
           borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0,0,0,0.06)',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            mb: 1,
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                flexShrink: 0,
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: accentColor,
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: '1rem',
+                boxShadow: `0 4px 10px ${accentColor}4d`,
+              }}
+            >
+              {String(sub.subject_name || '?')
+                .charAt(0)
+                .toUpperCase()}
+            </Box>
+            <Typography
+              variant="subtitle1"
+              fontWeight={700}
+              color="text.primary"
+              sx={{
+                fontSize: '0.925rem',
+                lineHeight: 1.25,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0,
+              }}
+              title={sub.subject_name}
+            >
+              {sub.subject_name}
+            </Typography>
+          </Box>
+          {classLabel && (
+            <Chip
+              label={classLabel}
+              size="small"
+              sx={{
+                fontWeight: 600,
+                fontSize: '11px',
+                height: '22px',
+                flexShrink: 0,
+                backgroundColor: isDark ? theme.palette.background.paper : '#FFFFFF',
+                border: '1px solid',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#D0D5DD',
+                color: theme.palette.text.primary,
+              }}
+            />
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 0.75,
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={0.5} sx={{ color: 'text.secondary' }}>
+            <IconBook size={13} />
+            <Typography variant="caption" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+              <strong>{topicCount}</strong> topics
+            </Typography>
+          </Stack>
           <Chip
-            label={`${weeksCovered} week${weeksCovered === 1 ? '' : 's'}`}
+            label={statusLabel}
             size="small"
+            icon={
+              isComplete ? (
+                <IconCheck size={12} />
+              ) : isStarted ? (
+                <IconProgressCheck size={12} />
+              ) : undefined
+            }
             sx={{
               fontWeight: 600,
               fontSize: '11px',
               height: '22px',
-              backgroundColor: isDark ? theme.palette.background.paper : '#FFFFFF',
-              border: '1px solid',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#D0D5DD',
-              color: theme.palette.text.primary,
+              bgcolor: alpha(accentColor, isDark ? 0.22 : 0.14),
+              color: accentColor,
+              '& .MuiChip-icon': { color: accentColor },
             }}
-          />
-        </Box>
-
-        <Typography
-          variant="subtitle1"
-          fontWeight={700}
-          color="text.primary"
-          sx={{
-            mb: 1,
-            fontSize: '0.925rem',
-            lineHeight: 1.25,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={sub.subject_name}
-        >
-          {sub.subject_name}
-        </Typography>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 0.75 }}>
-          <Typography variant="caption" fontWeight={500} color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-            Total topics: <strong>{topicCount}</strong>
-          </Typography>
-          <Chip
-            label={statusLabel}
-            size="small"
-            color={statusColor}
-            icon={isComplete ? <IconCheck size={12} /> : isStarted ? <IconProgressCheck size={12} /> : undefined}
-            sx={{ fontWeight: 600, fontSize: '11px', height: '22px' }}
           />
         </Box>
       </Box>
 
-      {/* ── Content — progress + secondary stat + status banner ── */}
-      <Box sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {/* ── Content Section with Progress Bar ───────────────── */}
+      <Box sx={{ p: 1.5, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1.75 }}>
         <Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-            <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}
+          >
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.primary"
+              sx={{ fontSize: '0.775rem' }}
+            >
               Lesson Note Progress
             </Typography>
-            <Typography variant="caption" fontWeight={700} color="text.primary" sx={{ fontSize: '0.775rem' }}>
+            <Typography
+              variant="caption"
+              fontWeight={700}
+              sx={{ fontSize: '0.775rem', color: accentColor }}
+            >
               {percent}%
             </Typography>
           </Box>
@@ -208,12 +287,12 @@ const StudentSubjectCard = ({ sub, opening, onOpen }) => {
             variant="determinate"
             value={percent}
             sx={{
-              height: 6,
-              borderRadius: 3,
+              height: 7,
+              borderRadius: 4,
               backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#E5E7EB',
               '& .MuiLinearProgress-bar': {
-                backgroundColor: isStarted ? '#1B7A16' : '#CCCCCC',
-                borderRadius: 3,
+                backgroundColor: accentColor,
+                borderRadius: 4,
               },
             }}
           />
@@ -222,39 +301,49 @@ const StudentSubjectCard = ({ sub, opening, onOpen }) => {
             color="text.secondary"
             sx={{ display: 'block', textAlign: 'center', mt: 0.5, fontSize: '0.7rem' }}
           >
-            {noteReads} of {topicCount} topics read
+            {noteReads} out of {topicCount} topics read
           </Typography>
         </Box>
 
-        <Stack direction="row" spacing={0.75} alignItems="center" justifyContent="center">
-          <IconPlayerPlay size={13} color="#64748B" />
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-            {videoViews} video view{videoViews === 1 ? '' : 's'}
-          </Typography>
-        </Stack>
-
+        {/* Reading Status Indicator Banner */}
         <Box
           sx={{
-            py: 0.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0.75,
+            py: 0.6,
             px: 1,
-            borderRadius: '4px',
+            borderRadius: '8px',
             backgroundColor: isComplete
-              ? isDark ? 'rgba(76, 175, 80, 0.15)' : '#EAF4D8'
+              ? isDark
+                ? 'rgba(76, 175, 80, 0.15)'
+                : '#EAF4D8'
               : isStarted
-                ? isDark ? 'rgba(33, 150, 243, 0.15)' : '#D7EEFD'
-                : isDark ? 'rgba(230, 126, 34, 0.15)' : '#FDF0E1',
-            textAlign: 'center',
+                ? isDark
+                  ? 'rgba(33, 150, 243, 0.15)'
+                  : '#D7EEFD'
+                : isDark
+                  ? 'rgba(230, 126, 34, 0.15)'
+                  : '#FDF0E1',
             mt: 'auto',
           }}
         >
-          <Typography variant="caption" fontWeight={600} color="text.primary" sx={{ fontSize: '0.725rem' }}>
-            Reading status:{' '}
+          <Box
+            sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: accentColor, flexShrink: 0 }}
+          />
+          <Typography
+            variant="caption"
+            fontWeight={600}
+            color="text.primary"
+            sx={{ fontSize: '0.725rem' }}
+          >
+            Reading Status:{' '}
             <Typography
               component="span"
               variant="caption"
               fontWeight={700}
-              color={isComplete ? 'success.main' : isStarted ? 'primary.main' : 'warning.main'}
-              sx={{ fontSize: '0.725rem' }}
+              sx={{ fontSize: '0.725rem', color: accentColor }}
             >
               {statusLabel}
             </Typography>
@@ -262,21 +351,38 @@ const StudentSubjectCard = ({ sub, opening, onOpen }) => {
         </Box>
       </Box>
 
-      {/* ── Footer action — takes the student straight to the subject's
-          Lesson Content page (note, progress & chat), not an inline list ── */}
-      <Box sx={{ p: 1.25, pt: 1, borderTop: '1px solid', borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6' }}>
+      {/* ── Action Footer ──────────────────────────────────── */}
+      <Box
+        sx={{
+          p: 1.25,
+          pt: 1,
+          borderTop: '1px solid',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6',
+        }}
+      >
         <Button
           fullWidth
           variant="contained"
-          color="primary"
           size="small"
           disabled={opening}
-          startIcon={opening ? <CircularProgress size={13} color="inherit" /> : <IconBooks size={14} />}
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen(sub);
+          startIcon={
+            opening ? <CircularProgress size={13} color="inherit" /> : <IconBooks size={14} />
+          }
+          onClick={() => onOpen(sub)}
+          sx={{
+            fontWeight: 600,
+            fontSize: '11px',
+            textTransform: 'none',
+            py: 0.6,
+            borderRadius: '8px',
+            color: '#fff',
+            backgroundImage: `linear-gradient(135deg, ${accentColor} 0%, ${alpha(accentColor, 0.8)} 100%)`,
+            boxShadow: `0 4px 10px ${alpha(accentColor, 0.35)}`,
+            '&:hover': {
+              backgroundImage: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor} 100%)`,
+              boxShadow: `0 6px 14px ${alpha(accentColor, 0.45)}`,
+            },
           }}
-          sx={{ fontWeight: 600, fontSize: '11px', textTransform: 'none', py: 0.5, borderRadius: '5px' }}
         >
           {opening ? 'Opening…' : 'Open Lesson Content'}
         </Button>
@@ -461,62 +567,10 @@ const StudentEResource = () => {
 
       {hub?.userStatus === 'Student' && (
         <>
-          {/* ── Hero header ──────────────────────────────────────────── */}
-          <Paper
-            elevation={0}
-            sx={{
-              mb: 2,
-              borderRadius: '14px',
-              overflow: 'hidden',
-              border: '1px solid',
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#BFDBFE',
-              background: isDark
-                ? 'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(37,99,235,0.1) 100%)'
-                : 'linear-gradient(135deg, #ffffff 0%, #EFF6FF 100%)',
-            }}
-          >
-            <Box sx={{ height: 3, background: 'linear-gradient(90deg, #2563EB, #2563EB88)' }} />
-            <Box sx={{ p: 2 }}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid size={{ xs: 12, md: 7 }}>
-                  <Stack direction="row" spacing={1.5} alignItems="center">
-                    <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(37,99,235,0.12)', color: '#2563EB' }}>
-                      <IconSchool size={21} />
-                    </Avatar>
-                    <Box>
-                      <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
-                        <Typography sx={{ fontWeight: 800, fontSize: 15.5 }}>{hub.className}</Typography>
-                        {hub.armName && (
-                          <Chip label={hub.armName} size="small" sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1E40AF' }} />
-                        )}
-                        {hub.progCode && (
-                          <Chip label={hub.progCode} size="small" variant="outlined" sx={{ fontSize: 10.5, fontWeight: 700 }} />
-                        )}
-                      </Stack>
-                      <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.25 }}>
-                        {subjects.length} registered subject{subjects.length === 1 ? '' : 's'} for the active term
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Grid>
-                <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', justifyContent: { md: 'flex-end' } }}>
-                  <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" startIcon={<IconRefresh size={16} />} onClick={loadHub} sx={{ borderRadius: '8px', fontWeight: 600 }}>
-                      Refresh
-                    </Button>
-                    <Button variant="contained" startIcon={<IconActivity size={16} />} onClick={() => navigate(PROGRESS_ROUTE)} sx={{ borderRadius: '8px', fontWeight: 700 }}>
-                      My Progress
-                    </Button>
-                  </Stack>
-                </Grid>
-              </Grid>
-            </Box>
-          </Paper>
-
           {/* ── Reading intelligence ─────────────────────────────────── */}
           <Grid container spacing={2} sx={{ mb: 2.5 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5, height: '100%', boxSizing: 'border-box' }}>
                 <Avatar sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#DBEAFE', color: '#2563EB' }}>
                   <IconBooks size={20} />
                 </Avatar>
@@ -527,7 +581,7 @@ const StudentEResource = () => {
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5, height: '100%', boxSizing: 'border-box' }}>
                 <Avatar sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#DCFCE7', color: '#16A34A' }}>
                   <IconFileText size={20} />
                 </Avatar>
@@ -538,7 +592,7 @@ const StudentEResource = () => {
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5, height: '100%', boxSizing: 'border-box' }}>
                 <Avatar sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#F3E8FF', color: '#9333EA' }}>
                   <IconPlayerPlay size={20} />
                 </Avatar>
@@ -549,16 +603,15 @@ const StudentEResource = () => {
               </Box>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff' }}>
-                <Stack direction="row" alignItems="center" gap={1.5} sx={{ mb: pageStats.totalSubjects ? 1 : 0 }}>
-                  <Avatar sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#FFEDD5', color: '#EA580C' }}>
-                    <IconActivity size={20} />
-                  </Avatar>
-                  <Box>
-                    <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#EA580C', lineHeight: 1 }}>{pageStats.avgProgress}%</Typography>
-                    <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>Overall Reading Progress</Typography>
-                  </Box>
-                </Stack>
+              <Box sx={{ ...cardSx(isDark), p: 1.5, bgcolor: isDark ? 'background.paper' : '#fff', display: 'flex', alignItems: 'center', gap: 1.5, height: '100%', boxSizing: 'border-box' }}>
+                <Avatar sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#FFEDD5', color: '#EA580C' }}>
+                  <IconActivity size={20} />
+                </Avatar>
+                <Box>
+                  <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#EA580C', lineHeight: 1 }}>{pageStats.avgProgress}%</Typography>
+                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: 'text.secondary' }}>Overall Reading Progress</Typography>
+                </Box>
+                {/* Progress bar commented out
                 {pageStats.totalSubjects > 0 && (
                   <LinearProgress
                     variant="determinate"
@@ -571,6 +624,7 @@ const StudentEResource = () => {
                     }}
                   />
                 )}
+                */}
               </Box>
             </Grid>
           </Grid>
@@ -593,6 +647,8 @@ const StudentEResource = () => {
                         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sub.subject_id}>
                           <StudentSubjectCard
                             sub={sub}
+                            className={hub.className}
+                            armName={hub.armName}
                             opening={openingSubjectId === sub.subject_id}
                             onOpen={openSubject}
                           />

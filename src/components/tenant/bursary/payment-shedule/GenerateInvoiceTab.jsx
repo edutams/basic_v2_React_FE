@@ -317,6 +317,12 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
   }, [classes]);
 
   const categories = overview?.categories || [];
+  // Every active category, not just ones with eligible students in the
+  // current class scope — used for the Category *filter* dropdown so a
+  // category with nobody currently assigned to it can still be selected
+  // (`categories` above stays scoped-with-students; it drives the table's
+  // own columns, where an all-zero column would be noise).
+  const allCategories = overview?.all_categories || [];
   const items = overview?.items || [];
   const footer = overview?.footer || { categories: {}, grand_total: 0 };
   // How many payment items (rows) have at least one unpriced/partial cell —
@@ -736,7 +742,7 @@ const GenerateInvoiceTab = ({ showSnackbar, selectedClass, setSelectedClass, onR
                 displayEmpty
               >
                 <MenuItem value="">All Categories</MenuItem>
-                {categories.map((cat) => (
+                {allCategories.map((cat) => (
                   <MenuItem key={cat.id} value={String(cat.id)}>
                     {cat.name}
                   </MenuItem>

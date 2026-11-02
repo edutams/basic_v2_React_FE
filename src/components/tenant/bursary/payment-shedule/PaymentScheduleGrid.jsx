@@ -108,11 +108,15 @@ const ScheduleCell = ({
   // installment" here, same as if none were set at all — it's the same
   // thing, so there's no need to call it out as its own selected value.
   const currentInstallmentId = cat.bursary_installment_id || '';
-  const normalizedInstallmentId = defaultInstallmentIds.has(currentInstallmentId) ? '' : currentInstallmentId;
-  const installmentValue = pending?.installmentId !== undefined ? pending.installmentId : normalizedInstallmentId;
+  const normalizedInstallmentId = defaultInstallmentIds.has(currentInstallmentId)
+    ? ''
+    : currentInstallmentId;
+  const installmentValue =
+    pending?.installmentId !== undefined ? pending.installmentId : normalizedInstallmentId;
   const isDirty =
     (pending?.amount !== undefined && String(pending.amount) !== String(cat.amount || '')) ||
-    (pending?.installmentId !== undefined && String(pending.installmentId) !== String(normalizedInstallmentId));
+    (pending?.installmentId !== undefined &&
+      String(pending.installmentId) !== String(normalizedInstallmentId));
   // Hide the picker entirely when there's genuinely nothing else to pick —
   // only the 100% default in play, everywhere. It still shows for a
   // category that's already pinned to a plan since deactivated, so that
@@ -160,7 +164,12 @@ const ScheduleCell = ({
                 '50%': { boxShadow: '0 0 0 4px rgba(237,108,2,0)' },
               },
               animation: isDirty ? 'pulseDirty 1.3s ease-in-out infinite' : 'none',
-              '& input::placeholder': { color: 'error.main', opacity: 1, fontWeight: 600, fontSize: '0.78rem' },
+              '& input::placeholder': {
+                color: 'error.main',
+                opacity: 1,
+                fontWeight: 600,
+                fontSize: '0.78rem',
+              },
               '& .MuiOutlinedInput-root': {
                 bgcolor: isInactive
                   ? 'rgba(220,38,38,0.06)'
@@ -402,14 +411,22 @@ const PaymentScheduleGrid = ({
       setLoadingSchedules(true);
       // No pay_option passed — combines Compulsory + Optional, sorted
       // compulsory-first by the backend.
-      const data = await fetchPaymentSchedules(sessionId, activeTermId, classId, undefined, payType, search);
+      const data = await fetchPaymentSchedules(
+        sessionId,
+        activeTermId,
+        classId,
+        undefined,
+        payType,
+        search,
+      );
 
       if (data?.data && Array.isArray(data.data)) {
         const transformed = data.data.map((paymentName) => {
           const scheduledCategories =
             paymentName.payschedules?.map((schedule) => ({
               id: schedule.bursary_payment_category_id,
-              name: schedule.paycategory?.name || `Category ${schedule.bursary_payment_category_id}`,
+              name:
+                schedule.paycategory?.name || `Category ${schedule.bursary_payment_category_id}`,
               amount: schedule.amount || 0,
               schedule_id: schedule.id,
               bursary_installment_id: schedule.bursary_installment_id,
@@ -481,7 +498,9 @@ const PaymentScheduleGrid = ({
     setScheduleData((prev) =>
       prev.map((row) => {
         if (row.payment_name.id !== paymentNameId) return row;
-        const categories = row.categories.map((c) => (c.id === categoryId ? { ...c, ...patch } : c));
+        const categories = row.categories.map((c) =>
+          c.id === categoryId ? { ...c, ...patch } : c,
+        );
         return recomputeRowFlags({ ...row, categories });
       }),
     );
@@ -635,7 +654,10 @@ const PaymentScheduleGrid = ({
       if (categoryActionDialog.action === 'delete') {
         const response = await deletePaymentSchedule(categoryActionDialog.categoryData.schedule_id);
         if (response.success) {
-          showSnackbar?.(`${categoryActionDialog.categoryData.name} removed successfully`, 'success');
+          showSnackbar?.(
+            `${categoryActionDialog.categoryData.name} removed successfully`,
+            'success',
+          );
           patchCategoryLocally(paymentNameId, categoryId, {
             schedule_id: null,
             amount: 0,
@@ -720,7 +742,10 @@ const PaymentScheduleGrid = ({
         showSnackbar?.(response.message || 'Failed to delete payment item schedule', 'error');
       }
     } catch (err) {
-      showSnackbar?.(err.response?.data?.message || 'Failed to delete payment item schedule', 'error');
+      showSnackbar?.(
+        err.response?.data?.message || 'Failed to delete payment item schedule',
+        'error',
+      );
     } finally {
       setProcessingAction(false);
       setDeleteDialog({ open: false, schedule: null });
@@ -813,12 +838,17 @@ const PaymentScheduleGrid = ({
     }
   };
 
-  const paginatedSchedules = scheduleData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedSchedules = scheduleData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  );
   const hasDirty = dirtyPaymentNameIds.length > 0;
   const pageCount = Math.max(1, Math.ceil(scheduleData.length / rowsPerPage));
   const showingFrom = scheduleData.length === 0 ? 0 : page * rowsPerPage + 1;
   const showingTo = Math.min((page + 1) * rowsPerPage, scheduleData.length);
-  const bulkCategoryLabel = allCategories.find((c) => String(c.id) === String(bulkCategoryId))?.name;
+  const bulkCategoryLabel = allCategories.find(
+    (c) => String(c.id) === String(bulkCategoryId),
+  )?.name;
 
   return (
     <Stack spacing={2}>
@@ -987,7 +1017,18 @@ const PaymentScheduleGrid = ({
                 // even before the data arrives.
                 Array.from({ length: 4 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', width: 40, minWidth: 40, maxWidth: 40, boxSizing: 'border-box' }}>
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        width: 40,
+                        minWidth: 40,
+                        maxWidth: 40,
+                        boxSizing: 'border-box',
+                      }}
+                    >
                       <Skeleton variant="text" width={16} />
                     </TableCell>
                     <TableCell
@@ -1003,7 +1044,12 @@ const PaymentScheduleGrid = ({
                       <Skeleton variant="text" width={120} height={22} />
                     </TableCell>
                     <TableCell>
-                      <Skeleton variant="rounded" width={78} height={22} sx={{ borderRadius: '999px' }} />
+                      <Skeleton
+                        variant="rounded"
+                        width={78}
+                        height={22}
+                        sx={{ borderRadius: '999px' }}
+                      />
                     </TableCell>
                     {allCategories.map((cat) => (
                       <TableCell key={cat.id}>
@@ -1029,7 +1075,18 @@ const PaymentScheduleGrid = ({
               ) : (
                 paginatedSchedules.map((schedule, index) => (
                   <TableRow key={schedule.payment_name.id} hover>
-                    <TableCell sx={{ position: 'sticky', left: 0, zIndex: 2, bgcolor: 'background.paper', width: 40, minWidth: 40, maxWidth: 40, boxSizing: 'border-box' }}>
+                    <TableCell
+                      sx={{
+                        position: 'sticky',
+                        left: 0,
+                        zIndex: 2,
+                        bgcolor: 'background.paper',
+                        width: 40,
+                        minWidth: 40,
+                        maxWidth: 40,
+                        boxSizing: 'border-box',
+                      }}
+                    >
                       {page * rowsPerPage + index + 1}
                     </TableCell>
                     <TableCell
@@ -1047,8 +1104,8 @@ const PaymentScheduleGrid = ({
                       </Typography>
                       {schedule.missingCount > 0 && (
                         <Typography variant="caption" color="error.main" display="block">
-                          {schedule.missingCount} categor{schedule.missingCount === 1 ? 'y' : 'ies'} missing a
-                          price
+                          {schedule.missingCount} categor{schedule.missingCount === 1 ? 'y' : 'ies'}{' '}
+                          missing a price
                         </Typography>
                       )}
                     </TableCell>
@@ -1062,7 +1119,9 @@ const PaymentScheduleGrid = ({
                           pending={pendingEdits[schedule.payment_name.id]?.[cat.id]}
                           installments={installments}
                           defaultInstallmentIds={defaultInstallmentIds}
-                          onAmountChange={(val) => handleAmountChange(schedule.payment_name.id, cat.id, val)}
+                          onAmountChange={(val) =>
+                            handleAmountChange(schedule.payment_name.id, cat.id, val)
+                          }
                           onInstallmentChange={(val) =>
                             handleInstallmentChange(schedule.payment_name.id, cat.id, val)
                           }
@@ -1136,7 +1195,9 @@ const PaymentScheduleGrid = ({
       <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
         <Tooltip
           title={
-            selectedRow?.hasInvoices ? 'Cannot change: one or more categories have attached invoices' : ''
+            selectedRow?.hasInvoices
+              ? 'Cannot change: one or more categories have attached invoices'
+              : ''
           }
           placement="left"
         >
@@ -1144,13 +1205,17 @@ const PaymentScheduleGrid = ({
             <MenuOption onClick={handleOpenPayOptionDialog} disabled={selectedRow?.hasInvoices}>
               <SyncAltIcon sx={{ fontSize: 18, mr: 1 }} />
               Mark as{' '}
-              {String(selectedRow?.pay_option).toLowerCase() === 'optional' ? 'Compulsory' : 'Optional'}
+              {String(selectedRow?.pay_option).toLowerCase() === 'optional'
+                ? 'Compulsory'
+                : 'Optional'}
             </MenuOption>
           </span>
         </Tooltip>
         <Tooltip
           title={
-            selectedRow?.hasInvoices ? 'Cannot delete: one or more categories have attached invoices' : ''
+            selectedRow?.hasInvoices
+              ? 'Cannot delete: one or more categories have attached invoices'
+              : ''
           }
           placement="left"
         >
@@ -1198,8 +1263,8 @@ const PaymentScheduleGrid = ({
       >
         <Typography variant="body2">
           Mark <strong>{payOptionDialog.schedule?.payment_name?.name}</strong> as{' '}
-          <strong>{payOptionDialog.nextValue === 'optional' ? 'Optional' : 'Compulsory'}</strong>? This
-          changes how it's treated when generating invoices for every class.
+          <strong>{payOptionDialog.nextValue === 'optional' ? 'Optional' : 'Compulsory'}</strong>?
+          This changes how it's treated when generating invoices for every class.
         </Typography>
       </ConfirmDialog>
 
@@ -1213,8 +1278,9 @@ const PaymentScheduleGrid = ({
         onClose={() => setSaveConfirmOpen(false)}
       >
         <Typography variant="body2">
-          This will save your price/installment changes for <strong>{dirtyPaymentNameIds.length}</strong>{' '}
-          payment item{dirtyPaymentNameIds.length === 1 ? '' : 's'} across their categories. Continue?
+          This will save your price/installment changes for{' '}
+          <strong>{dirtyPaymentNameIds.length}</strong> payment item
+          {dirtyPaymentNameIds.length === 1 ? '' : 's'} across their categories. Continue?
         </Typography>
       </ConfirmDialog>
 
@@ -1226,7 +1292,9 @@ const PaymentScheduleGrid = ({
         fullWidth
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
-          {categoryActionDialog.action === 'delete' ? 'Remove Category Price' : 'Toggle Category Status'}
+          {categoryActionDialog.action === 'delete'
+            ? 'Remove Category Price'
+            : 'Toggle Category Status'}
         </DialogTitle>
         <DialogContent>
           {categoryActionDialog.action === 'delete' && (
@@ -1262,9 +1330,9 @@ const PaymentScheduleGrid = ({
                 <>
                   <Alert severity="warning" sx={{ mt: 2, mb: 1 }}>
                     {paidStudents.data.students.length} student(s) have already paid a total of{' '}
-                    <strong>₦{Number(paidStudents.data.total_paid).toLocaleString()}</strong> against
-                    this item. Deactivating it will <strong>not</strong> touch their payments or refund
-                    anything.
+                    <strong>₦{Number(paidStudents.data.total_paid).toLocaleString()}</strong>{' '}
+                    against this item. Deactivating it will <strong>not</strong> touch their
+                    payments or refund anything.
                   </Alert>
                   <TableContainer
                     sx={{
@@ -1368,7 +1436,13 @@ const PaymentScheduleGrid = ({
             InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
           />
           <Box>
-            <Typography variant="caption" fontWeight={600} color="text.secondary" display="block" mb={0.5}>
+            <Typography
+              variant="caption"
+              fontWeight={600}
+              color="text.secondary"
+              display="block"
+              mb={0.5}
+            >
               Apply to
             </Typography>
             <Stack sx={{ maxHeight: 220, overflowY: 'auto' }}>
@@ -1396,7 +1470,9 @@ const PaymentScheduleGrid = ({
           <Button
             variant="contained"
             onClick={() => setBulkConfirmOpen(true)}
-            disabled={bulkSaving || !bulkCategoryId || !bulkAmount || bulkSelectedItems.length === 0}
+            disabled={
+              bulkSaving || !bulkCategoryId || !bulkAmount || bulkSelectedItems.length === 0
+            }
           >
             {bulkSaving ? <CircularProgress size={18} sx={{ color: 'inherit' }} /> : 'Apply'}
           </Button>
@@ -1413,8 +1489,8 @@ const PaymentScheduleGrid = ({
       >
         <Typography variant="body2">
           This will set <strong>₦{Number(bulkAmount || 0).toLocaleString()}</strong> for{' '}
-          <strong>{bulkCategoryLabel}</strong> across <strong>{bulkSelectedItems.length}</strong> payment
-          item{bulkSelectedItems.length === 1 ? '' : 's'}. Continue?
+          <strong>{bulkCategoryLabel}</strong> across <strong>{bulkSelectedItems.length}</strong>{' '}
+          payment item{bulkSelectedItems.length === 1 ? '' : 's'}. Continue?
         </Typography>
       </ConfirmDialog>
     </Stack>

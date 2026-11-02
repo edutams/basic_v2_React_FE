@@ -132,7 +132,7 @@ const ProfileHeader = ({ profile, onManageSchools, onManageAgent }) => {
             },
           }}
         >
-          Manage Agent
+          Manage Partner
         </Button>
       </Stack>
     </Card>

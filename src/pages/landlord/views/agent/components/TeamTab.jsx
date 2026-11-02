@@ -91,7 +91,7 @@ const ActionMenuCell = ({
             <ListItemIcon>
               <IconLogin size={18} />
             </ListItemIcon>
-            <ListItemText primary="Login As Agent" />
+            <ListItemText primary="Login As Partner" />
           </MenuItem>
         ) : (
           // When not viewing profile, show all menu items
@@ -116,7 +116,7 @@ const ActionMenuCell = ({
               <ListItemIcon>
                 <IconLogin size={18} />
               </ListItemIcon>
-              <ListItemText primary="Login As Agent" />
+              <ListItemText primary="Login As Partner" />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -127,7 +127,7 @@ const ActionMenuCell = ({
               <ListItemIcon>
                 <IconEdit size={18} />
               </ListItemIcon>
-              <ListItemText primary="Update Agent Info" />
+              <ListItemText primary="Update Partner Info" />
             </MenuItem>
             {can('landlord.commission.manage') && (
               <MenuItem
@@ -168,7 +168,7 @@ const ActionMenuCell = ({
                   <ListItemIcon sx={{ color: 'error.main' }}>
                     <DeleteIcon sx={{ fontSize: 18 }} />
                   </ListItemIcon>
-                  <ListItemText primary="Delete Agent" />
+                  <ListItemText primary="Delete Partner" />
                 </MenuItem>
               );
 
@@ -244,7 +244,7 @@ const TeamTab = ({
     try {
       const res = await agentApi.deleteOrganization(agentToDelete.id);
       if (res.status) {
-        notify.success('Agent deleted successfully!');
+        notify.success('Partner deleted successfully!');
         setReloadKey((prev) => prev + 1);
       } else {
         notify.error(res.message || 'Failed to delete agent');
@@ -468,7 +468,7 @@ const TeamTab = ({
             access_level >= 5). */}
         {!isViewingProfile && !hideAddButton && userAccessLevel < 5 && (
           <Button variant="contained" size="small" startIcon={<IconUsers />} onClick={onAddAgent}>
-            Add New Agent
+            Add New Partner
           </Button>
         )}
       </Stack>
@@ -487,10 +487,10 @@ const TeamTab = ({
         {getAvailableLevels().length > 0 && (
           <Grid size={{ xs: 12, md: 3 }}>
             <FormControl fullWidth size="small">
-              <InputLabel>Agent Level</InputLabel>
+              <InputLabel>Partner Level</InputLabel>
               <Select
                 value={agentLevel}
-                label="Agent Level"
+                label="Partner Level"
                 onChange={(e) => setAgentLevel(e.target.value)}
               >
                 <MenuItem value="">All Levels</MenuItem>
@@ -532,7 +532,7 @@ const TeamTab = ({
                 <Typography variant="h6">S/N</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Agent Details</Typography>
+                <Typography variant="h6">Partner Details</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Admin Details</Typography>
@@ -541,7 +541,7 @@ const TeamTab = ({
                 <Typography variant="h6">Access Level</Typography>
               </TableCell>
               <TableCell>
-                <Typography variant="h6">Sub Agents</Typography>
+                <Typography variant="h6">Sub Partners</Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="h6">Total School</Typography>

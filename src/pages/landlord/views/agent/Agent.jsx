@@ -88,7 +88,7 @@ const BCrumb = [
     title: 'Home',
   },
   {
-    title: 'Agent',
+    title: 'Partner',
   },
 ];
 
@@ -170,7 +170,7 @@ const ActionMenuCell = ({
           <ListItemIcon>
             <IconEye size={18} />
           </ListItemIcon>
-          <ListItemText primary="View Agent Profile" />
+          <ListItemText primary="View Partner Profile" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -181,7 +181,7 @@ const ActionMenuCell = ({
           <ListItemIcon>
             <IconLogin size={18} />
           </ListItemIcon>
-          <ListItemText primary="Login As Agent" />
+          <ListItemText primary="Login As Partner" />
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -192,7 +192,7 @@ const ActionMenuCell = ({
           <ListItemIcon>
             <IconEdit size={18} />
           </ListItemIcon>
-          <ListItemText primary="Update Agent Info" />
+          <ListItemText primary="Update Partner Info" />
         </MenuItem>
         {can('landlord.commission.manage') && (
           <MenuItem
@@ -259,7 +259,7 @@ const ActionMenuCell = ({
               <ListItemIcon sx={{ color: 'error.main' }}>
                 <DeleteIcon sx={{ fontSize: 18 }} />
               </ListItemIcon>
-              <ListItemText primary="Delete Agent" />
+              <ListItemText primary="Delete Partner" />
             </MenuItem>
           );
 
@@ -267,7 +267,7 @@ const ActionMenuCell = ({
           // wrapping span to still receive hover — bare disabled elements
           // don't fire mouse events for MUI's Tooltip to anchor to.
           return hasSchools ? (
-            <Tooltip title="This agent already has schools attached — remove them first." placement="left">
+            <Tooltip title="This partner already has schools attached — remove them first." placement="left">
               <span>{deleteItem}</span>
             </Tooltip>
           ) : (
@@ -627,13 +627,13 @@ const Agent = () => {
     () => [
       {
         key: 'search',
-        label: 'Agent Name',
+        label: 'Partner Name',
         type: 'text',
-        placeholder: 'Search by agent name…',
+        placeholder: 'Search by partner name…',
       },
       {
         key: 'agentLevel',
-        label: 'Agent Level',
+        label: 'Partner Level',
         type: 'select',
         options: [
           // { value: '1', label: 'Level 1' },
@@ -683,14 +683,14 @@ const Agent = () => {
   }, [data]);
 
   const emptyState = useTableEmptyState(filteredData, hasActiveFilters, !!search, search, {
-    defaultMessage: 'No agents found',
+    defaultMessage: 'No partners found',
     defaultDescription:
-      "No agents have been registered yet. Click 'Register Agent' to add your first agent.",
-    filterMessage: 'No agents match your filters',
+      "No partners have been registered yet. Click 'Register Partner' to add your first partner.",
+    filterMessage: 'No partners match your filters',
     filterDescription:
-      'No agents match your current filters. Try adjusting your search criteria or clearing the filters.',
-    searchMessage: `No agents found for "${search}"`,
-    searchDescription: 'Try adjusting your search terms or clearing the search to see all agents.',
+      'No partners match your current filters. Try adjusting your search criteria or clearing the filters.',
+    searchMessage: `No partners found for "${search}"`,
+    searchDescription: 'Try adjusting your search terms or clearing the search to see all partners.',
   });
 
   const handleAddAgent = (newAgent) => {
@@ -803,18 +803,18 @@ const Agent = () => {
     try {
       const res = await agentApi.deleteOrganization(selectedAgent.id);
       if (res.status) {
-        notify.success('Agent deleted successfully!');
+        notify.success('Partner deleted successfully!');
         // Refresh the data
         setRefreshKey((prevData) => prevData + 1);
       } else {
-        notify.error(res.message || 'Failed to delete agent');
+        notify.error(res.message || 'Failed to delete partner');
       }
     } catch (e) {
       // Check if the error response contains a message from the backend
       if (e.response && e.response.data && e.response.data.message) {
         notify.error(e.response.data.message);
       } else {
-        notify.error('Failed to delete agent');
+        notify.error('Failed to delete partner');
       }
     } finally {
       setDeleteConfirmOpen(false);
@@ -902,8 +902,8 @@ const Agent = () => {
   };
 
   return (
-    <PageContainer title="Agent Page" description="This is the Agent page">
-      <Breadcrumb title="Agent" items={BCrumb} />
+    <PageContainer title="Partner Page" description="This is the Partner page">
+      <Breadcrumb title="Partner" items={BCrumb} />
 
       <Box
         sx={{
@@ -1246,12 +1246,12 @@ const Agent = () => {
           <Tabs
             value={tab}
             onChange={handleTabChange}
-            aria-label="agent management tabs"
+            aria-label="partner management tabs"
             textColor="primary"
             indicatorColor="primary"
           >
             <Tab
-              label="Agents"
+              label="Partners"
               sx={{ fontWeight: 600, textTransform: 'none', fontSize: '15px' }}
             />
             <Tab
@@ -1291,7 +1291,7 @@ const Agent = () => {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  Add New Agent
+                  Add New Partner
                 </Button>
                  <Button
                   variant="contained"
@@ -1336,10 +1336,10 @@ const Agent = () => {
                   <TableRow sx={{ bgcolor: '#f8f9fa' }}>
                     {[
                       'S/N',
-                      'Agent Details',
+                      'Partner Details',
                       'Admin Details',
                       'Access Level',
-                      'Sub Agents',
+                      'Sub Partners',
                       'Total School',
                       'Commission',
                       'Bank Service',
@@ -1690,11 +1690,11 @@ const Agent = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle sx={{ fontWeight: 600 }}>Login as Agent</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>Login as Partner</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to login as{' '}
-              <strong>{agentToImpersonate?.organizationName || 'this agent'}</strong>? You will be
+              <strong>{agentToImpersonate?.organizationName || 'this partner'}</strong>? You will be
               able to return to your account at any time.
             </Typography>
           </DialogContent>
@@ -1718,11 +1718,11 @@ const Agent = () => {
 
         {/* Delete Confirmation */}
         <Dialog open={deleteDialogOpen} onClose={handleCancelDelete} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Partner</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{agentToDelete?.organizationName || 'this agent'}</strong>? This action cannot
+              <strong>{agentToDelete?.organizationName || 'this partner'}</strong>? This action cannot
               be undone.
             </Typography>
           </DialogContent>
@@ -1743,13 +1743,13 @@ const Agent = () => {
           maxWidth="xs"
           fullWidth
         >
-          <DialogTitle sx={{ fontWeight: 600 }}>Delete Agent</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 600 }}>Delete Partner</DialogTitle>
           <DialogContent>
             <Typography variant="body2" color="text.secondary">
               Are you sure you want to delete{' '}
-              <strong>{selectedAgent?.organizationName || 'this agent'}</strong>? This action
+              <strong>{selectedAgent?.organizationName || 'this partner'}</strong>? This action
               cannot be undone. This can only be done if no schools are attached to this
-              agent.
+              partner.
             </Typography>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>

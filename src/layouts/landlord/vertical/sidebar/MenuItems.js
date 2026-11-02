@@ -94,7 +94,7 @@ const Menuitems = [
   },
   {
     id: uniqueId(),
-    title: 'Agent',
+    title: 'Partner',
     icon: IconUserCircle,
     href: '/organization',
     permission: ['landlord.organization.index'],

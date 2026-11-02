@@ -75,7 +75,7 @@ const AgentDashboard = () => {
               id: data.id,
               name: data.organization_name,
               handle: data.organization_email,
-              level: `Level ${data.access_level} Agent`,
+              level: `Level ${data.access_level} Partner`,
               status: data.status
                 ? data.status.charAt(0).toUpperCase() + data.status.slice(1)
                 : 'Inactive',
@@ -196,8 +196,8 @@ const AgentDashboard = () => {
 
   return (
     <PageContainer
-      title="Agent Dashboard"
-      description="Detailed agent dashboard view"
+      title="Partner Dashboard"
+      description="Detailed partner dashboard view"
     >
       <Breadcrumb title="Dashboard" items={BCrumb} />
 
@@ -284,7 +284,7 @@ const AgentDashboard = () => {
                     <Tab
                       icon={<IconUsers size={18} />}
                       iconPosition="start"
-                      label="Sub Agents"
+                      label="Sub Partners"
                       value="2"
                     />
                     <Tab
@@ -319,7 +319,7 @@ const AgentDashboard = () => {
                       onClick={() => setIsAddAgentModalOpen(true)}
                       sx={{ textTransform: 'none', borderRadius: '8px' }}
                     >
-                      Add New Agent
+                      Add New Partner
                     </Button>
                   )}
 

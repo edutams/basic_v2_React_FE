@@ -183,7 +183,7 @@ const AdmissionApply = () => {
                   ref={recaptchaRef}
                   sitekey={
                     import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-                    '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
+                    '6LfMYXUnAAAAAMwSoIM18spji07dWZLq7GluUEiP'
                   }
                   onChange={(token) => {
                     setCaptchaToken(token);

@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -31,17 +30,14 @@ import {
   useTheme,
 } from '@mui/material';
 import {
-  IconArrowLeft,
   IconBook2,
   IconChecks,
   IconMessageCircle2,
   IconNotes,
-  IconPlayerPlay,
-  IconRefresh,
   IconSparkles,
   IconStarFilled,
   IconUpload,
-  IconVideo,
+  // IconVideo, // reserved for when the Video Content tab below is restored
 } from '@tabler/icons-react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import PageContainer from '@/components/container/PageContainer';
@@ -483,105 +479,21 @@ const StudentLessonNoteView = () => {
     <PageContainer title="Lesson Note" description="View your lesson note content">
       <Breadcrumb title={subjectName || 'Lesson Note'} items={BCrumb} />
 
-      {/* ── Hero header — subject, week & actions at a glance ────────────── */}
-      <Paper
-        elevation={0}
+      {/* ── Lesson Content tab strip — same Tabs styling used across the
+          e-resources workspace (StaffLessonNoteIndex). Video Content is
+          commented out until video lessons are enabled for students. ──── */}
+      <Tabs
+        value="note"
         sx={{
-          mb: 2,
-          borderRadius: '14px',
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#BFDBFE',
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(37,99,235,0.1) 100%)'
-            : 'linear-gradient(135deg, #ffffff 0%, #EFF6FF 100%)',
+          mb: 2.5,
+          borderBottom: 1,
+          borderColor: 'divider',
+          '& .MuiTab-root': { fontWeight: 600, textTransform: 'none', minHeight: 48 },
         }}
       >
-        <Box sx={{ height: 3, background: 'linear-gradient(90deg, #2563EB, #2563EB88)' }} />
-        <Box sx={{ p: 2 }}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-          >
-            <Stack direction="row" spacing={1.5} alignItems="center">
-              <Avatar sx={{ width: 40, height: 40, bgcolor: 'rgba(37,99,235,0.12)', color: '#2563EB' }}>
-                <IconBook2 size={21} />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontWeight: 800, fontSize: 15.5, lineHeight: 1.2 }}>
-                  {subjectName || 'Lesson Note'}
-                </Typography>
-                <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" sx={{ mt: 0.4 }}>
-                  {weekName && (
-                    <Chip
-                      label={weekName}
-                      size="small"
-                      sx={{ fontSize: 10.5, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1E40AF' }}
-                    />
-                  )}
-                  {meta?.student_name && (
-                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
-                      {meta.student_name}
-                    </Typography>
-                  )}
-                </Stack>
-              </Box>
-            </Stack>
-
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              <Button
-                size="small"
-                startIcon={<IconArrowLeft size={15} />}
-                onClick={() => navigate('/e-resources/student')}
-                sx={{ fontWeight: 600 }}
-              >
-                Back
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<IconRefresh size={15} />}
-                onClick={loadContent}
-                sx={{ borderRadius: '8px', fontWeight: 600 }}
-              >
-                Reload
-              </Button>
-              {lessonNote?.qz_scheme_id != null && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<IconPlayerPlay size={15} />}
-                  onClick={openAssessment}
-                  sx={{ borderRadius: '8px', fontWeight: 700 }}
-                >
-                  Take Assessment
-                </Button>
-              )}
-            </Stack>
-          </Stack>
-        </Box>
-      </Paper>
-
-      {/* ── Lesson Content tab strip — matches the legacy app's Lesson
-          Content page (Lesson Note tab active; Video Content reserved for
-          when video lessons are enabled for students). ──────────────────── */}
-      <Paper elevation={0} sx={{ ...cardSx, mb: 2, overflow: 'hidden' }}>
-        <Tabs
-          value="note"
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            minHeight: 44,
-            px: 1,
-            '& .MuiTab-root': { minHeight: 44, fontWeight: 700, fontSize: 12.5, textTransform: 'none' },
-          }}
-        >
-          <Tab icon={<IconNotes size={16} />} iconPosition="start" value="note" label="Lesson Note" />
-          <Tab icon={<IconVideo size={16} />} iconPosition="start" value="video" label="Video Content" disabled />
-        </Tabs>
-      </Paper>
+        <Tab icon={<IconNotes size={17} />} iconPosition="start" value="note" label="Lesson Note" />
+        {/* <Tab icon={<IconVideo size={17} />} iconPosition="start" value="video" label="Video Content" /> */}
+      </Tabs>
 
       {/* ── Week / Topic / Subtopic switcher — mirrors the legacy app's
           LessonPlan.vue dropdown row. Picking a different week or subtopic

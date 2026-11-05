@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Grid, Box, Typography, Button, Alert } from '@mui/material';
 import { InfoOutlined } from '@mui/icons-material';
@@ -11,7 +11,6 @@ import AuthVerifyOtp from '@/components/tenant/auth/AuthVerifyOtp';
 import AuthResetPassword from '@/components/tenant/auth/AuthResetPassword';
 import EduTAMSLogo from '@/assets/images/logos/EduTAMS.jpeg';
 import SchoolIcon from '@mui/icons-material/School';
-import ReCAPTCHA from 'react-google-recaptcha';
 import ParentForm from '@/components/tenant/parents/ParentForm';
 import guardianApi from '@/api/tenant/guardians/parentApi';
 import { fetchLandingStatus } from '@/api/tenant/public/publicApi';
@@ -71,8 +70,6 @@ const TenantLogin = () => {
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(null);
-  const recaptchaRef = useRef(null);
   const navigate = useNavigate();
 
   // Pre-login landing state — whether admission is open and whether a
@@ -116,10 +113,6 @@ const TenantLogin = () => {
   const resultTermLabel = landingStatus.result?.session_term_label;
 
   const handleAdmissionSubmit = async (values) => {
-    if (!captchaToken) {
-      setError('Please complete the reCAPTCHA verification.');
-      return;
-    }
     if (!values.password) {
       setError('Password is required.');
       return;
@@ -132,8 +125,6 @@ const TenantLogin = () => {
     setLoading(true);
     try {
       await guardianApi.admissionParentSignup(values);
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
       setView('login');
     } catch (err) {
       const data = err.response?.data;
@@ -141,8 +132,6 @@ const TenantLogin = () => {
       if (data?.errors) msg = Object.values(data.errors).flat().join(' ');
       else if (data?.message) msg = data.message;
       setError(msg);
-      recaptchaRef.current?.reset();
-      setCaptchaToken(null);
     } finally {
       setLoading(false);
     }
@@ -151,8 +140,6 @@ const TenantLogin = () => {
   const handleBackToLogin = () => {
     setView('login');
     setError('');
-    setCaptchaToken(null);
-    recaptchaRef.current?.reset();
   };
 
   return (
@@ -357,20 +344,6 @@ const TenantLogin = () => {
                   cancelLabel="← Back to Login"
                   showConfirmPassword
                   hideWardLink
-                  beforeActions={
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      sitekey={
-                        import.meta.env.VITE_RECAPTCHA_SITE_KEY ||
-                        '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
-                      }
-                      onChange={(token) => {
-                        setCaptchaToken(token);
-                        if (error) setError('');
-                      }}
-                      onExpired={() => setCaptchaToken(null)}
-                    />
-                  }
                 />
               </Box>
             </Box>

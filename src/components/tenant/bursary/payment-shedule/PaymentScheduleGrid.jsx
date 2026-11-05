@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -345,10 +345,11 @@ const PaymentScheduleGrid = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // { [paymentNameId]: { [categoryId]: { amount?, installmentId? } } } — unsaved edits.
+  // { [paymentNameId]: { [categoryId]: { amount?, installmentId? } } } — edits
+  // not yet confirmed persisted by the auto-save debounce below.
   const [pendingEdits, setPendingEdits] = useState({});
   const [saving, setSaving] = useState(false);
-  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
+  const autoSaveTimerRef = useRef(null);
 
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -553,15 +554,21 @@ const PaymentScheduleGrid = ({
     [pendingEdits],
   );
 
-  const performSaveChanges = async () => {
+  // Saves exactly the snapshot of edits passed in, then clears only those
+  // same cells from pendingEdits — never the whole map — so a keystroke
+  // made while this save is in flight (the next auto-save debounce window)
+  // is never silently discarded underneath the user.
+  const performSaveChanges = async (paymentNameIds, editsSnapshot) => {
+    if (!paymentNameIds.length) return;
+
     setSaving(true);
     let totalSkipped = 0;
     try {
       await Promise.all(
-        dirtyPaymentNameIds.map(async (paymentNameId) => {
+        paymentNameIds.map(async (paymentNameId) => {
           const row = scheduleData.find((r) => r.payment_name.id === paymentNameId);
           if (!row) return;
-          const edits = pendingEdits[paymentNameId] || {};
+          const edits = editsSnapshot[paymentNameId] || {};
 
           const categories = row.categories
             .map((cat) => {
@@ -593,9 +600,9 @@ const PaymentScheduleGrid = ({
             totalSkipped += res.data.skipped.length;
           }
 
-          // Merge the real saved result straight into local state —
-          // this is what makes "Save Changes" update the table instantly
-          // instead of re-fetching everything from the server.
+          // Merge the real saved result straight into local state — this is
+          // what makes auto-save update the table instantly instead of
+          // re-fetching everything from the server.
           (res?.data?.schedules || []).forEach((saved) => {
             patchCategoryLocally(paymentNameId, saved.category_id, {
               schedule_id: saved.schedule_id,
@@ -610,20 +617,58 @@ const PaymentScheduleGrid = ({
       showSnackbar?.(
         totalSkipped > 0
           ? `Changes saved — ${totalSkipped} categor${totalSkipped === 1 ? 'y' : 'ies'} skipped because they already have payment transactions`
-          : 'Payment schedule changes saved successfully',
+          : 'Payment schedule changes saved',
         totalSkipped > 0 ? 'warning' : 'success',
       );
-      setPendingEdits({});
+
+      setPendingEdits((prev) => {
+        const next = { ...prev };
+        paymentNameIds.forEach((paymentNameId) => {
+          const current = next[paymentNameId];
+          if (!current) return;
+          const saved = editsSnapshot[paymentNameId] || {};
+          const remaining = { ...current };
+          Object.keys(saved).forEach((categoryId) => {
+            if (JSON.stringify(remaining[categoryId]) === JSON.stringify(saved[categoryId])) {
+              delete remaining[categoryId];
+            }
+          });
+          if (Object.keys(remaining).length === 0) {
+            delete next[paymentNameId];
+          } else {
+            next[paymentNameId] = remaining;
+          }
+        });
+        return next;
+      });
       refreshStats?.();
     } catch (err) {
       showSnackbar?.(err?.response?.data?.message || 'Failed to save changes', 'error');
     } finally {
       setSaving(false);
-      setSaveConfirmOpen(false);
     }
   };
 
-  const handleDiscardChanges = () => setPendingEdits({});
+  // Auto-save: once editing settles for a moment, persist whatever's
+  // pending without requiring a separate "Save Changes" click. Debounced
+  // (rather than saving on every keystroke) so a clerk typing a multi-digit
+  // amount doesn't fire a request per digit.
+  useEffect(() => {
+    if (dirtyPaymentNameIds.length === 0) return undefined;
+
+    clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      performSaveChanges(dirtyPaymentNameIds, pendingEdits);
+    }, 900);
+
+    return () => clearTimeout(autoSaveTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingEdits]);
+
+  const handleDiscardChanges = () => {
+    clearTimeout(autoSaveTimerRef.current);
+    setPendingEdits({});
+  };
 
   const closeCategoryActionDialog = () => {
     setCategoryActionDialog({ open: false, action: null, schedule: null, categoryData: null });
@@ -911,21 +956,29 @@ const PaymentScheduleGrid = ({
                 variant="text"
                 size="small"
                 onClick={handleDiscardChanges}
+                disabled={saving}
                 sx={{ fontWeight: 600, textTransform: 'none' }}
               >
                 Discard
               </Button>
             )}
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={!saving && <SaveIcon fontSize="small" />}
-              onClick={() => setSaveConfirmOpen(true)}
-              disabled={!hasDirty || saving}
-              sx={{ fontWeight: 600, textTransform: 'none' }}
-            >
-              {saving ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : 'Save Changes'}
-            </Button>
+            {/* Changes save themselves a moment after typing stops — no
+             * "Save Changes" click required. This just reflects that state. */}
+            {saving ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <CircularProgress size={14} />
+                <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  Saving…
+                </Typography>
+              </Box>
+            ) : hasDirty ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <SaveIcon fontSize="small" sx={{ color: 'warning.main' }} />
+                <Typography variant="caption" sx={{ fontWeight: 600, color: 'warning.main' }}>
+                  Unsaved changes — saving shortly
+                </Typography>
+              </Box>
+            ) : null}
             {onOpenMigrate && (
               <Button
                 variant="outlined"
@@ -1265,22 +1318,6 @@ const PaymentScheduleGrid = ({
           Mark <strong>{payOptionDialog.schedule?.payment_name?.name}</strong> as{' '}
           <strong>{payOptionDialog.nextValue === 'optional' ? 'Optional' : 'Compulsory'}</strong>?
           This changes how it's treated when generating invoices for every class.
-        </Typography>
-      </ConfirmDialog>
-
-      {/* Save Changes confirmation */}
-      <ConfirmDialog
-        open={saveConfirmOpen}
-        title="Save Payment Schedule Changes"
-        confirmLabel="Save Changes"
-        loading={saving}
-        onConfirm={performSaveChanges}
-        onClose={() => setSaveConfirmOpen(false)}
-      >
-        <Typography variant="body2">
-          This will save your price/installment changes for{' '}
-          <strong>{dirtyPaymentNameIds.length}</strong> payment item
-          {dirtyPaymentNameIds.length === 1 ? '' : 's'} across their categories. Continue?
         </Typography>
       </ConfirmDialog>
 

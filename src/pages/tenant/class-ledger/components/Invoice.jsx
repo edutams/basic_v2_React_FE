@@ -37,6 +37,7 @@ import {
   fetchStudentOptionalPayments,
   saveStudentOptionalPayments,
 } from '@/api/tenant/bursary/bursarySettingsApi';
+import { fetchActiveTenantSessionTerm } from '@/api/tenant/session-term/sessionTermApi';
 import PrintInvoiceModal from '@/components/tenant/bursary/payment-shedule/PrintInvoiceModal';
 import useNotification from '@/hooks/useNotification';
 
@@ -391,20 +392,39 @@ const Invoice = () => {
       setLoading(false);
     }
   }, [invoiceId, user_id]);
-  // Fetch active session/term on mount, then load invoice data
+  // Fetch active session/term on mount, then load invoice data. The
+  // bursary-specific active term (fetchActiveSessionTerm) 404s whenever it
+  // hasn't been explicitly configured yet — the common case for a fresh
+  // setup (see BursarySetup.jsx's loadSessionTerms) — so that must fall
+  // back to the school's actual active session/term instead of blocking
+  // this page outright.
   useEffect(() => {
     const init = async () => {
       try {
-        const sessionRes = await fetchActiveSessionTerm();
-        if (sessionRes.status && sessionRes.data) {
-          const active = sessionRes.data;
-          setSessionInfo({
-            session_id: active.session_id,
-            term_id: active.term_id,
-            session: active.session_name || '',
-            term: active.term_name || '',
-          });
+        let active = null;
 
+        const sessionRes = await fetchActiveSessionTerm().catch(() => null);
+        if (sessionRes?.status && sessionRes.data) {
+          active = {
+            session_id: sessionRes.data.session_id,
+            term_id: sessionRes.data.term_id,
+            session: sessionRes.data.session_name || '',
+            term: sessionRes.data.term_name || '',
+          };
+        } else {
+          const tenantRes = await fetchActiveTenantSessionTerm();
+          if (tenantRes?.status && tenantRes.data) {
+            active = {
+              session_id: tenantRes.data.session_id,
+              term_id: tenantRes.data.term_id,
+              session: tenantRes.data.session?.session_name || '',
+              term: tenantRes.data.term?.term_name || '',
+            };
+          }
+        }
+
+        if (active) {
+          setSessionInfo(active);
           // Fetch invoice using session_id, term_id (no category initially)
           await fetchInvoiceData();
         } else {

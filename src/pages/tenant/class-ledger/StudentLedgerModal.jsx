@@ -278,6 +278,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
               <Table size="small">
                 <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
                   <TableRow>
+                    <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Student</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Sessn/Term</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Payment Items</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Category</TableCell>
@@ -296,6 +297,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                           const isStale = Number(item.is_current_category) !== 1;
                           return (
                           <TableRow key={`${gIndex}-${iIndex}`} hover sx={isStale ? { opacity: 0.55 } : undefined}>
+                            <TableCell sx={{ fontWeight: 500 }}>{studentName}</TableCell>
                             {iIndex === 0 ? (
                               <TableCell rowSpan={group.items.length} sx={{ verticalAlign: 'top', fontWeight: 600, borderRight: '1px solid', borderColor: 'divider' }}>
                                 {group.term}
@@ -351,7 +353,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                         No payment records found.
                       </TableCell>
                     </TableRow>
@@ -359,7 +361,7 @@ const StudentLedgerModal = ({ open, onClose, student }) => {
                   {/* Totals Row */}
                   {groupedData.length > 0 && (
                     <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
-                      <TableCell colSpan={3} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
+                      <TableCell colSpan={4} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.bill.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.paid.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.balance.toLocaleString()}</TableCell>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Box, Paper, Tabs, Tab, useTheme } from '@mui/material';
 import { IconMail, IconMessage, IconSend, IconBrandWhatsapp, IconReportMoney } from '@tabler/icons-react';
 import PageContainer from '@/components/container/PageContainer';
@@ -12,13 +13,13 @@ import MessagingTab from '../result/components/MessagingTab';
 
 const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Messaging' }];
 
-const SendMessagePanel = () => {
+const SendMessagePanel = ({ autoOpenCompose = false }) => {
   const { can } = usePermissions();
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [];
   if (can('messaging.create_mail')) {
-    tabs.push({ label: 'Mail', icon: <IconMail size={16} />, component: <MailTab /> });
+    tabs.push({ label: 'Mail', icon: <IconMail size={16} />, component: <MailTab autoOpenCompose={autoOpenCompose} /> });
   }
   if (can('messaging.view_chat')) {
     tabs.push({ label: 'Chats', icon: <IconMessage size={16} />, component: <ChatTab /> });
@@ -59,7 +60,9 @@ const CommunicationsPage = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { can } = usePermissions();
+  const location = useLocation();
   const [activeTopTab, setActiveTopTab] = useState(0);
+  const openCompose = Boolean(location.state?.openCompose);
 
   const canSendMessage =
     can('messaging.create_mail') || can('messaging.view_chat') || can('messaging.create_sms');
@@ -67,7 +70,11 @@ const CommunicationsPage = () => {
 
   const topTabs = [];
   if (canSendMessage) {
-    topTabs.push({ label: 'Send Message', icon: <IconSend size={16} />, component: <SendMessagePanel /> });
+    topTabs.push({
+      label: 'Send Message',
+      icon: <IconSend size={16} />,
+      component: <SendMessagePanel autoOpenCompose={openCompose} />,
+    });
   }
   if (canResultMessage) {
     topTabs.push({

@@ -1,28 +1,25 @@
 import React from 'react';
 import { Box, Typography, Paper, useTheme, Skeleton } from '@mui/material';
-import { ArrowUpward } from '@mui/icons-material';
+import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from 'recharts';
 
-const defaultAcademicData = [
-  { category: 'Excellent', val: 28, color: '#16a34a' },
-  { category: 'Good', val: 32, color: '#2563eb' },
-  { category: 'Average', val: 24, color: '#d97706' },
-  { category: 'At Risk', val: 16, color: '#dc2626' },
-];
-
 /**
- * Academic Performance Overview Bar Chart Component
+ * Academic Performance Overview Bar Chart Component. `data` is empty and
+ * `trend` is null until at least one class's broadsheet has actually been
+ * SPA-approved this term — shown as an explicit empty state rather than a
+ * fabricated placeholder chart.
  */
 const AcademicPerformanceOverview = ({
-  data = defaultAcademicData,
-  avgScore = '68.4%',
-  trend = '4.2%',
+  data = [],
+  avgScore = '0%',
+  trend = null,
   loading = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const chartData = (data && data.length > 0) ? data : defaultAcademicData;
+  const chartData = data || [];
+  const hasData = chartData.length > 0;
 
   return (
     <Paper
@@ -63,7 +60,7 @@ const AcademicPerformanceOverview = ({
               <Skeleton key={i} variant="rounded" width={36} height={h} sx={{ borderRadius: '6px 6px 0 0' }} />
             ))}
           </Box>
-        ) : (
+        ) : hasData ? (
         <Box sx={{ width: '100%', height: 180, mb: 1.5 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 15, right: 10, left: -25, bottom: 0 }}>
@@ -95,6 +92,21 @@ const AcademicPerformanceOverview = ({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </Box>
+        ) : (
+        <Box
+          sx={{
+            width: '100%',
+            height: 180,
+            mb: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#94a3b8' }}>
+            No reviewed results yet this term
+          </Typography>
         </Box>
         )}
       </Box>
@@ -131,12 +143,18 @@ const AcademicPerformanceOverview = ({
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: '#16a34a' }}>
-          <ArrowUpward sx={{ fontSize: 14 }} />
-          <Typography variant="subtitle2" fontWeight={800} sx={{ fontSize: '13px', color: '#16a34a' }}>
-            {trend} vs last term
+        {trend == null ? (
+          <Typography variant="caption" sx={{ fontSize: '11px', color: isDark ? 'rgba(255,255,255,0.5)' : '#94a3b8' }}>
+            No prior term to compare
           </Typography>
-        </Box>
+        ) : (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, color: trend >= 0 ? '#16a34a' : '#dc2626' }}>
+            {trend >= 0 ? <ArrowUpward sx={{ fontSize: 14 }} /> : <ArrowDownward sx={{ fontSize: 14 }} />}
+            <Typography variant="subtitle2" fontWeight={800} sx={{ fontSize: '13px', color: trend >= 0 ? '#16a34a' : '#dc2626' }}>
+              {Math.abs(trend)}% vs last term
+            </Typography>
+          </Box>
+        )}
         </>
         )}
       </Box>

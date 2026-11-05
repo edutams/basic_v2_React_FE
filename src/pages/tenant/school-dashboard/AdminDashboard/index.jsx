@@ -264,6 +264,7 @@ const AdminDashboard = () => {
                 avgScore={
                   academicData.exam_performance != null ? `${academicData.exam_performance}%` : '0%'
                 }
+                trend={academicData.trend ?? null}
                 loading={academicLoading}
               />
             </Grid>

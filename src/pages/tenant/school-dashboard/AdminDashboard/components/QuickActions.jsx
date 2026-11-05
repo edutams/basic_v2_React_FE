@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Snackbar, Alert, Skeleton, useTheme } from '@mui/material';
+import { Box, Button, Skeleton, useTheme } from '@mui/material';
 import {
   PersonAddAlt1,
   Groups,
@@ -15,9 +15,6 @@ const QuickActions = ({ loading = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
-  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
-
-  const comingSoon = (title) => () => setSnackbar({ open: true, message: `${title} — Page under development` });
 
   // Same page a student is added from, so "Add Student" and "Manage
   // Students" are two entry points into one feature rather than two pages.
@@ -47,8 +44,8 @@ const QuickActions = ({ loading = false }) => {
       id: 'upload_results',
       icon: UploadFile,
       color: '#d97706',
-      title: 'Upload Results',
-      onClick: comingSoon('Upload Results'),
+      title: 'Upload Scores',
+      onClick: () => navigate('/result-upload'),
     },
     {
       id: 'view_attendance',
@@ -62,14 +59,14 @@ const QuickActions = ({ loading = false }) => {
       icon: Campaign,
       color: '#16a34a',
       title: 'Create Announcement',
-      onClick: comingSoon('Create Announcement'),
+      onClick: () => navigate('/communications', { state: { openCompose: true } }),
     },
     {
-      id: 'generate_report',
+      id: 'generate_invoice',
       icon: Assessment,
       color: '#2563eb',
-      title: 'Generate Report',
-      onClick: comingSoon('Generate Report'),
+      title: 'Generate Invoice',
+      onClick: () => navigate('/payment-schedule', { state: { tab: 'invoice' } }),
     },
   ];
 
@@ -87,7 +84,6 @@ const QuickActions = ({ loading = false }) => {
           boxShadow: '0 2px 4px rgba(15, 23, 42, 0.04)',
         }}
       >
-
         {loading ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {Array.from({ length: 7 }).map((_, i) => (
@@ -134,23 +130,6 @@ const QuickActions = ({ loading = false }) => {
           </Box>
         )}
       </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ open: false, message: '' })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ open: false, message: '' })}
-          severity="info"
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

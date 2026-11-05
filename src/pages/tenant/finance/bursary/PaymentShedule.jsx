@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -136,6 +136,7 @@ const PaymentShedule = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const navigate = useNavigate();
+  const location = useLocation();
 
   const schemeMap = [
     { bg: '#DBEAFE', color: '#2563EB' },
@@ -148,7 +149,9 @@ const PaymentShedule = () => {
   const s1 = schemeMap[1];
   const s2 = schemeMap[2];
 
-  const [actionTab, setActionTab] = useState(0);
+  // Opened via a dashboard quick action ("Generate Invoice") can request
+  // landing directly on the Generate Invoice tab instead of Set Schedule.
+  const [actionTab, setActionTab] = useState(location.state?.tab === 'invoice' ? 1 : 0);
 
   const [snackbar, setSnackbar] = useState({
     open: false,

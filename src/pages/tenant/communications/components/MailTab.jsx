@@ -22,7 +22,7 @@ const normalizeUser = (u) => ({
   userId: u.user_id || u.phone || '',
 });
 
-const MailTab = () => {
+const MailTab = ({ autoOpenCompose = false }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const { can } = usePermissions();
@@ -35,7 +35,7 @@ const MailTab = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [stats, setStats] = useState({ all: 0, term_message: 0, received: 0, sent: 0, archive: 0 });
   const [unread, setUnread] = useState(0);
-  const [composeOpen, setComposeOpen] = useState(false);
+  const [composeOpen, setComposeOpen] = useState(autoOpenCompose);
   const [compose, setCompose] = useState(emptyCompose);
   const [filters, setFilters] = useState(emptyFilters);
   const [classes, setClasses] = useState([]);

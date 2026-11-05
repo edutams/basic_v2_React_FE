@@ -117,6 +117,14 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [arms, setArms] = useState([]);
+  // Every class-arm this class teacher is actually assigned to this term —
+  // a teacher can legitimately be class teacher of more than one. When
+  // there's more than one, the Programme/Class/Arm selects stay enabled but
+  // restricted to only these assignments (never the full school list).
+  const [teacherAssignments, setTeacherAssignments] = useState([]);
+  // A class teacher with exactly one assignment keeps the old locked-select
+  // behavior; one with several gets to pick among their own classes.
+  const lockClassSelection = isClassTeacher && teacherAssignments.length <= 1;
   const [weeks, setWeeks] = useState([]);
 
   const [pSession, setPSession] = useState('');
@@ -263,29 +271,22 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
           /* best-effort */
         }
 
-        // Class teacher: auto-populate their own programme/class/arm, same
-        // as Mark Attendance. Admin: preselect the first programme so the
-        // Class/Arm chain (below) resolves without a manual pick.
+        // Class teacher: auto-populate their own programme/class/arm from
+        // their assignment(s), same as Mark Attendance — the option lists
+        // themselves are populated from teacherAssignments by the effects
+        // below, not the full school list. Admin: preselect the first
+        // programme so the Class/Arm chain (below) resolves without a
+        // manual pick.
         if (isClassTeacher) {
           try {
             const tcRes = await attendanceApi.getTeacherClass();
-            const tcData = tcRes.data?.data;
-            if (tcData?.programme_id) {
-              setPProgramme(tcData.programme_id);
-              const clsRes = await fetchClassesByProgramme(tcData.programme_id);
-              const classesData = clsRes.data?.data || clsRes.data || [];
-              setClasses(Array.isArray(classesData) ? classesData : []);
-              if (tcData.class_id) {
-                setPClass(tcData.class_id);
-                const armRes = await fetchClassArmsByClass(tcData.class_id, {
-                  programme_id: tcData.programme_id || undefined,
-                });
-                const armsData = armRes.data || [];
-                setArms(Array.isArray(armsData) ? armsData : []);
-                if (tcData.class_arm_id) {
-                  setPArm(tcData.class_arm_id);
-                }
-              }
+            const assignments = Array.isArray(tcRes.data?.data) ? tcRes.data.data : [];
+            setTeacherAssignments(assignments);
+            if (assignments.length > 0) {
+              const first = assignments[0];
+              setPProgramme(first.programme_id);
+              setPClass(first.class_id);
+              setPArm(first.class_arm_id);
             }
           } catch (e) {
             console.error('Failed to load teacher class:', e);
@@ -349,6 +350,51 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pClass, pProgramme, isClassTeacher]);
+
+  // ── Class-teacher view: populate Programme/Class/Arm from their own
+  // assignments only (never the full school list), and keep the selected
+  // class/arm valid as the programme changes — the two admin-only effects
+  // above are skipped for a class teacher via their own isClassTeacher guard.
+  useEffect(() => {
+    if (!isClassTeacher) return;
+    const seen = new Map();
+    teacherAssignments.forEach((a) => {
+      if (!seen.has(a.programme_id)) {
+        seen.set(a.programme_id, { id: a.programme_id, programme_name: a.programme_name });
+      }
+    });
+    setProgrammes(Array.from(seen.values()));
+  }, [isClassTeacher, teacherAssignments]);
+
+  useEffect(() => {
+    if (!isClassTeacher || !pProgramme) return;
+    const seen = new Map();
+    teacherAssignments
+      .filter((a) => String(a.programme_id) === String(pProgramme))
+      .forEach((a) => {
+        if (!seen.has(a.class_id)) {
+          seen.set(a.class_id, { id: a.class_id, class_name: a.class_name });
+        }
+      });
+    const list = Array.from(seen.values());
+    setClasses(list);
+    if (list.length > 0 && !list.some((c) => String(c.id) === String(pClass))) {
+      setPClass(list[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClassTeacher, pProgramme, teacherAssignments]);
+
+  useEffect(() => {
+    if (!isClassTeacher || !pClass) return;
+    const list = teacherAssignments
+      .filter((a) => String(a.programme_id) === String(pProgramme) && String(a.class_id) === String(pClass))
+      .map((a) => ({ id: a.class_arm_id, class_arm_names: a.class_arm_names }));
+    setArms(list);
+    if (list.length > 0 && !list.some((a) => String(a.id) === String(pArm))) {
+      setPArm(list[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClassTeacher, pProgramme, pClass, teacherAssignments]);
 
   // ── Auto-apply the filter the first time Arm + Week resolve ──
   useEffect(() => {
@@ -978,7 +1024,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                   value={pProgramme}
                   label="Programme"
                   onChange={(e) => setPProgramme(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {programmes.map((p) => (
                     <MenuItem key={p.id} value={p.id}>
@@ -995,7 +1041,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                   value={pClass}
                   label="Class"
                   onChange={(e) => setPClass(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {classes.map((c) => (
                     <MenuItem key={c.id} value={c.id}>
@@ -1012,7 +1058,7 @@ const MarkPsychomotorTab = ({ metrics, onFilter }) => {
                   value={pArm}
                   label="Class/Arm"
                   onChange={(e) => setPArm(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {arms.map((a) => (
                     <MenuItem key={a.id} value={a.id}>

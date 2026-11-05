@@ -185,6 +185,11 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const [programmes, setProgrammes] = useState([]);
   const [classes, setClasses] = useState([]);
   const [arms, setArms] = useState([]);
+  // Every class-arm this class teacher is actually assigned to this term —
+  // a teacher can legitimately be class teacher of more than one. When
+  // there's more than one, the Programme/Class/Arm selects stay enabled but
+  // restricted to only these assignments (never the full school list).
+  const [teacherAssignments, setTeacherAssignments] = useState([]);
 
   const [attSession, setAttSession] = useState('');
   const [attTerm, setAttTerm] = useState('');
@@ -200,6 +205,10 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
   const isClassTeacher =
     Array.isArray(roles) &&
     roles.some((r) => (typeof r === 'string' ? r : r?.name) === 'class_teacher');
+  // A class teacher with exactly one assignment keeps the old locked-select
+  // behavior (nothing to choose); one with several gets to pick among their
+  // own classes instead of being stuck on whichever loaded first.
+  const lockClassSelection = isClassTeacher && teacherAssignments.length <= 1;
 
   // ── Learners & Attendance Data ────────────────────────────
   const [learners, setLearners] = useState([]);
@@ -311,30 +320,21 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
           /* best-effort */
         }
 
-        // If class teacher, auto-populate programme/class/arm and load report setting
+        // If class teacher, auto-populate programme/class/arm from their own
+        // assignment(s) and load the weekly-report setting. The Programme/
+        // Class/Arm option lists themselves are populated from
+        // teacherAssignments by the effects below, not the full school list.
         if (isClassTeacher) {
           try {
             const tcRes = await attendanceApi.getTeacherClass();
-            const tcData = tcRes.data?.data;
-            if (tcData) {
-              setAutoSendReport(tcData.auto_send_weekly_report === true);
-              setAttProgramme(tcData.programme_id);
-              // Fetch classes and pre-select
-              const clsRes = await fetchClassesByProgramme(tcData.programme_id);
-              const classesData = clsRes.data?.data || clsRes.data || [];
-              setClasses(Array.isArray(classesData) ? classesData : []);
-              if (tcData.class_id) {
-                setAttClass(tcData.class_id);
-                // Fetch arms and pre-select
-                const armRes = await fetchClassArmsByClass(tcData.class_id, {
-                  programme_id: tcData.programme_id || undefined,
-                });
-                const armsData = armRes.data || [];
-                setArms(Array.isArray(armsData) ? armsData : []);
-                if (tcData.class_arm_id) {
-                  setAttArm(tcData.class_arm_id);
-                }
-              }
+            const assignments = Array.isArray(tcRes.data?.data) ? tcRes.data.data : [];
+            setTeacherAssignments(assignments);
+            if (assignments.length > 0) {
+              const first = assignments[0];
+              setAttProgramme(first.programme_id);
+              setAttClass(first.class_id);
+              setAttArm(first.class_arm_id);
+              setAutoSendReport(first.auto_send_weekly_report === true);
             }
           } catch (e) {
             console.error('Failed to load teacher class:', e);
@@ -403,6 +403,59 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attClass, attProgramme, isClassTeacher]);
+
+  // ── Class-teacher view: populate Programme/Class/Arm from their own
+  // assignments only (never the full school list), and keep the selected
+  // class/arm valid as the programme changes — the three admin-only effects
+  // above are skipped for a class teacher via their own isClassTeacher guard.
+  useEffect(() => {
+    if (!isClassTeacher) return;
+    const seen = new Map();
+    teacherAssignments.forEach((a) => {
+      if (!seen.has(a.programme_id)) {
+        seen.set(a.programme_id, { id: a.programme_id, programme_name: a.programme_name });
+      }
+    });
+    setProgrammes(Array.from(seen.values()));
+  }, [isClassTeacher, teacherAssignments]);
+
+  useEffect(() => {
+    if (!isClassTeacher || !attProgramme) return;
+    const seen = new Map();
+    teacherAssignments
+      .filter((a) => String(a.programme_id) === String(attProgramme))
+      .forEach((a) => {
+        if (!seen.has(a.class_id)) {
+          seen.set(a.class_id, { id: a.class_id, class_name: a.class_name });
+        }
+      });
+    const list = Array.from(seen.values());
+    setClasses(list);
+    if (list.length > 0 && !list.some((c) => String(c.id) === String(attClass))) {
+      setAttClass(list[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClassTeacher, attProgramme, teacherAssignments]);
+
+  useEffect(() => {
+    if (!isClassTeacher || !attClass) return;
+    const list = teacherAssignments
+      .filter((a) => String(a.programme_id) === String(attProgramme) && String(a.class_id) === String(attClass))
+      .map((a) => ({
+        id: a.class_arm_id,
+        class_arm_names: a.class_arm_names,
+        auto_send_weekly_report: a.auto_send_weekly_report,
+      }));
+    setArms(list);
+    const current = list.find((a) => String(a.id) === String(attArm));
+    if (current) {
+      setAutoSendReport(current.auto_send_weekly_report === true);
+    } else if (list.length > 0) {
+      setAttArm(list[0].id);
+      setAutoSendReport(list[0].auto_send_weekly_report === true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isClassTeacher, attProgramme, attClass, teacherAssignments]);
 
   // ── Fetch Weeks when session or term changes ──────────────
   useEffect(() => {
@@ -632,20 +685,17 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
     fetchLearners();
     setFilterApplied(true);
     if (onFilter) onFilter(attArm, attSession, attTermId, attWeek, attProgramme, attClass);
-    // Load weekly report setting from backend when an arm is selected
+    // Weekly report setting for whichever arm is selected — looked up from
+    // the teacher's own assignments already fetched on load, rather than
+    // re-querying the backend on every Filter click.
     if (attArm) {
-      attendanceApi
-        .getTeacherClass()
-        .then((res) => {
-          const tcData = res.data?.data;
-          if (tcData && String(tcData.class_arm_id) === String(attArm)) {
-            setAutoSendReport(tcData.auto_send_weekly_report === true);
-          } else {
-            // For admin-selected arms (not the teacher's own), set to false
-            // The toggle API will properly set it when user interacts with checkbox
-          }
-        })
-        .catch(() => {});
+      const assignment = teacherAssignments.find((a) => String(a.class_arm_id) === String(attArm));
+      if (assignment) {
+        setAutoSendReport(assignment.auto_send_weekly_report === true);
+      }
+      // For an admin-selected arm that isn't the teacher's own, leave
+      // autoSendReport as-is — the toggle API sets it properly when the
+      // user interacts with the checkbox.
     }
   };
 
@@ -781,6 +831,33 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
       setAlertSnackbar({ open: true, message: 'Failed to export PDF report', severity: 'error' });
     } finally {
       setExportingPdf(false);
+    }
+  };
+
+  // Whole-term summary (every week of the session term aggregated), unlike
+  // the two exports above which are always scoped to one week. Reports
+  // either the selected class's own students or, with no class arm (admin
+  // only — see the "Whole School" menu item), one row per class arm so an
+  // admin can compare every class at a glance.
+  const handleExportTermly = async (schoolWide = false) => {
+    setExportAnchorEl(null);
+    try {
+      const res = await attendanceApi.exportTermlyAttendanceReport({
+        class_arm_id: schoolWide ? undefined : attArm || undefined,
+        session_id: attSession || undefined,
+        term_id: attTermId || undefined,
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'termly-attendance-report.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export termly report failed:', e);
+      setAlertSnackbar({ open: true, message: 'Failed to export termly report', severity: 'error' });
     }
   };
 
@@ -1200,7 +1277,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   value={attProgramme}
                   label="Programme"
                   onChange={(e) => setAttProgramme(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {programmes.map((p) => (
                     <MenuItem key={p.id} value={p.id}>
@@ -1217,7 +1294,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   value={attClass}
                   label="Class"
                   onChange={(e) => setAttClass(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {classes.map((c) => (
                     <MenuItem key={c.id} value={c.id}>
@@ -1234,7 +1311,7 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   value={attArm}
                   label="Class/Arm"
                   onChange={(e) => setAttArm(e.target.value)}
-                  disabled={isClassTeacher}
+                  disabled={lockClassSelection}
                 >
                   {arms.map((a) => (
                     <MenuItem key={a.id} value={a.id}>
@@ -1479,6 +1556,22 @@ const MarkAttendanceTab = ({ metrics, onFilter }) => {
                   </ListItemIcon>
                   <ListItemText>Report by PDF</ListItemText>
                 </MenuItem>
+                <MenuItem onClick={() => handleExportTermly(false)}>
+                  <ListItemIcon>
+                    <ExcelIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Termly Report — This Class</ListItemText>
+                </MenuItem>
+                {/* School-wide (every class arm) termly summary — not useful
+                 * for a class teacher, who only ever sees their own class(es). */}
+                {!isClassTeacher && (
+                  <MenuItem onClick={() => handleExportTermly(true)}>
+                    <ListItemIcon>
+                      <ExcelIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Termly Report — Whole School</ListItemText>
+                  </MenuItem>
+                )}
               </Menu>
             </Stack>
           </Box>

@@ -95,6 +95,8 @@ const attendanceApi = {
     tenantApi.get('/attendance/export', { params, responseType: 'blob' }),
   exportAttendancePdf: (params = {}) =>
     tenantApi.get('/attendance/export-pdf', { params, responseType: 'blob' }),
+  exportTermlyAttendanceReport: (params = {}) =>
+    tenantApi.get('/attendance/export-termly', { params, responseType: 'blob' }),
   exportPsychomotorReport: (params = {}) =>
     tenantApi.get('/psychomotor/export', { params, responseType: 'blob' }),
   exportPsychomotorPdf: (params = {}) =>

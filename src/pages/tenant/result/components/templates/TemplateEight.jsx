@@ -168,9 +168,9 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                 {sessionTerm?.term_id === 3 && promotionLine(report, className) && (
                   <TableRow><TableCell>Promotion</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{promotionLine(report, className)}</TableCell></TableRow>
                 )}
-                <TableRow><TableCell>This Term Ends</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || '2026-07-12'}</TableCell></TableRow>
-                <TableRow><TableCell>Next Term Begins</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>
-                <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || '2026-09-08'}</TableCell></TableRow>
+                <TableRow><TableCell>This Term Ends</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || 'Not set'}</TableCell></TableRow>
+                <TableRow><TableCell>Next Term Begins</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
+                <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
               </TableBody></Table>
             </SectionCard>
           </div>
@@ -209,7 +209,7 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
               <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 50, objectFit: 'contain' }} />
             </div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
-            <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
+            <div style={{ marginTop: 12, fontSize: '14px' }}>{sessionTerm?.closing_date || 'Not set'}</div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 2 }}><strong>Date</strong></div>
           </div>
         </div>

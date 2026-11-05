@@ -60,7 +60,7 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
         <div><strong>Percentage:</strong> <span style={{ fontSize: 16 }}>{avg}%</span></div>
       </div>
       <div className="tpl4-info-row" style={{ marginBottom: 16 }}>
-        <div><strong>Next Term Begins:</strong> {sessionTerm?.resumption_date || '2026-09-08'}</div>
+        <div><strong>Next Term Begins:</strong> {sessionTerm?.resumption_date || 'Not set'}</div>
         <div><strong>No. of Times Present:</strong> {report.attendance.present}</div>
         <div></div>
       </div>
@@ -229,7 +229,7 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
               <img src={hosSignature?.signature || signatureImg} alt={hosSignature?.label || "Head of School's Signature"} style={{ height: 80, objectFit: 'contain' }} />
             </div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}><strong>{hosSignature?.label || "Head of School's Signature"}</strong></div>
-            <div style={{ marginTop: 16, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
+            <div style={{ marginTop: 16, fontSize: '14px' }}>{sessionTerm?.closing_date || 'Not set'}</div>
             <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}><strong>Date</strong></div>
           </div>
 

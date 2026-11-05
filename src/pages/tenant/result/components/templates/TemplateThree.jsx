@@ -359,7 +359,7 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
             </div>
           </div>
           <div style={{ marginTop: 16 }}>
-            <p><strong>( Please return this card to the school on: {sessionTerm?.closing_date || '2026-07-12'} )</strong></p>
+            <p><strong>( Please return this card to the school on: {sessionTerm?.closing_date || 'Not set'} )</strong></p>
           </div>
         </div>
 
@@ -370,7 +370,7 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>
             <strong>{hosSignature?.label || "Head of School's Signature"}</strong>
           </div>
-          <div style={{ marginTop: 20, fontSize: '14px' }}>{sessionTerm?.closing_date || '2026-07-12'}</div>
+          <div style={{ marginTop: 20, fontSize: '14px' }}>{sessionTerm?.closing_date || 'Not set'}</div>
           <div style={{ borderTop: '1px solid #000', paddingTop: 4 }}>
             <strong>Date</strong>
           </div>

@@ -5,6 +5,7 @@ import { IconPrinter, IconClipboardCheck } from '@tabler/icons-react';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { getResultTemplate } from './templates';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
 import { decodeLinkParams } from '@/utils/scoreLinks';
 
@@ -25,6 +26,7 @@ const ClassDossierView = () => {
   const [error, setError] = useState('');
   const [classInfo, setClassInfo] = useState(null);
   const [termInfo, setTermInfo] = useState(null);
+  const [resumptionDates, setResumptionDates] = useState(null);
   const [students, setStudents] = useState([]);
   const [reportCache, setReportCache] = useState({});
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -51,6 +53,11 @@ const ClassDossierView = () => {
         setClassInfo(body.data?.class_arm || null);
         setTermInfo(body.data?.session_term || null);
         setStudents(withResults);
+
+        resultSetupApi
+          .getResumptionClosingDate(sessionTermId)
+          .then((r) => setResumptionDates(r?.data?.data || null))
+          .catch(() => setResumptionDates(null));
 
         const reports = await Promise.all(
           withResults.map((s) =>
@@ -94,8 +101,8 @@ const ClassDossierView = () => {
         sessionTerm={{
           label: `${termInfo?.session_name || report.session_term?.session_name || ''} - ${termInfo?.term_name || report.session_term?.term_name || ''}`,
           term_id: termInfo?.term_id ?? report.session_term?.term_id ?? null,
-          closing_date: report.session_term?.end_date || '',
-          resumption_date: '',
+          closing_date: resumptionDates?.closing_date || report.session_term?.end_date || '',
+          resumption_date: resumptionDates?.resumption_date || '',
         }}
         className={cls}
         gradeScale={gradeScaleFor(report)}

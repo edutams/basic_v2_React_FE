@@ -48,6 +48,15 @@ const resultSetupApi = {
   resetMarkConfiguration: (data) =>
     tenantApi.delete('/result-setup/mark-configurations/reset', { data }),
 
+  // ── Resumption & Closing Dates ────────────────────────────
+  getResumptionClosingDate: (sessionTermId) =>
+    tenantApi.get('/result-setup/resumption-closing-date', {
+      params: sessionTermId ? { session_term_id: sessionTermId } : {},
+    }),
+
+  saveResumptionClosingDate: (data) =>
+    tenantApi.post('/result-setup/resumption-closing-date', data),
+
   // ── Promotion Settings ───────────────────────────────────
   getPromotionStats: (params) =>
     tenantApi.get('/result-setup/promotion-stats', { params }),

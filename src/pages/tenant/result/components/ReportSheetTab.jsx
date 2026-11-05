@@ -69,6 +69,7 @@ import { useResultTemplate } from '@/context/ResultTemplateContext';
 import { getResultTemplate } from './templates';
 import StatCard from '@/components/shared/StatCard';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 import {
   fetchSessionTerms,
   fetchActiveTenantSessionTerm,
@@ -209,6 +210,7 @@ const ReportSheetTab = () => {
   const [students, setStudents] = useState([]);
   const [classInfo, setClassInfo] = useState(null);
   const [termInfo, setTermInfo] = useState(null);
+  const [resumptionDates, setResumptionDates] = useState(null);
   const [stats, setStats] = useState(null);
   const [schoolInfo, setSchoolInfo] = useState(null);
 
@@ -426,6 +428,11 @@ const ReportSheetTab = () => {
       } else {
         showSnackbar(body?.message || 'Failed to fetch students', 'error');
       }
+
+      resultSetupApi
+        .getResumptionClosingDate(selectedSessionTerm)
+        .then((r) => setResumptionDates(r?.data?.data || null))
+        .catch(() => setResumptionDates(null));
     } catch (err) {
       console.error('Failed to fetch class students:', err);
       showSnackbar(err?.response?.data?.message || 'Failed to fetch class students', 'error');
@@ -635,8 +642,8 @@ const ReportSheetTab = () => {
         sessionTerm={{
           label: `${termInfo?.session_name || report.session_term?.session_name || ''} - ${termInfo?.term_name || report.session_term?.term_name || ''}`,
           term_id: termInfo?.term_id ?? report.session_term?.term_id ?? null,
-          closing_date: report.session_term?.end_date || '',
-          resumption_date: '',
+          closing_date: resumptionDates?.closing_date || report.session_term?.end_date || '',
+          resumption_date: resumptionDates?.resumption_date || '',
         }}
         className={cls}
         gradeScale={gradeScaleFor(report)}

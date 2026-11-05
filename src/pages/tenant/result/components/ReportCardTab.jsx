@@ -29,6 +29,7 @@ import { usePermissions } from '@/context/TenantContext/permissions';
 import { getResultTemplate } from './templates';
 import { buildReportProp, gradeScaleFor, printNode } from './reportCardUtils';
 import resultDossierApi from '@/api/tenant/result-dossier/resultDossierApi';
+import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
 import { getTenantInfo } from '@/api/tenant/tenant_api';
 import { encodeLinkParams } from '@/utils/scoreLinks';
 
@@ -71,6 +72,7 @@ const ReportCardTab = ({
   const [error, setError] = useState('');
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [schoolInfo, setSchoolInfo] = useState(null);
+  const [resumptionDates, setResumptionDates] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const showSnackbar = (message, severity = 'success') =>
@@ -127,6 +129,17 @@ const ReportCardTab = ({
   }, [loadRegistrations]);
 
   // ── 2. The report card for the selected term ────────────────
+  useEffect(() => {
+    if (!selectedSessionTerm) {
+      setResumptionDates(null);
+      return;
+    }
+    resultSetupApi
+      .getResumptionClosingDate(selectedSessionTerm)
+      .then((r) => setResumptionDates(r?.data?.data || null))
+      .catch(() => setResumptionDates(null));
+  }, [selectedSessionTerm]);
+
   useEffect(() => {
     if (!selectedSessionTerm) {
       setReport(null);
@@ -611,8 +624,8 @@ const ReportCardView = ({ report, className, sessionTermLabel, getTemplateIndexF
       sessionTerm={{
         label: sessionTermLabel,
         term_id: report.session_term?.term_id ?? null,
-        closing_date: report.session_term?.end_date || '',
-        resumption_date: '',
+        closing_date: resumptionDates?.closing_date || report.session_term?.end_date || '',
+        resumption_date: resumptionDates?.resumption_date || '',
       }}
       className={cls}
       gradeScale={gradeScaleFor(report)}

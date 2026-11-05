@@ -55,12 +55,14 @@ import {
   IconEye,
   IconChevronDown,
   IconChevronRight,
+  IconCalendarEvent,
 } from '@tabler/icons-react';
 import { MoreVert as MoreVertIcon } from '@mui/icons-material';
 import SetupAffectivePsychomotorTab from '@/pages/tenant/attendance/components/SetupAffectivePsychomotorTab';
 import SessionTermSelector from './SessionTermSelector';
 import GradeConfiguration from './GradeConfiguration';
 import PromotionSettings from './PromotionSettings';
+import ResumptionDatesSection from './ResumptionDatesSection';
 import { useResultTemplate } from '@/context/ResultTemplateContext';
 import StatCard from '@/components/shared/StatCard';
 import resultSetupApi from '@/api/tenant/result-setup/resultSetupApi';
@@ -267,6 +269,7 @@ const ResultSetupTab = () => {
     { label: '3. Affective & Psychomotor', icon: <IconMoodSmile size={16} /> },
     { label: '4. Comment Nomenclature', icon: <IconMessageCircle size={16} /> },
     { label: '5. Promotion Settings', icon: <IconSettings size={16} /> },
+    { label: '6. Set Resumption', icon: <IconCalendarEvent size={16} /> },
   ];
 
   const handleNomSave = async () => {
@@ -906,6 +909,13 @@ const ResultSetupTab = () => {
           <Typography variant="h6" fontWeight={600} mb={2}></Typography>
           <PromotionSettings onStatsRefresh={fetchPromotionStats} />
         </Paper>
+      </InnerTabPanel>
+
+      {/* ════════════════════════════════════════════════════════
+          6. SET RESUMPTION
+          ════════════════════════════════════════════════════════ */}
+      <InnerTabPanel value={innerTab} index={5}>
+        <ResumptionDatesSection />
       </InnerTabPanel>
 
       {/* ════════════════════════════════════════════════════════

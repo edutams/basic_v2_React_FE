@@ -290,10 +290,20 @@ const LearnerManagement = () => {
     notify,
   ]);
 
+  // Same scoping filters fetchLearners() sends — status-driven filters
+  // (activeTab/statusFilter) are deliberately excluded, since the cards
+  // themselves are that status breakdown; applying one would collapse
+  // every card to a single bucket instead of showing them all scoped to
+  // the same class/arm/gender/search view.
   const fetchStats = useCallback(async () => {
     try {
       setStatsLoading(true);
-      const res = await learnerApi.getOverviewStats();
+      const res = await learnerApi.getOverviewStats({
+        search: debouncedSearch || undefined,
+        ...(classId && { class_id: classId }),
+        ...(armId && { arm_id: armId }),
+        ...(gender && { gender }),
+      });
       setStats(
         res?.data?.data ?? {
           total: 0,
@@ -309,7 +319,7 @@ const LearnerManagement = () => {
     } finally {
       setStatsLoading(false);
     }
-  }, [notify]);
+  }, [debouncedSearch, classId, armId, gender, notify]);
 
   const fetchClasses = useCallback(async () => {
     try {

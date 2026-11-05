@@ -2,7 +2,7 @@ import tenantApi from '@/api/tenant/tenant_api';
 
 const learnerApi = {
   getStats: () => tenantApi.get('/learners/learner-stats'),
-  getOverviewStats: () => tenantApi.get('/learners/overview-stats'),
+  getOverviewStats: (params = {}) => tenantApi.get('/learners/overview-stats', { params }),
   getClassArms: (params = {}) => tenantApi.get('/learners/class-arms', { params }),
   getAll: (params = {}) => tenantApi.get('/learners', { params }),
   update: (id, data) => tenantApi.put(`/learners/${id}`, data),

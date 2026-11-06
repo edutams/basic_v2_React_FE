@@ -23,6 +23,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import tenantApi from '@/api/tenant/tenant_api';
 import { fetchSessionTerms } from '@/api/tenant/curriculum/tenantCurriculumApi';
 
@@ -56,6 +57,7 @@ const TITLES = {
  *   - `type`        → drives the column layout (see columnsFor)
  */
 const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverview = {} }) => {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
@@ -468,6 +470,17 @@ const LearnerBreakdownModal = ({ open, type, onClose, sessionTerm, academicOverv
       </DialogContent>
       <DialogActions sx={{ px: 2.5, py: 1.5 }}>
         <Button onClick={onClose}>Close</Button>
+        {type === 'fees' && (
+          <Button
+            variant="contained"
+            onClick={() => {
+              onClose();
+              navigate('/pay-school-fees');
+            }}
+          >
+            Pay Now
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

@@ -180,11 +180,14 @@ const PayInvoice = () => {
     setter((prev) =>
       prev.map((f) => {
         if (f.id !== feeId) return f;
+        // f.balance is already net of this fee's discount/penalty (backend:
+        // balance = (amount - discount + penalty) - paid), so a custom
+        // amount — already capped at that net balance — must not have
+        // discount/penalty subtracted from it again; payable is just the
+        // clamped custom amount itself.
         const max = Number(f.balance || f.amount || 0);
         const custom = Math.min(Number(rawVal) || 0, max);
-        const discount = Number(f.discount_amount || 0);
-        const penalty = Number(f.penalty_amount || 0);
-        const payable = Math.max(0, custom - discount + penalty);
+        const payable = Math.max(0, custom);
         return { ...f, custom_amount: custom, payable };
       }),
     );
@@ -929,8 +932,8 @@ const PayInvoice = () => {
                             >
                               ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
                               {format(fee.balance)}
-                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
-                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                              {fee.discount_amount > 0 && ` · Discount ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Penalty ₦${format(fee.penalty_amount)}`}
                             </Typography>
                           </Box>
 
@@ -1149,8 +1152,8 @@ const PayInvoice = () => {
                             >
                               ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
                               {format(fee.balance)}
-                              {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
-                              {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                              {fee.discount_amount > 0 && ` · Discount ₦${format(fee.discount_amount)}`}
+                              {fee.penalty_amount > 0 && ` · Penalty ₦${format(fee.penalty_amount)}`}
                             </Typography>
                           </Box>
 

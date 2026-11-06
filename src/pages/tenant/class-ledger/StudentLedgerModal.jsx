@@ -126,6 +126,8 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
     let totalBill = 0;
     let totalPaid = 0;
     let totalBalance = 0;
+    let totalDiscount = 0;
+    let totalPenalty = 0;
     let cumulative = 0;
 
     visibleData.forEach((item) => {
@@ -145,6 +147,8 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
         totalBill += parseFloat(item.sched_amount || 0);
         totalPaid += parseFloat(item.amount_paid || 0);
         totalBalance += parseFloat(item.balance_amount || 0);
+        totalDiscount += parseFloat(item.discount_amount || 0);
+        totalPenalty += parseFloat(item.penalty_amount || 0);
       }
     });
 
@@ -171,6 +175,8 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
         bill: totalBill,
         paid: totalPaid,
         balance: totalBalance,
+        discount: totalDiscount,
+        penalty: totalPenalty,
       },
       distinctCategories,
     };
@@ -286,6 +292,8 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Payment Items</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Category</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Discount</TableCell>
+                    <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Penalty</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Amount Paid (NGN)</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Balance</TableCell>
                     <TableCell sx={{ fontWeight: 600, py: 1.5, fontSize: '0.75rem' }}>Cumulative</TableCell>
@@ -315,6 +323,16 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
                               )}
                             </TableCell>
                             <TableCell>{parseFloat(item.sched_amount || 0).toLocaleString()}</TableCell>
+                            <TableCell>
+                              {parseFloat(item.discount_amount || 0) > 0
+                                ? parseFloat(item.discount_amount).toLocaleString()
+                                : '-'}
+                            </TableCell>
+                            <TableCell>
+                              {parseFloat(item.penalty_amount || 0) > 0
+                                ? parseFloat(item.penalty_amount).toLocaleString()
+                                : '-'}
+                            </TableCell>
                             <TableCell>{parseFloat(item.amount_paid || 0).toLocaleString()}</TableCell>
                             <TableCell>{parseFloat(item.balance_amount || 0).toLocaleString()}</TableCell>
                             <TableCell>{item.cumulative.toLocaleString()}</TableCell>
@@ -355,7 +373,7 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
                         No payment records found.
                       </TableCell>
                     </TableRow>
@@ -365,6 +383,12 @@ const StudentLedgerModal = ({ open, onClose, student, className }) => {
                     <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'grey.900' : 'grey.50' }}>
                       <TableCell colSpan={3} sx={{ fontWeight: 700, fontSize: '0.85rem' }}>Total</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.bill.toLocaleString()}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                        {totals.discount > 0 ? totals.discount.toLocaleString() : '-'}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                        {totals.penalty > 0 ? totals.penalty.toLocaleString() : '-'}
+                      </TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.paid.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{totals.balance.toLocaleString()}</TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: '0.85rem' }}>{/* cumulative total? */}</TableCell>

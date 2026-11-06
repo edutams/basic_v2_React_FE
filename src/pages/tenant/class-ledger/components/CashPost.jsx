@@ -482,8 +482,8 @@ const CashPost = () => {
                         >
                           ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
                           {format(fee.balance || fee.amount)}
-                          {fee.discount_amount > 0 && ` · Disc ₦${format(fee.discount_amount)}`}
-                          {fee.penalty_amount > 0 && ` · Pen ₦${format(fee.penalty_amount)}`}
+                          {fee.discount_amount > 0 && ` · Discount ₦${format(fee.discount_amount)}`}
+                          {fee.penalty_amount > 0 && ` · Penalty ₦${format(fee.penalty_amount)}`}
                         </Typography>
                         {fee.has_cashpost && (
                           <Chip

@@ -165,8 +165,15 @@ const Invoice = () => {
     const discount = discountRowEnabled ? Number(fee.discount || 0) : 0;
     const penalty = penaltyRowEnabled ? Number(fee.penalty || 0) : 0;
 
-    // Use balance as the base amount (what's still owed), fallback to amount
-    const baseAmount = Number(fee.balance || fee.amount || 0);
+    // fee.balance is already net of any previously-saved discount/penalty
+    // (backend: balance = (amount - discount + penalty) - paid — see
+    // InvoiceRecalculationService) and the discount/penalty inputs here are
+    // pre-filled from those same saved values, so basing this on fee.balance
+    // subtracted the discount a second time (e.g. ₦120 fee, ₦20 saved
+    // discount => balance ₦100, then this computed 100 - 20 = ₦80 instead of
+    // the correct ₦100). Must mirror the backend's own formula exactly:
+    // payable = amount - discount + penalty.
+    const baseAmount = Number(fee.amount || 0);
 
     return Math.max(0, baseAmount - discount + penalty);
   };

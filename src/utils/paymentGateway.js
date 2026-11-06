@@ -94,10 +94,16 @@ const skoolpay = (data, onConfirm) => {
 };
 
 const xpress_pay = (data, hash) => {
+    // Bulk payments must charge the combined total of every selected
+    // schedule, not just the first one — data[0].instValue silently dropped
+    // every other selected item's amount from what XpressPay actually
+    // charged, while the backend still marked all of them pending.
+    const totalAmount = data.reduce((sum, d) => sum + Number(d.instValue || 0), 0);
+
     const body = {
         publicKey: data[0].pub_key,
         transactionId: data[0].bulk_order_id,
-        amount: data[0].instValue,
+        amount: totalAmount,
         currency: "NGN",
         country: "NG",
         email: data[0].admin_email,

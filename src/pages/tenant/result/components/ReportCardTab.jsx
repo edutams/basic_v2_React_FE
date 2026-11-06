@@ -540,6 +540,7 @@ const ReportCardTab = ({
               className={className}
               sessionTermLabel={sessionTermLabel}
               getTemplateIndexForSample={getTemplateIndexForSample}
+              resumptionDates={resumptionDates}
             />
           ) : (
             <Box sx={{ p: 5, textAlign: 'center' }}>
@@ -601,7 +602,13 @@ const ReportCardTab = ({
 };
 
 // Renders the dossier payload through the school's configured template.
-const ReportCardView = ({ report, className, sessionTermLabel, getTemplateIndexForSample }) => {
+const ReportCardView = ({
+  report,
+  className,
+  sessionTermLabel,
+  getTemplateIndexForSample,
+  resumptionDates,
+}) => {
   const sample = report.result_template?.result_sample;
   const TemplateComponent = getResultTemplate(getTemplateIndexForSample(sample));
   const cls = className || '';
@@ -626,6 +633,7 @@ const ReportCardView = ({ report, className, sessionTermLabel, getTemplateIndexF
         term_id: report.session_term?.term_id ?? null,
         closing_date: resumptionDates?.closing_date || report.session_term?.end_date || '',
         resumption_date: resumptionDates?.resumption_date || '',
+        boarding_resumption_date: resumptionDates?.boarding_resumption_date || '',
       }}
       className={cls}
       gradeScale={gradeScaleFor(report)}

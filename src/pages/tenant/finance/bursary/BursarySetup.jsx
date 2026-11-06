@@ -12,6 +12,7 @@ import {
   IconStack2,
   IconBuildingBank,
   IconTrophy,
+  IconEye,
 } from '@tabler/icons-react';
 import dayjs from 'dayjs';
 import PageContainer from '@/components/container/PageContainer';
@@ -19,6 +20,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import StatCard, { StatSubtitleParts, STAT_SUBTITLE_COLORS } from '@/components/shared/StatCard';
 import BursarySetupTab from '@/components/tenant/bursary/BursarySetupTab';
 import PaymentNameTab from '@/components/tenant/bursary/PaymentNameTab';
+import ResultPaymentSettingsTab from '@/components/tenant/bursary/ResultPaymentSettingsTab';
 import { fetchTenantSessions, fetchTenantSessionTerms } from '@/api/tenant/session-term/sessionTermApi';
 import { fetchActiveSessionTerm } from '@/api/tenant/bursary/bursarySettingsApi';
 import { fetchPaymentNameStats } from '@/api/tenant/bursary/paymentNameApi';
@@ -165,13 +167,21 @@ const BursarySetup = () => {
         subtitle={
           currentTab === 1
             ? 'Configure payment items that parents can pay for and manage their settlement destinations.'
-            : 'Configure how fees are collected for the current term'
+            : currentTab === 2
+              ? 'Configure whether students must pay before they can view their results.'
+              : 'Configure how fees are collected for the current term'
         }
-        items={currentTab === 1 ? [...BCrumb, { title: 'Payment Items' }] : BCrumb}
+        items={
+          currentTab === 1
+            ? [...BCrumb, { title: 'Payment Items' }]
+            : currentTab === 2
+              ? [...BCrumb, { title: 'Result Viewing' }]
+              : BCrumb
+        }
       />
 
       {/* Stats Cards - Dynamic based on active tab */}
-      {currentTab === 0 ? (
+      {currentTab === 2 ? null : currentTab === 0 ? (
         // Bursary Setup Stats — five summary cards matching the Bursary
         // Setup reference design.
         <Grid container spacing={3} mb={1} alignItems="stretch">
@@ -381,6 +391,12 @@ const BursarySetup = () => {
             iconPosition="start"
             sx={{ textTransform: 'none', fontWeight: 600 }}
           />
+          <Tab
+            label="Result Viewing"
+            icon={<IconEye size={18} />}
+            iconPosition="start"
+            sx={{ textTransform: 'none', fontWeight: 600 }}
+          />
         </Tabs>
       </Box>
 
@@ -406,6 +422,8 @@ const BursarySetup = () => {
           stats={paymentNameStats}
         />
       )}
+
+      {currentTab === 2 && <ResultPaymentSettingsTab />}
 
       {/* Snackbar */}
       <Snackbar

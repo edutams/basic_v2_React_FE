@@ -904,12 +904,13 @@ const PayInvoice = () => {
                             sx={{ p: 0.5 }}
                           />
 
-                          {/* Description + amount breakdown — one truncating line */}
+                          {/* Description + amount breakdown — stacked so the
+                              breakdown (now spelling out Discount/Penalty in
+                              full) wraps instead of truncating money info */}
                           <Box
                             sx={{
                               display: 'flex',
-                              alignItems: 'baseline',
-                              gap: 0.75,
+                              flexDirection: 'column',
                               minWidth: 0,
                               flex: '1 1 200px',
                             }}
@@ -918,8 +919,6 @@ const PayInvoice = () => {
                               variant="body2"
                               fontWeight={700}
                               color="text.primary"
-                              noWrap
-                              sx={{ flexShrink: 0, maxWidth: '55%' }}
                             >
                               {idx + 1}. {fee.description}
                             </Typography>
@@ -927,8 +926,7 @@ const PayInvoice = () => {
                               variant="body2"
                               fontWeight={600}
                               color="text.secondary"
-                              noWrap
-                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                              sx={{ fontSize: '0.9375rem' }}
                             >
                               ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
                               {format(fee.balance)}
@@ -1124,12 +1122,13 @@ const PayInvoice = () => {
                             sx={{ p: 0.5 }}
                           />
 
-                          {/* Description + amount breakdown — one truncating line */}
+                          {/* Description + amount breakdown — stacked so the
+                              breakdown (now spelling out Discount/Penalty in
+                              full) wraps instead of truncating money info */}
                           <Box
                             sx={{
                               display: 'flex',
-                              alignItems: 'baseline',
-                              gap: 0.75,
+                              flexDirection: 'column',
                               minWidth: 0,
                               flex: '1 1 200px',
                             }}
@@ -1138,8 +1137,6 @@ const PayInvoice = () => {
                               variant="body2"
                               fontWeight={700}
                               color="text.primary"
-                              noWrap
-                              sx={{ flexShrink: 0, maxWidth: '55%' }}
                             >
                               {idx + 1}. {fee.description}
                             </Typography>
@@ -1147,8 +1144,7 @@ const PayInvoice = () => {
                               variant="body2"
                               fontWeight={600}
                               color="text.secondary"
-                              noWrap
-                              sx={{ flex: 1, minWidth: 0, fontSize: '0.9375rem' }}
+                              sx={{ fontSize: '0.9375rem' }}
                             >
                               ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
                               {format(fee.balance)}

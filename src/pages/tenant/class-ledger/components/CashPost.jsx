@@ -454,46 +454,52 @@ const CashPost = () => {
                         flexWrap: { xs: 'wrap', sm: 'nowrap' },
                       }}
                     >
-                      {/* LEFT — checkbox + description + amount breakdown, own width only */}
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                      {/* LEFT — checkbox + description + amount breakdown. The
+                          breakdown wraps onto its own line now instead of
+                          being clipped with an ellipsis — Discount/Penalty
+                          written out in full no longer fits a single
+                          truncated line, and this is money the bursar must
+                          actually be able to read in full. */}
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, minWidth: 0, flex: 1 }}>
                         <Checkbox
                           size="small"
                           checked={fee.checked}
                           onChange={(e) => handleCheckChange(type, fee.id, e.target.checked)}
                           onClick={(e) => e.stopPropagation()}
                           disabled={fee.has_cashpost}
-                          sx={{ p: 0.5, flexShrink: 0 }}
+                          sx={{ p: 0.5, flexShrink: 0, mt: 0.25 }}
                         />
-                        <Typography
-                          variant="body2"
-                          fontWeight={700}
-                          color="text.primary"
-                          noWrap
-                          sx={{ flexShrink: 0, maxWidth: { xs: 130, sm: 170 } }}
-                        >
-                          {i + 1}. {fee.description}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          color="text.secondary"
-                          noWrap
-                          sx={{ fontSize: '0.9375rem', maxWidth: { xs: 150, sm: 260 } }}
-                        >
-                          ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
-                          {format(fee.balance || fee.amount)}
-                          {fee.discount_amount > 0 && ` · Discount ₦${format(fee.discount_amount)}`}
-                          {fee.penalty_amount > 0 && ` · Penalty ₦${format(fee.penalty_amount)}`}
-                        </Typography>
-                        {fee.has_cashpost && (
-                          <Chip
-                            label="Cash Posted"
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                            sx={{ flexShrink: 0, fontWeight: 600 }}
-                          />
-                        )}
+                        <Box sx={{ minWidth: 0 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color="text.primary"
+                            >
+                              {i + 1}. {fee.description}
+                            </Typography>
+                            {fee.has_cashpost && (
+                              <Chip
+                                label="Cash Posted"
+                                size="small"
+                                color="success"
+                                variant="outlined"
+                                sx={{ flexShrink: 0, fontWeight: 600 }}
+                              />
+                            )}
+                          </Box>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.secondary"
+                            sx={{ fontSize: '0.9375rem' }}
+                          >
+                            ₦{format(fee.amount)} · Paid ₦{format(fee.paid_amount)} · Bal ₦
+                            {format(fee.balance || fee.amount)}
+                            {fee.discount_amount > 0 && ` · Discount ₦${format(fee.discount_amount)}`}
+                            {fee.penalty_amount > 0 && ` · Penalty ₦${format(fee.penalty_amount)}`}
+                          </Typography>
+                        </Box>
                       </Box>
 
                       {/* MIDDLE — Amount to Post, centered in the remaining space */}

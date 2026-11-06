@@ -644,6 +644,7 @@ const ReportSheetTab = () => {
           term_id: termInfo?.term_id ?? report.session_term?.term_id ?? null,
           closing_date: resumptionDates?.closing_date || report.session_term?.end_date || '',
           resumption_date: resumptionDates?.resumption_date || '',
+          boarding_resumption_date: resumptionDates?.boarding_resumption_date || '',
         }}
         className={cls}
         gradeScale={gradeScaleFor(report)}

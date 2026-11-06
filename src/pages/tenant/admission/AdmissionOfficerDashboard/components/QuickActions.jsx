@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip, Skeleton, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, TextField, Button, InputAdornment, useTheme, CircularProgress, Stack, Avatar, Chip, Skeleton } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import {
   AddBoxOutlined,
@@ -34,7 +34,6 @@ const QuickActions = ({ loading = false }) => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '' });
 
   const handleAction = (action) => {
     switch (action) {
@@ -54,10 +53,10 @@ const QuickActions = ({ loading = false }) => {
         navigate('/process-applications');
         break;
       case 'admission_report':
-        // /application-tracker needs a specific applicant id/state and is
-        // an individual's timeline, not a report — there's no admissions
-        // report page yet, so surface that instead of a broken navigation.
-        setSnackbar({ open: true, message: 'Admission Report — Page under development' });
+        // No separate report page exists — /process-applications already
+        // shows every admission (stats + the full applications table across
+        // all batches), so that's the real "see all admissions" view.
+        navigate('/process-applications');
         break;
       default:
         break;
@@ -353,22 +352,6 @@ const QuickActions = ({ loading = false }) => {
           </Box>
         )}
       </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ open: false, message: '' })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ open: false, message: '' })}
-          severity="info"
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

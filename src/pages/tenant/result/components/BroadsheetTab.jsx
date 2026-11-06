@@ -31,6 +31,7 @@ import {
   TextField,
   Snackbar,
   Alert as MuiAlert,
+  Collapse,
   Stack,
   CircularProgress,
   Skeleton,
@@ -284,6 +285,11 @@ const BroadsheetTab = () => {
   const [addEditMenu, setAddEditMenu] = useState({ rowId: null, anchorEl: null });
   const [editScoresDialog, setEditScoresDialog] = useState({ open: false, student: null });
   const [scoreForm, setScoreForm] = useState([]);
+  // Shown inline in the Edit Scores dialog itself rather than the page-level
+  // Snackbar — that toast rendered behind this Dialog's own stacking context
+  // (z-index bump didn't fix it), so feedback from a save made inside the
+  // modal now shows in the modal.
+  const [editScoresFeedback, setEditScoresFeedback] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [filterError, setFilterError] = useState('');
   const [generatingComments, setGeneratingComments] = useState(false);
@@ -876,11 +882,13 @@ const BroadsheetTab = () => {
 
     setScoreForm(form);
     setEditScoresDialog({ open: true, student: row });
+    setEditScoresFeedback(null);
   };
 
   const handleCloseEditScores = () => {
     setEditScoresDialog({ open: false, student: null });
     setScoreForm([]);
+    setEditScoresFeedback(null);
   };
 
   const handleScoreChange = (subjectIdx, groupIdx, entityIdx, value) => {
@@ -920,7 +928,7 @@ const BroadsheetTab = () => {
     );
     const invalidExam = subj.exam_score === '' || isScoreInvalid(subj.exam_score, examMax);
     if (invalidEntity || invalidExam) {
-      showSnackbar('Fix invalid scores before saving', 'error');
+      setEditScoresFeedback({ message: 'Fix invalid scores before saving', severity: 'error' });
       return;
     }
 
@@ -955,17 +963,20 @@ const BroadsheetTab = () => {
       // overall class/arm position (what the report card reads) only
       // updates when "Recompute Positions & Grades" is run, since one
       // student's edit can shift everyone else's rank too.
-      showSnackbar(
-        `${subj.subject_name} score updated — run "Recompute Positions & Grades" to refresh class rankings`,
-      );
-      handleCloseEditScores();
+      setEditScoresFeedback({
+        message: `${subj.subject_name} score updated — run "Recompute Positions & Grades" to refresh class rankings`,
+        severity: 'success',
+      });
+      // Stay open — editing several subjects in one visit means saving one
+      // must not close the dialog out from under the rest; the explicit
+      // Close button is the only thing that should dismiss it now.
       refetch();
     } catch (err) {
       console.error('Failed to save score:', err);
-      showSnackbar(
-        err?.response?.data?.message || err?.response?.data?.error || 'Failed to save score',
-        'error',
-      );
+      setEditScoresFeedback({
+        message: err?.response?.data?.message || err?.response?.data?.error || 'Failed to save score',
+        severity: 'error',
+      });
     }
   };
 
@@ -3038,7 +3049,7 @@ const BroadsheetTab = () => {
                                                 disabled={generatingPositioning}
                                                 onClick={() => {
                                                   closeAddEditMenu();
-                                                  handleGeneratePositioning();
+                                                  setPublishConfirm({ open: true, action: 'positioning' });
                                                 }}
                                               >
                                                 <IconRefresh size={16} style={{ marginRight: 8 }} />{' '}
@@ -3430,6 +3441,15 @@ const BroadsheetTab = () => {
           {editScoresDialog.student?.user?.fname}
         </DialogTitle>
         <DialogContent dividers>
+          <Collapse in={Boolean(editScoresFeedback)}>
+            <Alert
+              severity={editScoresFeedback?.severity || 'success'}
+              onClose={() => setEditScoresFeedback(null)}
+              sx={{ mb: 2 }}
+            >
+              {editScoresFeedback?.message}
+            </Alert>
+          </Collapse>
           <TableContainer sx={{ overflowX: 'auto' }}>
             <Table size="small" sx={{ whiteSpace: 'nowrap' }}>
               <TableHead>
@@ -3569,6 +3589,7 @@ const BroadsheetTab = () => {
         autoHideDuration={3000}
         onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 9999 }}
       >
         <MuiAlert
           onClose={() => setSnackbar((s) => ({ ...s, open: false }))}

@@ -631,7 +631,15 @@ const TenantRoutes = [
       {
         path: '/bursary/transactions/print_receipt',
         element: (
-          <TenantProtectedRoute permission="walet_manager.transactions.index">
+          // Reached from two different pages with two different permissions:
+          // staff via /transactions (walet_manager.transactions.index) and
+          // staff/parent/student via /bursary/payment-history
+          // (bursary_manager.payment_history.index) — gating on only the
+          // first one 404'd every parent/student clicking "print receipt"
+          // from their own payment history.
+          <TenantProtectedRoute
+            anyOf={['walet_manager.transactions.index', 'bursary_manager.payment_history.index']}
+          >
             <PrintReceipt />
           </TenantProtectedRoute>
         ),
@@ -885,7 +893,15 @@ const TenantRoutes = [
       {
         path: 'admission/new-application',
         element: (
-          <TenantProtectedRoute permission="admission_manager.my_applications.index">
+          // Two different audiences reach this same application form: a
+          // parent applying for their own ward (my_applications.index), and
+          // an admission officer adding a walk-in applicant on someone's
+          // behalf from their dashboard's "Add Applicant" quick action
+          // (process.index) — gating on only the parent permission 404'd
+          // every officer who clicked it.
+          <TenantProtectedRoute
+            anyOf={['admission_manager.my_applications.index', 'admission_manager.process.index']}
+          >
             <NewApplication />
           </TenantProtectedRoute>
         ),

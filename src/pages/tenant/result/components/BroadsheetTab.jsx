@@ -127,7 +127,7 @@ const PUBLISH_CONFIRM = {
   },
   recommend_promotions: {
     title: 'Recommend promotions for this class?',
-    body: 'Computes each student\'s promotion recommendation and next class arm based on their results, for review — this does not move anyone yet. Any existing recommendation will be recalculated.',
+    body: "Computes each student's promotion recommendation and next class arm based on their results, for review — this does not move anyone yet. Any existing recommendation will be recalculated.",
     confirm: 'Recommend',
     color: 'primary',
   },
@@ -692,10 +692,10 @@ const BroadsheetTab = () => {
   // checks the workflow-stage cards below compute for themselves.
   const allWorkflowStagesComplete = Boolean(
     sheet?.workflow &&
-      (sheet.workflow.checks?.remarks_pending ?? 1) === 0 &&
-      (sheet.workflow.checks?.positions_missing ?? 1) === 0 &&
-      sheet.result_publish?.spa_publish === 'yes' &&
-      sheet.result_publish?.head_of_school_publish === 'yes',
+    (sheet.workflow.checks?.remarks_pending ?? 1) === 0 &&
+    (sheet.workflow.checks?.positions_missing ?? 1) === 0 &&
+    sheet.result_publish?.spa_publish === 'yes' &&
+    sheet.result_publish?.head_of_school_publish === 'yes',
   );
   const showPromotionButtons =
     activeTab === 0 && showData && Boolean(sheet?.is_third_term) && allWorkflowStagesComplete;
@@ -999,7 +999,8 @@ const BroadsheetTab = () => {
       refetch();
     } catch (err) {
       showSnackbar(
-        err?.response?.data?.message || 'Failed to remove subject — it may already have scores recorded',
+        err?.response?.data?.message ||
+          'Failed to remove subject — it may already have scores recorded',
         'error',
       );
     } finally {
@@ -1202,7 +1203,9 @@ const BroadsheetTab = () => {
         }),
         ...(isCumulative ? [] : [row.total_score ?? '']),
         cwa ?? '',
-        isCumulative ? (row.all_term_overall_class_position ?? '') : (row.persisted_class_position ?? ''),
+        isCumulative
+          ? (row.all_term_overall_class_position ?? '')
+          : (row.persisted_class_position ?? ''),
         row.registered_subjects ?? '',
         row.remark ?? remarkFor(cwa, gradeSettings),
         ...(showPromotionButtons ? [row.promotion_recommendation || '', armName] : []),
@@ -1623,7 +1626,8 @@ const BroadsheetTab = () => {
               // itself was already documented to work server-side. Remarks
               // and positioning still gate, since those are prerequisites
               // the approval step itself relies on having been generated.
-              const approvalBlockingTotal = (checks.remarks_pending ?? 0) + (checks.positions_missing ?? 0);
+              const approvalBlockingTotal =
+                (checks.remarks_pending ?? 0) + (checks.positions_missing ?? 0);
               const spaDone = sheet.result_publish?.spa_publish === 'yes';
               const hosDone = sheet.result_publish?.head_of_school_publish === 'yes';
 
@@ -1920,31 +1924,38 @@ const BroadsheetTab = () => {
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
-                                  sx={{ fontStyle: 'italic', display: 'block', textAlign: 'center' }}
+                                  sx={{
+                                    fontStyle: 'italic',
+                                    display: 'block',
+                                    textAlign: 'center',
+                                  }}
                                 >
                                   Requires SPA / Head of School
                                 </Typography>
                               )}
-                              {stage.secondaryAction && can('result.admin.unpublish_broadsheet') && (
-                                <Button
-                                  fullWidth
-                                  size="small"
-                                  variant="contained"
-                                  color="warning"
-                                  disabled={publishing === 'unpublish' || publishing === 'unapprove'}
-                                  onClick={stage.onSecondaryAction}
-                                  sx={{
-                                    fontSize: '0.7rem',
-                                    fontWeight: 700,
-                                    mt: 0.5,
-                                    textTransform: 'none',
-                                    boxShadow: 'none',
-                                    '&:hover': { boxShadow: 'none' },
-                                  }}
-                                >
-                                  {stage.secondaryAction}
-                                </Button>
-                              )}
+                              {stage.secondaryAction &&
+                                can('result.admin.unpublish_broadsheet') && (
+                                  <Button
+                                    fullWidth
+                                    size="small"
+                                    variant="contained"
+                                    color="warning"
+                                    disabled={
+                                      publishing === 'unpublish' || publishing === 'unapprove'
+                                    }
+                                    onClick={stage.onSecondaryAction}
+                                    sx={{
+                                      fontSize: '0.7rem',
+                                      fontWeight: 700,
+                                      mt: 0.5,
+                                      textTransform: 'none',
+                                      boxShadow: 'none',
+                                      '&:hover': { boxShadow: 'none' },
+                                    }}
+                                  >
+                                    {stage.secondaryAction}
+                                  </Button>
+                                )}
                             </Box>
                           </Box>
                           {idx < arr.length - 1 && (
@@ -2889,17 +2900,27 @@ const BroadsheetTab = () => {
                                             Boolean(recMenu.anchorEl) &&
                                             recMenu.rowId === row.student_registration_id
                                           }
-                                          onClose={() => setRecMenu({ rowId: null, anchorEl: null })}
+                                          onClose={() =>
+                                            setRecMenu({ rowId: null, anchorEl: null })
+                                          }
                                         >
                                           {[
-                                            { value: 'promoted on trial', label: 'Promote on Trial' },
-                                            { value: 'advised to repeat', label: 'Advise to Repeat' },
+                                            {
+                                              value: 'promoted on trial',
+                                              label: 'Promote on Trial',
+                                            },
+                                            {
+                                              value: 'advised to repeat',
+                                              label: 'Advise to Repeat',
+                                            },
                                           ].map((opt) => (
                                             <MenuItem
                                               key={opt.value}
                                               dense
                                               selected={row.promotion_recommendation === opt.value}
-                                              onClick={() => handleSetRecommendation(row, opt.value)}
+                                              onClick={() =>
+                                                handleSetRecommendation(row, opt.value)
+                                              }
                                             >
                                               {opt.label}
                                             </MenuItem>
@@ -3021,7 +3042,7 @@ const BroadsheetTab = () => {
                                                 }}
                                               >
                                                 <IconRefresh size={16} style={{ marginRight: 8 }} />{' '}
-                                                Recompute Positions &amp; Grades
+                                                Recompute
                                               </MenuItem>
                                             </span>
                                           </Tooltip>
@@ -3095,7 +3116,10 @@ const BroadsheetTab = () => {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
             Registered for {subjectsPopover.row?.registered_subjects ?? 0} subject(s)
           </Typography>
-          <Stack spacing={0.4} divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}>
+          <Stack
+            spacing={0.4}
+            divider={<Box sx={{ borderBottom: '1px solid', borderColor: 'divider' }} />}
+          >
             {(subjectsPopover.row?.results ?? [])
               .filter((r) => r.course_registration_id)
               .map((r) => {
@@ -3104,7 +3128,13 @@ const BroadsheetTab = () => {
                 return (
                   <Box
                     key={r.subject_id}
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.4, gap: 1 }}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      py: 0.4,
+                      gap: 1,
+                    }}
                   >
                     <Typography variant="body2" sx={{ flex: 1 }}>
                       &bull; {r.subject_name}
@@ -3140,7 +3170,10 @@ const BroadsheetTab = () => {
                         </Tooltip>
                       ) : (
                         <Tooltip title="Remove this subject">
-                          <IconButton size="small" onClick={() => setConfirmRemoveSubjectId(r.subject_id)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => setConfirmRemoveSubjectId(r.subject_id)}
+                          >
                             <IconX size={14} />
                           </IconButton>
                         </Tooltip>
@@ -3204,9 +3237,21 @@ const BroadsheetTab = () => {
                             <Typography variant="body2" fontWeight={600}>
                               {`${s.user?.lname ?? ''} ${s.user?.fname ?? ''}`.trim()}
                             </Typography>
-                            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.25 }}>
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              flexWrap="wrap"
+                              useFlexGap
+                              sx={{ mt: 0.25 }}
+                            >
                               {subtitleFor(s).map((name) => (
-                                <Chip key={name} size="small" label={name} variant="outlined" color="warning" />
+                                <Chip
+                                  key={name}
+                                  size="small"
+                                  label={name}
+                                  variant="outlined"
+                                  color="warning"
+                                />
                               ))}
                             </Stack>
                           </Box>

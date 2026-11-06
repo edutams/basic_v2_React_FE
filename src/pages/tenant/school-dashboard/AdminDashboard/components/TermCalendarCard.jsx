@@ -11,11 +11,11 @@ import { CalendarMonth, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const TermCalendarCard = ({
-  dayCurrent = 48,
-  dayTotal = 90,
-  termStart = '8 Sept 2025',
-  expectedEnd = '12 Dec 2025',
-  progressPct = 53,
+  dayCurrent = null,
+  dayTotal = null,
+  termStart = null,
+  expectedEnd = null,
+  progressPct = null,
   loading = false,
   onViewCalendar,
 }) => {
@@ -30,6 +30,8 @@ const TermCalendarCard = ({
       navigate('/curriculum/session-mapping');
     }
   };
+
+  const hasTermData = Boolean(dayTotal) && Boolean(termStart) && Boolean(expectedEnd);
 
   return (
     <Paper
@@ -110,6 +112,21 @@ const TermCalendarCard = ({
             </Button>
           </Box>
 
+          {!hasTermData ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 140,
+              }}
+            >
+              <Typography variant="caption" sx={{ color: isDark ? 'rgba(255,255,255,0.5)' : '#94a3b8' }}>
+                No active session term configured yet
+              </Typography>
+            </Box>
+          ) : (
+          <>
           {/* Info Row: Day Badge | Dates */}
           <Box
             sx={{
@@ -292,6 +309,8 @@ const TermCalendarCard = ({
               }}
             />
           </Box>
+          </>
+          )}
         </Box>
       )}
     </Paper>

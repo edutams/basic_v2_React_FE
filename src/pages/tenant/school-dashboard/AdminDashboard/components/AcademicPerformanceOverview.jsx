@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, Typography, Paper, useTheme, Skeleton } from '@mui/material';
+import { Box, Typography, Paper, Button, useTheme, Skeleton } from '@mui/material';
 import { ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * Academic Performance Overview Bar Chart Component. `data` is empty and
@@ -17,6 +18,7 @@ const AcademicPerformanceOverview = ({
 }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const navigate = useNavigate();
 
   const chartData = data || [];
   const hasData = chartData.length > 0;
@@ -39,7 +41,7 @@ const AcademicPerformanceOverview = ({
     >
       <Box>
         {/* Header */}
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Typography
             sx={{
               fontSize: '11px',
@@ -51,6 +53,13 @@ const AcademicPerformanceOverview = ({
           >
             ACADEMIC PERFORMANCE OVERVIEW
           </Typography>
+          <Button
+            size="small"
+            onClick={() => navigate('/result-broadsheet')}
+            sx={{ fontSize: '11px', fontWeight: 700, textTransform: 'none', minWidth: 0, py: 0.25 }}
+          >
+            View All
+          </Button>
         </Box>
 
         {/* Chart */}

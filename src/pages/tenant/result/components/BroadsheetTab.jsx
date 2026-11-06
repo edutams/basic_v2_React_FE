@@ -63,6 +63,7 @@ import {
   IconPrinter,
   IconChevronDown,
   IconFileText,
+  IconRefresh,
 } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import resultSheetApi from '@/api/tenant/result-sheet/resultSheetApi';
@@ -949,9 +950,15 @@ const BroadsheetTab = () => {
         exam_score: examScore,
         session_term_id: loadedQuery?.payload?.session_term_id,
       });
-      showSnackbar(`${subj.subject_name} score updated`);
+      // Grades/averages for this subject are resolved live on every fetch,
+      // so refetch() already shows them correctly — but the persisted
+      // overall class/arm position (what the report card reads) only
+      // updates when "Recompute Positions & Grades" is run, since one
+      // student's edit can shift everyone else's rank too.
+      showSnackbar(
+        `${subj.subject_name} score updated — run "Recompute Positions & Grades" to refresh class rankings`,
+      );
       handleCloseEditScores();
-      // Refetch so grades, averages and positions are recomputed server-side.
       refetch();
     } catch (err) {
       console.error('Failed to save score:', err);
@@ -3003,6 +3010,21 @@ const BroadsheetTab = () => {
                                               Scores
                                             </MenuItem>
                                           )}
+                                          <Tooltip title="Recalculates totals, averages, positions and quality points for the whole class — run this after editing any student's scores so the broadsheet and report cards reflect the edit.">
+                                            <span>
+                                              <MenuItem
+                                                dense
+                                                disabled={generatingPositioning}
+                                                onClick={() => {
+                                                  closeAddEditMenu();
+                                                  handleGeneratePositioning();
+                                                }}
+                                              >
+                                                <IconRefresh size={16} style={{ marginRight: 8 }} />{' '}
+                                                Recompute Positions &amp; Grades
+                                              </MenuItem>
+                                            </span>
+                                          </Tooltip>
                                         </Menu>
                                       </>
                                     ) : (

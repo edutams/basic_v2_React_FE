@@ -929,7 +929,7 @@ const CommentBankTab = () => {
                 sx={{ mb: 1 }}
               >
                 <Box>
-                  <Typography sx={panelTitleSx}>Comment Matrix</Typography>
+                  <Typography sx={panelTitleSx}>Comment Bank</Typography>
                   <Typography sx={{ fontSize: 11.5, color: '#64748b' }}>
                     Enter a generic comment for each combination of academic score range and
                     psychomotor/behaviour rating.

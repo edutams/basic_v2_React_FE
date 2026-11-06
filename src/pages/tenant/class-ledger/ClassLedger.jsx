@@ -1340,6 +1340,7 @@ const ClassLedger = () => {
           setSelectedStudentForLedger(null);
         }}
         student={selectedStudentForLedger}
+        className={selectedClassName}
       />
 
       <LearnerWalletTransactionsModal

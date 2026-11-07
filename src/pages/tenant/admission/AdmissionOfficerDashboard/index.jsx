@@ -177,6 +177,7 @@ const AdmissionOfficerDashboard = () => {
           <ApplicationsByGrade
             gradeData={gradeData.grade_data}
             loading={gradeLoading}
+            onViewFullReport={() => navigate('/process-applications')}
           />
         </Box>
 

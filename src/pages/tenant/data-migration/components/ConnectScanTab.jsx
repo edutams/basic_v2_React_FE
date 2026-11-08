@@ -26,23 +26,8 @@ import {
 import SectionPaper from './SectionPaper';
 import ActionBar from './ActionBar';
 import { DUMMY_SCHOOL, DUMMY_READINESS_CHECKS } from '../dummyData';
+import { DATA_TYPES } from '../domainTypes';
 import { fetchMigrationSummary } from '@/api/tenant/dataMigration/dataMigrationApi';
-
-// Display metadata (name, dependency order) is static — it's the same for
-// every school. Only the counts themselves come from the real summary
-// endpoint. Keys must match MigrationRun::DOMAINS on the backend exactly.
-const DATA_TYPES = [
-  { key: 'sessions_terms', name: 'Academic sessions & terms', waitsFor: [] },
-  { key: 'classes', name: 'Classes & arms', waitsFor: ['Sessions'] },
-  { key: 'subjects', name: 'Subjects', waitsFor: ['Classes'] },
-  { key: 'staff', name: 'Staff', waitsFor: [] },
-  { key: 'students', name: 'Students', waitsFor: ['Classes'] },
-  { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'] },
-  { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions'] },
-  { key: 'attendance', name: 'Attendance', waitsFor: ['Enrolments'] },
-  { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'] },
-  { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'] },
-];
 
 const ConnectScanTab = ({ onContinue }) => {
   const theme = useTheme();

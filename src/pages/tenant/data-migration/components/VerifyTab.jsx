@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -15,138 +15,159 @@ import {
 import {
   IconCircleCheck,
   IconAlertTriangle,
-  IconDownload,
-  IconLayoutDashboard,
   IconFileCheck,
-  IconUserCheck,
   IconAlertCircle,
   IconListDetails,
 } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import SectionPaper from './SectionPaper';
-import {
-  DUMMY_RUN_PROGRESS,
-  DUMMY_VERIFICATION_CHECKS,
-  DUMMY_FOLLOW_UPS,
-  DUMMY_RUN_HISTORY,
-} from '../dummyData';
+import { DATA_TYPE_BY_KEY } from '../domainTypes';
+import { fetchMigrationStatus, fetchMigrationHistory } from '@/api/tenant/dataMigration/dataMigrationApi';
 
-const followUpChip = (status) => {
-  if (status === 'Not copied') {
-    return <Chip size="small" label={status} sx={{ bgcolor: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 11, height: 22 }} />;
-  }
-  return <Chip size="small" label={status} sx={{ bgcolor: '#FEF3C7', color: '#D97706', fontWeight: 700, fontSize: 11, height: 22 }} />;
+const statusChip = (status) => {
+  const map = {
+    completed: { bg: '#DCFCE7', color: '#15803D' },
+    failed: { bg: '#FEF2F2', color: '#DC2626' },
+    running: { bg: '#DBEAFE', color: '#1D4ED8' },
+    pending: { bg: '#F1F5F9', color: '#64748b' },
+  };
+  const style = map[status] || map.pending;
+
+  return <Chip size="small" label={status || 'unknown'} sx={{ bgcolor: style.bg, color: style.color, fontWeight: 700, fontSize: 11, height: 22, textTransform: 'capitalize' }} />;
 };
 
-const VerifyTab = () => {
+const VerifyTab = ({ selectedDomains, onStartNewRun }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [runsByDomain, setRunsByDomain] = useState({});
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      Promise.all(selectedDomains.map((domain) => fetchMigrationStatus(domain))),
+      fetchMigrationHistory(),
+    ])
+      .then(([statusResults, historyRes]) => {
+        const byDomain = {};
+        statusResults.forEach((res, i) => {
+          byDomain[selectedDomains[i]] = res?.data;
+        });
+        setRunsByDomain(byDomain);
+        setHistory(historyRes?.data?.data || []);
+      })
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDomains]);
+
+  const runs = selectedDomains.map((domain) => runsByDomain[domain]).filter(Boolean);
+  const totalMigrated = runs.reduce((sum, run) => sum + (run.migrated_count || 0), 0);
+  const totalSkipped = runs.reduce((sum, run) => sum + (run.skipped_count || 0), 0);
+  const totalErrors = runs.reduce((sum, run) => sum + (run.error_count || 0), 0);
+  const anyFailed = runs.some((run) => run.status === 'failed');
+
+  const allIssues = selectedDomains.flatMap((domain) => {
+    const run = runsByDomain[domain];
+    return (run?.issues || []).map((issue) => ({ ...issue, domain }));
+  });
 
   return (
     <Box>
       <SectionPaper sx={{ mb: 1.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '10px',
-                bgcolor: '#DCFCE7',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <IconCircleCheck size={22} color="#16A34A" />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 17, fontWeight: 800 }}>Migration complete</Typography>
-              <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
-                Run #{DUMMY_RUN_PROGRESS.runNumber} · finished today at 10:48 · took 27 minutes. 12 records
-                couldn&apos;t be copied and 203 were copied with flags.
-              </Typography>
-            </Box>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '10px',
+              bgcolor: anyFailed ? '#FEF2F2' : '#DCFCE7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            {anyFailed ? <IconAlertTriangle size={22} color="#DC2626" /> : <IconCircleCheck size={22} color="#16A34A" />}
           </Box>
-          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-            <Button variant="outlined" startIcon={<IconDownload size={16} />} sx={{ textTransform: 'none', fontWeight: 600 }}>
-              Full report (CSV)
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<IconLayoutDashboard size={16} />}
-              sx={{ textTransform: 'none', fontWeight: 700 }}
-            >
-              Go to dashboard
-            </Button>
+          <Box>
+            <Typography sx={{ fontSize: 17, fontWeight: 800 }}>
+              {anyFailed ? 'Migration finished with errors' : 'Migration complete'}
+            </Typography>
+            <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
+              {totalErrors > 0
+                ? `${totalErrors} record${totalErrors === 1 ? '' : 's'} couldn't be copied — see "Items to follow up" below.`
+                : 'Every eligible record copied cleanly.'}
+            </Typography>
           </Box>
         </Box>
       </SectionPaper>
 
       <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard align="left" icon={IconFileCheck} colorIndex={1} count="81,020" label="Copied" subtitle="203 with flags" />
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard align="left" icon={IconFileCheck} colorIndex={1} loading={loading} count={totalMigrated.toLocaleString()} label="Copied" />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard align="left" icon={IconUserCheck} colorIndex={1} count={38} label="Already in V2" subtitle="Left unchanged" />
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard align="left" icon={IconListDetails} colorIndex={2} loading={loading} count={totalSkipped.toLocaleString()} label="Skipped" subtitle="Already in V2 or unresolved" />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard align="left" icon={IconAlertCircle} colorIndex={4} accent count={12} label="Not copied" subtitle="Need a fix in V1" />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard align="left" icon={IconListDetails} colorIndex={2} count="184,220" label="Not selected" subtitle="Attendance" />
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <StatCard align="left" icon={IconAlertCircle} colorIndex={4} accent loading={loading} count={totalErrors.toLocaleString()} label="Not copied" subtitle="Need a fix in V1" />
         </Grid>
       </Grid>
 
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 8 }}>
-          <SectionPaper title="Verification" subtitle="We compared V2 against V1 after copying.">
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-              {DUMMY_VERIFICATION_CHECKS.map((check) => (
-                <Box key={check.label} sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    {check.status === 'pass' ? (
-                      <IconCircleCheck size={16} color="#16A34A" style={{ marginTop: 2, flexShrink: 0 }} />
-                    ) : (
-                      <IconAlertTriangle size={16} color="#D97706" style={{ marginTop: 2, flexShrink: 0 }} />
-                    )}
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{check.label}</Typography>
-                      <Typography sx={{ fontSize: 12, color: '#64748b' }}>{check.detail}</Typography>
-                    </Box>
-                  </Box>
-                  <Typography sx={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>{check.ratio}</Typography>
-                </Box>
-              ))}
-            </Box>
-          </SectionPaper>
-
-          <SectionPaper title="Items to follow up" sx={{ mt: 1.5 }}>
+          <SectionPaper title="Results by data type">
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>ISSUE</TableCell>
-                  <TableCell align="right" sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>RECORDS</TableCell>
+                  <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>DATA TYPE</TableCell>
+                  <TableCell align="right" sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>COPIED</TableCell>
+                  <TableCell align="right" sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>ELIGIBLE</TableCell>
                   <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>STATUS</TableCell>
-                  <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>NEXT STEP</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {DUMMY_FOLLOW_UPS.map((row) => (
-                  <TableRow key={row.issue}>
-                    <TableCell sx={{ fontSize: 13 }}>{row.issue}</TableCell>
-                    <TableCell align="right" sx={{ fontSize: 13 }}>{row.records}</TableCell>
-                    <TableCell>{followUpChip(row.status)}</TableCell>
-                    <TableCell>
-                      <Typography component="a" href="#" sx={{ fontSize: 12.5, fontWeight: 600, color: theme.palette.primary.main, textDecoration: 'underline' }}>
-                        {row.nextStep}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {selectedDomains.map((domain) => {
+                  const run = runsByDomain[domain];
+                  return (
+                    <TableRow key={domain}>
+                      <TableCell sx={{ fontSize: 13 }}>{DATA_TYPE_BY_KEY[domain]?.name || domain}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.migrated_count || 0).toLocaleString()}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.eligible_count || 0).toLocaleString()}</TableCell>
+                      <TableCell>{statusChip(run?.status)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
+          </SectionPaper>
+
+          <SectionPaper title={`Items to follow up (${allIssues.length})`} sx={{ mt: 1.5 }}>
+            {allIssues.length === 0 ? (
+              <Typography sx={{ fontSize: 13, color: '#64748b' }}>Nothing to follow up on.</Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>DATA TYPE</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>ISSUE</TableCell>
+                    <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>SEVERITY</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {allIssues.map((issue, idx) => (
+                    <TableRow key={`${issue.domain}-${issue.source_table}-${issue.source_id}-${idx}`}>
+                      <TableCell sx={{ fontSize: 13 }}>{DATA_TYPE_BY_KEY[issue.domain]?.name || issue.domain}</TableCell>
+                      <TableCell sx={{ fontSize: 13 }}>{issue.message}</TableCell>
+                      <TableCell sx={{ fontSize: 12.5, textTransform: 'capitalize', color: issue.issue_type === 'error' ? '#DC2626' : '#D97706' }}>
+                        {issue.issue_type}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </SectionPaper>
         </Grid>
 
@@ -154,52 +175,34 @@ const VerifyTab = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <SectionPaper
               title="Run it again"
-              subtitle="Fixed something in V1, or still using V1 during the switch? A new run copies only new and changed records. Nothing is duplicated."
+              subtitle="Fixed something in V1, or still using V1 during the switch? A new run copies only new and changed records — nothing is duplicated."
             >
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button variant="contained" sx={{ textTransform: 'none', fontWeight: 700 }}>
-                  Start a new run
-                </Button>
-                <Button variant="outlined" sx={{ textTransform: 'none', fontWeight: 600 }}>
-                  Retry the 12 not copied
-                </Button>
-                <Button variant="outlined" sx={{ textTransform: 'none', fontWeight: 600 }}>
-                  Add attendance (184,220)
-                </Button>
-              </Box>
+              <Button variant="contained" onClick={onStartNewRun} sx={{ textTransform: 'none', fontWeight: 700 }}>
+                Start a new run
+              </Button>
             </SectionPaper>
 
             <SectionPaper title="Run history">
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                {DUMMY_RUN_HISTORY.map((run) => (
-                  <Box key={run.label} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{run.label}</Typography>
-                      <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-                        {run.when} · {run.by}
-                      </Typography>
+              {history.length === 0 ? (
+                <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>No runs yet.</Typography>
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                  {history.slice(0, 8).map((run) => (
+                    <Box key={run.id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
+                          {DATA_TYPE_BY_KEY[run.domain]?.name || run.domain}
+                          {run.dry_run ? ' (dry run)' : ''}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: '#64748b' }}>
+                          {run.started_at ? new Date(run.started_at).toLocaleString() : '—'}
+                        </Typography>
+                      </Box>
+                      {statusChip(run.status)}
                     </Box>
-                    <Typography sx={{ fontSize: 12.5, color: run.status === 'Complete' ? '#16A34A' : '#64748b', fontWeight: 600 }}>
-                      {run.status}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </SectionPaper>
-
-            <SectionPaper
-              title="Finished with V1?"
-              sx={{
-                border: '1.5px dashed',
-                borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#cbd5e1',
-              }}
-            >
-              <Typography sx={{ fontSize: 12.5, color: '#64748b', mb: 1 }}>
-                Mark the migration as final to stop syncing reminders. You can still re-run later if needed.
-              </Typography>
-              <Button fullWidth variant="outlined" sx={{ textTransform: 'none', fontWeight: 600 }}>
-                Mark as final
-              </Button>
+                  ))}
+                </Box>
+              )}
             </SectionPaper>
           </Box>
         </Grid>

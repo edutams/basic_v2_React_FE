@@ -8,6 +8,7 @@ import ConnectScanTab from './components/ConnectScanTab';
 import ReviewConfigureTab from './components/ReviewConfigureTab';
 import MigrateTab from './components/MigrateTab';
 import VerifyTab from './components/VerifyTab';
+import { AVAILABLE_DOMAIN_KEYS } from './domainTypes';
 
 const BCrumb = [
   { to: '/school-dashboard', title: 'Home' },
@@ -17,26 +18,50 @@ const BCrumb = [
 const STEPS = ['Connect & scan', 'Review & configure', 'Migrate', 'Verify'];
 
 /**
- * UI-only preview of the self-service V1 → V2 migration flow, built for
- * stakeholder sign-off before the real scan/migrate/verify logic exists.
- * Every number on screen comes from ../dummyData, not an API. Steps are
- * freely clickable for now; real sequential gating (a stage only unlocks
- * once the one before it is actually complete) lands with the real backend.
+ * Real self-service V1 → V2 migration flow for the three domains that have
+ * a backend migrator today (sessions_terms, classes, subjects — see
+ * docs/migration/STAGE2_PLAN.md build order, row 1). selectedDomains and
+ * conflictStrategy are lifted here because both "Review & configure" (which
+ * sets them) and "Migrate" (which needs them to trigger the real run) rely
+ * on the same values.
  */
 const DataMigration = () => {
   const [activeStep, setActiveStep] = useState(0);
+  const [maxStepReached, setMaxStepReached] = useState(0);
+  const [selectedDomains, setSelectedDomains] = useState(AVAILABLE_DOMAIN_KEYS);
+  const [conflictStrategy, setConflictStrategy] = useState('keep_v2');
+
+  const goToStep = (index) => {
+    if (index <= maxStepReached) {
+      setActiveStep(index);
+    }
+  };
+
+  const advanceTo = (index) => {
+    setMaxStepReached((prev) => Math.max(prev, index));
+    setActiveStep(index);
+  };
 
   const renderStep = () => {
     switch (activeStep) {
       case 0:
-        return <ConnectScanTab onContinue={() => setActiveStep(1)} />;
+        return <ConnectScanTab onContinue={() => advanceTo(1)} />;
       case 1:
-        return <ReviewConfigureTab onBack={() => setActiveStep(0)} onContinue={() => setActiveStep(2)} />;
+        return (
+          <ReviewConfigureTab
+            selectedDomains={selectedDomains}
+            setSelectedDomains={setSelectedDomains}
+            conflictStrategy={conflictStrategy}
+            setConflictStrategy={setConflictStrategy}
+            onBack={() => goToStep(0)}
+            onContinue={() => advanceTo(2)}
+          />
+        );
       case 2:
-        return <MigrateTab onContinue={() => setActiveStep(3)} />;
+        return <MigrateTab selectedDomains={selectedDomains} onContinue={() => advanceTo(3)} />;
       case 3:
       default:
-        return <VerifyTab />;
+        return <VerifyTab selectedDomains={selectedDomains} onStartNewRun={() => goToStep(1)} />;
     }
   };
 
@@ -47,12 +72,18 @@ const DataMigration = () => {
         subtitle="Bring your school's records from the previous platform into V2. Your V1 data is only read — nothing there is changed or deleted, and you can run this again safely at any time."
         items={BCrumb}
       >
-        <Button variant="outlined" startIcon={<IconHistory size={16} />} sx={{ textTransform: 'none', fontWeight: 600 }}>
+        <Button
+          variant="outlined"
+          startIcon={<IconHistory size={16} />}
+          disabled={maxStepReached < 3}
+          onClick={() => goToStep(3)}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
           Run history
         </Button>
       </Breadcrumb>
 
-      <MigrationStepper steps={STEPS} activeStep={activeStep} onStepClick={setActiveStep} />
+      <MigrationStepper steps={STEPS} activeStep={activeStep} onStepClick={goToStep} />
 
       {renderStep()}
     </PageContainer>

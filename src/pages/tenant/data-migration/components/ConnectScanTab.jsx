@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
   Grid,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -23,16 +25,68 @@ import {
 } from '@tabler/icons-react';
 import SectionPaper from './SectionPaper';
 import ActionBar from './ActionBar';
-import { DUMMY_SCHOOL, DUMMY_DATA_TYPES, DUMMY_READINESS_CHECKS } from '../dummyData';
+import { DUMMY_SCHOOL, DUMMY_READINESS_CHECKS } from '../dummyData';
+import { fetchMigrationSummary } from '@/api/tenant/dataMigration/dataMigrationApi';
+
+// Display metadata (name, dependency order) is static — it's the same for
+// every school. Only the counts themselves come from the real summary
+// endpoint. Keys must match MigrationRun::DOMAINS on the backend exactly.
+const DATA_TYPES = [
+  { key: 'sessions_terms', name: 'Academic sessions & terms', waitsFor: [] },
+  { key: 'classes', name: 'Classes & arms', waitsFor: ['Sessions'] },
+  { key: 'subjects', name: 'Subjects', waitsFor: ['Classes'] },
+  { key: 'staff', name: 'Staff', waitsFor: [] },
+  { key: 'students', name: 'Students', waitsFor: ['Classes'] },
+  { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'] },
+  { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions'] },
+  { key: 'attendance', name: 'Attendance', waitsFor: ['Enrolments'] },
+  { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'] },
+  { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'] },
+];
 
 const ConnectScanTab = ({ onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
-  const totalInV1 = DUMMY_DATA_TYPES.reduce((sum, row) => sum + row.inV1, 0);
-  const alreadyInV2 = DUMMY_DATA_TYPES.reduce((sum, row) => sum + row.inV2, 0);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadSummary = () => {
+    setLoading(true);
+    setError('');
+    fetchMigrationSummary()
+      .then((res) => {
+        if (res?.status) {
+          setSummary(res.data);
+        } else {
+          setError(res?.message || 'Failed to load V1 data.');
+        }
+      })
+      .catch((err) => {
+        setError(err?.response?.data?.message || 'Failed to load V1 data.');
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadSummary();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const totalInV1 = summary
+    ? DATA_TYPES.reduce((sum, row) => sum + (summary[row.key]?.in_v1 || 0), 0)
+    : 0;
   const needsAttention = DUMMY_READINESS_CHECKS.find((c) => c.status === 'warning');
   const needsAttentionCount = needsAttention ? parseInt(needsAttention.label, 10) : 0;
+
+  if (error) {
+    return (
+      <Alert severity="error" action={<Button color="inherit" size="small" onClick={loadSummary}>Retry</Button>}>
+        {error}
+      </Alert>
+    );
+  }
 
   return (
     <Box>
@@ -42,6 +96,7 @@ const ConnectScanTab = ({ onContinue }) => {
             align="left"
             icon={IconDatabase}
             colorIndex={0}
+            loading={loading}
             count={totalInV1.toLocaleString()}
             label="Records found in V1"
           />
@@ -51,7 +106,8 @@ const ConnectScanTab = ({ onContinue }) => {
             align="left"
             icon={IconCategory}
             colorIndex={1}
-            count={DUMMY_DATA_TYPES.length}
+            loading={loading}
+            count={DATA_TYPES.length}
             label="Data types"
           />
         </Grid>
@@ -60,8 +116,10 @@ const ConnectScanTab = ({ onContinue }) => {
             align="left"
             icon={IconCircleCheck}
             colorIndex={1}
-            count={alreadyInV2}
+            loading={loading}
+            count="—"
             label="Already in V2"
+            subtitle="Computed during Review"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -70,6 +128,7 @@ const ConnectScanTab = ({ onContinue }) => {
             icon={IconAlertCircle}
             colorIndex={3}
             accent
+            loading={loading}
             count={needsAttentionCount}
             label="Need your attention"
           />
@@ -99,7 +158,7 @@ const ConnectScanTab = ({ onContinue }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {DUMMY_DATA_TYPES.map((row, index) => (
+                  {DATA_TYPES.map((row, index) => (
                     <TableRow key={row.key}>
                       <TableCell sx={{ fontSize: 13, fontWeight: 600 }}>
                         <Typography component="span" sx={{ fontSize: 11, color: '#94a3b8', mr: 1 }}>
@@ -107,9 +166,19 @@ const ConnectScanTab = ({ onContinue }) => {
                         </Typography>
                         {row.name}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontSize: 13 }}>{row.inV1.toLocaleString()}</TableCell>
-                      <TableCell align="right" sx={{ fontSize: 13 }}>{row.inV2.toLocaleString()}</TableCell>
-                      <TableCell align="right" sx={{ fontSize: 13, fontWeight: 700 }}>{row.toCopy.toLocaleString()}</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 13 }}>
+                        {loading ? (
+                          <Skeleton variant="text" width={40} sx={{ ml: 'auto' }} />
+                        ) : (
+                          (summary?.[row.key]?.in_v1 ?? 0).toLocaleString()
+                        )}
+                      </TableCell>
+                      {/* Not computed by the backend yet for every domain —
+                          shown honestly as "—" rather than a fabricated
+                          number. Filled in as later phases land (see
+                          docs/migration/STAGE2_PLAN.md §12). */}
+                      <TableCell align="right" sx={{ fontSize: 13, color: '#94a3b8' }}>—</TableCell>
+                      <TableCell align="right" sx={{ fontSize: 13, color: '#94a3b8' }}>—</TableCell>
                       <TableCell sx={{ fontSize: 12.5, color: '#64748b' }}>
                         {row.waitsFor.length ? row.waitsFor.join(', ') : '—'}
                       </TableCell>
@@ -149,6 +218,8 @@ const ConnectScanTab = ({ onContinue }) => {
                   fullWidth
                   variant="outlined"
                   startIcon={<IconRefresh size={16} />}
+                  onClick={loadSummary}
+                  disabled={loading}
                   sx={{ mt: 1, textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
                 >
                   Scan again
@@ -181,6 +252,7 @@ const ConnectScanTab = ({ onContinue }) => {
         <Button
           variant="contained"
           onClick={onContinue}
+          disabled={loading || Boolean(error)}
           sx={{ bgcolor: '#fff', color: '#0f172a', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#f1f5f9' } }}
         >
           Continue to review →

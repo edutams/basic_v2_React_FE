@@ -7,7 +7,7 @@ export const DATA_TYPES = [
   { key: 'sessions_terms', name: 'Academic sessions & terms', waitsFor: [], available: true },
   { key: 'classes', name: 'Classes & arms', waitsFor: ['Sessions & terms'], available: true },
   { key: 'subjects', name: 'Subjects', waitsFor: ['Classes'], available: true },
-  { key: 'staff', name: 'Staff', waitsFor: [], available: false },
+  { key: 'staff', name: 'Staff', waitsFor: [], available: true },
   { key: 'students', name: 'Students', waitsFor: ['Classes'], available: false },
   { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'], available: false },
   { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions & terms'], available: false },

@@ -46,7 +46,6 @@ const SchoolNotFound = Loadable(lazy(() => import('../utils/Auth/SchoolNotFound'
 const VerifyResult = Loadable(lazy(() => import('@/pages/tenant/public/VerifyResult')));
 const AlcManager = Loadable(lazy(() => import('@/pages/tenant/alc-manager/SchoolAlcManager')));
 const ActivityLog = Loadable(lazy(() => import('@/pages/tenant/activity-log/ActivityLog')));
-const DataMigration = Loadable(lazy(() => import('@/pages/tenant/data-migration/DataMigration')));
 
 const EResourcesIndex = Loadable(lazy(() => import('@/pages/tenant/e-resources/Index')));
 const EResourcesVideoTutorials = Loadable(
@@ -397,14 +396,6 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="activity_log.index">
             <ActivityLog />
-          </TenantProtectedRoute>
-        ),
-      },
-      {
-        path: 'data-migration',
-        element: (
-          <TenantProtectedRoute permission="data_migration.index">
-            <DataMigration />
           </TenantProtectedRoute>
         ),
       },

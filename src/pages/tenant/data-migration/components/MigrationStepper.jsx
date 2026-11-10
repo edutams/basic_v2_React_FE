@@ -19,7 +19,7 @@ const MigrationStepper = ({ steps, activeStep, onStepClick }) => {
         const isComplete = index < activeStep;
 
         return (
-          <Grid key={label} size={{ xs: 6, sm: 3 }}>
+          <Grid key={label} size={{ xs: 6, sm: 2.3 }}>
             <Paper
               elevation={0}
               onClick={() => onStepClick(index)}
@@ -51,8 +51,13 @@ const MigrationStepper = ({ steps, activeStep, onStepClick }) => {
                   justifyContent: 'center',
                   fontSize: 13,
                   fontWeight: 700,
-                  bgcolor: isComplete ? '#16A34A' : isActive ? theme.palette.primary.main : 'transparent',
-                  color: isComplete || isActive ? '#fff' : isDark ? 'rgba(255,255,255,0.6)' : '#94a3b8',
+                  bgcolor: isComplete
+                    ? '#16A34A'
+                    : isActive
+                      ? theme.palette.primary.main
+                      : 'transparent',
+                  color:
+                    isComplete || isActive ? '#fff' : isDark ? 'rgba(255,255,255,0.6)' : '#94a3b8',
                   border: isComplete || isActive ? 'none' : '1.5px solid',
                   borderColor: isDark ? 'rgba(255,255,255,0.3)' : '#cbd5e1',
                 }}
@@ -63,11 +68,7 @@ const MigrationStepper = ({ steps, activeStep, onStepClick }) => {
                 sx={{
                   fontSize: 13,
                   fontWeight: isActive ? 700 : 600,
-                  color: isActive
-                    ? theme.palette.primary.main
-                    : isDark
-                      ? '#fff'
-                      : '#0f172a',
+                  color: isActive ? theme.palette.primary.main : isDark ? '#fff' : '#0f172a',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',

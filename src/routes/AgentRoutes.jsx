@@ -29,6 +29,7 @@ const CalendarManagement = Loadable(
 const ViewSchool = Loadable(
   lazy(() => import('@/components/landlord/add-school/component/ViewSchool')),
 );
+const DataMigration = Loadable(lazy(() => import('@/pages/landlord/data-migration/DataMigration')));
 const AgentSubscriptionManagement = Loadable(
   lazy(() => import('@/pages/landlord/views/agent/subscriptions/AgentSubscriptionIndex')),
 );
@@ -297,6 +298,19 @@ const AgentRoutes = [
         element: (
           <LandlordProtectedRoute anyOf={['landlord.profile.view', 'landlord.profile.edit']}>
             <AccountSetting />
+          </LandlordProtectedRoute>
+        ),
+      },
+      {
+        // Platform super-admin only — mirrors Analytics's own route guard
+        // exactly (same permission-naming convention, seeded to the
+        // super_admin role only in AgentModuleSeeder.php). The page itself
+        // also re-checks access_level === 1 directly, matching the
+        // backend's real enforcement (denyIfNotL1()) as a second layer.
+        path: 'data-migration',
+        element: (
+          <LandlordProtectedRoute permission="landlord.tenant_migration_for_landlord_level_one_only.index">
+            <DataMigration />
           </LandlordProtectedRoute>
         ),
       },

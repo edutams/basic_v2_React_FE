@@ -34,7 +34,12 @@ const CONFLICT_OPTIONS = [
 ];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const POLL_INTERVAL_MS = 1500;
+const POLL_INTERVAL_MS = 2000;
+// Safety cap, not a tuning knob: if something never settles (a stalled
+// queue worker, a genuinely huge domain), this stops hammering the server
+// forever and surfaces it as an error instead — confirmed live, 2026-11-10,
+// that an unbounded loop here is a real problem, not a hypothetical one.
+const MAX_POLL_ATTEMPTS = 60; // ~2 minutes at POLL_INTERVAL_MS
 
 const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue }) => {
   const theme = useTheme();
@@ -46,15 +51,17 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const [hasRunDryRun, setHasRunDryRun] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Which action is pending confirmation — 'dry_run' | 'migrate' | null —
+  // rather than two separate dialogs, since every action the admin clicks
+  // here needs the same "confirm before it happens" treatment.
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const toggleDomain = (key) => {
     setSelectedDomains((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
   const pollUntilSettled = async (domains) => {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
       const results = await Promise.all(domains.map((domain) => fetchMigrationStatus(tenantId, domain)));
       const byDomain = {};
       results.forEach((res, i) => {
@@ -68,9 +75,13 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       }
       await sleep(POLL_INTERVAL_MS);
     }
+
+    throw new Error('This is taking much longer than expected — the migration may still be running. Check "Run history" in a moment instead of waiting here.');
   };
 
   const runDryRun = async () => {
+    setConfirmAction(null);
+
     if (selectedDomains.length === 0) {
       return;
     }
@@ -94,7 +105,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   };
 
   const startMigration = async () => {
-    setConfirmOpen(false);
+    setConfirmAction(null);
     setStarting(true);
     setStartError('');
 
@@ -198,7 +209,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
               </Typography>
               <Button
                 variant="contained"
-                onClick={runDryRun}
+                onClick={() => setConfirmAction('dry_run')}
                 disabled={dryRunLoading || starting || selectedDomains.length === 0}
                 sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
               >
@@ -305,7 +316,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
               <Button
                 fullWidth
                 variant="contained"
-                onClick={() => setConfirmOpen(true)}
+                onClick={() => setConfirmAction('migrate')}
                 disabled={!hasRunDryRun || dryRunLoading || starting}
                 sx={{ textTransform: 'none', fontWeight: 700 }}
               >
@@ -316,7 +327,31 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
         </Grid>
       </Grid>
 
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+      <Dialog open={confirmAction === 'dry_run'} onClose={() => setConfirmAction(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconAlertTriangle size={20} color="#2563EB" />
+          Confirm dry run
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5, mb: 1.5 }}>
+            This checks every record for <strong>{school?.tenant_name || tenantId}</strong> and reports what would
+            happen. It does not write anything to V2 — completely safe to run as many times as you like.
+          </Typography>
+          <Typography sx={{ fontSize: 13 }}>
+            <strong>Data types:</strong> {selectedDomains.map((d) => DATA_TYPE_BY_KEY[d]?.name || d).join(', ')}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmAction(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button onClick={runDryRun} variant="contained" sx={{ textTransform: 'none', fontWeight: 700 }}>
+            Yes, run dry run
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={confirmAction === 'migrate'} onClose={() => setConfirmAction(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <IconAlertTriangle size={20} color="#D97706" />
           Confirm migration
@@ -344,7 +379,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setConfirmOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+          <Button onClick={() => setConfirmAction(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
             Cancel
           </Button>
           <Button onClick={startMigration} variant="contained" sx={{ textTransform: 'none', fontWeight: 700 }}>

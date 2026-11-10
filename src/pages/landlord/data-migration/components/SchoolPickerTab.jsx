@@ -3,6 +3,10 @@ import {
   Alert,
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   InputAdornment,
   Pagination,
   Table,
@@ -13,7 +17,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch, IconSchool } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { fetchMigrationSchools } from '@/api/landlord/dataMigration/dataMigrationApi';
 
@@ -30,6 +34,7 @@ const SchoolPickerTab = ({ onSelect }) => {
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [perPage, setPerPage] = useState(20);
+  const [pendingSchool, setPendingSchool] = useState(null);
 
   const load = (term = '', pageNumber = 1) => {
     setLoading(true);
@@ -110,7 +115,7 @@ const SchoolPickerTab = ({ onSelect }) => {
               <TableCell sx={{ fontSize: 13.5, fontWeight: 600 }}>{school.tenant_name}</TableCell>
               <TableCell sx={{ fontSize: 12.5, color: '#64748b', textTransform: 'capitalize' }}>{school.status}</TableCell>
               <TableCell align="right">
-                <Button size="small" variant="outlined" onClick={() => onSelect(school)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+                <Button size="small" variant="outlined" onClick={() => setPendingSchool(school)} sx={{ textTransform: 'none', fontWeight: 600 }}>
                   Select
                 </Button>
               </TableCell>
@@ -129,6 +134,34 @@ const SchoolPickerTab = ({ onSelect }) => {
           )}
         </Box>
       )}
+
+      <Dialog open={Boolean(pendingSchool)} onClose={() => setPendingSchool(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconSchool size={20} color="#2563EB" />
+          Confirm school
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5 }}>
+            This scans <strong>{pendingSchool?.tenant_name}</strong>'s real V1 data (read-only — nothing is changed
+            in V1) and starts the migration wizard for this school.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setPendingSchool(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              onSelect(pendingSchool);
+              setPendingSchool(null);
+            }}
+            variant="contained"
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
+            Yes, use this school
+          </Button>
+        </DialogActions>
+      </Dialog>
     </SectionPaper>
   );
 };

@@ -5,7 +5,12 @@ import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper'
 import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 3000;
+// Soft cap, not a hard failure — a real migration can legitimately run long.
+// After this many automatic checks, stop polling on its own and let the
+// admin resume manually instead of silently hammering the server forever
+// (confirmed live, 2026-11-10: an unbounded loop here is a real problem).
+const MAX_AUTO_POLL_ATTEMPTS = 100; // ~5 minutes at POLL_INTERVAL_MS
 
 const StatusIcon = ({ status }) => {
   if (status === 'completed') {
@@ -61,10 +66,13 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
+  const [autoPollStopped, setAutoPollStopped] = useState(false);
   const stoppedRef = useRef(false);
 
-  useEffect(() => {
+  const startPolling = () => {
     stoppedRef.current = false;
+    setAutoPollStopped(false);
+    let attempts = 0;
 
     const poll = async () => {
       if (stoppedRef.current) {
@@ -79,12 +87,25 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
       setRunsByDomain(byDomain);
 
       const allSettled = selectedDomains.every((domain) => SETTLED_RUN_STATUSES.includes(byDomain[domain]?.status));
-      if (!allSettled && !stoppedRef.current) {
-        setTimeout(poll, POLL_INTERVAL_MS);
+      attempts += 1;
+
+      if (allSettled || stoppedRef.current) {
+        return;
       }
+
+      if (attempts >= MAX_AUTO_POLL_ATTEMPTS) {
+        setAutoPollStopped(true);
+        return;
+      }
+
+      setTimeout(poll, POLL_INTERVAL_MS);
     };
 
     poll();
+  };
+
+  useEffect(() => {
+    startPolling();
 
     return () => {
       stoppedRef.current = true;
@@ -174,9 +195,18 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
-          <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
-            {allSettled ? `Finished for ${school?.tenant_name || tenantId}.` : 'Checking every few seconds…'}
+          <Typography sx={{ fontSize: 12.5, color: autoPollStopped ? '#D97706' : '#64748b' }}>
+            {allSettled
+              ? `Finished for ${school?.tenant_name || tenantId}.`
+              : autoPollStopped
+                ? 'Taking longer than expected — still running in the background. Check again when ready.'
+                : 'Checking every few seconds…'}
           </Typography>
+          {autoPollStopped && !allSettled && (
+            <Button variant="outlined" onClick={startPolling} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
+              Check again
+            </Button>
+          )}
           <Button
             variant="contained"
             onClick={onContinue}

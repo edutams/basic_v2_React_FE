@@ -3,6 +3,10 @@ import {
   Box,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   Table,
   TableBody,
@@ -33,6 +37,7 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
   const [runsByDomain, setRunsByDomain] = useState({});
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmNewRun, setConfirmNewRun] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -168,7 +173,7 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
               title="Run it again"
               subtitle="Fixed something in V1, or still using V1 during the switch? A new run copies only new and changed records — nothing is duplicated."
             >
-              <Button variant="contained" onClick={onStartNewRun} sx={{ textTransform: 'none', fontWeight: 700 }}>
+              <Button variant="contained" onClick={() => setConfirmNewRun(true)} sx={{ textTransform: 'none', fontWeight: 700 }}>
                 Start a new run
               </Button>
             </SectionPaper>
@@ -198,6 +203,34 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
           </Box>
         </Grid>
       </Grid>
+
+      <Dialog open={confirmNewRun} onClose={() => setConfirmNewRun(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconAlertTriangle size={20} color="#2563EB" />
+          Start a new run?
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5 }}>
+            This takes you back to Review & configure for another pass. It copies only new and changed records —
+            nothing already migrated is duplicated.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmNewRun(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmNewRun(false);
+              onStartNewRun();
+            }}
+            variant="contained"
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
+            Yes, start a new run
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

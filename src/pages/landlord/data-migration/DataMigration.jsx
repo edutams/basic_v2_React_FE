@@ -32,7 +32,13 @@ const DataMigration = () => {
   const [maxStepReached, setMaxStepReached] = useState(0);
   const [school, setSchool] = useState(null);
   const [selectedDomains, setSelectedDomains] = useState(AVAILABLE_DOMAIN_KEYS);
-  const [conflictStrategy, setConflictStrategy] = useState('keep_v2');
+  // Defaults to always_v1, not keep_v2 — the whole point of a first-time
+  // migration is a faithful, complete copy of V1's real data, including
+  // records that happen to name-match something V2 already seeded by
+  // default (e.g. a default class/division at tenant onboarding). keep_v2
+  // matters more for a later, incremental re-run once a school has
+  // actually started editing things in V2 themselves.
+  const [conflictStrategy, setConflictStrategy] = useState('always_v1');
 
   // Mirrors the backend's own denyIfNotL1() gate — this is a UX
   // convenience (hide controls the user couldn't use anyway), not the

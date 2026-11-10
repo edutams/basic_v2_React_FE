@@ -1,4 +1,4 @@
-// Single source of truth for the 10 data-type rows shown across every stage
+// Single source of truth for the data-type rows shown across every stage
 // of the migration wizard. `available: true` marks the domains that have a
 // real DomainMigrator built on the backend (docs/migration/STAGE2_PLAN.md
 // build order, row 1) — every other domain is still real/listed but can't
@@ -9,11 +9,12 @@ export const DATA_TYPES = [
   { key: 'subjects', name: 'Subjects', waitsFor: ['Classes'], available: true },
   { key: 'staff', name: 'Staff', waitsFor: [], available: true },
   { key: 'students', name: 'Students', waitsFor: ['Classes'], available: true },
-  { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'], available: false },
-  { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions & terms'], available: false },
-  { key: 'attendance', name: 'Attendance', waitsFor: ['Enrolments'], available: false },
-  { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'], available: false },
-  { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'], available: false },
+  { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'], available: true },
+  { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions & terms'], available: true },
+  { key: 'attendance', name: 'Attendance', waitsFor: ['Enrolments'], available: true },
+  { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'], available: true },
+  { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'], available: true },
+  { key: 'chat', name: 'Chat/messaging', waitsFor: ['Staff', 'Students', 'Parents & guardians'], available: true },
 ];
 
 export const AVAILABLE_DOMAIN_KEYS = DATA_TYPES.filter((row) => row.available).map((row) => row.key);

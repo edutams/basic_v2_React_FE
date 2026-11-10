@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -25,7 +25,7 @@ import {
 import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { triggerMigration, fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const CONFLICT_OPTIONS = [
   { value: 'keep_v2', label: 'Keep V2, skip V1', detail: 'Safest. Edits made in V2 are never touched.' },
@@ -35,6 +35,25 @@ const CONFLICT_OPTIONS = [
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const POLL_INTERVAL_MS = 2000;
+
+/** Rough, conservative estimate only — labeled "~" everywhere it's shown,
+ * never claimed as exact. Based on how fast the domains built so far
+ * actually ran against real V1 data (sessions/classes/subjects/staff:
+ * low hundreds of records in a few seconds), not a real benchmark across
+ * every domain yet. */
+const RECORDS_PER_SECOND_ESTIMATE = 50;
+
+const estimateDuration = (recordCount) => {
+  if (!recordCount) {
+    return null;
+  }
+  const seconds = Math.max(5, Math.ceil(recordCount / RECORDS_PER_SECOND_ESTIMATE));
+  if (seconds < 60) {
+    return `~${seconds} second${seconds === 1 ? '' : 's'}`;
+  }
+  const minutes = Math.ceil(seconds / 60);
+  return `~${minutes} minute${minutes === 1 ? '' : 's'}`;
+};
 // Safety cap, not a tuning knob: if something never settles (a stalled
 // queue worker, a genuinely huge domain), this stops hammering the server
 // forever and surfaces it as an error instead — confirmed live, 2026-11-10,
@@ -45,6 +64,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
+  const [summary, setSummary] = useState(null);
   const [dryRunResults, setDryRunResults] = useState({});
   const [dryRunLoading, setDryRunLoading] = useState(false);
   const [dryRunError, setDryRunError] = useState('');
@@ -59,6 +79,23 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const toggleDomain = (key) => {
     setSelectedDomains((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
+
+  useEffect(() => {
+    fetchMigrationSummary(tenantId)
+      .then((res) => {
+        if (res?.status) {
+          setSummary(res.data);
+        }
+      })
+      .catch(() => {
+        // Non-fatal — the estimate just won't show if this fails; the
+        // dry run itself doesn't depend on it.
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tenantId]);
+
+  const selectedRecordEstimate = selectedDomains.reduce((sum, domain) => sum + (summary?.[domain]?.in_v1 || 0), 0);
+  const dryRunEstimate = estimateDuration(selectedRecordEstimate);
 
   const pollUntilSettled = async (domains) => {
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
@@ -201,12 +238,19 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
               </Alert>
             )}
 
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
-              <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
-                {dryRunLoading
-                  ? 'Running dry run — checking what would happen, nothing is written yet…'
-                  : `${selectedDomains.length} of ${DATA_TYPES.filter((r) => r.available).length} available data types selected`}
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+              <Box>
+                <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
+                  {dryRunLoading
+                    ? 'Running dry run — checking what would happen, nothing is written yet…'
+                    : `${selectedDomains.length} of ${DATA_TYPES.filter((r) => r.available).length} available data types selected`}
+                </Typography>
+                {!dryRunLoading && dryRunEstimate && (
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#2563EB', mt: 0.25 }}>
+                    Estimated time: {dryRunEstimate} ({selectedRecordEstimate.toLocaleString()} records)
+                  </Typography>
+                )}
+              </Box>
               <Button
                 variant="contained"
                 onClick={() => setConfirmAction('dry_run')}
@@ -337,9 +381,14 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
             This checks every record for <strong>{school?.tenant_name || tenantId}</strong> and reports what would
             happen. It does not write anything to V2 — completely safe to run as many times as you like.
           </Typography>
-          <Typography sx={{ fontSize: 13 }}>
+          <Typography sx={{ fontSize: 13, mb: 1 }}>
             <strong>Data types:</strong> {selectedDomains.map((d) => DATA_TYPE_BY_KEY[d]?.name || d).join(', ')}
           </Typography>
+          {dryRunEstimate && (
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>
+              Estimated time: {dryRunEstimate} ({selectedRecordEstimate.toLocaleString()} records)
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setConfirmAction(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
@@ -371,6 +420,11 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
             <Typography sx={{ fontSize: 13 }}>
               <strong>Records to be copied:</strong> {totals.eligible.toLocaleString()}
             </Typography>
+            {estimateDuration(totals.eligible) && (
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2563EB' }}>
+                Estimated time: {estimateDuration(totals.eligible)}
+              </Typography>
+            )}
           </Box>
           {conflictStrategy === 'always_v1' && (
             <Alert severity="warning" sx={{ fontSize: 12.5 }}>

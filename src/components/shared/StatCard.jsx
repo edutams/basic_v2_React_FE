@@ -64,6 +64,8 @@ const StatCardSkeleton = ({ isDark, theme }) => (
       borderRadius: '14px',
       p: '14px',
       width: '100%',
+      height: '100%',
+      boxSizing: 'border-box',
       bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
       border: '1px solid',
       borderColor: isDark ? 'rgba(255,255,255,0.12)' : '#94a3b8',
@@ -122,6 +124,8 @@ const StatCard = ({
         p: '14px',
         pr: showChevron ? '26px' : '14px',
         width: '100%',
+        height: '100%',
+        boxSizing: 'border-box',
         bgcolor: isDark ? theme.palette.background.paper : '#ffffff',
         ...(accent && {
           backgroundImage: isDark

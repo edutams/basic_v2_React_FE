@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Box, Button, Grid, LinearProgress, Typography, useTheme } from '@mui/material';
 import { IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import ActionBar from '@/pages/tenant/data-migration/components/ActionBar';
 import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
 
@@ -58,7 +57,7 @@ const detailFor = (run) => {
   return `${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
 };
 
-const MigrateTab = ({ tenantId, selectedDomains, onContinue }) => {
+const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
@@ -173,18 +172,21 @@ const MigrateTab = ({ tenantId, selectedDomains, onContinue }) => {
             );
           })}
         </Box>
-      </SectionPaper>
 
-      <ActionBar status={allSettled ? 'All selected data types have finished.' : 'Checking every few seconds…'}>
-        <Button
-          variant="contained"
-          onClick={onContinue}
-          disabled={!allSettled}
-          sx={{ bgcolor: '#fff', color: '#0f172a', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#f1f5f9' } }}
-        >
-          Continue to verify →
-        </Button>
-      </ActionBar>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
+          <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
+            {allSettled ? `Finished for ${school?.tenant_name || tenantId}.` : 'Checking every few seconds…'}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={onContinue}
+            disabled={!allSettled}
+            sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
+          >
+            Continue to verify →
+          </Button>
+        </Box>
+      </SectionPaper>
     </Box>
   );
 };

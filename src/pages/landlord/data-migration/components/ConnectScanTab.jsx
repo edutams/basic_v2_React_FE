@@ -18,7 +18,6 @@ import {
 import { IconRefresh, IconDatabase, IconCategory, IconCircleCheck, IconAlertCircle } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import ActionBar from '@/pages/tenant/data-migration/components/ActionBar';
 import { DATA_TYPES } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationSummary } from '@/api/landlord/dataMigration/dataMigrationApi';
 
@@ -83,8 +82,8 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 8 }}>
           <SectionPaper
-            title="What we found in V1"
-            subtitle="Listed in the order they'll be migrated — each type waits for the ones it depends on."
+            title="Step 1 — Review what we found in this school's V1 records"
+            subtitle="This is a read-only scan — nothing has been changed or copied yet. Listed in the order they'll be migrated; each type waits for the ones it depends on."
             action={
               <Chip
                 size="small"
@@ -125,6 +124,20 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
                 </TableBody>
               </Table>
             </TableContainer>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
+              <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
+                Ready to choose what to migrate for this school.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={onContinue}
+                disabled={loading || Boolean(error)}
+                sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
+              >
+                Continue to review →
+              </Button>
+            </Box>
           </SectionPaper>
         </Grid>
 
@@ -155,17 +168,6 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
           </SectionPaper>
         </Grid>
       </Grid>
-
-      <ActionBar status="Estimated time varies by data volume. You can leave this page while it runs.">
-        <Button
-          variant="contained"
-          onClick={onContinue}
-          disabled={loading || Boolean(error)}
-          sx={{ bgcolor: '#fff', color: '#0f172a', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#f1f5f9' } }}
-        >
-          Continue to review →
-        </Button>
-      </ActionBar>
     </Box>
   );
 };

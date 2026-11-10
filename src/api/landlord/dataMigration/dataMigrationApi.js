@@ -5,8 +5,12 @@ import api from '@/api/landlord/landlord_api';
 // is scoped to one chosen school (tenantId), unlike the tenant-side
 // version where the school was always implicit.
 
-export const fetchMigrationSchools = async (search = '') => {
-  const res = await api.get('/v1/landlord/data-migration/schools', { params: search ? { search } : {} });
+export const fetchMigrationSchools = async (search = '', page = 1) => {
+  const params = { page };
+  if (search) {
+    params.search = search;
+  }
+  const res = await api.get('/v1/landlord/data-migration/schools', { params });
   return res.data;
 };
 

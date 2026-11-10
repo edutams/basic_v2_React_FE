@@ -5,6 +5,10 @@ import {
   Button,
   Checkbox,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
   Link,
@@ -18,10 +22,9 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import ActionBar from '@/pages/tenant/data-migration/components/ActionBar';
-import { DATA_TYPES, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
+import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
 import { triggerMigration, fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const CONFLICT_OPTIONS = [
@@ -33,7 +36,7 @@ const CONFLICT_OPTIONS = [
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const POLL_INTERVAL_MS = 1500;
 
-const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue }) => {
+const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -43,6 +46,7 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
   const [hasRunDryRun, setHasRunDryRun] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const toggleDomain = (key) => {
     setSelectedDomains((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -90,6 +94,7 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
   };
 
   const startMigration = async () => {
+    setConfirmOpen(false);
     setStarting(true);
     setStartError('');
 
@@ -124,6 +129,8 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
     return (run?.issues || []).map((issue) => ({ ...issue, domain }));
   });
 
+  const conflictLabel = CONFLICT_OPTIONS.find((o) => o.value === conflictStrategy)?.label;
+
   return (
     <Box>
       <Link
@@ -138,8 +145,8 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 12, md: 8 }}>
           <SectionPaper
-            title="What to migrate"
-            subtitle="Only data types with a migration built are selectable today — the rest are coming in a later update."
+            title="Step 1 — Pick what to migrate, then run a dry run"
+            subtitle="A dry run checks every record and tells you exactly what would happen — nothing is written to V2 yet. Always run this before the real migration."
           >
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               {DATA_TYPES.map((row, index) => (
@@ -176,13 +183,29 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
                 </Box>
               ))}
             </Box>
-          </SectionPaper>
 
-          {dryRunError && (
-            <Alert severity="error" sx={{ mt: 1.5 }}>
-              {dryRunError}
-            </Alert>
-          )}
+            {dryRunError && (
+              <Alert severity="error" sx={{ mt: 1.5 }}>
+                {dryRunError}
+              </Alert>
+            )}
+
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
+              <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
+                {dryRunLoading
+                  ? 'Running dry run — checking what would happen, nothing is written yet…'
+                  : `${selectedDomains.length} of ${DATA_TYPES.filter((r) => r.available).length} available data types selected`}
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={runDryRun}
+                disabled={dryRunLoading || starting || selectedDomains.length === 0}
+                sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
+              >
+                {dryRunLoading ? 'Checking…' : hasRunDryRun ? 'Run dry run again' : 'Run dry run'}
+              </Button>
+            </Box>
+          </SectionPaper>
 
           {hasRunDryRun && (
             <SectionPaper
@@ -251,56 +274,84 @@ const ReviewConfigureTab = ({ tenantId, selectedDomains, setSelectedDomains, con
               </RadioGroup>
             </SectionPaper>
 
-            {hasRunDryRun && (
-              <SectionPaper
-                sx={{
-                  bgcolor: isDark ? 'rgba(37,99,235,0.1)' : '#EFF6FF',
-                  borderColor: isDark ? 'rgba(37,99,235,0.3)' : '#BFDBFE',
-                }}
-              >
-                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 0.5 }}>Last dry run</Typography>
-                <Typography sx={{ fontSize: 12.5 }}>
+            <SectionPaper
+              title="Step 2 — Start the real migration"
+              subtitle={
+                hasRunDryRun
+                  ? 'Review the dry run above, then start the real migration when ready.'
+                  : 'Run a dry run first (Step 1) — this unlocks once that finishes.'
+              }
+              sx={{
+                bgcolor: hasRunDryRun ? (isDark ? 'rgba(37,99,235,0.1)' : '#EFF6FF') : undefined,
+                borderColor: hasRunDryRun ? (isDark ? 'rgba(37,99,235,0.3)' : '#BFDBFE') : undefined,
+              }}
+            >
+              {hasRunDryRun && (
+                <Typography sx={{ fontSize: 12.5, mb: 1.5 }}>
+                  Last dry run:{' '}
                   <Typography component="span" sx={{ fontWeight: 700 }}>
                     {totals.errors} errors
                   </Typography>
-                  , {totals.eligible.toLocaleString()} records would be copied. Nothing was saved.
+                  , {totals.eligible.toLocaleString()} records would be copied.
                 </Typography>
-              </SectionPaper>
-            )}
+              )}
+
+              {startError && (
+                <Alert severity="error" sx={{ mb: 1.5 }}>
+                  {startError}
+                </Alert>
+              )}
+
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={() => setConfirmOpen(true)}
+                disabled={!hasRunDryRun || dryRunLoading || starting}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                {starting ? 'Starting…' : 'Start migration'}
+              </Button>
+            </SectionPaper>
           </Box>
         </Grid>
       </Grid>
 
-      {startError && (
-        <Alert severity="error" sx={{ mt: 1.5 }}>
-          {startError}
-        </Alert>
-      )}
-
-      <ActionBar
-        status={
-          dryRunLoading
-            ? 'Running dry run — checking what would happen, nothing is written yet…'
-            : `${selectedDomains.length} of ${DATA_TYPES.filter((r) => r.available).length} available data types selected`
-        }
-      >
-        <Button
-          variant="outlined"
-          onClick={runDryRun}
-          disabled={dryRunLoading || starting || selectedDomains.length === 0}
-          sx={{ textTransform: 'none', fontWeight: 600, borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}
-        >
-          {hasRunDryRun ? 'Run dry run again' : 'Run dry run'}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={startMigration}
-          disabled={!hasRunDryRun || dryRunLoading || starting}
-          sx={{ bgcolor: '#fff', color: '#0f172a', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#f1f5f9' } }}
-        >
-          {starting ? 'Starting…' : 'Start migration'}
-        </Button>
-      </ActionBar>
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconAlertTriangle size={20} color="#D97706" />
+          Confirm migration
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5, mb: 1.5 }}>
+            You're about to copy real data from V1 into V2 for <strong>{school?.tenant_name || tenantId}</strong>.
+            This writes to the live database — it is not a preview.
+          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1.5 }}>
+            <Typography sx={{ fontSize: 13 }}>
+              <strong>Data types:</strong> {selectedDomains.map((d) => DATA_TYPE_BY_KEY[d]?.name || d).join(', ')}
+            </Typography>
+            <Typography sx={{ fontSize: 13 }}>
+              <strong>If a record already exists:</strong> {conflictLabel}
+            </Typography>
+            <Typography sx={{ fontSize: 13 }}>
+              <strong>Records to be copied:</strong> {totals.eligible.toLocaleString()}
+            </Typography>
+          </Box>
+          {conflictStrategy === 'always_v1' && (
+            <Alert severity="warning" sx={{ fontSize: 12.5 }}>
+              "Always use V1" will overwrite any edits already made in V2 for these records.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmOpen(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button onClick={startMigration} variant="contained" sx={{ textTransform: 'none', fontWeight: 700 }}>
+            Yes, start migration
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

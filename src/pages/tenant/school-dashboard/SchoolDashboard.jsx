@@ -18,17 +18,37 @@ export default function SchoolDashboard() {
    * 1 = Staff
    * 2 = Learner
    * 3 = Parent
+   *
+   * `user_type_id` is the primary signal, but confirmed live: a real
+   * class-teacher account (correct roles, correct permissions, a real
+   * `staff` record with staff_type "teaching") had `user_type_id: null`
+   * — never backfilled when the account was created — so it fell
+   * through to isStaff === false and landed on "Page Under
+   * Development" despite being a completely valid teacher. The
+   * presence of a nested `staff`/`student`/`guardian` record is just as
+   * reliable a signal and doesn't depend on that one column having been
+   * set correctly.
    */
-  const isStaff = user?.user_type_id === 1;
-  const isLearner = user?.user_type_id === 2;
-  const isParent = user?.user_type_id === 3;
+  const isStaff = user?.user_type_id === 1 || Boolean(user?.staff);
+  const isLearner = user?.user_type_id === 2 || Boolean(user?.student);
+  const isParent = user?.user_type_id === 3 || Boolean(user?.guardian);
 
   // Check user roles
   const roles = user?.roles || [];
 
-  const isTeachingStaff = isStaff && user?.staff?.staff_type === 'teaching';
+  // `user.staff.staff_type` is the primary signal, but a staff account
+  // can genuinely hold a teaching role (class_teacher/subject_teacher)
+  // without that Staff record's staff_type being set to 'teaching' —
+  // treating either signal as sufficient avoids a correctly-permissioned
+  // user landing on a placeholder.
+  const hasTeachingRole = roles.some((role) =>
+    ['class_teacher', 'subject_teacher'].includes(role.name),
+  );
+  const isTeachingStaff =
+    isStaff && (user?.staff?.staff_type === 'teaching' || hasTeachingRole);
 
-  const isNonTeachingStaff = isStaff && user?.staff?.staff_type === 'non-teaching';
+  const isNonTeachingStaff =
+    isStaff && user?.staff?.staff_type === 'non-teaching' && !hasTeachingRole;
 
   const isAdmissionOfficer =
     isNonTeachingStaff && roles.some((role) => role.name === 'admission_officer');

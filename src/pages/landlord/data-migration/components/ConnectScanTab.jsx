@@ -18,7 +18,7 @@ import {
 import { IconRefresh, IconDatabase, IconCategory, IconCircleCheck, IconAlertCircle } from '@tabler/icons-react';
 import StatCard from '@/components/shared/StatCard';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import { DATA_TYPES } from '@/pages/tenant/data-migration/domainTypes';
+import { DATA_TYPES, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationSummary } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 /** Agent-side twin of the tenant "Connect & scan" stage — identical
@@ -122,7 +122,7 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
                         {loading ? <Skeleton variant="text" width={40} sx={{ ml: 'auto' }} /> : (summary?.[row.key]?.in_v1 ?? 0).toLocaleString()}
                       </TableCell>
                       <TableCell sx={{ fontSize: 12.5, color: '#64748b' }}>
-                        {row.waitsFor.length ? row.waitsFor.join(', ') : '—'}
+                        {row.waitsFor.length ? dependencyNames(row.waitsFor) : '—'}
                       </TableCell>
                     </TableRow>
                   ))}

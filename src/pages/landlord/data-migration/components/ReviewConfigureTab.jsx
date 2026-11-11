@@ -24,8 +24,8 @@ import {
 } from '@mui/material';
 import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
+import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const CONFLICT_OPTIONS = [
   { value: 'keep_v2', label: 'Keep V2, skip V1', detail: 'Safest. Edits made in V2 are never touched.' },
@@ -74,6 +74,9 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const isDark = theme.palette.mode === 'dark';
 
   const [summary, setSummary] = useState(null);
+  // Which domains have a completed REAL run — null until loaded, so a row
+  // isn't shown as blocked for a split second before this arrives.
+  const [completedDomains, setCompletedDomains] = useState(null);
   const [dryRunResults, setDryRunResults] = useState({});
   const [dryRunLoading, setDryRunLoading] = useState(false);
   const [dryRunError, setDryRunError] = useState('');
@@ -86,11 +89,25 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // here needs the same "confirm before it happens" treatment.
   const [confirmAction, setConfirmAction] = useState(null);
 
+  // A row's dependencies are satisfied once every domain in its waitsFor
+  // list has a completed REAL run (a dry run never counts) — mirrors
+  // MigrationRun::unsatisfiedDependencies() server-side exactly, so the UI
+  // never offers something the backend would reject anyway. Returns []
+  // (nothing blocking) until completedDomains has actually loaded, so a
+  // row isn't shown as blocked for a split second on first render.
+  const unsatisfiedDependencies = (row) => (completedDomains ? row.waitsFor.filter((key) => !completedDomains[key]) : []);
+
+  const isRowSelectable = (row) => row.available && unsatisfiedDependencies(row).length === 0;
+
   const toggleDomain = (key) => {
+    const row = DATA_TYPE_BY_KEY[key];
+    if (row && !isRowSelectable(row)) {
+      return;
+    }
     setSelectedDomains((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
-  const availableDomainKeys = DATA_TYPES.filter((row) => row.available).map((row) => row.key);
+  const availableDomainKeys = DATA_TYPES.filter((row) => isRowSelectable(row)).map((row) => row.key);
   const allAvailableSelected = availableDomainKeys.length > 0 && availableDomainKeys.every((key) => selectedDomains.includes(key));
   const someAvailableSelected = availableDomainKeys.some((key) => selectedDomains.includes(key));
 
@@ -108,6 +125,17 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       .catch(() => {
         // Non-fatal — the estimate just won't show if this fails; the
         // dry run itself doesn't depend on it.
+      });
+
+    fetchCompletedDomains(tenantId)
+      .then((res) => {
+        if (res?.status) {
+          setCompletedDomains(res.data);
+        }
+      })
+      .catch(() => {
+        // Non-fatal — rows just won't be dependency-gated if this fails,
+        // same fallback posture as the summary fetch above.
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
@@ -273,7 +301,11 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              {DATA_TYPES.map((row, index) => (
+              {DATA_TYPES.map((row, index) => {
+                const blocked = unsatisfiedDependencies(row);
+                const selectable = isRowSelectable(row);
+
+                return (
                 <Box
                   key={row.key}
                   sx={{
@@ -281,22 +313,27 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                     alignItems: 'center',
                     gap: 1,
                     py: 1,
-                    opacity: row.available ? 1 : 0.5,
+                    opacity: selectable ? 1 : 0.5,
                     borderBottom: index === DATA_TYPES.length - 1 ? 'none' : '1px solid',
                     borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
                   }}
                 >
                   <Checkbox
                     size="small"
-                    checked={row.available && selectedDomains.includes(row.key)}
-                    disabled={!row.available}
+                    checked={selectable && selectedDomains.includes(row.key)}
+                    disabled={!selectable}
                     onChange={() => toggleDomain(row.key)}
                   />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.name}</Typography>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-                      {row.waitsFor.length ? `Waits for ${row.waitsFor.join(', ')}` : 'No dependencies'}
+                      {row.waitsFor.length ? `Waits for ${dependencyNames(row.waitsFor)}` : 'No dependencies'}
                     </Typography>
+                    {row.available && blocked.length > 0 && (
+                      <Typography sx={{ fontSize: 11.5, color: '#D97706', fontWeight: 600, mt: 0.25 }}>
+                        Migrate {dependencyNames(blocked)} for real first (a dry run doesn&apos;t count) — this unlocks automatically once that&apos;s done.
+                      </Typography>
+                    )}
                     {row.note && (
                       <Typography sx={{ fontSize: 11.5, color: '#94a3b8', fontStyle: 'italic', mt: 0.25 }}>
                         {row.note}
@@ -304,13 +341,17 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                     )}
                   </Box>
                   {!row.available && <Chip size="small" label="Coming soon" sx={{ fontSize: 11, fontWeight: 700 }} />}
+                  {row.available && blocked.length > 0 && (
+                    <Chip size="small" label="Locked" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#FEF3C7', color: '#B45309' }} />
+                  )}
                   {row.available && dryRunResults[row.key] && (
                     <Typography sx={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
                       {(dryRunResults[row.key].eligible_count || 0).toLocaleString()}
                     </Typography>
                   )}
                 </Box>
-              ))}
+                );
+              })}
             </Box>
 
             {dryRunError && (

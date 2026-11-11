@@ -107,6 +107,23 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const selectedRecordEstimate = selectedDomains.reduce((sum, domain) => sum + (summary?.[domain]?.in_v1 || 0), 0);
   const dryRunEstimate = estimateDuration(selectedRecordEstimate);
 
+  // DATA_TYPES is already listed in dependency order (STAGE2_PLAN.md §12 —
+  // e.g. Classes before Subjects, Subjects before Results). Selecting
+  // several dependent domains together and firing them all at once (the
+  // old Promise.all below) meant a later domain's job could start, and
+  // even finish, before an earlier one it depends on had actually
+  // committed anything — confirmed live, 2026-11-11: a dry run of
+  // Classes+Subjects together left every Subjects row unable to find the
+  // Programme Classes was supposed to have just created, since nothing
+  // from one domain's job is guaranteed to exist yet when a sibling
+  // domain's own separate job starts. Each domain here now runs to
+  // completion (triggered, then polled until settled) before the next
+  // one is even triggered.
+  const orderByDependency = (domains) => {
+    const order = DATA_TYPES.map((t) => t.key);
+    return [...domains].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+  };
+
   const pollUntilSettled = async (domains) => {
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
       const results = await Promise.all(domains.map((domain) => fetchMigrationStatus(tenantId, domain)));
@@ -142,10 +159,10 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     setStartError('');
 
     try {
-      await Promise.all(
-        selectedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy })),
-      );
-      await pollUntilSettled(selectedDomains);
+      for (const domain of orderByDependency(selectedDomains)) {
+        await triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy });
+        await pollUntilSettled([domain]);
+      }
       setHasRunDryRun(true);
     } catch (err) {
       // pollUntilSettled() throws a plain Error (no `.response`) when
@@ -169,12 +186,19 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     setStartError('');
 
     try {
-      await Promise.all(
-        selectedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy })),
-      );
+      // Dispatched one at a time, in dependency order, but deliberately
+      // NOT awaited to completion here — unlike runDryRun, the whole
+      // point of this being a queued job is that the UI doesn't have to
+      // sit and wait for it; the Migrate tab (onContinue) is where
+      // progress is actually watched. Ordering is still preserved
+      // because the queue has a single worker processing it FIFO, so
+      // jobs dispatched in order are worked in that same order.
+      for (const domain of orderByDependency(selectedDomains)) {
+        await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy });
+      }
       onContinue();
     } catch (err) {
-      setStartError(err?.response?.data?.message || 'Failed to start the migration.');
+      setStartError(err?.response?.data?.message || err?.message || 'Failed to start the migration.');
     } finally {
       setStarting(false);
     }

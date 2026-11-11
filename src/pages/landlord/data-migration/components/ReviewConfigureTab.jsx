@@ -90,6 +90,14 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     setSelectedDomains((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
   };
 
+  const availableDomainKeys = DATA_TYPES.filter((row) => row.available).map((row) => row.key);
+  const allAvailableSelected = availableDomainKeys.length > 0 && availableDomainKeys.every((key) => selectedDomains.includes(key));
+  const someAvailableSelected = availableDomainKeys.some((key) => selectedDomains.includes(key));
+
+  const toggleAllDomains = () => {
+    setSelectedDomains(allAvailableSelected ? [] : availableDomainKeys);
+  };
+
   useEffect(() => {
     fetchMigrationSummary(tenantId)
       .then((res) => {
@@ -242,6 +250,28 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
             title="Step 1 — Pick what to migrate, then run a dry run"
             subtitle="A dry run checks every record and tells you exactly what would happen — nothing is written to V2 yet. Always run this before the real migration."
           >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                py: 1,
+                borderBottom: '1px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#f1f5f9',
+              }}
+            >
+              <Checkbox
+                size="small"
+                checked={allAvailableSelected}
+                indeterminate={!allAvailableSelected && someAvailableSelected}
+                disabled={availableDomainKeys.length === 0}
+                onChange={toggleAllDomains}
+              />
+              <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>
+                {allAvailableSelected ? 'Deselect all' : 'Select all'}
+              </Typography>
+            </Box>
+
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               {DATA_TYPES.map((row, index) => (
                 <Box

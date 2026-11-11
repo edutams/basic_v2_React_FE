@@ -21,7 +21,18 @@ import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper'
 import { DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationStatus, fetchMigrationHistory } from '@/api/landlord/dataMigration/dataMigrationApi';
 
-const statusChip = (status) => {
+const statusChip = (status, dryRun) => {
+  // A dry run that "completed" never wrote anything — showing it with the
+  // same green "completed" chip a real run gets is exactly what made a
+  // user read the Run History/Verify screen as "this data is already
+  // migrated" when it wasn't (confirmed live, 2026-11-11). Dry runs get
+  // their own distinct amber "Dry run" chip instead, regardless of status,
+  // so the one thing a user glances at can never be mistaken for a real
+  // completed migration.
+  if (dryRun) {
+    return <Chip size="small" label="Dry run" sx={{ bgcolor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: 11, height: 22 }} />;
+  }
+
   const map = {
     completed: { bg: '#DCFCE7', color: '#15803D' },
     failed: { bg: '#FEF2F2', color: '#DC2626' },
@@ -62,6 +73,14 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
   const totalSkipped = runs.reduce((sum, run) => sum + (run.skipped_count || 0), 0);
   const totalErrors = runs.reduce((sum, run) => sum + (run.error_count || 0), 0);
   const anyFailed = runs.some((run) => run.status === 'failed');
+  // The most recent run for a domain can be a dry run — fetchMigrationStatus()
+  // returns whichever run that was, dry or real, with nothing in the shape
+  // itself flagging it. Without this check the banner below said "Migration
+  // complete" / "Every eligible record copied cleanly" off a dry run that
+  // never wrote anything, which read as the data already being migrated
+  // (confirmed live, 2026-11-11, directly from a user's own Review &
+  // Configure dry run).
+  const anyDryRun = runs.some((run) => run.dry_run);
 
   const allIssues = selectedDomains.flatMap((domain) => {
     const run = runsByDomain[domain];
@@ -77,23 +96,31 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
               width: 40,
               height: 40,
               borderRadius: '10px',
-              bgcolor: anyFailed ? '#FEF2F2' : '#DCFCE7',
+              bgcolor: anyFailed ? '#FEF2F2' : anyDryRun ? '#FEF3C7' : '#DCFCE7',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
             }}
           >
-            {anyFailed ? <IconAlertTriangle size={22} color="#DC2626" /> : <IconCircleCheck size={22} color="#16A34A" />}
+            {anyFailed ? (
+              <IconAlertTriangle size={22} color="#DC2626" />
+            ) : anyDryRun ? (
+              <IconListDetails size={22} color="#B45309" />
+            ) : (
+              <IconCircleCheck size={22} color="#16A34A" />
+            )}
           </Box>
           <Box>
             <Typography sx={{ fontSize: 17, fontWeight: 800 }}>
-              {anyFailed ? 'Migration finished with errors' : 'Migration complete'}
+              {anyFailed ? 'Migration finished with errors' : anyDryRun ? 'Dry run complete — nothing written yet' : 'Migration complete'}
             </Typography>
             <Typography sx={{ fontSize: 12.5, color: '#64748b' }}>
-              {totalErrors > 0
-                ? `${totalErrors} record${totalErrors === 1 ? '' : 's'} couldn't be copied — see "Items to follow up" below.`
-                : 'Every eligible record copied cleanly.'}
+              {anyDryRun
+                ? 'This was a preview only. Nothing in V2 has changed — run it again without "dry run" to actually copy this data.'
+                : totalErrors > 0
+                  ? `${totalErrors} record${totalErrors === 1 ? '' : 's'} couldn't be copied — see "Items to follow up" below.`
+                  : 'Every eligible record copied cleanly.'}
             </Typography>
           </Box>
         </Box>
@@ -101,7 +128,7 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
 
       <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
-          <StatCard align="left" icon={IconFileCheck} colorIndex={1} loading={loading} count={totalMigrated.toLocaleString()} label="Copied" />
+          <StatCard align="left" icon={IconFileCheck} colorIndex={1} loading={loading} count={totalMigrated.toLocaleString()} label={anyDryRun ? 'Would copy (dry run)' : 'Copied'} />
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
           <StatCard align="left" icon={IconListDetails} colorIndex={2} loading={loading} count={totalSkipped.toLocaleString()} label="Skipped" subtitle="Already in V2 or unresolved" />
@@ -131,7 +158,7 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
                       <TableCell sx={{ fontSize: 13 }}>{DATA_TYPE_BY_KEY[domain]?.name || domain}</TableCell>
                       <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.migrated_count || 0).toLocaleString()}</TableCell>
                       <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.eligible_count || 0).toLocaleString()}</TableCell>
-                      <TableCell>{statusChip(run?.status)}</TableCell>
+                      <TableCell>{statusChip(run?.status, run?.dry_run)}</TableCell>
                     </TableRow>
                   );
                 })}
@@ -188,13 +215,12 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
                       <Box sx={{ minWidth: 0 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
                           {DATA_TYPE_BY_KEY[run.domain]?.name || run.domain}
-                          {run.dry_run ? ' (dry run)' : ''}
                         </Typography>
                         <Typography sx={{ fontSize: 12, color: '#64748b' }}>
                           {run.started_at ? new Date(run.started_at).toLocaleString() : '—'}
                         </Typography>
                       </Box>
-                      {statusChip(run.status)}
+                      {statusChip(run.status, run.dry_run)}
                     </Box>
                   ))}
                 </Box>

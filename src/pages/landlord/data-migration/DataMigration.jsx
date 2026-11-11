@@ -89,6 +89,10 @@ const DataMigration = () => {
             setConflictStrategy={setConflictStrategy}
             onBack={() => goToStep(1)}
             onContinue={() => advanceTo(3)}
+            onViewRunHistory={() => {
+              setMaxStepReached((prev) => Math.max(prev, 4));
+              setActiveStep(4);
+            }}
           />
         );
       case 3:
@@ -109,8 +113,18 @@ const DataMigration = () => {
         <Button
           variant="outlined"
           startIcon={<IconHistory size={16} />}
-          disabled={maxStepReached < 4}
-          onClick={() => goToStep(4)}
+          disabled={!school}
+          // Run history is a read-only view (it only needs tenantId, not
+          // anything set by steps 2/3) — gating it behind maxStepReached
+          // meant the one moment you'd actually want to check it (a dry
+          // run or migration that looks stuck) was exactly when you
+          // couldn't reach it yet, since you hadn't completed those
+          // steps. Bypasses goToStep()'s "no skipping ahead" restriction
+          // on purpose, rather than reusing it.
+          onClick={() => {
+            setMaxStepReached((prev) => Math.max(prev, 4));
+            setActiveStep(4);
+          }}
           sx={{ textTransform: 'none', fontWeight: 600 }}
         >
           Run history

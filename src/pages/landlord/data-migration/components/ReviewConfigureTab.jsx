@@ -34,7 +34,13 @@ const CONFLICT_OPTIONS = [
 ];
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const POLL_INTERVAL_MS = 2000;
+// Widened from 2s — confirmed live, 2026-11-11: a dry run across several
+// domains routinely outlasted the old 2s/150-attempt window, and at 2s
+// that meant 150+ requests just to find out it was still running. A
+// slower interval over the same real-world wait cuts request volume
+// without losing responsiveness (nobody's watching closely enough to
+// notice the difference between a 2s and 4s refresh).
+const POLL_INTERVAL_MS = 4000;
 
 /** Rough, conservative estimate only — labeled "~" everywhere it's shown,
  * never claimed as exact. Based on how fast the domains built so far
@@ -56,11 +62,14 @@ const estimateDuration = (recordCount) => {
 };
 // Safety cap, not a tuning knob: if something never settles (a stalled
 // queue worker, a genuinely huge domain), this stops hammering the server
-// forever and surfaces it as an error instead — confirmed live, 2026-11-10,
-// that an unbounded loop here is a real problem, not a hypothetical one.
-const MAX_POLL_ATTEMPTS = 150; // ~5 minutes at POLL_INTERVAL_MS — bumped for the now much larger (17-domain) dry run
+// forever — confirmed live, 2026-11-10, that an unbounded loop here is a
+// real problem, not a hypothetical one. Giving up here no longer shows an
+// alarming "failed" message (see the catch block below) — Run History is
+// reachable at any time now, so this is just "stop watching from this
+// screen," not a dead end.
+const MAX_POLL_ATTEMPTS = 90; // ~6 minutes at POLL_INTERVAL_MS
 
-const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue }) => {
+const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue, onViewRunHistory }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -68,6 +77,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   const [dryRunResults, setDryRunResults] = useState({});
   const [dryRunLoading, setDryRunLoading] = useState(false);
   const [dryRunError, setDryRunError] = useState('');
+  const [dryRunTimedOut, setDryRunTimedOut] = useState(false);
   const [hasRunDryRun, setHasRunDryRun] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
@@ -113,7 +123,9 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       await sleep(POLL_INTERVAL_MS);
     }
 
-    throw new Error('This is taking much longer than expected — the migration may still be running. Check "Run history" in a moment instead of waiting here.');
+    const timeoutError = new Error('This is taking longer than this screen watches for — it may well still be finishing in the background. Check Run History below rather than waiting here.');
+    timeoutError.isTimeout = true;
+    throw timeoutError;
   };
 
   const runDryRun = async () => {
@@ -125,6 +137,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
 
     setDryRunLoading(true);
     setDryRunError('');
+    setDryRunTimedOut(false);
     setHasRunDryRun(false);
     setStartError('');
 
@@ -143,6 +156,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       // 17-domain dry run: easily longer than the ~2 minute poll window)
       // silently showed the generic "failed" message instead, making an
       // in-progress run look like an outright failure.
+      setDryRunTimedOut(Boolean(err?.isTimeout));
       setDryRunError(err?.response?.data?.message || err?.message || 'Failed to run the dry run.');
     } finally {
       setDryRunLoading(false);
@@ -241,7 +255,17 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
             </Box>
 
             {dryRunError && (
-              <Alert severity="error" sx={{ mt: 1.5 }}>
+              <Alert
+                severity={dryRunTimedOut ? 'warning' : 'error'}
+                sx={{ mt: 1.5 }}
+                action={
+                  dryRunTimedOut && onViewRunHistory ? (
+                    <Button color="inherit" size="small" onClick={onViewRunHistory}>
+                      View Run History
+                    </Button>
+                  ) : undefined
+                }
+              >
                 {dryRunError}
               </Alert>
             )}

@@ -34,11 +34,6 @@ const timetableApi = {
   updatePeriod: (id, data) => tenantApi.put(`/timetable/periods/${id}`, data),
   deletePeriod: (id) => tenantApi.delete(`/timetable/periods/${id}`),
 
-  getRooms: () => tenantApi.get('/timetable/rooms'),
-  createRoom: (data) => tenantApi.post('/timetable/rooms', data),
-  updateRoom: (id, data) => tenantApi.put(`/timetable/rooms/${id}`, data),
-  deleteRoom: (id) => tenantApi.delete(`/timetable/rooms/${id}`),
-
   getSettings: () => tenantApi.get('/timetable/settings'),
   updateSettings: (data) => tenantApi.put('/timetable/settings', data),
 

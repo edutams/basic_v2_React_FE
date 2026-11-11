@@ -54,7 +54,6 @@ import DomainIcon from '@mui/icons-material/Domain';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import GroupsIcon from '@mui/icons-material/Groups';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -116,7 +115,6 @@ const GenerateTimetable = () => {
   const [subjectSearch, setSubjectSearch] = useState('');
   const [showAllSubjects, setShowAllSubjects] = useState(false);
   const [quickPickSubjectId, setQuickPickSubjectId] = useState('');
-  const [rooms, setRooms] = useState([]);
 
   const [teachers, setTeachers] = useState([]);
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -128,7 +126,6 @@ const GenerateTimetable = () => {
 
   const [assignTarget, setAssignTarget] = useState(null);
   const [assignSubjectId, setAssignSubjectId] = useState('');
-  const [assignRoomId, setAssignRoomId] = useState('');
   const [assignSaving, setAssignSaving] = useState(false);
   const [assignError, setAssignError] = useState('');
 
@@ -223,27 +220,23 @@ const GenerateTimetable = () => {
     }
   }, [notify]);
 
-  const fetchRoomsTeachers = useCallback(async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
-      const [roomRes, teacherRes] = await Promise.all([
-        timetableApi.getRooms(),
-        tenantApi.get('/school_setup/staff/all', {
-          params: { staff_type: 'teaching', per_page: 50 },
-        }),
-      ]);
-      setRooms(roomRes.data.data || []);
+      const teacherRes = await tenantApi.get('/school_setup/staff/all', {
+        params: { staff_type: 'teaching', per_page: 50 },
+      });
       setTeachers(teacherRes.data?.data || []);
     } catch {
-      notify.error('Failed to load rooms/teachers');
+      notify.error('Failed to load teachers');
     }
   }, [notify]);
 
   useEffect(() => {
     fetchAcademicInfo();
     fetchClasses();
-    fetchRoomsTeachers();
+    fetchTeachers();
     fetchSessions();
-  }, [fetchAcademicInfo, fetchClasses, fetchRoomsTeachers, fetchSessions]);
+  }, [fetchAcademicInfo, fetchClasses, fetchTeachers, fetchSessions]);
 
   // ── Programme → Class cascade ───────────────────────────────────────
   const programmes = useMemo(() => {
@@ -424,7 +417,6 @@ const GenerateTimetable = () => {
     }
     setAssignTarget({ anchorEl: e.currentTarget, armId, periodId });
     setAssignSubjectId(slot?.subject_id || '');
-    setAssignRoomId(slot?.room_id || '');
     setAssignError('');
   };
 
@@ -457,7 +449,6 @@ const GenerateTimetable = () => {
         period_id: assignTarget.periodId,
         day_of_week: selectedDay,
         subject_id: assignSubjectId,
-        room_id: assignRoomId || null,
         session_term_id: selectedTermId,
       };
       if (slot?.id) {
@@ -867,7 +858,7 @@ const GenerateTimetable = () => {
           icon={WarningAmberIcon}
           iconColor="#DC2626"
           title="Conflicts & Issues"
-          tooltip="Assigning a period that would double-book a teacher or room is blocked before it happens, so this stays at 0 — unassigned periods are still listed here as something to resolve."
+          tooltip="Assigning a period that would double-book a teacher is blocked before it happens, so this stays at 0 — unassigned periods are still listed here as something to resolve."
           loading={statsLoading}
           linkText="View and resolve issues"
           accent="#DC2626"
@@ -882,31 +873,6 @@ const GenerateTimetable = () => {
           />
         </StatCardShell>
 
-        <StatCardShell
-          icon={MeetingRoomIcon}
-          iconColor="#16A34A"
-          title="Room/Facility Usage"
-          tooltip="Rooms currently assigned to at least one period this term."
-          loading={statsLoading}
-          linkText="View room usage"
-          onLinkClick={() => navigate('/timetable/period-settings')}
-        >
-          <BarWithPct
-            value={pct(stats.rooms_in_use, stats.rooms_total)}
-            mainLabel={stats.rooms_total ?? 0}
-            subLabel="Rooms"
-            barColor="#2563EB"
-            legend={
-              <>
-                <LegendDot color="#16A34A" label={`In Use ${stats.rooms_in_use ?? 0}`} />
-                <LegendDot
-                  color="#CBD5E1"
-                  label={`Available ${Math.max((stats.rooms_total ?? 0) - (stats.rooms_in_use ?? 0), 0)}`}
-                />
-              </>
-            }
-          />
-        </StatCardShell>
       </Box>
 
       <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems="flex-start">
@@ -1665,21 +1631,6 @@ const GenerateTimetable = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" fullWidth>
-              <InputLabel>Room (optional)</InputLabel>
-              <Select
-                value={assignRoomId}
-                label="Room (optional)"
-                onChange={(e) => setAssignRoomId(e.target.value)}
-              >
-                <MenuItem value="">No room</MenuItem>
-                {rooms.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>
-                    {r.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
 
             <Stack direction="row" spacing={1} justifyContent="flex-end">
               {assignTarget && gridByArm[assignTarget.armId]?.[assignTarget.periodId] && (
@@ -1763,7 +1714,7 @@ const GenerateTimetable = () => {
         open={rolloverModalOpen}
         onClose={() => setRolloverModalOpen(false)}
         title="Roll Over Timetable From Last Term"
-        description="Carries every assigned period forward from the previous term into the current one — same class arm, period, day, subject and room. A period that would conflict in the new term (e.g. the teacher is now busy elsewhere) is skipped, not forced."
+        description="Carries every assigned period forward from the previous term into the current one — same class arm, period, day and subject. A period that would conflict in the new term (e.g. the teacher is now busy elsewhere) is skipped, not forced."
         migrateFn={migrateTimetable}
         onSuccess={() => {
           fetchStats();

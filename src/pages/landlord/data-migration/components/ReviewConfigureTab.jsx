@@ -58,7 +58,7 @@ const estimateDuration = (recordCount) => {
 // queue worker, a genuinely huge domain), this stops hammering the server
 // forever and surfaces it as an error instead — confirmed live, 2026-11-10,
 // that an unbounded loop here is a real problem, not a hypothetical one.
-const MAX_POLL_ATTEMPTS = 60; // ~2 minutes at POLL_INTERVAL_MS
+const MAX_POLL_ATTEMPTS = 150; // ~5 minutes at POLL_INTERVAL_MS — bumped for the now much larger (17-domain) dry run
 
 const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue }) => {
   const theme = useTheme();
@@ -135,7 +135,15 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       await pollUntilSettled(selectedDomains);
       setHasRunDryRun(true);
     } catch (err) {
-      setDryRunError(err?.response?.data?.message || 'Failed to run the dry run.');
+      // pollUntilSettled() throws a plain Error (no `.response`) when
+      // polling itself times out — that message ("still running, check
+      // Run history") is the useful one; a real backend failure carries
+      // `err.response.data.message` instead. Checking only the axios
+      // shape meant a polling-timeout (confirmed live with the fuller
+      // 17-domain dry run: easily longer than the ~2 minute poll window)
+      // silently showed the generic "failed" message instead, making an
+      // in-progress run look like an outright failure.
+      setDryRunError(err?.response?.data?.message || err?.message || 'Failed to run the dry run.');
     } finally {
       setDryRunLoading(false);
     }

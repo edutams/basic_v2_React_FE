@@ -77,8 +77,6 @@ const TimetableOverview = ({ data = {}, loading = false }) => {
     teachers_total = 0,
     subjects_used = 0,
     subjects_total = 0,
-    rooms_in_use = 0,
-    rooms_total = 0,
     completion_trend = null,
     last_saved_at = null,
   } = data;
@@ -112,13 +110,6 @@ const TimetableOverview = ({ data = {}, loading = false }) => {
       numerator: subjects_used,
       denominator: subjects_total,
       extra: [{ label: 'Subjects Not Yet Scheduled', value: Math.max(subjects_total - subjects_used, 0) }],
-    },
-    {
-      key: 'rooms',
-      label: 'Rooms In Use',
-      numerator: rooms_in_use,
-      denominator: rooms_total,
-      extra: [{ label: 'Rooms Available', value: Math.max(rooms_total - rooms_in_use, 0) }],
     },
   ];
 

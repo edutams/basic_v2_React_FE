@@ -11,6 +11,7 @@ export const DATA_TYPES = [
   { key: 'students', name: 'Students', waitsFor: ['Classes'], available: true },
   { key: 'guardians', name: 'Parents & guardians', waitsFor: ['Students'], available: true },
   { key: 'enrolments', name: 'Enrolments', waitsFor: ['Students', 'Sessions & terms'], available: true },
+  { key: 'subject_groups', name: 'Subject groups & results', waitsFor: ['Classes', 'Subjects', 'Enrolments'], available: true },
   { key: 'attendance', name: 'Attendance', waitsFor: ['Enrolments'], available: true },
   { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'], available: true },
   { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'], available: true },

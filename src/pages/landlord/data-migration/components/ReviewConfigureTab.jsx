@@ -297,6 +297,11 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>
                       {row.waitsFor.length ? `Waits for ${row.waitsFor.join(', ')}` : 'No dependencies'}
                     </Typography>
+                    {row.note && (
+                      <Typography sx={{ fontSize: 11.5, color: '#94a3b8', fontStyle: 'italic', mt: 0.25 }}>
+                        {row.note}
+                      </Typography>
+                    )}
                   </Box>
                   {!row.available && <Chip size="small" label="Coming soon" sx={{ fontSize: 11, fontWeight: 700 }} />}
                   {row.available && dryRunResults[row.key] && (

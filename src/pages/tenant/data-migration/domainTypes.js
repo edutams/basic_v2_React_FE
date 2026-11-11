@@ -4,7 +4,13 @@
 // build order, row 1) — every other domain is still real/listed but can't
 // actually be run yet, so the UI must disable it rather than pretend.
 export const DATA_TYPES = [
-  { key: 'sessions_terms', name: 'Academic sessions & terms', waitsFor: [], available: true },
+  {
+    key: 'sessions_terms',
+    name: 'Academic sessions & terms',
+    waitsFor: [],
+    available: true,
+    note: 'Includes weeks & their dates, not just sessions/terms — the count covers both',
+  },
   { key: 'classes', name: 'Classes & arms', waitsFor: ['Sessions & terms'], available: true },
   { key: 'subjects', name: 'Subjects', waitsFor: ['Classes'], available: true },
   { key: 'staff', name: 'Staff', waitsFor: [], available: true },

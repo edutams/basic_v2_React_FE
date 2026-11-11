@@ -112,6 +112,11 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
                         {!row.available && (
                           <Chip size="small" label="Coming soon" sx={{ ml: 1, fontSize: 10, fontWeight: 700, height: 18 }} />
                         )}
+                        {row.note && (
+                          <Typography sx={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', mt: 0.25 }}>
+                            {row.note}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell align="right" sx={{ fontSize: 13 }}>
                         {loading ? <Skeleton variant="text" width={40} sx={{ ml: 'auto' }} /> : (summary?.[row.key]?.in_v1 ?? 0).toLocaleString()}

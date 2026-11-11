@@ -199,7 +199,7 @@ const TemplateOne = ({ student, report, sessionTerm, className, gradeScale }) =>
                 <Table size="small"><TableBody>
                   <TableRow><TableCell style={innerCellBorder}>This Term Ends</TableCell><TableCell style={{ ...innerCellBorder, textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || 'Not set'}</TableCell></TableRow>
                   <TableRow><TableCell style={innerCellBorder}>Next Term Begins</TableCell><TableCell style={{ ...innerCellBorder, textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
-                  <TableRow><TableCell style={innerCellBorder}>Boarding Resumption Date</TableCell><TableCell style={{ ...innerCellBorder, textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
+                  <TableRow><TableCell style={innerCellBorder}>Boarding Resumption Date</TableCell><TableCell style={{ ...innerCellBorder, textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || 'Not set'}</TableCell></TableRow>
                 </TableBody></Table>
               </Box>
             </div>

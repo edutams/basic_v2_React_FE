@@ -172,7 +172,15 @@ const ApplicationCard = ({ app, onRefresh }) => {
   const acceptanceFeeTotal = acceptanceFeeItems.reduce((sum, f) => sum + Number(f.amount || 0), 0);
   const hasPaidAcceptanceFee = admission.has_paid_acceptance_fee === true;
 
-  const needsAcceptanceFee = Boolean(admissionBatch?.require_payment) && acceptanceFeeTotal > 0;
+  // Gated on the batch having ANY post-application fee at all — not on
+  // acceptanceFeeTotal (class-filtered) — a real fee requirement must
+  // never silently disappear just because the admitted class doesn't
+  // exactly match a fee item's class_id (or admitted_class_id isn't
+  // populated yet, falling back to intending_class_id). The filtered
+  // acceptanceFeeItems/acceptanceFeeTotal above are still used for
+  // display (how much is owed), just not for this gate.
+  const needsAcceptanceFee =
+    Boolean(admissionBatch?.require_payment) && (admissionBatch?.post_application_payments || []).length > 0;
   const showPayAcceptanceFee =
     isAdmitted && !offerAccepted && needsAcceptanceFee && !hasPaidAcceptanceFee;
   const showAcceptOffer = isAdmitted && !offerAccepted && (!needsAcceptanceFee || hasPaidAcceptanceFee);

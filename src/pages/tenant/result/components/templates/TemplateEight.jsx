@@ -170,7 +170,7 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                 )}
                 <TableRow><TableCell>This Term Ends</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.closing_date || 'Not set'}</TableCell></TableRow>
                 <TableRow><TableCell>Next Term Begins</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
-                <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || sessionTerm?.resumption_date || 'Not set'}</TableCell></TableRow>
+                <TableRow><TableCell>Boarding Resumption</TableCell><TableCell style={{ textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || 'Not set'}</TableCell></TableRow>
               </TableBody></Table>
             </SectionCard>
           </div>

@@ -198,7 +198,7 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                   </tr>
                   <tr className="tpl13-inner">
                     <td style={{ ...innerCellBorder, padding: '4px 8px' }}>Boarding Resumption Date</td>
-                    <td style={{ ...innerCellBorder, padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || sessionTerm?.resumption_date || 'Not set'}</td>
+                    <td style={{ ...innerCellBorder, padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{sessionTerm?.boarding_resumption_date || 'Not set'}</td>
                   </tr>
                 </TableBody></Table>
               </TableContainer>

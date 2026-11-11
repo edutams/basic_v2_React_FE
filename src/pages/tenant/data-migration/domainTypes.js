@@ -15,6 +15,9 @@ export const DATA_TYPES = [
   { key: 'results', name: 'Assessments & results', waitsFor: ['Enrolments', 'Subjects'], available: true },
   { key: 'fees', name: 'Fees & payments', waitsFor: ['Students'], available: true },
   { key: 'chat', name: 'Chat/messaging', waitsFor: ['Staff', 'Students', 'Parents & guardians'], available: true },
+  { key: 'quizzes', name: 'Quizzes', waitsFor: ['Students', 'Enrolments'], available: true },
+  { key: 'subject_teachers', name: 'Subject-teacher assignments', waitsFor: ['Staff', 'Subjects', 'Classes'], available: true },
+  { key: 'class_teachers', name: 'Class teachers & report-card comments', waitsFor: ['Staff', 'Students', 'Enrolments'], available: true },
 ];
 
 export const AVAILABLE_DOMAIN_KEYS = DATA_TYPES.filter((row) => row.available).map((row) => row.key);

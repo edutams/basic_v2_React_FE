@@ -5,14 +5,6 @@ import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper'
 import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
 
-// A batch-aware domain (Students, for now) pauses between batches of a
-// few hundred rows instead of running start-to-finish in one go — not
-// settled (there's more to do) but also not actively "running" right
-// this second, so it's treated separately from both in the UI: stop
-// auto-polling (nothing changes until the next click) and offer a
-// "Continue migrating" button rather than showing a spinner forever.
-const WAITING_RUN_STATUSES = ['paused'];
-
 const POLL_INTERVAL_MS = 3000;
 // Soft cap, not a hard failure — a real migration can legitimately run long.
 // After this many automatic checks, stop polling on its own and let the
@@ -84,8 +76,13 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
   const [autoPollStopped, setAutoPollStopped] = useState(false);
+  const [autoContinueFailed, setAutoContinueFailed] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const stoppedRef = useRef(false);
+
+  const continueBatches = async (domains) => {
+    await Promise.all(domains.map((domain) => triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy })));
+  };
 
   const startPolling = () => {
     stoppedRef.current = false;
@@ -104,16 +101,30 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
       });
       setRunsByDomain(byDomain);
 
-      // A paused domain isn't settled (there's more to migrate) but
-      // also isn't actively running right now — nothing will change on
-      // its own until the next "Continue migrating" click, so polling
-      // further is pointless until then.
-      const allStoppable = selectedDomains.every((domain) =>
-        [...SETTLED_RUN_STATUSES, ...WAITING_RUN_STATUSES].includes(byDomain[domain]?.status),
-      );
+      const allSettled = selectedDomains.every((domain) => SETTLED_RUN_STATUSES.includes(byDomain[domain]?.status));
       attempts += 1;
 
-      if (allStoppable || stoppedRef.current) {
+      if (allSettled || stoppedRef.current) {
+        return;
+      }
+
+      // A paused domain won't advance on its own — the backend is
+      // waiting for the next batch to be triggered. Fire it
+      // automatically so a domain with hundreds of thousands of rows
+      // doesn't need hundreds of manual clicks to finish; "Continue
+      // migrating" stays only as a manual recovery path for if this
+      // automatic continue itself fails (e.g. a dropped connection).
+      const pausedDomains = selectedDomains.filter((domain) => byDomain[domain]?.status === 'paused');
+
+      if (pausedDomains.length > 0) {
+        try {
+          await continueBatches(pausedDomains);
+        } catch (e) {
+          setAutoContinueFailed(true);
+          return;
+        }
+
+        setTimeout(poll, POLL_INTERVAL_MS);
         return;
       }
 
@@ -141,7 +152,8 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
     setContinuing(true);
     try {
       const pausedDomains = selectedDomains.filter((domain) => runsByDomain[domain]?.status === 'paused');
-      await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy })));
+      await continueBatches(pausedDomains);
+      setAutoContinueFailed(false);
       startPolling();
     } finally {
       setContinuing(false);
@@ -207,9 +219,11 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         >
           <IconInfoCircle size={16} color="#64748b" style={{ flexShrink: 0 }} />
           <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-            {anyPaused && !allSettled
-              ? 'Migrating in batches so this never looks stuck — click "Continue migrating" below to do the next batch.'
-              : 'You can leave this page — the migration keeps running in the background. Come back and check "Verify" once it\'s done.'}
+            {autoContinueFailed
+              ? 'Couldn\'t start the next batch automatically — click "Continue migrating" below to retry.'
+              : anyPaused && !allSettled
+                ? 'Migrating in batches so this never looks stuck — the next batch starts automatically.'
+                : 'You can leave this page — the migration keeps running in the background. Come back and check "Verify" once it\'s done.'}
           </Typography>
         </Box>
       </SectionPaper>
@@ -242,21 +256,23 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
-          <Typography sx={{ fontSize: 12.5, color: autoPollStopped ? '#D97706' : anyPaused ? '#D97706' : '#64748b' }}>
+          <Typography sx={{ fontSize: 12.5, color: autoContinueFailed || autoPollStopped ? '#D97706' : anyPaused ? '#D97706' : '#64748b' }}>
             {allSettled
               ? `Finished for ${school?.tenant_name || tenantId}.`
-              : anyPaused
-                ? 'Paused between batches — click "Continue migrating" to keep going.'
-                : autoPollStopped
-                  ? 'Taking longer than expected — still running in the background. Check again when ready.'
-                  : 'Checking every few seconds…'}
+              : autoContinueFailed
+                ? 'Couldn\'t start the next batch automatically — click "Continue migrating" to retry.'
+                : anyPaused
+                  ? 'Paused between batches — starting the next batch automatically…'
+                  : autoPollStopped
+                    ? 'Taking longer than expected — still running in the background. Check again when ready.'
+                    : 'Checking every few seconds…'}
           </Typography>
           {autoPollStopped && !allSettled && !anyPaused && (
             <Button variant="outlined" onClick={startPolling} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
               Check again
             </Button>
           )}
-          {anyPaused && !allSettled && (
+          {autoContinueFailed && !allSettled && (
             <Button
               variant="contained"
               onClick={handleContinue}

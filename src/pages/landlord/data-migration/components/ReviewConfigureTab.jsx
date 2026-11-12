@@ -25,7 +25,7 @@ import {
 import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
-import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains, mergeDuplicateClasses } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const CONFLICT_OPTIONS = [
   { value: 'keep_v2', label: 'Keep V2, skip V1', detail: 'Safest. Edits made in V2 are never touched.' },
@@ -88,6 +88,44 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // rather than two separate dialogs, since every action the admin clicks
   // here needs the same "confirm before it happens" treatment.
   const [confirmAction, setConfirmAction] = useState(null);
+  // Separate, self-contained state for the duplicate-class repair tool —
+  // deliberately not folded into confirmAction's dry_run/migrate states,
+  // since this is an occasional repair action, not part of the normal
+  // dry-run-then-migrate flow those two drive.
+  const [duplicateCheck, setDuplicateCheck] = useState(null);
+  const [duplicateCheckLoading, setDuplicateCheckLoading] = useState(false);
+  const [duplicateMergeLoading, setDuplicateMergeLoading] = useState(false);
+  const [confirmMergeDuplicates, setConfirmMergeDuplicates] = useState(false);
+
+  const checkDuplicateClasses = async () => {
+    setDuplicateCheckLoading(true);
+    try {
+      const res = await mergeDuplicateClasses(tenantId, true);
+      if (res?.status) {
+        setDuplicateCheck(res.data);
+      }
+    } catch {
+      // Non-fatal — the check just won't show a result if this fails.
+    } finally {
+      setDuplicateCheckLoading(false);
+    }
+  };
+
+  const applyMergeDuplicateClasses = async () => {
+    setDuplicateMergeLoading(true);
+    try {
+      const res = await mergeDuplicateClasses(tenantId, false);
+      if (res?.status) {
+        setDuplicateCheck(res.data);
+      }
+    } catch {
+      // Left as the last-known dry-run result if this fails — the user
+      // can just try again.
+    } finally {
+      setDuplicateMergeLoading(false);
+      setConfirmMergeDuplicates(false);
+    }
+  };
 
   // A row's dependencies are satisfied once every domain in its waitsFor
   // list has a completed REAL run (a dry run never counts) — mirrors
@@ -543,6 +581,92 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
           </Box>
         </Grid>
       </Grid>
+
+      <SectionPaper
+        title="Repair tools"
+        subtitle="A class migrated before 2026-11-11 may have been duplicated next to the school's pre-seeded default (e.g. a separate 'JSS1' instead of attaching to 'Junior Secondary 1'). Check for this and repair it here — safe to check at any time, and safe to re-run even if there's nothing to fix."
+        sx={{ mt: 1.5 }}
+      >
+        <Button
+          variant="outlined"
+          onClick={checkDuplicateClasses}
+          disabled={duplicateCheckLoading}
+          sx={{ textTransform: 'none', fontWeight: 700 }}
+        >
+          {duplicateCheckLoading ? 'Checking…' : 'Check for duplicate classes'}
+        </Button>
+
+        {duplicateCheck && (
+          <Box sx={{ mt: 1.5 }}>
+            {duplicateCheck.merged.length === 0 ? (
+              <Alert severity="success">No duplicate classes found.</Alert>
+            ) : (
+              <>
+                <Alert severity={duplicateCheck.dry_run ? 'warning' : 'success'} sx={{ mb: 1 }}>
+                  {duplicateCheck.dry_run
+                    ? `Found ${duplicateCheck.merged.length} duplicate class(es) — nothing has been changed yet.`
+                    : `Merged ${duplicateCheck.merged.length} duplicate class(es).`}
+                </Alert>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>DUPLICATE</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>MERGED INTO</TableCell>
+                      <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>ALSO CARRIES</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {duplicateCheck.merged.map((entry, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell sx={{ fontSize: 13 }}>{entry.duplicate}</TableCell>
+                        <TableCell sx={{ fontSize: 13 }}>{entry.original}</TableCell>
+                        <TableCell sx={{ fontSize: 12.5, color: '#64748b' }}>
+                          {Object.keys(entry.attached).length === 0
+                            ? '—'
+                            : Object.entries(entry.attached).map(([table, count]) => `${table} (${count})`).join(', ')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {duplicateCheck.dry_run && (
+                  <Button
+                    variant="contained"
+                    onClick={() => setConfirmMergeDuplicates(true)}
+                    sx={{ mt: 1.5, textTransform: 'none', fontWeight: 700 }}
+                  >
+                    Merge them now
+                  </Button>
+                )}
+              </>
+            )}
+          </Box>
+        )}
+      </SectionPaper>
+
+      <Dialog open={confirmMergeDuplicates} onClose={() => setConfirmMergeDuplicates(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconAlertTriangle size={20} color="#D97706" /> Confirm class merge
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5 }}>
+            This moves every real class arm (and anything else attached — subjects, scheme of work, curriculum, fees, admissions) from each duplicate class onto the school&apos;s original class, then deletes the now-empty duplicate. This writes to the school&apos;s live data — review the table above first.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setConfirmMergeDuplicates(false)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={applyMergeDuplicateClasses}
+            variant="contained"
+            disabled={duplicateMergeLoading}
+            sx={{ textTransform: 'none', fontWeight: 700 }}
+          >
+            {duplicateMergeLoading ? 'Merging…' : 'Yes, merge now'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={confirmAction === 'dry_run'} onClose={() => setConfirmAction(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

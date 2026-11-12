@@ -118,7 +118,17 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
   const anyFailed = runs.some((run) => run?.status === 'failed');
   const totalMigrated = runs.reduce((sum, run) => sum + (run?.migrated_count || 0), 0);
   const totalEligible = runs.reduce((sum, run) => sum + (run?.eligible_count || 0), 0);
-  const percent = totalEligible > 0 ? Math.round((totalMigrated / totalEligible) * 100) : allSettled ? 100 : 0;
+  // Clamped — confirmed live, 2026-11-12: every migrator in this engine
+  // only finalizes its own eligible_count once, at the very end of its
+  // run, while migrated_count climbs row-by-row throughout. Migrating
+  // more than one domain at once means this can briefly sum one
+  // already-finished domain (both counts final) with another still
+  // mid-run (migrated_count already climbing, eligible_count still 0
+  // until IT finishes too) — real numbers, just summed mid-flight,
+  // never actually impossible once both runs settle. The display should
+  // never show over 100% regardless.
+  const percent = totalEligible > 0 ? Math.min(100, Math.round((totalMigrated / totalEligible) * 100)) : allSettled ? 100 : 0;
+  const displayMigrated = Math.min(totalMigrated, totalEligible);
 
   return (
     <Box>
@@ -139,7 +149,7 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
           <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
-            {totalMigrated.toLocaleString()} of {totalEligible.toLocaleString()} records
+            {displayMigrated.toLocaleString()} of {totalEligible.toLocaleString()} records
           </Typography>
           <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{percent}%</Typography>
         </Box>

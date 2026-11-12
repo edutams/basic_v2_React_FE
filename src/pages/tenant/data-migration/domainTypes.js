@@ -40,6 +40,7 @@ export const DATA_TYPES = [
   { key: 'lesson_notes', name: 'Lesson notes & scheme of work', waitsFor: ['subjects', 'classes', 'subject_teachers', 'sessions_terms'], available: true },
   { key: 'calendar_and_domains', name: 'School calendar & result domains', waitsFor: ['sessions_terms'], available: true },
   { key: 'reporting_extras', name: 'Result templates & bursary settlements', waitsFor: ['sessions_terms', 'classes', 'enrolments'], available: true },
+  { key: 'admissions', name: 'Admissions', waitsFor: ['sessions_terms', 'classes', 'guardians'], available: true },
 ];
 
 export const AVAILABLE_DOMAIN_KEYS = DATA_TYPES.filter((row) => row.available).map((row) => row.key);

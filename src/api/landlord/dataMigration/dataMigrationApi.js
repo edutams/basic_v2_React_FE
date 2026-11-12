@@ -46,11 +46,10 @@ export const fetchCompletedDomains = async (tenantId) => {
   return res.data;
 };
 
-// Repairs a class that was duplicated by ClassesMigrator before the
-// class_code matching fix (2026-11-11) — a pre-seeded default class sat
-// untouched while a migrated duplicate actually received the real arms.
-// dryRun=true (the default) only previews what would merge.
-export const mergeDuplicateClasses = async (tenantId, dryRun = true) => {
-  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/merge-duplicate-classes`, { dry_run: dryRun });
+// Read-only — every class this tenant currently has (name, code,
+// division, v1 link), ordered by name so a visual duplicate is easy to
+// spot by eye.
+export const fetchClassesOverview = async (tenantId) => {
+  const res = await api.get(`/v1/landlord/data-migration/${tenantId}/classes-overview`);
   return res.data;
 };

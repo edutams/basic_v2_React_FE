@@ -140,6 +140,27 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
+  // Prunes any already-selected domain that's no longer actually
+  // selectable the moment completedDomains loads or changes — confirmed
+  // live, 2026-11-11: a domain selected before this status was known (or
+  // before another domain's dependency was satisfied) stayed selected in
+  // state forever even once its checkbox rendered as disabled/"Locked",
+  // since disabling the checkbox only blocks NEW selections — it never
+  // reconciles one already sitting in selectedDomains. The confirm-dry-run
+  // dialog (and the actual trigger loop) read selectedDomains directly, so
+  // a stale locked domain kept showing up there as if it would really run.
+  useEffect(() => {
+    if (!completedDomains) {
+      return;
+    }
+
+    setSelectedDomains((prev) => prev.filter((key) => {
+      const row = DATA_TYPE_BY_KEY[key];
+      return row && isRowSelectable(row);
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completedDomains]);
+
   const selectedRecordEstimate = selectedDomains.reduce((sum, domain) => sum + (summary?.[domain]?.in_v1 || 0), 0);
   const dryRunEstimate = estimateDuration(selectedRecordEstimate);
 

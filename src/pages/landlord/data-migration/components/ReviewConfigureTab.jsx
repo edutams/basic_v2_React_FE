@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -140,6 +140,11 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
+  // Whether the one-time "deselect already-migrated domains" pass below
+  // has run yet — a ref, not state, since it must never fire a second
+  // time and re-override a deliberate re-selection later in the session.
+  const didDeselectCompletedRef = useRef(false);
+
   // Prunes any already-selected domain that's no longer actually
   // selectable the moment completedDomains loads or changes — confirmed
   // live, 2026-11-11: a domain selected before this status was known (or
@@ -158,6 +163,18 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       const row = DATA_TYPE_BY_KEY[key];
       return row && isRowSelectable(row);
     }));
+
+    // Also, once only, on first load: don't default to pre-checking a
+    // domain that's already been fully migrated — the initial selection
+    // starts as every available domain (DataMigration.jsx), which meant
+    // revisiting this screen kept showing already-done work as checked,
+    // as if it still needed running. A genuine re-run (e.g. "fixed
+    // something in V1") is still just a checkbox click away — this only
+    // changes what's pre-checked by default, never what's selectable.
+    if (!didDeselectCompletedRef.current) {
+      didDeselectCompletedRef.current = true;
+      setSelectedDomains((prev) => prev.filter((key) => !completedDomains[key]));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completedDomains]);
 
@@ -364,6 +381,9 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                   {!row.available && <Chip size="small" label="Coming soon" sx={{ fontSize: 11, fontWeight: 700 }} />}
                   {row.available && blocked.length > 0 && (
                     <Chip size="small" label="Locked" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#FEF3C7', color: '#B45309' }} />
+                  )}
+                  {row.available && blocked.length === 0 && completedDomains?.[row.key] && (
+                    <Chip size="small" label="Migrated" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DCFCE7', color: '#15803D' }} />
                   )}
                   {row.available && dryRunResults[row.key] && (
                     <Typography sx={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>

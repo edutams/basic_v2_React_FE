@@ -3,7 +3,15 @@ import { Box, Button, Grid, LinearProgress, Typography, useTheme } from '@mui/ma
 import { IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
+
+// A batch-aware domain (Students, for now) pauses between batches of a
+// few hundred rows instead of running start-to-finish in one go — not
+// settled (there's more to do) but also not actively "running" right
+// this second, so it's treated separately from both in the UI: stop
+// auto-polling (nothing changes until the next click) and offer a
+// "Continue migrating" button rather than showing a spinner forever.
+const WAITING_RUN_STATUSES = ['paused'];
 
 const POLL_INTERVAL_MS = 3000;
 // Soft cap, not a hard failure — a real migration can legitimately run long.
@@ -43,6 +51,14 @@ const StatusIcon = ({ status }) => {
       />
     );
   }
+  if (status === 'paused') {
+    return (
+      <Box sx={{ width: 18, height: 18, borderRadius: '50%', bgcolor: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Box sx={{ width: 2.5, height: 7, bgcolor: '#fff', mr: '2px' }} />
+        <Box sx={{ width: 2.5, height: 7, bgcolor: '#fff' }} />
+      </Box>
+    );
+  }
   return <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: '2px dashed #cbd5e1', flexShrink: 0 }} />;
 };
 
@@ -59,14 +75,16 @@ const detailFor = (run) => {
   const migrated = run.migrated_count || 0;
   const eligible = run.eligible_count || 0;
   const suffix = run.error_count ? ` · ${run.error_count} errors` : '';
-  return `${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
+  const prefix = run.status === 'paused' ? 'Paused at ' : '';
+  return `${prefix}${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
 };
 
-const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
+const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
   const [autoPollStopped, setAutoPollStopped] = useState(false);
+  const [continuing, setContinuing] = useState(false);
   const stoppedRef = useRef(false);
 
   const startPolling = () => {
@@ -86,10 +104,16 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
       });
       setRunsByDomain(byDomain);
 
-      const allSettled = selectedDomains.every((domain) => SETTLED_RUN_STATUSES.includes(byDomain[domain]?.status));
+      // A paused domain isn't settled (there's more to migrate) but
+      // also isn't actively running right now — nothing will change on
+      // its own until the next "Continue migrating" click, so polling
+      // further is pointless until then.
+      const allStoppable = selectedDomains.every((domain) =>
+        [...SETTLED_RUN_STATUSES, ...WAITING_RUN_STATUSES].includes(byDomain[domain]?.status),
+      );
       attempts += 1;
 
-      if (allSettled || stoppedRef.current) {
+      if (allStoppable || stoppedRef.current) {
         return;
       }
 
@@ -113,8 +137,20 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, selectedDomains]);
 
+  const handleContinue = async () => {
+    setContinuing(true);
+    try {
+      const pausedDomains = selectedDomains.filter((domain) => runsByDomain[domain]?.status === 'paused');
+      await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy })));
+      startPolling();
+    } finally {
+      setContinuing(false);
+    }
+  };
+
   const runs = selectedDomains.map((domain) => runsByDomain[domain]);
   const allSettled = runs.length > 0 && runs.every((run) => SETTLED_RUN_STATUSES.includes(run?.status));
+  const anyPaused = runs.some((run) => run?.status === 'paused');
   const anyFailed = runs.some((run) => run?.status === 'failed');
   const totalMigrated = runs.reduce((sum, run) => sum + (run?.migrated_count || 0), 0);
   const totalEligible = runs.reduce((sum, run) => sum + (run?.eligible_count || 0), 0);
@@ -136,9 +172,9 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 1.5 }}>
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : '#2563EB' }} />
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : '#2563EB', textTransform: 'uppercase' }}>
-                {allSettled ? (anyFailed ? 'Finished with errors' : 'Complete') : 'Migrating'}
+              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : anyPaused ? '#D97706' : '#2563EB' }} />
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : anyPaused ? '#D97706' : '#2563EB', textTransform: 'uppercase' }}>
+                {allSettled ? (anyFailed ? 'Finished with errors' : 'Complete') : anyPaused ? 'Paused' : 'Migrating'}
               </Typography>
             </Box>
             <Typography sx={{ fontSize: 20, fontWeight: 800 }}>
@@ -171,8 +207,9 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
         >
           <IconInfoCircle size={16} color="#64748b" style={{ flexShrink: 0 }} />
           <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-            You can leave this page — the migration keeps running in the background. Come back and check "Verify"
-            once it's done.
+            {anyPaused && !allSettled
+              ? 'Migrating in batches so this never looks stuck — click "Continue migrating" below to do the next batch.'
+              : 'You can leave this page — the migration keeps running in the background. Come back and check "Verify" once it\'s done.'}
           </Typography>
         </Box>
       </SectionPaper>
@@ -205,16 +242,28 @@ const MigrateTab = ({ tenantId, school, selectedDomains, onContinue }) => {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
-          <Typography sx={{ fontSize: 12.5, color: autoPollStopped ? '#D97706' : '#64748b' }}>
+          <Typography sx={{ fontSize: 12.5, color: autoPollStopped ? '#D97706' : anyPaused ? '#D97706' : '#64748b' }}>
             {allSettled
               ? `Finished for ${school?.tenant_name || tenantId}.`
-              : autoPollStopped
-                ? 'Taking longer than expected — still running in the background. Check again when ready.'
-                : 'Checking every few seconds…'}
+              : anyPaused
+                ? 'Paused between batches — click "Continue migrating" to keep going.'
+                : autoPollStopped
+                  ? 'Taking longer than expected — still running in the background. Check again when ready.'
+                  : 'Checking every few seconds…'}
           </Typography>
-          {autoPollStopped && !allSettled && (
+          {autoPollStopped && !allSettled && !anyPaused && (
             <Button variant="outlined" onClick={startPolling} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
               Check again
+            </Button>
+          )}
+          {anyPaused && !allSettled && (
+            <Button
+              variant="contained"
+              onClick={handleContinue}
+              disabled={continuing}
+              sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
+            >
+              {continuing ? 'Continuing…' : 'Continue migrating'}
             </Button>
           )}
           <Button

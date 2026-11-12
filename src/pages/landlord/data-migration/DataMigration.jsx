@@ -96,7 +96,15 @@ const DataMigration = () => {
           />
         );
       case 3:
-        return <MigrateTab tenantId={school.id} school={school} selectedDomains={selectedDomains} onContinue={() => advanceTo(4)} />;
+        return (
+          <MigrateTab
+            tenantId={school.id}
+            school={school}
+            selectedDomains={selectedDomains}
+            conflictStrategy={conflictStrategy}
+            onContinue={() => advanceTo(4)}
+          />
+        );
       case 4:
       default:
         return <VerifyTab tenantId={school.id} selectedDomains={selectedDomains} onStartNewRun={() => goToStep(2)} />;

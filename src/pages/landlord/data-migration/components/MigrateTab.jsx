@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Grid, LinearProgress, Typography, useTheme } from '@mui/material';
-import { IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
+import { Box, Button, LinearProgress, Typography, useTheme } from '@mui/material';
+import { IconAlertTriangle, IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
@@ -71,13 +71,16 @@ const detailFor = (run) => {
   return `${prefix}${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
 };
 
-const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onContinue }) => {
+const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onContinue, onBack }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
   const [autoPollStopped, setAutoPollStopped] = useState(false);
   const [autoContinueFailed, setAutoContinueFailed] = useState(false);
   const [continuing, setContinuing] = useState(false);
+  // Null until the first status check actually resolves — distinguishes
+  // "still finding out" from "checked, and nothing is there" below.
+  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
   const stoppedRef = useRef(false);
 
   const continueBatches = async (domains) => {
@@ -109,6 +112,20 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         byDomain[selectedDomains[i]] = res?.data;
       });
       setRunsByDomain(byDomain);
+      setHasCheckedOnce(true);
+
+      // Reachable directly now (every step is freely clickable — see
+      // DataMigration.jsx), not only after actually clicking "Start
+      // migration" in Review & configure — confirmed live, 2026-11-13:
+      // landing here with nothing ever triggered meant every selected
+      // domain's run was simply null (never existed, not merely
+      // unsettled), which this screen had no way to tell apart from "in
+      // progress" — it just kept polling and showing "Migrating…"
+      // forever. No run existing at all for ANY selected domain means
+      // there's genuinely nothing to wait for.
+      if (selectedDomains.length === 0 || selectedDomains.every((domain) => !byDomain[domain])) {
+        return;
+      }
 
       const allSettled = selectedDomains.every((domain) => SETTLED_RUN_STATUSES.includes(byDomain[domain]?.status));
       attempts += 1;
@@ -182,6 +199,7 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
   };
 
   const runs = selectedDomains.map((domain) => runsByDomain[domain]);
+  const nothingMigrating = hasCheckedOnce && (selectedDomains.length === 0 || runs.every((run) => !run));
   const allSettled = runs.length > 0 && runs.every((run) => SETTLED_RUN_STATUSES.includes(run?.status));
   const anyPaused = runs.some((run) => run?.status === 'paused');
   const anyFailed = runs.some((run) => run?.status === 'failed');
@@ -198,6 +216,29 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
   // never show over 100% regardless.
   const percent = totalEligible > 0 ? Math.min(100, Math.round((totalMigrated / totalEligible) * 100)) : allSettled ? 100 : 0;
   const displayMigrated = Math.min(totalMigrated, totalEligible);
+
+  if (nothingMigrating) {
+    return (
+      <SectionPaper>
+        <Box sx={{ display: 'flex', gap: 1.5, p: 1.5, borderRadius: '10px', border: '1.5px solid', borderColor: '#FDE68A', bgcolor: isDark ? 'rgba(217,119,6,0.12)' : '#FFFBEB' }}>
+          <IconAlertTriangle size={20} color="#D97706" style={{ flexShrink: 0 }} />
+          <Box sx={{ flex: 1 }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 700, color: '#92400E', mb: 0.5 }}>
+              Nothing is currently migrating
+            </Typography>
+            <Typography sx={{ fontSize: 13, color: '#92400E', mb: 1.5 }}>
+              {selectedDomains.length === 0
+                ? 'No data types are selected, so there\'s nothing for this screen to show. Go to Review & configure to pick what to migrate.'
+                : 'None of the selected data types have ever been started for this school. Go to Review & configure to start the migration — this screen will show real progress once it does.'}
+            </Typography>
+            <Button variant="contained" onClick={onBack} sx={{ textTransform: 'none', fontWeight: 700, bgcolor: '#D97706', '&:hover': { bgcolor: '#B45309' } }}>
+              Go to Review & configure
+            </Button>
+          </Box>
+        </Box>
+      </SectionPaper>
+    );
+  }
 
   return (
     <Box>

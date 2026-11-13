@@ -428,6 +428,9 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                   {row.available && blocked.length === 0 && completedDomains?.[row.key] && (
                     <Chip size="small" label="Migrated" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DCFCE7', color: '#15803D' }} />
                   )}
+                  {row.available && blocked.length === 0 && completedDomains && !completedDomains[row.key] && !dryRunResults[row.key] && (
+                    <Chip size="small" label="Ready to migrate" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1D4ED8' }} />
+                  )}
                   {row.available && dryRunResults[row.key] && (() => {
                     const run = dryRunResults[row.key];
                     const migrated = run.migrated_count || 0;

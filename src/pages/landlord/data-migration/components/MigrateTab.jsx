@@ -88,6 +88,15 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
     stoppedRef.current = false;
     setAutoPollStopped(false);
     let attempts = 0;
+    // Only continue a paused domain once per resume_cursor value, not on
+    // every poll tick it's still seen paused — confirmed live,
+    // 2026-11-13: the queue worker can take longer than one
+    // POLL_INTERVAL_MS to actually pick up a dispatched job, and without
+    // this a domain still reading "paused" on the next tick (because
+    // nothing has processed yet) fires a second, redundant
+    // MigrateTenantDataJob for the exact same run before the first one
+    // even starts.
+    const lastTriggeredCursor = {};
 
     const poll = async () => {
       if (stoppedRef.current) {
@@ -114,9 +123,16 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
       // doesn't need hundreds of manual clicks to finish; "Continue
       // migrating" stays only as a manual recovery path for if this
       // automatic continue itself fails (e.g. a dropped connection).
-      const pausedDomains = selectedDomains.filter((domain) => byDomain[domain]?.status === 'paused');
+      const pausedDomains = selectedDomains.filter((domain) => {
+        const run = byDomain[domain];
+        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
+      });
 
       if (pausedDomains.length > 0) {
+        pausedDomains.forEach((domain) => {
+          lastTriggeredCursor[domain] = byDomain[domain].resume_cursor;
+        });
+
         try {
           await continueBatches(pausedDomains);
         } catch (e) {
@@ -127,6 +143,11 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         setTimeout(poll, POLL_INTERVAL_MS);
         return;
       }
+
+      // Falls through to here when a domain is still paused on the SAME
+      // cursor already continued above (the dispatched job just hasn't
+      // been picked up by the queue worker yet) — the attempts cap below
+      // still applies, same as any other "nothing new to do yet" tick.
 
       if (attempts >= MAX_AUTO_POLL_ATTEMPTS) {
         setAutoPollStopped(true);

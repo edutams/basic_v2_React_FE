@@ -199,6 +199,19 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   };
 
   const pollUntilSettled = async (domains) => {
+    // Tracks the resume_cursor value already continued for each domain —
+    // confirmed live, 2026-11-13: the loop below used to `continue`
+    // straight back to another status fetch with NO delay at all when a
+    // domain was paused, so if the queue worker hadn't picked up the
+    // dispatched job yet (normal — workers poll on their own cadence,
+    // not instantly), the next near-immediate tick saw the SAME "paused"
+    // state and fired ANOTHER trigger for the exact same run, dispatching
+    // duplicate MigrateTenantDataJob instances in a tight loop bounded
+    // only by network round-trip time. Only firing once per distinct
+    // resume_cursor value — and always pacing every tick by
+    // POLL_INTERVAL_MS, whether or not it triggered — closes that.
+    const lastTriggeredCursor = {};
+
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
       const results = await Promise.all(domains.map((domain) => fetchMigrationStatus(tenantId, domain)));
       const byDomain = {};
@@ -221,10 +234,16 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       // never actually slow, just never asked to continue — until this
       // screen's own MAX_POLL_ATTEMPTS cap gave up and threw the
       // timeout error below. Confirmed live, 2026-11-13.
-      const pausedDomains = domains.filter((domain) => byDomain[domain]?.status === 'paused');
+      const pausedDomains = domains.filter((domain) => {
+        const run = byDomain[domain];
+        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
+      });
+
       if (pausedDomains.length > 0) {
+        pausedDomains.forEach((domain) => {
+          lastTriggeredCursor[domain] = byDomain[domain].resume_cursor;
+        });
         await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy })));
-        continue;
       }
 
       await sleep(POLL_INTERVAL_MS);

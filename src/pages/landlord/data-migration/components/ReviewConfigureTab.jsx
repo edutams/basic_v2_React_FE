@@ -313,12 +313,20 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     }
   };
 
+  // Falls back to the scan-time V1 count (summary) when a domain has no
+  // dry-run result at all — confirmed live, 2026-11-13: dry run is no
+  // longer a required step before migrating, so the confirm-migration
+  // dialog's "records to be copied" can't assume dryRunResults is
+  // populated. Errors stay 0 in that fallback case, correctly — there's
+  // genuinely no error count to show until the real run actually runs.
   const totals = selectedDomains.reduce(
     (acc, domain) => {
       const run = dryRunResults[domain];
+
       if (!run) {
-        return acc;
+        return { eligible: acc.eligible + (summary?.[domain]?.in_v1 || 0), errors: acc.errors };
       }
+
       return {
         eligible: acc.eligible + (run.eligible_count || 0),
         errors: acc.errors + (run.error_count || 0),
@@ -551,10 +559,22 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
 
             <SectionPaper
               title="Step 2 — Start the real migration"
+              // A dry run is no longer required before this unlocks —
+              // confirmed live, 2026-11-13: dry run runs through the
+              // exact same batching/queue mechanism as a real run (no
+              // faster, no safer in that respect), and conflict_strategy
+              // 'keep_v2' already makes a real run idempotent — it only
+              // fills in what's missing, never overwrites existing V2
+              // data. Dependency ordering (e.g. Classes & arms before
+              // Students) is still enforced server-side regardless
+              // (DataMigrationService::createPendingRun() checks
+              // MigrationRun::unsatisfiedDependencies() unconditionally,
+              // for dry AND real runs alike) — this change only removes
+              // the extra UI gate, not that safety check.
               subtitle={
                 hasRunDryRun
                   ? 'Review the dry run above, then start the real migration when ready.'
-                  : 'Run a dry run first (Step 1) — this unlocks once that finishes.'
+                  : 'You can start the real migration directly, or run a dry run first (Step 1) to preview it.'
               }
               sx={{
                 bgcolor: hasRunDryRun ? (isDark ? 'rgba(37,99,235,0.1)' : '#EFF6FF') : undefined,
@@ -581,7 +601,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                 fullWidth
                 variant="contained"
                 onClick={() => setConfirmAction('migrate')}
-                disabled={!hasRunDryRun || dryRunLoading || starting}
+                disabled={selectedDomains.length === 0 || dryRunLoading || starting}
                 sx={{ textTransform: 'none', fontWeight: 700 }}
               >
                 {starting ? 'Starting…' : 'Start migration'}

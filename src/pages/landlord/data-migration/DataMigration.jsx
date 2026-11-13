@@ -6,7 +6,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useAuth } from '@/hooks/useAuth';
 import MigrationStepper from '@/pages/tenant/data-migration/components/MigrationStepper';
 import { AVAILABLE_DOMAIN_KEYS, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
 import SchoolPickerTab from './components/SchoolPickerTab';
 import ConnectScanTab from './components/ConnectScanTab';
 import ReviewConfigureTab from './components/ReviewConfigureTab';
@@ -67,6 +67,11 @@ const DataMigration = () => {
     }
 
     let cancelled = false;
+    // Only continue a paused domain once per resume_cursor value — same
+    // debounce MigrateTab.jsx/ReviewConfigureTab.jsx already use, so a
+    // slow queue pickup doesn't fire a second, redundant continuation
+    // before the first one's even started.
+    const lastTriggeredCursor = {};
 
     const poll = async () => {
       const results = await Promise.all(
@@ -90,6 +95,29 @@ const DataMigration = () => {
         });
         return next;
       });
+
+      // Actually drives a paused domain forward from here too, not just
+      // displays it — confirmed live, 2026-11-13: the background banner
+      // used to only show status, so a migration silently stopped
+      // making progress the moment nobody had the Migrate tab itself
+      // open (the only place that used to auto-continue), even though
+      // the backend was otherwise completely fine and just waiting to
+      // be asked for the next batch.
+      const toContinue = results.filter(([domain, run]) => {
+        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
+      });
+
+      if (toContinue.length > 0) {
+        toContinue.forEach(([domain, run]) => {
+          lastTriggeredCursor[domain] = run.resume_cursor;
+        });
+
+        await Promise.all(
+          toContinue.map(([domain, run]) =>
+            triggerMigration(school.id, { domain, dryRun: Boolean(run.dry_run), conflictStrategy }).catch(() => null),
+          ),
+        );
+      }
     };
 
     poll();
@@ -100,7 +128,7 @@ const DataMigration = () => {
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [school, selectedDomains]);
+  }, [school, selectedDomains, conflictStrategy]);
 
   // Mirrors the backend's own denyIfNotL1() gate — this is a UX
   // convenience (hide controls the user couldn't use anyway), not the

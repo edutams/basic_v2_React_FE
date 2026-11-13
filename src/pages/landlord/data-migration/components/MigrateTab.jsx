@@ -106,10 +106,24 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         return;
       }
 
-      const results = await Promise.all(selectedDomains.map((domain) => fetchMigrationStatus(tenantId, domain)));
+      // Each domain's status check fails independently — confirmed live,
+      // 2026-11-13: a single domain erroring (a real 500, confirmed for
+      // "fees") used to reject the whole Promise.all, which meant NONE
+      // of the other, perfectly fine domains ever got their status
+      // shown either — every one of them sat on "Waiting…" forever, and
+      // since the next poll is scheduled from inside this same
+      // success path, polling itself silently stopped dead for the
+      // entire screen, not just the one broken domain.
+      const results = await Promise.all(
+        selectedDomains.map((domain) =>
+          fetchMigrationStatus(tenantId, domain)
+            .then((res) => res?.data)
+            .catch(() => null),
+        ),
+      );
       const byDomain = {};
-      results.forEach((res, i) => {
-        byDomain[selectedDomains[i]] = res?.data;
+      results.forEach((data, i) => {
+        byDomain[selectedDomains[i]] = data;
       });
       setRunsByDomain(byDomain);
       setHasCheckedOnce(true);

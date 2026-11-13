@@ -213,10 +213,20 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     const lastTriggeredCursor = {};
 
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
-      const results = await Promise.all(domains.map((domain) => fetchMigrationStatus(tenantId, domain)));
+      // Each domain's status check fails independently — see
+      // MigrateTab.jsx's own identical fix for why: one domain erroring
+      // used to reject the whole Promise.all, freezing every other,
+      // perfectly fine domain's display along with it.
+      const results = await Promise.all(
+        domains.map((domain) =>
+          fetchMigrationStatus(tenantId, domain)
+            .then((res) => res?.data)
+            .catch(() => null),
+        ),
+      );
       const byDomain = {};
-      results.forEach((res, i) => {
-        byDomain[domains[i]] = res?.data;
+      results.forEach((data, i) => {
+        byDomain[domains[i]] = data;
       });
       setDryRunResults((prev) => ({ ...prev, ...byDomain }));
 

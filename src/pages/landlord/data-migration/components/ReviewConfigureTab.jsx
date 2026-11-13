@@ -211,6 +211,22 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       if (allSettled) {
         return byDomain;
       }
+
+      // A batch-aware domain (BatchableDomainMigrator) processes one
+      // v1_migration.batch_size (500) chunk per trigger, then parks at
+      // status=paused waiting to be triggered again — MigrateTab already
+      // auto-continues this for a real migration. Without the same thing
+      // here, a dry run of any domain with more than 500 V1 rows (e.g.
+      // Subject-teacher assignments' 8,319) sat at "paused" forever —
+      // never actually slow, just never asked to continue — until this
+      // screen's own MAX_POLL_ATTEMPTS cap gave up and threw the
+      // timeout error below. Confirmed live, 2026-11-13.
+      const pausedDomains = domains.filter((domain) => byDomain[domain]?.status === 'paused');
+      if (pausedDomains.length > 0) {
+        await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy })));
+        continue;
+      }
+
       await sleep(POLL_INTERVAL_MS);
     }
 
@@ -385,11 +401,23 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                   {row.available && blocked.length === 0 && completedDomains?.[row.key] && (
                     <Chip size="small" label="Migrated" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DCFCE7', color: '#15803D' }} />
                   )}
-                  {row.available && dryRunResults[row.key] && (
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
-                      {(dryRunResults[row.key].eligible_count || 0).toLocaleString()}
-                    </Typography>
-                  )}
+                  {row.available && dryRunResults[row.key] && (() => {
+                    const run = dryRunResults[row.key];
+                    const migrated = run.migrated_count || 0;
+                    // The scan total (known up front, from Connect & Scan)
+                    // is a far steadier denominator than eligible_count —
+                    // that column is only finalized once a non-batched
+                    // migrator's run fully completes, and only grows
+                    // batch-by-batch for a batched one, so showing it alone
+                    // while running just read as "0" the whole time.
+                    const total = summary?.[row.key]?.in_v1 || run.eligible_count || 0;
+
+                    return (
+                      <Typography sx={{ fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                        {total > 0 ? `${migrated.toLocaleString()} of ${total.toLocaleString()}` : migrated.toLocaleString()}
+                      </Typography>
+                    );
+                  })()}
                 </Box>
                 );
               })}

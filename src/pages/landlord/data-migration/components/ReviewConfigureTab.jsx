@@ -312,8 +312,31 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       // one place that actually wipes and redoes real data, so it gets
       // its own belt-and-braces check rather than trusting state alone.
       const domainsToMigrate = orderByDependency(selectedDomains).filter((domain) => !completedDomains?.[domain]);
+      const selectedSet = new Set(domainsToMigrate);
 
       for (const domain of domainsToMigrate) {
+        // Skipped (not triggered yet), not awaited — confirmed live,
+        // 2026-11-14: a dependency ALSO being started in this same batch
+        // can't possibly be "completed" yet at the instant we'd trigger
+        // this domain — queuing that prerequisite's job and it actually
+        // finishing are different moments, and the backend's own
+        // dependency check requires the latter. Triggering both together
+        // here rejected the dependent one outright every single time
+        // (e.g. Admissions, which waits on Guardians) — and worse, that
+        // rejection threw out of this loop and skipped onContinue()
+        // entirely, stranding the admin here even though everything else
+        // had already started fine. A prerequisite NOT in this selection
+        // (already completed before now) needs no wait at all. The
+        // Migrate tab's own polling (see its matching comment) triggers
+        // this domain for real the moment its dependency actually
+        // completes — nothing is lost, it just starts a little later.
+        const row = DATA_TYPE_BY_KEY[domain];
+        const hasPendingSelectedDependency = (row?.waitsFor || []).some((dep) => selectedSet.has(dep));
+
+        if (hasPendingSelectedDependency) {
+          continue;
+        }
+
         await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy });
       }
       onContinue();

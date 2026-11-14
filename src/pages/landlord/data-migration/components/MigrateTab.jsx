@@ -148,6 +148,34 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
         return;
       }
 
+      // A domain with no run at all yet (byDomain[domain] is null, not
+      // merely paused) is one Review & configure deliberately skipped
+      // triggering — see ReviewConfigureTab's startMigration() comment —
+      // because its dependency was selected in the SAME batch and hadn't
+      // actually finished yet. Trigger it for real the moment every
+      // dependency it needs that's ALSO selected here has genuinely
+      // reached 'completed'; one that isn't selected at all was already
+      // done before this run started, so it needs no wait.
+      const readyToStart = selectedDomains.filter((domain) => {
+        if (byDomain[domain]) {
+          return false;
+        }
+
+        const deps = (DATA_TYPE_BY_KEY[domain]?.waitsFor || []).filter((dep) => selectedDomains.includes(dep));
+
+        return deps.every((dep) => byDomain[dep]?.status === 'completed');
+      });
+
+      if (readyToStart.length > 0) {
+        try {
+          await continueBatches(readyToStart);
+        } catch (e) {
+          // Swallowed — a domain whose dependency isn't genuinely ready
+          // yet (the backend's own check disagrees) just stays without a
+          // run and this same check retries it next tick.
+        }
+      }
+
       // A paused domain won't advance on its own — the backend is
       // waiting for the next batch to be triggered. Fire it
       // automatically so a domain with hundreds of thousands of rows

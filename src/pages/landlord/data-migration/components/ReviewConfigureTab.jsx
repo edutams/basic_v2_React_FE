@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Box,
@@ -97,7 +97,14 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // row isn't shown as blocked for a split second on first render.
   const unsatisfiedDependencies = (row) => (completedDomains ? row.waitsFor.filter((key) => !completedDomains[key]) : []);
 
-  const isRowSelectable = (row) => row.available && unsatisfiedDependencies(row).length === 0;
+  // A domain that already has a completed REAL run is never selectable —
+  // confirmed live, 2026-11-14: nothing stopped an already-finished
+  // domain from being re-checked (or left checked) and re-triggered,
+  // which wipes its real progress and migrates it again from scratch for
+  // no reason. A genuine need to redo one (e.g. "fixed something in V1")
+  // is an explicit, separate action, not a plain checkbox anyone could
+  // tick by accident.
+  const isRowSelectable = (row) => row.available && unsatisfiedDependencies(row).length === 0 && !completedDomains?.[row.key];
 
   const toggleDomain = (key) => {
     const row = DATA_TYPE_BY_KEY[key];
@@ -140,11 +147,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId]);
 
-  // Whether the one-time "deselect already-migrated domains" pass below
-  // has run yet — a ref, not state, since it must never fire a second
-  // time and re-override a deliberate re-selection later in the session.
-  const didDeselectCompletedRef = useRef(false);
-
   // Prunes any already-selected domain that's no longer actually
   // selectable the moment completedDomains loads or changes — confirmed
   // live, 2026-11-11: a domain selected before this status was known (or
@@ -154,6 +156,10 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // reconciles one already sitting in selectedDomains. The confirm-dry-run
   // dialog (and the actual trigger loop) read selectedDomains directly, so
   // a stale locked domain kept showing up there as if it would really run.
+  // isRowSelectable() now excludes a completed domain outright (see its
+  // own comment above), so this same pass also continuously keeps a
+  // completed domain out of selectedDomains — no separate one-time pass
+  // needed for that case anymore.
   useEffect(() => {
     if (!completedDomains) {
       return;
@@ -163,18 +169,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       const row = DATA_TYPE_BY_KEY[key];
       return row && isRowSelectable(row);
     }));
-
-    // Also, once only, on first load: don't default to pre-checking a
-    // domain that's already been fully migrated — the initial selection
-    // starts as every available domain (DataMigration.jsx), which meant
-    // revisiting this screen kept showing already-done work as checked,
-    // as if it still needed running. A genuine re-run (e.g. "fixed
-    // something in V1") is still just a checkbox click away — this only
-    // changes what's pre-checked by default, never what's selectable.
-    if (!didDeselectCompletedRef.current) {
-      didDeselectCompletedRef.current = true;
-      setSelectedDomains((prev) => prev.filter((key) => !completedDomains[key]));
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completedDomains]);
 
@@ -312,7 +306,14 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
       // progress is actually watched. Ordering is still preserved
       // because the queue has a single worker processing it FIFO, so
       // jobs dispatched in order are worked in that same order.
-      for (const domain of orderByDependency(selectedDomains)) {
+      //
+      // Filtered against completedDomains again here, not just relying on
+      // isRowSelectable() having kept selectedDomains clean — this is the
+      // one place that actually wipes and redoes real data, so it gets
+      // its own belt-and-braces check rather than trusting state alone.
+      const domainsToMigrate = orderByDependency(selectedDomains).filter((domain) => !completedDomains?.[domain]);
+
+      for (const domain of domainsToMigrate) {
         await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy });
       }
       onContinue();

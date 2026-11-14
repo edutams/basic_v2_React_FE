@@ -200,16 +200,38 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, selectedDomains]);
 
+  // Not just 'paused' domains — confirmed live, 2026-11-14: a domain can
+  // be frozen on status='running' forever if the worker processing it
+  // died mid-batch (its own job never got to mark it failed). The same
+  // trigger() call used to resume a paused domain already safely
+  // recovers this too — createPendingRun() detects and clears a 'running'
+  // row that's been stale past the abandonment threshold on its own, and
+  // leaves a genuinely still-active one untouched otherwise. Both manual
+  // recovery buttons below should retry every unsettled domain, not only
+  // the ones currently showing 'paused'.
+  const unsettledDomains = () => selectedDomains.filter((domain) => !SETTLED_RUN_STATUSES.includes(runsByDomain[domain]?.status));
+
   const handleContinue = async () => {
     setContinuing(true);
     try {
-      const pausedDomains = selectedDomains.filter((domain) => runsByDomain[domain]?.status === 'paused');
-      await continueBatches(pausedDomains);
+      await continueBatches(unsettledDomains());
       setAutoContinueFailed(false);
       startPolling();
     } finally {
       setContinuing(false);
     }
+  };
+
+  const handleCheckAgain = async () => {
+    try {
+      await continueBatches(unsettledDomains());
+    } catch (e) {
+      // Swallowed — startPolling() below re-checks real status regardless,
+      // and this button's job is "try again," not to fail loudly on one
+      // attempt that didn't even need to succeed (a domain that was never
+      // actually stuck just ignores a redundant trigger call).
+    }
+    startPolling();
   };
 
   const runs = selectedDomains.map((domain) => runsByDomain[domain]);
@@ -344,7 +366,7 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
                     : 'Checking every few seconds…'}
           </Typography>
           {autoPollStopped && !allSettled && !anyPaused && (
-            <Button variant="outlined" onClick={startPolling} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
+            <Button variant="outlined" onClick={handleCheckAgain} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
               Check again
             </Button>
           )}

@@ -3,7 +3,7 @@ app:
 
 image:
   repository: ghcr.io/edutams/basic_v2_fe
-  tag: sha-0f7a4b5
+  tag: sha-ef14a7c
   pullPolicy: Always
 
 imagePullSecrets:

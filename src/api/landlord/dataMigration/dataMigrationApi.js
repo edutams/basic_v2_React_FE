@@ -69,3 +69,42 @@ export const checkDomainState = async (tenantId, domain) => {
   const res = await api.post(`/v1/landlord/data-migration/${tenantId}/check-now/${domain}`);
   return res.data;
 };
+
+// migration-hardening Step 4 — the server drives the actual migration from
+// here on; this is the ONLY call that starts one. Every domain it starts
+// (and every one it cascades into afterwards) finishes entirely on its
+// own, batch by batch, with no further request from this screen ever
+// needed — see fetchPlanStatus() below, the one thing the frontend still
+// asks about it.
+export const startPlan = async (tenantId, { selectedDomains, conflictStrategy, reason }) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans`, {
+    selected_domains: selectedDomains,
+    conflict_strategy: conflictStrategy,
+    ...(reason ? { reason } : {}),
+  });
+  return res.data;
+};
+
+// Read-only — this plan plus every one of its selected domains' current
+// run (if any). Never triggers anything; the self-chaining job on the
+// backend is the only thing that ever starts the next batch or the next
+// domain.
+export const fetchPlanStatus = async (tenantId) => {
+  const res = await api.get(`/v1/landlord/data-migration/${tenantId}/plans/current`);
+  return res.data;
+};
+
+export const pausePlan = async (tenantId) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans/pause`);
+  return res.data;
+};
+
+export const resumePlan = async (tenantId) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans/resume`);
+  return res.data;
+};
+
+export const cancelPlan = async (tenantId) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans/cancel`);
+  return res.data;
+};

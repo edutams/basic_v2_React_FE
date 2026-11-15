@@ -22,7 +22,7 @@ import {
 import { IconArrowLeft, IconAlertTriangle } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
-import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains, startPlan } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 // migration-hardening Step 3 item 2 — always_v1/update_if_changed can
 // overwrite or delete real, already-migrated V2 data; the backend now
@@ -192,19 +192,12 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   };
 
   const pollUntilSettled = async (domains) => {
-    // Tracks the resume_cursor value already continued for each domain —
-    // confirmed live, 2026-11-13: the loop below used to `continue`
-    // straight back to another status fetch with NO delay at all when a
-    // domain was paused, so if the queue worker hadn't picked up the
-    // dispatched job yet (normal — workers poll on their own cadence,
-    // not instantly), the next near-immediate tick saw the SAME "paused"
-    // state and fired ANOTHER trigger for the exact same run, dispatching
-    // duplicate MigrateTenantDataJob instances in a tight loop bounded
-    // only by network round-trip time. Only firing once per distinct
-    // resume_cursor value — and always pacing every tick by
-    // POLL_INTERVAL_MS, whether or not it triggered — closes that.
-    const lastTriggeredCursor = {};
-
+    // migration-hardening Step 4 — purely read-only now. A batchable
+    // domain used to sit at 'paused' until THIS screen fired another
+    // trigger() to continue it; the self-chaining job now does that
+    // entirely on its own (MigrateTenantDataJob redispatches itself the
+    // moment one batch finishes), regardless of dry_run — so all this
+    // loop needs to do is keep checking until every domain settles.
     for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
       // Each domain's status check fails independently — see
       // MigrateTab.jsx's own identical fix for why: one domain erroring
@@ -228,27 +221,11 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
         return byDomain;
       }
 
-      // A batch-aware domain (BatchableDomainMigrator) processes one
-      // v1_migration.batch_size (500) chunk per trigger, then parks at
-      // status=paused waiting to be triggered again — MigrateTab already
-      // auto-continues this for a real migration. Without the same thing
-      // here, a dry run of any domain with more than 500 V1 rows (e.g.
-      // Subject-teacher assignments' 8,319) sat at "paused" forever —
-      // never actually slow, just never asked to continue — until this
-      // screen's own MAX_POLL_ATTEMPTS cap gave up and threw the
-      // timeout error below. Confirmed live, 2026-11-13.
-      const pausedDomains = domains.filter((domain) => {
-        const run = byDomain[domain];
-        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
-      });
-
-      if (pausedDomains.length > 0) {
-        pausedDomains.forEach((domain) => {
-          lastTriggeredCursor[domain] = byDomain[domain].resume_cursor;
-        });
-        await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy: CONFLICT_STRATEGY })));
-      }
-
+      // A batch-aware domain (BatchableDomainMigrator) parks at
+      // status=paused between batches — the self-chaining job
+      // (MigrateTenantDataJob) redispatches itself to continue, entirely
+      // on its own, regardless of dry_run. Nothing here needs to ask it
+      // to continue; this loop only ever watches.
       await sleep(POLL_INTERVAL_MS);
     }
 
@@ -298,45 +275,20 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     setStartError('');
 
     try {
-      // Dispatched one at a time, in dependency order, but deliberately
-      // NOT awaited to completion here — unlike runDryRun, the whole
-      // point of this being a queued job is that the UI doesn't have to
-      // sit and wait for it; the Migrate tab (onContinue) is where
-      // progress is actually watched. Ordering is still preserved
-      // because the queue has a single worker processing it FIFO, so
-      // jobs dispatched in order are worked in that same order.
+      // migration-hardening Step 4 — ONE call creates ONE plan covering
+      // every selected domain; the server itself works out which ones can
+      // start immediately and which must wait for a dependency also in
+      // this selection, then cascades into the rest entirely on its own
+      // (DataMigrationService::createPlan()/advancePlan()) — this screen
+      // no longer orders, filters, or waits for anything itself.
       //
       // Filtered against completedDomains again here, not just relying on
       // isRowSelectable() having kept selectedDomains clean — this is the
       // one place that actually wipes and redoes real data, so it gets
       // its own belt-and-braces check rather than trusting state alone.
-      const domainsToMigrate = orderByDependency(selectedDomains).filter((domain) => !completedDomains?.[domain]);
-      const selectedSet = new Set(domainsToMigrate);
+      const domainsToMigrate = selectedDomains.filter((domain) => !completedDomains?.[domain]);
 
-      for (const domain of domainsToMigrate) {
-        // Skipped (not triggered yet), not awaited — confirmed live,
-        // 2026-11-14: a dependency ALSO being started in this same batch
-        // can't possibly be "completed" yet at the instant we'd trigger
-        // this domain — queuing that prerequisite's job and it actually
-        // finishing are different moments, and the backend's own
-        // dependency check requires the latter. Triggering both together
-        // here rejected the dependent one outright every single time
-        // (e.g. Admissions, which waits on Guardians) — and worse, that
-        // rejection threw out of this loop and skipped onContinue()
-        // entirely, stranding the admin here even though everything else
-        // had already started fine. A prerequisite NOT in this selection
-        // (already completed before now) needs no wait at all. The
-        // Migrate tab's own polling (see its matching comment) triggers
-        // this domain for real the moment its dependency actually
-        // completes — nothing is lost, it just starts a little later.
-        const hasPendingSelectedDependency = (dependencyGraph[domain] || []).some((dep) => selectedSet.has(dep));
-
-        if (hasPendingSelectedDependency) {
-          continue;
-        }
-
-        await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy: CONFLICT_STRATEGY });
-      }
+      await startPlan(tenantId, { selectedDomains: domainsToMigrate, conflictStrategy: CONFLICT_STRATEGY });
       onContinue();
     } catch (err) {
       setStartError(err?.response?.data?.message || err?.message || 'Failed to start the migration.');

@@ -5,8 +5,8 @@ import PageContainer from '@/components/container/PageContainer';
 import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useAuth } from '@/hooks/useAuth';
 import MigrationStepper from '@/pages/tenant/data-migration/components/MigrationStepper';
-import { AVAILABLE_DOMAIN_KEYS, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus, triggerMigration, fetchDependencyGraph } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { AVAILABLE_DOMAIN_KEYS, DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
+import { fetchDependencyGraph, fetchPlanStatus } from '@/api/landlord/dataMigration/dataMigrationApi';
 import SchoolPickerTab from './components/SchoolPickerTab';
 import ConnectScanTab from './components/ConnectScanTab';
 import ReviewConfigureTab from './components/ReviewConfigureTab';
@@ -25,14 +25,6 @@ const BCrumb = [
 ];
 
 const STEPS = ['Choose school', 'Connect & scan', 'Review & configure', 'Migrate', 'Verify'];
-
-// migration-hardening Step 3 — always_v1/update_if_changed can overwrite
-// or delete real V2 data, so the normal flow no longer offers a choice at
-// all (the backend also rejects either from anyone but a platform
-// super_admin, with a required reason). keep_v2 already means "fill in
-// anything missing, never touch what's there," which is what every normal
-// migration and re-run actually needs.
-const CONFLICT_STRATEGY = 'keep_v2';
 
 /**
  * Agent-side (platform super-admin only) Stage 2 data migration — moved
@@ -74,82 +66,36 @@ const DataMigration = () => {
   // can show "X is migrating right now" without each one duplicating its
   // own poll loop, and without losing track of it just because the admin
   // wandered off to look at something else.
-  const [activeRuns, setActiveRuns] = useState({});
-  // Runs unconditionally (not gated behind the access-level check below —
-  // hooks can't be called after an early return) whenever a school and
-  // at least one selected domain exist, regardless of which tab/step is
-  // currently showing.
+  //
+  // migration-hardening Step 4 item 6 — purely read-only now. The plan
+  // (and every domain's batch-to-batch progress within it) is entirely
+  // server-driven; this poll only ever asks what the current plan looks
+  // like, never triggers or continues anything. Two independent loops
+  // each deciding to "continue" the same domain was the real, confirmed
+  // source of "another migration run already in progress" collisions —
+  // removing every trigger call from the frontend removes that class of
+  // bug outright, not just here.
+  const [planRuns, setPlanRuns] = useState({});
+  const [planStatusValue, setPlanStatusValue] = useState(null);
   useEffect(() => {
     // Paused entirely while the Migrate step (3) is actually showing —
-    // confirmed live, 2026-11-15: MigrateTab already polls this exact
-    // same data every 3s and auto-continues a paused/newly-ready domain
-    // itself, with no shared state between the two. Running both at once
-    // meant two independent, uncoordinated loops could each try to
-    // trigger the SAME domain around the same moment — the real source
-    // of repeated "another migration run already in progress" collisions
-    // — on top of simply doubling request volume for no benefit while
-    // this same data was already visible and being kept fresh.
-    if (!school || selectedDomains.length === 0 || activeStep === 3) {
+    // MigrateTab already polls this exact same endpoint every 3s; running
+    // both at once would just double the request volume for no benefit.
+    if (!school || activeStep === 3) {
       return undefined;
     }
 
     let cancelled = false;
-    // Only continue a paused domain once per resume_cursor value — same
-    // debounce MigrateTab.jsx/ReviewConfigureTab.jsx already use, so a
-    // slow queue pickup doesn't fire a second, redundant continuation
-    // before the first one's even started.
-    const lastTriggeredCursor = {};
 
     const poll = async () => {
-      const results = await Promise.all(
-        selectedDomains.map((domain) =>
-          fetchMigrationStatus(school.id, domain)
-            .then((res) => [domain, res?.data])
-            .catch(() => [domain, null]),
-        ),
-      );
+      const res = await fetchPlanStatus(school.id).catch(() => null);
 
-      if (cancelled) {
+      if (cancelled || !res?.status) {
         return;
       }
 
-      setActiveRuns((prev) => {
-        const next = { ...prev };
-        results.forEach(([domain, run]) => {
-          if (run) {
-            next[domain] = run;
-          }
-        });
-        return next;
-      });
-
-      // Actually drives a paused domain forward from here too, not just
-      // displays it — confirmed live, 2026-11-13: the background banner
-      // used to only show status, so a migration silently stopped
-      // making progress the moment nobody had the Migrate tab itself
-      // open (the only place that used to auto-continue), even though
-      // the backend was otherwise completely fine and just waiting to
-      // be asked for the next batch.
-      const toContinue = results.filter(([domain, run]) => {
-        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
-      });
-
-      if (toContinue.length > 0) {
-        toContinue.forEach(([domain, run]) => {
-          lastTriggeredCursor[domain] = run.resume_cursor;
-        });
-
-        await Promise.all(
-          // Continues with whatever conflict_strategy this specific run
-          // already has, not a single app-wide value — createPendingRun()'s
-          // in-flight match requires an exact (domain, dry_run,
-          // conflict_strategy) triple, so continuing with a different one
-          // would create a competing row instead of resuming this one.
-          toContinue.map(([domain, run]) =>
-            triggerMigration(school.id, { domain, dryRun: Boolean(run.dry_run), conflictStrategy: run.conflict_strategy }).catch(() => null),
-          ),
-        );
-      }
+      setPlanStatusValue(res.data?.plan?.status || null);
+      setPlanRuns(res.data?.runs || {});
     };
 
     poll();
@@ -159,8 +105,7 @@ const DataMigration = () => {
       cancelled = true;
       clearInterval(interval);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [school, selectedDomains, activeStep]);
+  }, [school, activeStep]);
 
   // Mirrors the backend's own denyIfNotL1() gate — this is a UX
   // convenience (hide controls the user couldn't use anyway), not the
@@ -192,11 +137,16 @@ const DataMigration = () => {
 
   const advanceTo = (index) => setActiveStep(index);
 
-  // Anything not yet settled (pending/running/paused) counts as "actively
-  // migrating right now" for the cross-tab banner below.
-  const runningEntries = selectedDomains
-    .map((domain) => [domain, activeRuns[domain]])
-    .filter(([, run]) => run && !SETTLED_RUN_STATUSES.includes(run.status));
+  // Driven by the PLAN's own domain list, not the local selectedDomains
+  // state above — that state is for the NEXT run being configured on
+  // Review & configure, which can differ from whatever plan is actually
+  // in flight right now. Anything not yet settled (pending/running/
+  // paused) counts as "actively migrating" for the cross-tab banner
+  // below; a paused PLAN still shows its domains here too, since the
+  // work genuinely isn't done, just not currently advancing.
+  const runningEntries = Object.entries(planRuns).filter(
+    ([, run]) => run && !['completed', 'failed'].includes(run.status),
+  );
 
   const renderStep = () => {
     switch (activeStep) {
@@ -229,9 +179,6 @@ const DataMigration = () => {
           <MigrateTab
             tenantId={school.id}
             school={school}
-            selectedDomains={selectedDomains}
-            conflictStrategy={CONFLICT_STRATEGY}
-            dependencyGraph={dependencyGraph}
             onContinue={() => advanceTo(4)}
             onBack={() => goToStep(2)}
           />
@@ -299,7 +246,7 @@ const DataMigration = () => {
             sx={{
               display: 'flex',
               flexShrink: 0,
-              animation: 'spin 1.2s linear infinite',
+              animation: planStatusValue === 'paused' ? 'none' : 'spin 1.2s linear infinite',
               '@keyframes spin': { to: { transform: 'rotate(360deg)' } },
             }}
           >
@@ -307,7 +254,7 @@ const DataMigration = () => {
           </Box>
           <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.25 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#1D4ED8' }}>
-              Still migrating in the background
+              {planStatusValue === 'paused' ? 'Migration paused' : 'Still migrating in the background'}
             </Typography>
             <Typography sx={{ fontSize: 12.5, color: isDark ? 'rgba(255,255,255,0.75)' : '#334155' }}>
               {runningEntries

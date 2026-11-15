@@ -1,16 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, LinearProgress, Typography, useTheme } from '@mui/material';
-import { IconAlertTriangle, IconCheck, IconInfoCircle, IconX } from '@tabler/icons-react';
+import { Alert, Box, Button, LinearProgress, Typography, useTheme } from '@mui/material';
+import { IconAlertTriangle, IconCheck, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import { DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
+import { fetchPlanStatus, pausePlan, resumePlan, cancelPlan } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const POLL_INTERVAL_MS = 3000;
-// Soft cap, not a hard failure — a real migration can legitimately run long.
-// After this many automatic checks, stop polling on its own and let the
-// admin resume manually instead of silently hammering the server forever
-// (confirmed live, 2026-11-10: an unbounded loop here is a real problem).
-const MAX_AUTO_POLL_ATTEMPTS = 100; // ~5 minutes at POLL_INTERVAL_MS
 
 const StatusIcon = ({ status }) => {
   if (status === 'completed') {
@@ -56,7 +51,7 @@ const StatusIcon = ({ status }) => {
 
 const detailFor = (run) => {
   if (!run) {
-    return 'Waiting…';
+    return 'Queued…';
   }
   if (run.status === 'pending') {
     return 'Queued…';
@@ -71,232 +66,80 @@ const detailFor = (run) => {
   return `${prefix}${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
 };
 
-const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, dependencyGraph = {}, onContinue, onBack }) => {
+/**
+ * migration-hardening Step 4 item 6 — purely read-only now. The server
+ * drives every batch and every domain in a plan entirely on its own (see
+ * MigrateTenantDataJob's self-chaining and DataMigrationService::advancePlan())
+ * — this screen only ever asks "what's the current state" and displays it.
+ * The only writes it can ever cause are the three explicit, admin-initiated
+ * actions below (pause/resume/cancel), never anything that "continues"
+ * progress itself.
+ */
+const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [plan, setPlan] = useState(null);
   const [runsByDomain, setRunsByDomain] = useState({});
-  const [autoPollStopped, setAutoPollStopped] = useState(false);
-  const [autoContinueFailed, setAutoContinueFailed] = useState(false);
-  const [continuing, setContinuing] = useState(false);
-  // Null until the first status check actually resolves — distinguishes
-  // "still finding out" from "checked, and nothing is there" below.
-  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
   const stoppedRef = useRef(false);
 
-  const continueBatches = async (domains) => {
-    await Promise.all(domains.map((domain) => triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy })));
-  };
-
-  const startPolling = () => {
-    stoppedRef.current = false;
-    setAutoPollStopped(false);
-    let attempts = 0;
-    // Only continue a paused domain once per resume_cursor value, not on
-    // every poll tick it's still seen paused — confirmed live,
-    // 2026-11-13: the queue worker can take longer than one
-    // POLL_INTERVAL_MS to actually pick up a dispatched job, and without
-    // this a domain still reading "paused" on the next tick (because
-    // nothing has processed yet) fires a second, redundant
-    // MigrateTenantDataJob for the exact same run before the first one
-    // even starts.
-    const lastTriggeredCursor = {};
-    // A settled domain (completed/failed) can never change again — no
-    // reason to keep asking the backend about it. Confirmed live,
-    // 2026-11-15: a long session with even one or two genuinely-stuck
-    // domains kept re-querying EVERY selected domain's status on every
-    // single 3-second tick, including ones that finished hours earlier —
-    // hundreds of wasted requests over time for data that was never
-    // going to change. Reused across ticks, reset fresh each time
-    // startPolling() itself (re)starts.
-    const settledSnapshot = {};
-
-    const poll = async () => {
+  const poll = async () => {
+    try {
+      const res = await fetchPlanStatus(tenantId);
       if (stoppedRef.current) {
         return;
       }
-
-      const domainsToFetch = selectedDomains.filter((domain) => !settledSnapshot[domain]);
-
-      // Each domain's status check fails independently — confirmed live,
-      // 2026-11-13: a single domain erroring (a real 500, confirmed for
-      // "fees") used to reject the whole Promise.all, which meant NONE
-      // of the other, perfectly fine domains ever got their status
-      // shown either — every one of them sat on "Waiting…" forever, and
-      // since the next poll is scheduled from inside this same
-      // success path, polling itself silently stopped dead for the
-      // entire screen, not just the one broken domain.
-      const results = await Promise.all(
-        domainsToFetch.map((domain) =>
-          fetchMigrationStatus(tenantId, domain)
-            .then((res) => res?.data)
-            .catch(() => null),
-        ),
-      );
-      const byDomain = { ...settledSnapshot };
-      results.forEach((data, i) => {
-        byDomain[domainsToFetch[i]] = data;
-
-        if (data && SETTLED_RUN_STATUSES.includes(data.status)) {
-          settledSnapshot[domainsToFetch[i]] = data;
-        }
-      });
-      setRunsByDomain(byDomain);
-      setHasCheckedOnce(true);
-
-      // Reachable directly now (every step is freely clickable — see
-      // DataMigration.jsx), not only after actually clicking "Start
-      // migration" in Review & configure — confirmed live, 2026-11-13:
-      // landing here with nothing ever triggered meant every selected
-      // domain's run was simply null (never existed, not merely
-      // unsettled), which this screen had no way to tell apart from "in
-      // progress" — it just kept polling and showing "Migrating…"
-      // forever. No run existing at all for ANY selected domain means
-      // there's genuinely nothing to wait for.
-      if (selectedDomains.length === 0 || selectedDomains.every((domain) => !byDomain[domain])) {
-        return;
+      if (res?.status) {
+        setPlan(res.data?.plan || null);
+        setRunsByDomain(res.data?.runs || {});
       }
-
-      const allSettled = selectedDomains.every((domain) => SETTLED_RUN_STATUSES.includes(byDomain[domain]?.status));
-      attempts += 1;
-
-      if (allSettled || stoppedRef.current) {
-        return;
-      }
-
-      // A domain with no run at all yet (byDomain[domain] is null, not
-      // merely paused) is one Review & configure deliberately skipped
-      // triggering — see ReviewConfigureTab's startMigration() comment —
-      // because its dependency was selected in the SAME batch and hadn't
-      // actually finished yet. Trigger it for real the moment every
-      // dependency it needs that's ALSO selected here has genuinely
-      // reached 'completed'; one that isn't selected at all was already
-      // done before this run started, so it needs no wait.
-      const readyToStart = selectedDomains.filter((domain) => {
-        if (byDomain[domain]) {
-          return false;
-        }
-
-        const deps = (dependencyGraph[domain] || []).filter((dep) => selectedDomains.includes(dep));
-
-        return deps.every((dep) => byDomain[dep]?.status === 'completed');
-      });
-
-      if (readyToStart.length > 0) {
-        try {
-          await continueBatches(readyToStart);
-        } catch (e) {
-          // Swallowed — a domain whose dependency isn't genuinely ready
-          // yet (the backend's own check disagrees) just stays without a
-          // run and this same check retries it next tick.
-        }
-      }
-
-      // A paused domain won't advance on its own — the backend is
-      // waiting for the next batch to be triggered. Fire it
-      // automatically so a domain with hundreds of thousands of rows
-      // doesn't need hundreds of manual clicks to finish; "Continue
-      // migrating" stays only as a manual recovery path for if this
-      // automatic continue itself fails (e.g. a dropped connection).
-      const pausedDomains = selectedDomains.filter((domain) => {
-        const run = byDomain[domain];
-        return run?.status === 'paused' && lastTriggeredCursor[domain] !== run.resume_cursor;
-      });
-
-      if (pausedDomains.length > 0) {
-        pausedDomains.forEach((domain) => {
-          lastTriggeredCursor[domain] = byDomain[domain].resume_cursor;
-        });
-
-        try {
-          await continueBatches(pausedDomains);
-        } catch (e) {
-          setAutoContinueFailed(true);
-          return;
-        }
-
-        setTimeout(poll, POLL_INTERVAL_MS);
-        return;
-      }
-
-      // Falls through to here when a domain is still paused on the SAME
-      // cursor already continued above (the dispatched job just hasn't
-      // been picked up by the queue worker yet) — the attempts cap below
-      // still applies, same as any other "nothing new to do yet" tick.
-
-      if (attempts >= MAX_AUTO_POLL_ATTEMPTS) {
-        setAutoPollStopped(true);
-        return;
-      }
-
-      setTimeout(poll, POLL_INTERVAL_MS);
-    };
-
-    poll();
+    } catch (e) {
+      // Swallowed — a transient failed poll just tries again next tick;
+      // nothing here ever needs to trigger a retry action.
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    startPolling();
+    stoppedRef.current = false;
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL_MS);
 
     return () => {
       stoppedRef.current = true;
+      clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tenantId, selectedDomains]);
+  }, [tenantId]);
 
-  // Not just 'paused' domains — confirmed live, 2026-11-14: a domain can
-  // be frozen on status='running' forever if the worker processing it
-  // died mid-batch (its own job never got to mark it failed). The same
-  // trigger() call used to resume a paused domain already safely
-  // recovers this too — createPendingRun() detects and clears a 'running'
-  // row that's been stale past the abandonment threshold on its own, and
-  // leaves a genuinely still-active one untouched otherwise. Both manual
-  // recovery buttons below should retry every unsettled domain, not only
-  // the ones currently showing 'paused'.
-  const unsettledDomains = () => selectedDomains.filter((domain) => !SETTLED_RUN_STATUSES.includes(runsByDomain[domain]?.status));
-
-  const handleContinue = async () => {
-    setContinuing(true);
+  const runAction = async (action) => {
+    setActionLoading(true);
+    setActionError('');
     try {
-      await continueBatches(unsettledDomains());
-      setAutoContinueFailed(false);
-      startPolling();
-    } finally {
-      setContinuing(false);
-    }
-  };
-
-  const handleCheckAgain = async () => {
-    try {
-      await continueBatches(unsettledDomains());
+      const res = await action();
+      if (res?.status) {
+        setPlan(res.data);
+      }
+      await poll();
     } catch (e) {
-      // Swallowed — startPolling() below re-checks real status regardless,
-      // and this button's job is "try again," not to fail loudly on one
-      // attempt that didn't even need to succeed (a domain that was never
-      // actually stuck just ignores a redundant trigger call).
+      setActionError(e?.response?.data?.message || e?.message || 'That action failed — please try again.');
+    } finally {
+      setActionLoading(false);
     }
-    startPolling();
   };
 
-  const runs = selectedDomains.map((domain) => runsByDomain[domain]);
-  const nothingMigrating = hasCheckedOnce && (selectedDomains.length === 0 || runs.every((run) => !run));
-  const allSettled = runs.length > 0 && runs.every((run) => SETTLED_RUN_STATUSES.includes(run?.status));
-  const anyPaused = runs.some((run) => run?.status === 'paused');
-  const anyFailed = runs.some((run) => run?.status === 'failed');
-  const totalMigrated = runs.reduce((sum, run) => sum + (run?.migrated_count || 0), 0);
-  const totalEligible = runs.reduce((sum, run) => sum + (run?.eligible_count || 0), 0);
-  // Clamped — confirmed live, 2026-11-12: every migrator in this engine
-  // only finalizes its own eligible_count once, at the very end of its
-  // run, while migrated_count climbs row-by-row throughout. Migrating
-  // more than one domain at once means this can briefly sum one
-  // already-finished domain (both counts final) with another still
-  // mid-run (migrated_count already climbing, eligible_count still 0
-  // until IT finishes too) — real numbers, just summed mid-flight,
-  // never actually impossible once both runs settle. The display should
-  // never show over 100% regardless.
-  const percent = totalEligible > 0 ? Math.min(100, Math.round((totalMigrated / totalEligible) * 100)) : allSettled ? 100 : 0;
-  const displayMigrated = Math.min(totalMigrated, totalEligible);
+  if (loading) {
+    return (
+      <SectionPaper>
+        <Typography sx={{ fontSize: 13, color: '#64748b' }}>Checking current migration status…</Typography>
+      </SectionPaper>
+    );
+  }
 
-  if (nothingMigrating) {
+  if (!plan) {
     return (
       <SectionPaper>
         <Box sx={{ display: 'flex', gap: 1.5, p: 1.5, borderRadius: '10px', border: '1.5px solid', borderColor: '#FDE68A', bgcolor: isDark ? 'rgba(217,119,6,0.12)' : '#FFFBEB' }}>
@@ -306,12 +149,11 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, depen
               Nothing is currently migrating
             </Typography>
             <Typography sx={{ fontSize: 13, color: '#92400E', mb: 1.5 }}>
-              {selectedDomains.length === 0
-                ? 'No data types are selected, so there\'s nothing for this screen to show. Go to Review & configure to pick what to migrate.'
-                : 'None of the selected data types have ever been started for this school. Go to Review & configure to start the migration — this screen will show real progress once it does.'}
+              No migration has ever been started for this school. Go to Review &amp; configure to start one — this
+              screen shows real progress once it does.
             </Typography>
             <Button variant="contained" onClick={onBack} sx={{ textTransform: 'none', fontWeight: 700, bgcolor: '#D97706', '&:hover': { bgcolor: '#B45309' } }}>
-              Go to Review & configure
+              Go to Review &amp; configure
             </Button>
           </Box>
         </Box>
@@ -319,22 +161,84 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, depen
     );
   }
 
+  const selectedDomains = plan.selected_domains || [];
+  const runs = selectedDomains.map((domain) => runsByDomain[domain]);
+  const allSettled = plan.status === 'completed' || plan.status === 'cancelled' || plan.status === 'failed';
+  const anyFailed = runs.some((run) => run?.status === 'failed');
+  const isPaused = plan.status === 'paused';
+  const totalMigrated = runs.reduce((sum, run) => sum + (run?.migrated_count || 0), 0);
+  const totalEligible = runs.reduce((sum, run) => sum + (run?.eligible_count || 0), 0);
+  // Clamped — the same two independently-finalized counters summed
+  // mid-flight across several domains can briefly overshoot 100%; see
+  // this exact reasoning preserved from the pre-Step-4 version of this
+  // screen.
+  const percent = totalEligible > 0 ? Math.min(100, Math.round((totalMigrated / totalEligible) * 100)) : allSettled ? 100 : 0;
+  const displayMigrated = Math.min(totalMigrated, totalEligible);
+
+  const statusLabel = allSettled ? (anyFailed ? 'Finished with errors' : 'Complete') : isPaused ? 'Paused' : 'Migrating';
+  const statusColor = allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : isPaused ? '#D97706' : '#2563EB';
+
   return (
     <Box>
       <SectionPaper sx={{ mb: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2, mb: 1.5 }}>
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : anyPaused ? '#D97706' : '#2563EB' }} />
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: allSettled ? (anyFailed ? '#DC2626' : '#16A34A') : anyPaused ? '#D97706' : '#2563EB', textTransform: 'uppercase' }}>
-                {allSettled ? (anyFailed ? 'Finished with errors' : 'Complete') : anyPaused ? 'Paused' : 'Migrating'}
+              <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: statusColor }} />
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: statusColor, textTransform: 'uppercase' }}>
+                {statusLabel}
               </Typography>
             </Box>
             <Typography sx={{ fontSize: 20, fontWeight: 800 }}>
               {allSettled ? 'Copying finished' : 'Copying this school\'s data into V2'}
             </Typography>
           </Box>
+
+          {!allSettled && (
+            <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+              {plan.status === 'active' && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<IconPlayerPause size={14} />}
+                  disabled={actionLoading}
+                  onClick={() => runAction(() => pausePlan(tenantId))}
+                  sx={{ textTransform: 'none', fontWeight: 700 }}
+                >
+                  Pause
+                </Button>
+              )}
+              {plan.status === 'paused' && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<IconPlayerPlay size={14} />}
+                  disabled={actionLoading}
+                  onClick={() => runAction(() => resumePlan(tenantId))}
+                  sx={{ textTransform: 'none', fontWeight: 700 }}
+                >
+                  Resume
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                color="error"
+                disabled={actionLoading}
+                onClick={() => runAction(() => cancelPlan(tenantId))}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Cancel
+              </Button>
+            </Box>
+          )}
         </Box>
+
+        {actionError && (
+          <Alert severity="error" sx={{ mb: 1.5 }}>
+            {actionError}
+          </Alert>
+        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
           <Typography sx={{ fontSize: 13, fontWeight: 700 }}>
@@ -360,11 +264,11 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, depen
         >
           <IconInfoCircle size={16} color="#64748b" style={{ flexShrink: 0 }} />
           <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-            {autoContinueFailed
-              ? 'Couldn\'t start the next batch automatically — click "Continue migrating" below to retry.'
-              : anyPaused && !allSettled
-                ? 'Migrating in batches so this never looks stuck — the next batch starts automatically.'
-                : 'You can leave this page — the migration keeps running in the background. Come back and check "Verify" once it\'s done.'}
+            {plan.status === 'cancelled'
+              ? 'This migration was cancelled. Start a new one from Review & configure for anything still outstanding.'
+              : isPaused
+                ? 'Paused — nothing will continue until you resume. Any batch already in flight finished safely; nothing was interrupted mid-write.'
+                : 'Entirely server-driven — you can leave this page and it keeps going. Come back and check "Verify" once it\'s done.'}
           </Typography>
         </Box>
       </SectionPaper>
@@ -397,32 +301,9 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, depen
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 2 }}>
-          <Typography sx={{ fontSize: 12.5, color: autoContinueFailed || autoPollStopped ? '#D97706' : anyPaused ? '#D97706' : '#64748b' }}>
-            {allSettled
-              ? `Finished for ${school?.tenant_name || tenantId}.`
-              : autoContinueFailed
-                ? 'Couldn\'t start the next batch automatically — click "Continue migrating" to retry.'
-                : anyPaused
-                  ? 'Paused between batches — starting the next batch automatically…'
-                  : autoPollStopped
-                    ? 'Taking longer than expected — still running in the background. Check again when ready.'
-                    : 'Checking every few seconds…'}
+          <Typography sx={{ fontSize: 12.5, color: isPaused ? '#D97706' : '#64748b' }}>
+            {allSettled ? `Finished for ${school?.tenant_name || tenantId}.` : isPaused ? 'Paused.' : 'Updating every few seconds…'}
           </Typography>
-          {autoPollStopped && !allSettled && !anyPaused && (
-            <Button variant="outlined" onClick={handleCheckAgain} sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}>
-              Check again
-            </Button>
-          )}
-          {autoContinueFailed && !allSettled && (
-            <Button
-              variant="contained"
-              onClick={handleContinue}
-              disabled={continuing}
-              sx={{ textTransform: 'none', fontWeight: 700, flexShrink: 0 }}
-            >
-              {continuing ? 'Continuing…' : 'Continue migrating'}
-            </Button>
-          )}
           <Button
             variant="contained"
             onClick={onContinue}

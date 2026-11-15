@@ -100,11 +100,22 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
     // MigrateTenantDataJob for the exact same run before the first one
     // even starts.
     const lastTriggeredCursor = {};
+    // A settled domain (completed/failed) can never change again — no
+    // reason to keep asking the backend about it. Confirmed live,
+    // 2026-11-15: a long session with even one or two genuinely-stuck
+    // domains kept re-querying EVERY selected domain's status on every
+    // single 3-second tick, including ones that finished hours earlier —
+    // hundreds of wasted requests over time for data that was never
+    // going to change. Reused across ticks, reset fresh each time
+    // startPolling() itself (re)starts.
+    const settledSnapshot = {};
 
     const poll = async () => {
       if (stoppedRef.current) {
         return;
       }
+
+      const domainsToFetch = selectedDomains.filter((domain) => !settledSnapshot[domain]);
 
       // Each domain's status check fails independently — confirmed live,
       // 2026-11-13: a single domain erroring (a real 500, confirmed for
@@ -115,15 +126,19 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
       // success path, polling itself silently stopped dead for the
       // entire screen, not just the one broken domain.
       const results = await Promise.all(
-        selectedDomains.map((domain) =>
+        domainsToFetch.map((domain) =>
           fetchMigrationStatus(tenantId, domain)
             .then((res) => res?.data)
             .catch(() => null),
         ),
       );
-      const byDomain = {};
+      const byDomain = { ...settledSnapshot };
       results.forEach((data, i) => {
-        byDomain[selectedDomains[i]] = data;
+        byDomain[domainsToFetch[i]] = data;
+
+        if (data && SETTLED_RUN_STATUSES.includes(data.status)) {
+          settledSnapshot[domainsToFetch[i]] = data;
+        }
       });
       setRunsByDomain(byDomain);
       setHasCheckedOnce(true);

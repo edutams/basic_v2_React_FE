@@ -62,7 +62,16 @@ const DataMigration = () => {
   // at least one selected domain exist, regardless of which tab/step is
   // currently showing.
   useEffect(() => {
-    if (!school || selectedDomains.length === 0) {
+    // Paused entirely while the Migrate step (3) is actually showing —
+    // confirmed live, 2026-11-15: MigrateTab already polls this exact
+    // same data every 3s and auto-continues a paused/newly-ready domain
+    // itself, with no shared state between the two. Running both at once
+    // meant two independent, uncoordinated loops could each try to
+    // trigger the SAME domain around the same moment — the real source
+    // of repeated "another migration run already in progress" collisions
+    // — on top of simply doubling request volume for no benefit while
+    // this same data was already visible and being kept fresh.
+    if (!school || selectedDomains.length === 0 || activeStep === 3) {
       return undefined;
     }
 
@@ -128,7 +137,7 @@ const DataMigration = () => {
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [school, selectedDomains, conflictStrategy]);
+  }, [school, selectedDomains, conflictStrategy, activeStep]);
 
   // Mirrors the backend's own denyIfNotL1() gate — this is a UX
   // convenience (hide controls the user couldn't use anyway), not the

@@ -27,6 +27,7 @@ import {
   IconCalendarClock,
   IconArchive,
   IconTimeline,
+  IconCloudUpload,
 } from '@tabler/icons-react';
 import { useParams } from 'react-router-dom';
 import api from '@/api/landlord/landlord_api';
@@ -47,6 +48,7 @@ const iconMapper = {
   Point: IconPoint,
   Settings: IconSettings,
   Archive: IconArchive,
+  CloudUpload: IconCloudUpload,
 };
 
 const SidebarItems = () => {

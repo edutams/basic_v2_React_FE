@@ -9,11 +9,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   Grid,
   Link,
-  Radio,
-  RadioGroup,
   Table,
   TableBody,
   TableCell,
@@ -27,11 +24,13 @@ import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper'
 import { DATA_TYPES, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
 import { triggerMigration, fetchMigrationStatus, fetchMigrationSummary, fetchCompletedDomains } from '@/api/landlord/dataMigration/dataMigrationApi';
 
-const CONFLICT_OPTIONS = [
-  { value: 'keep_v2', label: 'Keep V2, skip V1', detail: 'Safest. Edits made in V2 are never touched.' },
-  { value: 'update_if_changed', label: 'Update if V1 changed since last run', detail: 'For schools still using V1 during the switch.' },
-  { value: 'always_v1', label: 'Always use V1', detail: 'Overwrites changes made in V2.', danger: true },
-];
+// migration-hardening Step 3 item 2 — always_v1/update_if_changed can
+// overwrite or delete real, already-migrated V2 data; the backend now
+// rejects either from anyone but a platform super_admin, with a required
+// reason. A normal migration never needs them — keep_v2 already means
+// "fill in anything missing, never touch what's there" — so this screen
+// no longer offers a choice at all; it always sends 'keep_v2'.
+const CONFLICT_STRATEGY = 'keep_v2';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Widened from 2s — confirmed live, 2026-11-11: a dry run across several
@@ -69,7 +68,7 @@ const estimateDuration = (recordCount) => {
 // screen," not a dead end.
 const MAX_POLL_ATTEMPTS = 90; // ~6 minutes at POLL_INTERVAL_MS
 
-const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, conflictStrategy, setConflictStrategy, onBack, onContinue, onViewRunHistory }) => {
+const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDomains, dependencyGraph = {}, onBack, onContinue, onViewRunHistory }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -95,7 +94,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // never offers something the backend would reject anyway. Returns []
   // (nothing blocking) until completedDomains has actually loaded, so a
   // row isn't shown as blocked for a split second on first render.
-  const unsatisfiedDependencies = (row) => (completedDomains ? row.waitsFor.filter((key) => !completedDomains[key]) : []);
+  const unsatisfiedDependencies = (row) => (completedDomains ? (dependencyGraph[row.key] || []).filter((key) => !completedDomains[key]) : []);
 
   // A domain that already has a completed REAL run is never selectable —
   // confirmed live, 2026-11-14: nothing stopped an already-finished
@@ -247,7 +246,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
         pausedDomains.forEach((domain) => {
           lastTriggeredCursor[domain] = byDomain[domain].resume_cursor;
         });
-        await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy })));
+        await Promise.all(pausedDomains.map((domain) => triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy: CONFLICT_STRATEGY })));
       }
 
       await sleep(POLL_INTERVAL_MS);
@@ -273,7 +272,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
 
     try {
       for (const domain of orderByDependency(selectedDomains)) {
-        await triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy });
+        await triggerMigration(tenantId, { domain, dryRun: true, conflictStrategy: CONFLICT_STRATEGY });
         await pollUntilSettled([domain]);
       }
       setHasRunDryRun(true);
@@ -330,14 +329,13 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
         // Migrate tab's own polling (see its matching comment) triggers
         // this domain for real the moment its dependency actually
         // completes — nothing is lost, it just starts a little later.
-        const row = DATA_TYPE_BY_KEY[domain];
-        const hasPendingSelectedDependency = (row?.waitsFor || []).some((dep) => selectedSet.has(dep));
+        const hasPendingSelectedDependency = (dependencyGraph[domain] || []).some((dep) => selectedSet.has(dep));
 
         if (hasPendingSelectedDependency) {
           continue;
         }
 
-        await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy });
+        await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy: CONFLICT_STRATEGY });
       }
       onContinue();
     } catch (err) {
@@ -373,8 +371,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
     const run = dryRunResults[domain];
     return (run?.issues || []).map((issue) => ({ ...issue, domain }));
   });
-
-  const conflictLabel = CONFLICT_OPTIONS.find((o) => o.value === conflictStrategy)?.label;
 
   return (
     <Box>
@@ -442,7 +438,7 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{row.name}</Typography>
                     <Typography sx={{ fontSize: 12, color: '#64748b' }}>
-                      {row.waitsFor.length ? `Waits for ${dependencyNames(row.waitsFor)}` : 'No dependencies'}
+                      {(dependencyGraph[row.key] || []).length ? `Waits for ${dependencyNames(dependencyGraph[row.key])}` : 'No dependencies'}
                     </Typography>
                     {row.available && blocked.length > 0 && (
                       <Typography sx={{ fontSize: 11.5, color: '#D97706', fontWeight: 600, mt: 0.25 }}>
@@ -563,36 +559,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
 
         <Grid size={{ xs: 12, md: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <SectionPaper title="If a record already exists in V2" subtitle="Applies to this run and every re-run.">
-              <RadioGroup value={conflictStrategy} onChange={(e) => setConflictStrategy(e.target.value)}>
-                {CONFLICT_OPTIONS.map((opt) => (
-                  <Box
-                    key={opt.value}
-                    sx={{
-                      border: '1.5px solid',
-                      borderColor: conflictStrategy === opt.value ? theme.palette.primary.main : isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
-                      borderRadius: '10px',
-                      px: 1,
-                      mb: 1,
-                    }}
-                  >
-                    <FormControlLabel
-                      value={opt.value}
-                      control={<Radio size="small" />}
-                      sx={{ alignItems: 'flex-start', m: 0, py: 0.75 }}
-                      label={
-                        <Box>
-                          <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{opt.label}</Typography>
-                          <Typography sx={{ fontSize: 12, color: opt.danger ? '#DC2626' : '#64748b' }}>
-                            {opt.detail}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </Box>
-                ))}
-              </RadioGroup>
-            </SectionPaper>
 
             <SectionPaper
               title="Step 2 — Start the real migration"
@@ -692,9 +658,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
               <strong>Data types:</strong> {selectedDomains.map((d) => DATA_TYPE_BY_KEY[d]?.name || d).join(', ')}
             </Typography>
             <Typography sx={{ fontSize: 13 }}>
-              <strong>If a record already exists:</strong> {conflictLabel}
-            </Typography>
-            <Typography sx={{ fontSize: 13 }}>
               <strong>Records to be copied:</strong> {totals.eligible.toLocaleString()}
             </Typography>
             {estimateDuration(totals.eligible) && (
@@ -703,11 +666,6 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
               </Typography>
             )}
           </Box>
-          {conflictStrategy === 'always_v1' && (
-            <Alert severity="warning" sx={{ fontSize: 12.5 }}>
-              "Always use V1" will overwrite any edits already made in V2 for these records.
-            </Alert>
-          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setConfirmAction(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>

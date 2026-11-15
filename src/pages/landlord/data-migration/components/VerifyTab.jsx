@@ -19,7 +19,12 @@ import { IconCircleCheck, IconAlertTriangle, IconFileCheck, IconAlertCircle, Ico
 import StatCard from '@/components/shared/StatCard';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus, fetchMigrationHistory } from '@/api/landlord/dataMigration/dataMigrationApi';
+import {
+  fetchMigrationStatus,
+  fetchMigrationHistory,
+  checkDomainState,
+  triggerMigration,
+} from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const statusChip = (status, dryRun) => {
   // A dry run that "completed" never wrote anything — showing it with the
@@ -30,7 +35,7 @@ const statusChip = (status, dryRun) => {
   // so the one thing a user glances at can never be mistaken for a real
   // completed migration.
   if (dryRun) {
-    return <Chip size="small" label="Dry run" sx={{ bgcolor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: 11, height: 22 }} />;
+    return <Chip size="small" label="Preview" sx={{ bgcolor: '#FEF3C7', color: '#B45309', fontWeight: 700, fontSize: 11, height: 22 }} />;
   }
 
   const map = {
@@ -49,6 +54,14 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmNewRun, setConfirmNewRun] = useState(false);
+  // migration-hardening Step 2/3 — the reconciled MigrationDomainState per
+  // domain, once "Check now" has actually been run for it this session.
+  // Not fetched up front for every domain on load — reconciliation
+  // re-scans all of V1, so it's deliberately only ever run on demand.
+  const [domainStates, setDomainStates] = useState({});
+  const [busyDomain, setBusyDomain] = useState(null);
+  const [fillGapsDomain, setFillGapsDomain] = useState(null);
+  const [fillGapsStarted, setFillGapsStarted] = useState({});
 
   useEffect(() => {
     setLoading(true);
@@ -67,6 +80,31 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, selectedDomains]);
+
+  const handleCheckNow = async (domain) => {
+    setBusyDomain(domain);
+    try {
+      const res = await checkDomainState(tenantId, domain);
+      setDomainStates((prev) => ({ ...prev, [domain]: res?.data }));
+    } finally {
+      setBusyDomain(null);
+    }
+  };
+
+  const handleFillGaps = async (domain) => {
+    setFillGapsDomain(null);
+    setBusyDomain(domain);
+    try {
+      // Always keep_v2 — Fill gaps only ever creates rows whose V1 id has
+      // no link yet; it never updates or deletes an existing row, which is
+      // exactly why this needs only a simple confirmation, not the
+      // super_admin+reason gate always_v1/update_if_changed requires.
+      await triggerMigration(tenantId, { domain, dryRun: false, conflictStrategy: 'keep_v2' });
+      setFillGapsStarted((prev) => ({ ...prev, [domain]: true }));
+    } finally {
+      setBusyDomain(null);
+    }
+  };
 
   const runs = selectedDomains.map((domain) => runsByDomain[domain]).filter(Boolean);
   const totalMigrated = runs.reduce((sum, run) => sum + (run.migrated_count || 0), 0);
@@ -148,17 +186,65 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
                   <TableCell align="right" sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>COPIED</TableCell>
                   <TableCell align="right" sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>ELIGIBLE</TableCell>
                   <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>STATUS</TableCell>
+                  <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }}>RECONCILED</TableCell>
+                  <TableCell sx={{ fontSize: 11, fontWeight: 700, color: '#94a3b8' }} />
                 </TableRow>
               </TableHead>
               <TableBody>
                 {selectedDomains.map((domain) => {
                   const run = runsByDomain[domain];
+                  const state = domainStates[domain];
+                  const isBusy = busyDomain === domain;
+
                   return (
                     <TableRow key={domain}>
                       <TableCell sx={{ fontSize: 13 }}>{DATA_TYPE_BY_KEY[domain]?.name || domain}</TableCell>
                       <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.migrated_count || 0).toLocaleString()}</TableCell>
                       <TableCell align="right" sx={{ fontSize: 13 }}>{(run?.eligible_count || 0).toLocaleString()}</TableCell>
                       <TableCell>{statusChip(run?.status, run?.dry_run)}</TableCell>
+                      <TableCell sx={{ fontSize: 12.5 }}>
+                        {state ? (
+                          <Chip
+                            size="small"
+                            label={state.status}
+                            sx={{
+                              bgcolor: state.status === 'completed' ? '#DCFCE7' : '#FEF3C7',
+                              color: state.status === 'completed' ? '#15803D' : '#B45309',
+                              fontWeight: 700,
+                              fontSize: 11,
+                              height: 22,
+                              textTransform: 'capitalize',
+                            }}
+                          />
+                        ) : (
+                          <Typography sx={{ fontSize: 12, color: '#94a3b8' }}>Not checked yet</Typography>
+                        )}
+                        {fillGapsStarted[domain] && (
+                          <Typography sx={{ fontSize: 11, color: '#2563EB', mt: 0.25 }}>
+                            Filling gaps — check again shortly.
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <Button
+                            size="small"
+                            onClick={() => handleCheckNow(domain)}
+                            disabled={isBusy}
+                            sx={{ textTransform: 'none', fontSize: 11.5, fontWeight: 600, minWidth: 0, px: 1 }}
+                          >
+                            {isBusy ? '…' : 'Check now'}
+                          </Button>
+                          <Button
+                            size="small"
+                            onClick={() => setFillGapsDomain(domain)}
+                            disabled={isBusy}
+                            sx={{ textTransform: 'none', fontSize: 11.5, fontWeight: 600, minWidth: 0, px: 1 }}
+                          >
+                            {state?.status === 'completed' ? 'Check & fill gaps' : 'Fill gaps'}
+                          </Button>
+                        </Box>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -198,7 +284,7 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             <SectionPaper
               title="Run it again"
-              subtitle="Fixed something in V1, or still using V1 during the switch? A new run copies only new and changed records — nothing is duplicated."
+              subtitle="Adding a data type you didn't migrate the first time? Start a fresh pass from Review & configure — it only fills in what's missing, never changes or removes what's already there."
             >
               <Button variant="contained" onClick={() => setConfirmNewRun(true)} sx={{ textTransform: 'none', fontWeight: 700 }}>
                 Start a new run
@@ -237,8 +323,8 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13.5 }}>
-            This takes you back to Review & configure for another pass. It copies only new and changed records —
-            nothing already migrated is duplicated.
+            This takes you back to Review & configure for another pass. It only fills in what's missing — nothing
+            already migrated is changed or duplicated.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -254,6 +340,27 @@ const VerifyTab = ({ tenantId, selectedDomains, onStartNewRun }) => {
             sx={{ textTransform: 'none', fontWeight: 700 }}
           >
             Yes, start a new run
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(fillGapsDomain)} onClose={() => setFillGapsDomain(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconCircleCheck size={20} color="#16A34A" />
+          Fill gaps for {DATA_TYPE_BY_KEY[fillGapsDomain]?.name || fillGapsDomain}?
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 13.5 }}>
+            This only creates records that are missing in V2 — it never changes or removes anything already there.
+            Safe to run anytime, including on a domain that already shows "Completed."
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setFillGapsDomain(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancel
+          </Button>
+          <Button onClick={() => handleFillGaps(fillGapsDomain)} variant="contained" sx={{ textTransform: 'none', fontWeight: 700 }}>
+            Yes, fill gaps
           </Button>
         </DialogActions>
       </Dialog>

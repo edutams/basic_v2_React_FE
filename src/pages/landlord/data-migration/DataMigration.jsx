@@ -6,7 +6,7 @@ import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import { useAuth } from '@/hooks/useAuth';
 import MigrationStepper from '@/pages/tenant/data-migration/components/MigrationStepper';
 import { AVAILABLE_DOMAIN_KEYS, DATA_TYPE_BY_KEY, SETTLED_RUN_STATUSES } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchMigrationStatus, triggerMigration } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { fetchMigrationStatus, triggerMigration, fetchDependencyGraph } from '@/api/landlord/dataMigration/dataMigrationApi';
 import SchoolPickerTab from './components/SchoolPickerTab';
 import ConnectScanTab from './components/ConnectScanTab';
 import ReviewConfigureTab from './components/ReviewConfigureTab';
@@ -26,6 +26,14 @@ const BCrumb = [
 
 const STEPS = ['Choose school', 'Connect & scan', 'Review & configure', 'Migrate', 'Verify'];
 
+// migration-hardening Step 3 — always_v1/update_if_changed can overwrite
+// or delete real V2 data, so the normal flow no longer offers a choice at
+// all (the backend also rejects either from anyone but a platform
+// super_admin, with a required reason). keep_v2 already means "fill in
+// anything missing, never touch what's there," which is what every normal
+// migration and re-run actually needs.
+const CONFLICT_STRATEGY = 'keep_v2';
+
 /**
  * Agent-side (platform super-admin only) Stage 2 data migration — moved
  * here from the tenant side 2026-11-09 per direct CEO decision. An agent
@@ -40,6 +48,24 @@ const DataMigration = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [school, setSchool] = useState(null);
   const [selectedDomains, setSelectedDomains] = useState(AVAILABLE_DOMAIN_KEYS);
+  // migration-hardening Step 4 item 7 — fetched once, not tenant-scoped
+  // (the same graph applies to every school); {} until it loads, which
+  // every consumer treats as "no known dependencies yet" rather than
+  // crashing on an undefined lookup.
+  const [dependencyGraph, setDependencyGraph] = useState({});
+
+  useEffect(() => {
+    fetchDependencyGraph()
+      .then((res) => {
+        if (res?.status) {
+          setDependencyGraph(res.data);
+        }
+      })
+      .catch(() => {
+        // Non-fatal — every consumer already falls back to [] per domain,
+        // same posture as fetchCompletedDomains()'s own failure handling.
+      });
+  }, []);
   // Lives here, not inside any one tab — confirmed live, 2026-11-13: a
   // migration keeps running on the backend regardless of which tab is
   // open, but progress was only ever VISIBLE while sitting on the one
@@ -49,14 +75,6 @@ const DataMigration = () => {
   // own poll loop, and without losing track of it just because the admin
   // wandered off to look at something else.
   const [activeRuns, setActiveRuns] = useState({});
-  // Defaults to always_v1, not keep_v2 — the whole point of a first-time
-  // migration is a faithful, complete copy of V1's real data, including
-  // records that happen to name-match something V2 already seeded by
-  // default (e.g. a default class/division at tenant onboarding). keep_v2
-  // matters more for a later, incremental re-run once a school has
-  // actually started editing things in V2 themselves.
-  const [conflictStrategy, setConflictStrategy] = useState('always_v1');
-
   // Runs unconditionally (not gated behind the access-level check below —
   // hooks can't be called after an early return) whenever a school and
   // at least one selected domain exist, regardless of which tab/step is
@@ -122,8 +140,13 @@ const DataMigration = () => {
         });
 
         await Promise.all(
+          // Continues with whatever conflict_strategy this specific run
+          // already has, not a single app-wide value — createPendingRun()'s
+          // in-flight match requires an exact (domain, dry_run,
+          // conflict_strategy) triple, so continuing with a different one
+          // would create a competing row instead of resuming this one.
           toContinue.map(([domain, run]) =>
-            triggerMigration(school.id, { domain, dryRun: Boolean(run.dry_run), conflictStrategy }).catch(() => null),
+            triggerMigration(school.id, { domain, dryRun: Boolean(run.dry_run), conflictStrategy: run.conflict_strategy }).catch(() => null),
           ),
         );
       }
@@ -137,7 +160,7 @@ const DataMigration = () => {
       clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [school, selectedDomains, conflictStrategy, activeStep]);
+  }, [school, selectedDomains, activeStep]);
 
   // Mirrors the backend's own denyIfNotL1() gate — this is a UX
   // convenience (hide controls the user couldn't use anyway), not the
@@ -187,7 +210,7 @@ const DataMigration = () => {
           />
         );
       case 1:
-        return <ConnectScanTab tenantId={school.id} school={school} onContinue={() => advanceTo(2)} />;
+        return <ConnectScanTab tenantId={school.id} school={school} dependencyGraph={dependencyGraph} onContinue={() => advanceTo(2)} />;
       case 2:
         return (
           <ReviewConfigureTab
@@ -195,8 +218,7 @@ const DataMigration = () => {
             school={school}
             selectedDomains={selectedDomains}
             setSelectedDomains={setSelectedDomains}
-            conflictStrategy={conflictStrategy}
-            setConflictStrategy={setConflictStrategy}
+            dependencyGraph={dependencyGraph}
             onBack={() => goToStep(1)}
             onContinue={() => advanceTo(3)}
             onViewRunHistory={() => setActiveStep(4)}
@@ -208,7 +230,8 @@ const DataMigration = () => {
             tenantId={school.id}
             school={school}
             selectedDomains={selectedDomains}
-            conflictStrategy={conflictStrategy}
+            conflictStrategy={CONFLICT_STRATEGY}
+            dependencyGraph={dependencyGraph}
             onContinue={() => advanceTo(4)}
             onBack={() => goToStep(2)}
           />

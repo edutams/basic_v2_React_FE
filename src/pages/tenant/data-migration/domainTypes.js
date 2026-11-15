@@ -4,43 +4,38 @@
 // build order, row 1) — every other domain is still real/listed but can't
 // actually be run yet, so the UI must disable it rather than pretend.
 //
-// `waitsFor` holds domain KEYS (not display names) — mirrors the backend's
-// MigrationRun::DEPENDENCIES exactly (app/Models/Tenant/DataMigration/
-// MigrationRun.php), since 2026-11-11 this is enforced, not just shown:
-// a domain whose dependencies haven't had a completed REAL run yet (a dry
-// run never counts — it never actually writes anything) gets disabled in
-// Review & Configure, with an explanation, instead of being selectable and
-// failing with a wall of "hasn't been migrated yet" errors. Previously
-// `waitsFor` held free-text display names that didn't always match a real
-// domain's own `name` (e.g. 'Classes' vs the real 'Classes & arms') — harmless
-// back when this was purely decorative text, but had to be fixed now that
-// it's used for real lookups.
+// migration-hardening Step 4 item 7 — no `waitsFor` field here anymore.
+// This used to hardcode its own copy of the backend's
+// MigrationRun::DEPENDENCIES, which is exactly how Enrolments → Classes
+// went undeclared in one of the two copies but not the other. Dependency
+// data now comes from GET /data-migration/dependency-graph (fetched once,
+// passed down as a plain {domain: [key, ...]} object) — see
+// fetchDependencyGraph() — never hardcoded here again.
 export const DATA_TYPES = [
   {
     key: 'sessions_terms',
     name: 'Academic sessions & terms',
-    waitsFor: [],
     available: true,
     note: 'Includes weeks & their dates, not just sessions/terms — the count covers both',
   },
-  { key: 'classes', name: 'Classes & arms', waitsFor: ['sessions_terms'], available: true },
-  { key: 'subjects', name: 'Subjects', waitsFor: ['classes'], available: true },
-  { key: 'staff', name: 'Staff', waitsFor: [], available: true },
-  { key: 'students', name: 'Students', waitsFor: ['classes'], available: true },
-  { key: 'guardians', name: 'Parents & guardians', waitsFor: ['students'], available: true },
-  { key: 'enrolments', name: 'Enrolments', waitsFor: ['students', 'sessions_terms'], available: true },
-  { key: 'subject_groups', name: 'Subject groups & results', waitsFor: ['classes', 'subjects', 'enrolments'], available: true },
-  { key: 'attendance', name: 'Attendance', waitsFor: ['enrolments', 'sessions_terms'], available: true },
-  { key: 'results', name: 'Assessments & results', waitsFor: ['enrolments', 'subjects', 'sessions_terms'], available: true },
-  { key: 'fees', name: 'Fees & payments', waitsFor: ['students', 'classes', 'sessions_terms'], available: true },
-  { key: 'chat', name: 'Chat/messaging', waitsFor: ['staff', 'students', 'guardians'], available: true },
-  { key: 'quizzes', name: 'Quizzes', waitsFor: ['students', 'enrolments', 'classes', 'sessions_terms'], available: true },
-  { key: 'subject_teachers', name: 'Subject-teacher assignments', waitsFor: ['staff', 'subjects', 'classes', 'sessions_terms'], available: true },
-  { key: 'class_teachers', name: 'Class teachers & report-card comments', waitsFor: ['staff', 'students', 'enrolments', 'classes', 'sessions_terms'], available: true },
-  { key: 'lesson_notes', name: 'Lesson notes & scheme of work', waitsFor: ['subjects', 'classes', 'subject_teachers', 'sessions_terms'], available: true },
-  { key: 'calendar_and_domains', name: 'School calendar & result domains', waitsFor: ['sessions_terms'], available: true },
-  { key: 'reporting_extras', name: 'Result templates & bursary settlements', waitsFor: ['sessions_terms', 'classes', 'enrolments'], available: true },
-  { key: 'admissions', name: 'Admissions', waitsFor: ['sessions_terms', 'classes', 'guardians'], available: true },
+  { key: 'classes', name: 'Classes & arms', available: true },
+  { key: 'subjects', name: 'Subjects', available: true },
+  { key: 'staff', name: 'Staff', available: true },
+  { key: 'students', name: 'Students', available: true },
+  { key: 'guardians', name: 'Parents & guardians', available: true },
+  { key: 'enrolments', name: 'Enrolments', available: true },
+  { key: 'subject_groups', name: 'Subject groups & results', available: true },
+  { key: 'attendance', name: 'Attendance', available: true },
+  { key: 'results', name: 'Assessments & results', available: true },
+  { key: 'fees', name: 'Fees & payments', available: true },
+  { key: 'chat', name: 'Chat/messaging', available: true },
+  { key: 'quizzes', name: 'Quizzes', available: true },
+  { key: 'subject_teachers', name: 'Subject-teacher assignments', available: true },
+  { key: 'class_teachers', name: 'Class teachers & report-card comments', available: true },
+  { key: 'lesson_notes', name: 'Lesson notes & scheme of work', available: true },
+  { key: 'calendar_and_domains', name: 'School calendar & result domains', available: true },
+  { key: 'reporting_extras', name: 'Result templates & bursary settlements', available: true },
+  { key: 'admissions', name: 'Admissions', available: true },
 ];
 
 export const AVAILABLE_DOMAIN_KEYS = DATA_TYPES.filter((row) => row.available).map((row) => row.key);

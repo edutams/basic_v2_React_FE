@@ -71,7 +71,7 @@ const detailFor = (run) => {
   return `${prefix}${migrated.toLocaleString()} of ${eligible.toLocaleString()} migrated${suffix}`;
 };
 
-const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onContinue, onBack }) => {
+const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, dependencyGraph = {}, onContinue, onBack }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [runsByDomain, setRunsByDomain] = useState({});
@@ -176,7 +176,7 @@ const MigrateTab = ({ tenantId, school, selectedDomains, conflictStrategy, onCon
           return false;
         }
 
-        const deps = (DATA_TYPE_BY_KEY[domain]?.waitsFor || []).filter((dep) => selectedDomains.includes(dep));
+        const deps = (dependencyGraph[domain] || []).filter((dep) => selectedDomains.includes(dep));
 
         return deps.every((dep) => byDomain[dep]?.status === 'completed');
       });

@@ -5,6 +5,14 @@ import api from '@/api/landlord/landlord_api';
 // is scoped to one chosen school (tenantId), unlike the tenant-side
 // version where the school was always implicit.
 
+// migration-hardening Step 4 item 7 — the backend's own
+// MigrationRun::DEPENDENCIES, not a hardcoded frontend copy. Not
+// tenant-scoped — the graph is the same for every school.
+export const fetchDependencyGraph = async () => {
+  const res = await api.get('/v1/landlord/data-migration/dependency-graph');
+  return res.data;
+};
+
 export const fetchMigrationSchools = async (search = '', page = 1) => {
   const params = { page };
   if (search) {
@@ -51,5 +59,13 @@ export const fetchCompletedDomains = async (tenantId) => {
 // spot by eye.
 export const fetchClassesOverview = async (tenantId) => {
   const res = await api.get(`/v1/landlord/data-migration/${tenantId}/classes-overview`);
+  return res.data;
+};
+
+// migration-hardening Step 2 item 5 — "Check now": re-runs reconciliation
+// for one domain on demand (read-only against V1, only ever writes
+// migration_domain_states), independent of any run finishing on its own.
+export const checkDomainState = async (tenantId, domain) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/check-now/${domain}`);
   return res.data;
 };

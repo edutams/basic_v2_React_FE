@@ -23,7 +23,7 @@ import { fetchMigrationSummary } from '@/api/landlord/dataMigration/dataMigratio
 
 /** Agent-side twin of the tenant "Connect & scan" stage — identical
  * behavior, scoped to the chosen school instead of the implicit tenant. */
-const ConnectScanTab = ({ tenantId, school, onContinue }) => {
+const ConnectScanTab = ({ tenantId, school, dependencyGraph = {}, onContinue }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -122,7 +122,7 @@ const ConnectScanTab = ({ tenantId, school, onContinue }) => {
                         {loading ? <Skeleton variant="text" width={40} sx={{ ml: 'auto' }} /> : (summary?.[row.key]?.in_v1 ?? 0).toLocaleString()}
                       </TableCell>
                       <TableCell sx={{ fontSize: 12.5, color: '#64748b' }}>
-                        {row.waitsFor.length ? dependencyNames(row.waitsFor) : '—'}
+                        {(dependencyGraph[row.key] || []).length ? dependencyNames(dependencyGraph[row.key]) : '—'}
                       </TableCell>
                     </TableRow>
                   ))}

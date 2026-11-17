@@ -125,7 +125,7 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Average', report.ca_max)}</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</div></TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>Total(100%)</div></TableCell>
-                      {sessionTerm?.term_id === 3 && ['1st Term score (100%)', '2nd Term score (100%)', '3rd Term score (100%)'].map((label) => (
+                      {sessionTerm?.term_id === 3 && ['1st Term score (100%)', '2nd Term score (100%)', '3rd Term score (100%)', 'Weighted Annual Score (100%)'].map((label) => (
                         <TableCell key={label} style={{ ...innerCellBorder, textAlign: 'center' }}><div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', whiteSpace: 'nowrap', fontWeight: 700 }}>{label}</div></TableCell>
                       ))}
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700, verticalAlign: 'bottom' }}>Grade</TableCell>
@@ -144,9 +144,10 @@ const TemplateEight = ({ student, report, sessionTerm, className, gradeScale }) 
                         <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                         {sessionTerm?.term_id === 3 && (
                           <>
-                            <TableCell style={innerCellBorder} align="center">{s.first_term || '-'}</TableCell>
-                            <TableCell style={innerCellBorder} align="center">{s.second_term || '-'}</TableCell>
-                            <TableCell style={innerCellBorder} align="center">{s.third_term || '-'}</TableCell>
+                            <TableCell style={innerCellBorder} align="center">{s.first_term ?? '-'}</TableCell>
+                            <TableCell style={innerCellBorder} align="center">{s.second_term ?? '-'}</TableCell>
+                            <TableCell style={innerCellBorder} align="center">{s.third_term ?? '-'}</TableCell>
+                            <TableCell style={innerCellBorder} align="center">{s.weighted_annual ?? '-'}</TableCell>
                           </>
                         )}
                         <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</TableCell>

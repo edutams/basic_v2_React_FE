@@ -98,7 +98,7 @@ const SchoolHeader = () => {
         }}
       >
         <Box sx={{ width: lgDown ? '40px' : 'auto', overflow: 'hidden' }}>
-          <Logo />
+          <Logo logoUrl={tenantInfo?.logo_url} />
         </Box>
 
         {lgDown ? (

@@ -7,11 +7,18 @@ import Scrollbar from 'src/components/custom-scroll/Scrollbar';
 import config from 'src/context/config';
 import { CustomizerContext } from 'src/context/CustomizerContext';
 import { useContext } from 'react';
+import { TenantAuthContext } from 'src/context/TenantContext/auth';
 
 const SchoolSidebar = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const { isCollapse, isSidebarHover, setIsSidebarHover, isMobileSidebar, setIsMobileSidebar } =
     useContext(CustomizerContext);
+  // The agent/organization that onboarded this school sets this (falls back
+  // to the school's own uploaded logo, then the default wordmark) — see
+  // getAcademicInfo() on the backend. Refetched on every reload, so an
+  // agent changing their own logo reaches every school under them without
+  // any extra sync.
+  const { tenantInfo } = useContext(TenantAuthContext);
 
   const MiniSidebarWidth = config.miniSidebarWidth;
   const SidebarWidth = config.sidebarWidth;
@@ -64,7 +71,7 @@ const SchoolSidebar = () => {
             }}
           >
             <Box px={3}>
-              <Logo />
+              <Logo logoUrl={tenantInfo?.logo_url} />
             </Box>
             <Scrollbar sx={{ height: 'calc(100% - 244px)' }}>
               <SchoolSidebarItems />
@@ -92,7 +99,7 @@ const SchoolSidebar = () => {
       }}
     >
       <Box px={2}>
-        <Logo />
+        <Logo logoUrl={tenantInfo?.logo_url} />
       </Box>
       <SchoolSidebarItems />
     </Drawer>

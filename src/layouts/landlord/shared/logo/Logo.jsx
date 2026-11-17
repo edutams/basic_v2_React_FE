@@ -12,7 +12,12 @@ import { CustomizerContext } from 'src/context/CustomizerContext';
 import EduTAMSLogoDark from '@/assets/images/logos/EduTAMS.jpeg';
 import EduTAMSLogoLight from '@/assets/images/logos/EduTams2.png';
 
-const Logo = () => {
+// logoUrl: the agent/organization's own logo (falls back to the school's
+// own uploaded logo, then this default wordmark — see getAcademicInfo() on
+// the backend) — passed in by the tenant sidebar only; the landlord side
+// never passes this, so it's unaffected and keeps showing the default
+// wordmark exactly as before.
+const Logo = ({ logoUrl }) => {
   const { isCollapse, isSidebarHover, activeMode } = useContext(CustomizerContext);
   const TopbarHeight = config.topbarHeight;
 
@@ -21,6 +26,7 @@ const Logo = () => {
   // for dark backgrounds — it was previously used unconditionally, which
   // made it read as a blank white box against the light sidebar.
   const EduTAMSLogo = activeMode === 'dark' ? EduTAMSLogoLight : EduTAMSLogoDark;
+  const resolvedLogo = logoUrl || EduTAMSLogo;
 
   const LinkStyled = styled(Link)(() => ({
     height: TopbarHeight,
@@ -38,8 +44,8 @@ const Logo = () => {
     <LinkStyled to="/">
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <img
-          src={EduTAMSLogo}
-          alt="EduTAMS Logo"
+          src={resolvedLogo}
+          alt="School logo"
           style={{
             height: isMini ? '32px' : '42px',
             width: 'auto',

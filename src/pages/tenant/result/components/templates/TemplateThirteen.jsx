@@ -108,6 +108,9 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                     <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{pctLabel('Average', report.ca_max)}</div></td>
                     <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</div></td>
                     <td style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>Total(100%)</div></td>
+                    {sessionTerm?.term_id === 3 && ['1st Term score (100 %)', '2nd Term score (100 %)', '3rd Term score(100 %)'].map((label) => (
+                      <td key={label} style={{ ...innerCellBorder, textAlign: 'center' }}><div className="tpl13-rotate" style={{ fontWeight: 700 }}>{label}</div></td>
+                    ))}
                     <td style={{ ...innerCellBorder, textAlign: 'center', verticalAlign: 'bottom', fontWeight: 700 }}>Grade</td>
                     <td style={{ ...innerCellBorder, textAlign: 'center', verticalAlign: 'bottom', fontWeight: 700 }}>Grade Remark</td>
                   </tr>
@@ -122,6 +125,13 @@ const TemplateThirteen = ({ student, report, sessionTerm, className, gradeScale 
                       <td style={{ ...innerCellBorder, textAlign: 'center' }}>{caTotal(s) ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.exam ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</td>
+                      {sessionTerm?.term_id === 3 && (
+                        <>
+                          <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.first_term || '-'}</td>
+                          <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.second_term || '-'}</td>
+                          <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.third_term || '-'}</td>
+                        </>
+                      )}
                       <td style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</td>
                       <td style={{ ...innerCellBorder, textAlign: 'center' }}>{s.remark ?? '-'}</td>
                     </tr>

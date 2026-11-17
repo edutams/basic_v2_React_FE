@@ -172,6 +172,12 @@ export const buildReportProp = (report) => {
     subject.position = s.position ? `${s.position}${ordinalSuffix(s.position)}` : '-';
     subject.grade = s.grade || '-';
     subject.remark = s.remark || '-';
+    // Cumulative 1st/2nd/3rd term totals for this subject. Only the third
+    // term's result row carries them (null elsewhere), and the templates
+    // print the columns only on the third term report card.
+    subject.first_term = s.first_term_score ?? null;
+    subject.second_term = s.second_term_score ?? null;
+    subject.third_term = s.third_term_score ?? null;
     return subject;
   });
 

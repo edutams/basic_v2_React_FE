@@ -133,6 +133,9 @@ const TemplateSix = ({ student, report, sessionTerm, className, gradeScale }) =>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>CA Total</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Exam</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Total Score</TableCell>
+                    {sessionTerm?.term_id === 3 && ['1st Term score (100%)', '2nd Term score (100%)', '3rd Term score (100%)'].map((label) => (
+                      <TableCell key={label} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{label}</TableCell>
+                    ))}
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Highest</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Lowest</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Grade</TableCell>
@@ -150,6 +153,13 @@ const TemplateSix = ({ student, report, sessionTerm, className, gradeScale }) =>
                       <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
+                      {sessionTerm?.term_id === 3 && (
+                        <>
+                          <TableCell style={innerCellBorder} align="center">{s.first_term || '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.second_term || '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.third_term || '-'}</TableCell>
+                        </>
+                      )}
                       <TableCell style={innerCellBorder} align="center">{s.highest ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder} align="center">{s.lowest ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</TableCell>

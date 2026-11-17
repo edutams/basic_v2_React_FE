@@ -127,6 +127,19 @@ const TemplateThree = ({ student, report, sessionTerm, className, gradeScale }) 
                   <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                 ))}
               </TableRow>
+              {sessionTerm?.term_id === 3 && (
+                <>
+                  {[['1st Term score', 'first_term'], ['2nd Term score', 'second_term'], ['3rd Term score', 'third_term']].map(([label, key]) => (
+                    <TableRow key={key}>
+                      <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>{label}</TableCell>
+                      <TableCell style={innerCellBorder}></TableCell>
+                      {report.subjects.map((s, i) => (
+                        <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s[key] || '-'}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </>
+              )}
               <TableRow>
                 <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Grade</TableCell>
                 <TableCell style={innerCellBorder}></TableCell>

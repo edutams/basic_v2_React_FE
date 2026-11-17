@@ -93,6 +93,9 @@ const TemplateTwelve = ({ student, report, sessionTerm, className, gradeScale })
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{pctLabel('CA', report.ca_max)}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{pctLabel('Exam', report.exam_max)}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Total(100%)</TableCell>
+                    {sessionTerm?.term_id === 3 && ['1st Term score (100 %)', '2nd Term score(100 %)', '3rd Term score(100 %)'].map((label) => (
+                      <TableCell key={label} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{label}</TableCell>
+                    ))}
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Class Average</TableCell>
                     <TableCell style={{ ...innerCellBorder, fontWeight: 700 }}>Teacher's Remarks</TableCell>
                   </TableRow>
@@ -104,6 +107,13 @@ const TemplateTwelve = ({ student, report, sessionTerm, className, gradeScale })
                       <TableCell style={innerCellBorder} align="center">{caTotal(s) ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder} align="center">{s.exam ?? '-'}</TableCell>
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
+                      {sessionTerm?.term_id === 3 && (
+                        <>
+                          <TableCell style={innerCellBorder} align="center">{s.first_term || '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.second_term || '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.third_term || '-'}</TableCell>
+                        </>
+                      )}
                       <TableCell style={innerCellBorder} align="center">{s.class_average ?? '-'}</TableCell>
                       <TableCell style={innerCellBorder}>{s.remark ?? '-'}</TableCell>
                     </TableRow>

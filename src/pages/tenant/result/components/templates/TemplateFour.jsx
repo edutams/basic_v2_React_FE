@@ -128,6 +128,18 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
                       <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                     ))}
                   </TableRow>
+                  {sessionTerm?.term_id === 3 && (
+                    <>
+                      {[['1st Term score (100%)', 'first_term'], ['2nd Term score (100%)', 'second_term'], ['3rd Term score (100%)', 'third_term']].map(([label, key]) => (
+                        <TableRow key={key}>
+                          <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>{label}</TableCell>
+                          {report.subjects.map((s, i) => (
+                            <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s[key] || '-'}</TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </>
+                  )}
                   <TableRow>
                     <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>Highest Score/Term</TableCell>
                     {report.subjects.map((s, i) => (

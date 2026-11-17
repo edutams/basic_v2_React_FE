@@ -94,6 +94,15 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
   // never offers something the backend would reject anyway. Returns []
   // (nothing blocking) until completedDomains has actually loaded, so a
   // row isn't shown as blocked for a split second on first render.
+  //
+  // completedDomains[key] is `true`, the string `'incomplete'`, or `false`
+  // (see completedDomains() endpoint's own docblock) — `!completedDomains[key]`
+  // is only true for the `false` case, since a non-empty string is always
+  // truthy in JS. That's deliberate, not an oversight: changed 2026-11-17,
+  // directly requested — a dependency that's genuinely attempted (even if
+  // not perfectly reconciled) already satisfies this check with no extra
+  // code needed here; only the chip label below needs to tell "Migrated"
+  // apart from "Some data didn't fully migrate".
   const unsatisfiedDependencies = (row) => (completedDomains ? (dependencyGraph[row.key] || []).filter((key) => !completedDomains[key]) : []);
 
   // A domain that already has a completed REAL run is never selectable —
@@ -407,8 +416,15 @@ const ReviewConfigureTab = ({ tenantId, school, selectedDomains, setSelectedDoma
                   {row.available && blocked.length > 0 && (
                     <Chip size="small" label="Locked" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#FEF3C7', color: '#B45309' }} />
                   )}
-                  {row.available && blocked.length === 0 && completedDomains?.[row.key] && (
+                  {row.available && blocked.length === 0 && completedDomains?.[row.key] === true && (
                     <Chip size="small" label="Migrated" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DCFCE7', color: '#15803D' }} />
+                  )}
+                  {/* Changed 2026-11-17, directly requested: a domain whose real run finished but reconciliation
+                      found some gap remaining no longer blocks anything downstream (see domainTypes.js/backend's
+                      own unsatisfiedDependencies()) — it just needs its own distinct, non-alarming label instead
+                      of silently looking identical to "Migrated". */}
+                  {row.available && blocked.length === 0 && completedDomains?.[row.key] === 'incomplete' && (
+                    <Chip size="small" label="Some data didn't fully migrate" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#FFEDD5', color: '#C2410C' }} />
                   )}
                   {row.available && blocked.length === 0 && completedDomains && !completedDomains[row.key] && !dryRunResults[row.key] && (
                     <Chip size="small" label="Ready to migrate" sx={{ fontSize: 11, fontWeight: 700, bgcolor: '#DBEAFE', color: '#1D4ED8' }} />

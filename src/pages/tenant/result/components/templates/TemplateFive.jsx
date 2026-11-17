@@ -98,7 +98,7 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>CA Total</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Exam</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Total Score</TableCell>
-                    {sessionTerm?.term_id === 3 && ['1st Term score', '2nd Term score', '3rd Term score'].map((label) => (
+                    {sessionTerm?.term_id === 3 && ['1st Term score', '2nd Term score', '3rd Term score', 'Weighted Annual Score'].map((label) => (
                       <TableCell key={label} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{label}</TableCell>
                     ))}
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>Grade</TableCell>
@@ -112,7 +112,7 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>{report.ca_max || ''}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>{report.exam_max || ''}</TableCell>
                     <TableCell style={{ ...innerCellBorder, textAlign: 'center' }}>100</TableCell>
-                    {sessionTerm?.term_id === 3 && ['1st Term score', '2nd Term score', '3rd Term score'].map((label) => (
+                    {sessionTerm?.term_id === 3 && ['1st Term score', '2nd Term score', '3rd Term score', 'Weighted Annual Score'].map((label) => (
                       <TableCell key={label} style={innerCellBorder}></TableCell>
                     ))}
                     <TableCell style={innerCellBorder}></TableCell>
@@ -131,9 +131,10 @@ const TemplateFive = ({ student, report, sessionTerm, className, gradeScale }) =
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.total ?? '-'}</TableCell>
                       {sessionTerm?.term_id === 3 && (
                         <>
-                          <TableCell style={innerCellBorder} align="center">{s.first_term || '-'}</TableCell>
-                          <TableCell style={innerCellBorder} align="center">{s.second_term || '-'}</TableCell>
-                          <TableCell style={innerCellBorder} align="center">{s.third_term || '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.first_term ?? '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.second_term ?? '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.third_term ?? '-'}</TableCell>
+                          <TableCell style={innerCellBorder} align="center">{s.weighted_annual ?? '-'}</TableCell>
                         </>
                       )}
                       <TableCell style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.grade ?? '-'}</TableCell>

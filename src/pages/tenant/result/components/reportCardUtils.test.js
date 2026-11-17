@@ -50,4 +50,73 @@ describe('buildReportProp third-term columns', () => {
 
     expect(report.subjects[0].first_term).toBe(0);
   });
+
+  it('averages the terms the student sat, instead of summing them', () => {
+    const report = buildReportProp(
+      reportWith({ first_term_score: 72, second_term_score: 68, third_term_score: 80 }),
+    );
+
+    expect(report.subjects[0].weighted_annual).toBe(73.33);
+  });
+
+  it('only counts the terms that have a score', () => {
+    const report = buildReportProp(reportWith({ first_term_score: 72, third_term_score: 80 }));
+
+    expect(report.subjects[0].weighted_annual).toBe(76);
+  });
+
+  it('averages a mid-session entrant over the terms sat, not all three', () => {
+    const report = buildReportProp(reportWith({ second_term_score: 70, third_term_score: 80 }));
+
+    expect(report.subjects[0].weighted_annual).toBe(75);
+  });
+
+  it('re-bases the term weights for a student who joined in the second term', () => {
+    const report = buildReportProp({
+      ...reportWith({ second_term_score: 70, third_term_score: 80 }),
+      mark_config: {
+        exam_max_score: 70,
+        ca_max_score: 30,
+        ca_content: [],
+        term_percentage: { first_term: 30, second_term: 30, third_term: 40 },
+      },
+    });
+
+    // (70*30 + 80*40) / (30 + 40) — the unused 1st term weight is not lost.
+    expect(report.subjects[0].weighted_annual).toBe(75.71);
+  });
+
+  it('weights the terms when the mark configuration sets term percentages', () => {
+    const report = buildReportProp({
+      ...reportWith({ first_term_score: 90, second_term_score: 60, third_term_score: 70 }),
+      mark_config: {
+        exam_max_score: 70,
+        ca_max_score: 30,
+        ca_content: [],
+        term_percentage: { first_term: 20, second_term: 30, third_term: 50 },
+      },
+    });
+
+    expect(report.subjects[0].weighted_annual).toBe(71);
+  });
+
+  it('never reports more than 100 for the weighted annual score', () => {
+    const report = buildReportProp({
+      ...reportWith({ first_term_score: 100, second_term_score: 100, third_term_score: 100 }),
+      mark_config: {
+        exam_max_score: 70,
+        ca_max_score: 30,
+        ca_content: [],
+        term_percentage: { first_term: 60, second_term: 60, third_term: 60 },
+      },
+    });
+
+    expect(report.subjects[0].weighted_annual).toBe(100);
+  });
+
+  it('leaves the weighted annual score null when the student has no term scores', () => {
+    const report = buildReportProp(reportWith({}));
+
+    expect(report.subjects[0].weighted_annual).toBeNull();
+  });
 });

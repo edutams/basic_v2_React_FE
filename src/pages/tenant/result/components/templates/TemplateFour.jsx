@@ -138,6 +138,12 @@ const TemplateFour = ({ student, report, sessionTerm, className, gradeScale }) =
                           ))}
                         </TableRow>
                       ))}
+                      <TableRow>
+                        <TableCell style={{ ...innerCellBorder, fontSize: 13 }}>Weighted Annual Score</TableCell>
+                        {report.subjects.map((s, i) => (
+                          <TableCell key={i} style={{ ...innerCellBorder, textAlign: 'center', fontWeight: 700 }}>{s.weighted_annual ?? '-'}</TableCell>
+                        ))}
+                      </TableRow>
                     </>
                   )}
                   <TableRow>

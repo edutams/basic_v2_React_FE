@@ -133,6 +133,53 @@ export const caColumnsFor = (report, subjects = []) => {
     }));
 };
 
+// Configured 1st/2nd/3rd term weights (the mark configuration's
+// "term_percentage" JSON, e.g. { first_term: 30, second_term: 30,
+// third_term: 40 }). v2 has no term-percentage setup of its own, so this is
+// normally absent and the terms are averaged instead.
+const parseTermPercentages = (markConfig) => {
+  let raw = markConfig?.term_percentage;
+  if (!raw) return null;
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch (error) {
+      return null;
+    }
+  }
+  return typeof raw === 'object' ? raw : null;
+};
+
+// Weighted annual score (100%) — the subject's total for the whole session,
+// expressed out of 100. It is a percentage capped at 100, NOT the sum of
+// three 100-mark terms.
+//
+// It is scaled over the terms the student actually sat, so a learner who
+// joined in the 2nd term (no 1st term result) is not averaged over three
+// terms / does not lose the 1st term's weight — their own ceilings are
+// re-based to 100. Without configured term weights that is the plain average
+// of the terms present; with them it is the weighted average scaled by the
+// weights of those same terms.
+const weightedAnnualScore = (subject, markConfig) => {
+  const terms = [
+    ['first_term', subject.first_term_score],
+    ['second_term', subject.second_term_score],
+    ['third_term', subject.third_term_score],
+  ].filter(([, score]) => score !== null && score !== undefined);
+  if (terms.length === 0) return null;
+
+  const percentages = parseTermPercentages(markConfig);
+  const weights = terms.map(([key]) => (percentages ? Number(percentages[key] || 0) : 1));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+
+  const total =
+    totalWeight > 0
+      ? terms.reduce((sum, [, score], idx) => sum + Number(score || 0) * weights[idx], 0) / totalWeight
+      : terms.reduce((sum, [, score]) => sum + Number(score || 0), 0) / terms.length;
+
+  return Math.round(Math.min(100, total) * 100) / 100;
+};
+
 // CA total for one subject: the server-computed `ca_total`, falling back to
 // adding the individual CA scores when it is missing.
 export const caTotal = (subject) => {
@@ -178,6 +225,9 @@ export const buildReportProp = (report) => {
     subject.first_term = s.first_term_score ?? null;
     subject.second_term = s.second_term_score ?? null;
     subject.third_term = s.third_term_score ?? null;
+    // Weighted annual score (100%), computed the way basic v1 does (see
+    // weightedAnnualScore above) — a percentage, not a running sum.
+    subject.weighted_annual = weightedAnnualScore(s, report.mark_config);
     return subject;
   });
 

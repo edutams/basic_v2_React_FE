@@ -6,16 +6,17 @@ import ImpersonationBar from './vertical/header/ImpersonationBar';
 import SubscriptionBanner from './vertical/header/SubscriptionBanner';
 import SchoolSidebar from './vertical/sidebar/SchoolSidebar';
 import Customizer from '../landlord/shared/customizer/Customizer';
-import DashboardFooter from '../../components/shared/DashboardFooter';
+import DashboardFooter from '@/components/shared/DashboardFooter';
 import { CustomizerContext } from 'src/context/CustomizerContext';
-import { TenantAuthContext } from '../../context/TenantContext/auth';
-import { useSnackbar } from '../../context/SnackbarContext';
+import { TenantAuthContext } from '@/context/TenantContext/auth';
+import { useSnackbar } from '@/context/SnackbarContext';
 import Navigation from './horizontal/navbar/SchoolNavigation';
 import HorizontalHeader from './horizontal/header/SchoolHeader';
-import ScrollToTop from '../../components/shared/ScrollToTop';
-import AccountLockedScreen from '../../components/protectedroutes/AccountLockedScreen';
+import ScrollToTop from '@/components/shared/ScrollToTop';
+import SupportChatWidget from '@/components/shared/SupportChatWidget';
+import AccountLockedScreen from '@/components/protectedroutes/AccountLockedScreen';
 import { isAdminTier, isSubscriptionOwner } from '@/utils/roleLabels';
-// import LoadingBar from '../../LoadingBar';
+// import LoadingBar from '@/LoadingBar';
 import config from 'src/context/config';
 
 const MainWrapper = styled('div')(() => ({
@@ -116,6 +117,7 @@ const SchoolLayout = () => {
   return (
     <>
       {/* <LoadingBar /> */}
+      <SupportChatWidget />
 
       <MainWrapper>
         {activeLayout === 'horizontal' ? '' : <SchoolSidebar />}

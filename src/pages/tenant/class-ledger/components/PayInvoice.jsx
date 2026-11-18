@@ -99,6 +99,9 @@ const PayInvoice = () => {
   const [loadingOptionalPayments, setLoadingOptionalPayments] = useState(false);
   const [selectedOptionalIds, setSelectedOptionalIds] = useState(new Set());
   const [savedOptionalIds, setSavedOptionalIds] = useState(new Set());
+  /* How many of each selected variant — e.g. "School Bag: Large" x3.
+     Keyed by option_id; a selected option with no entry here defaults to 1. */
+  const [optionalQuantities, setOptionalQuantities] = useState({});
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState('');
@@ -232,6 +235,13 @@ const PayInvoice = () => {
       /* Use persisted savedOptionalIds as the source of truth for pre-selection */
       const preSelected = new Set([...savedOptionalIds]);
       setSelectedOptionalIds(preSelected);
+      setOptionalQuantities((prev) => {
+        const next = {};
+        preSelected.forEach((id) => {
+          next[id] = prev[id] || 1;
+        });
+        return next;
+      });
     } catch (err) {
       console.error('Failed to load optional payments', err);
       setOptionalPaymentList([]);
@@ -252,6 +262,18 @@ const PayInvoice = () => {
       next.has(optionId) ? next.delete(optionId) : next.add(optionId);
       return next;
     });
+    setOptionalQuantities((prev) => {
+      if (prev[optionId]) {
+        const { [optionId]: _removed, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [optionId]: 1 };
+    });
+  };
+
+  const handleOptionalQuantityChange = (optionId, quantity) => {
+    const safeQuantity = Math.max(1, Math.floor(Number(quantity)) || 1);
+    setOptionalQuantities((prev) => ({ ...prev, [optionId]: safeQuantity }));
   };
 
   const handleToggleAllOptional = () => {
@@ -261,20 +283,38 @@ const PayInvoice = () => {
     });
     setSelectedOptionalIds((prev) => {
       const isAllSelected = prev.size === allIds.size && [...allIds].every((id) => prev.has(id));
-      return isAllSelected ? new Set() : allIds;
+
+      if (isAllSelected) {
+        setOptionalQuantities({});
+        return new Set();
+      }
+
+      setOptionalQuantities((prevQty) => {
+        const next = { ...prevQty };
+        allIds.forEach((id) => {
+          next[id] = next[id] || 1;
+        });
+        return next;
+      });
+
+      return allIds;
     });
   };
 
   const handleAddOptionalPayments = async () => {
     if (!invoiceId || !user_id) return;
     const optionPaymentIds = [...selectedOptionalIds];
+    const options = optionPaymentIds.map((optionId) => ({
+      option_id: optionId,
+      quantity: optionalQuantities[optionId] || 1,
+    }));
     handleCloseOptionalModal();
 
     try {
       const res = await saveStudentOptionalPayments({
         invoice_number: Number(invoiceId),
         user_id,
-        option_payment_ids: optionPaymentIds,
+        options,
       });
       if (res?.success) {
         /* Immediately persist the saved IDs so they show checked on modal reopen */
@@ -296,7 +336,11 @@ const PayInvoice = () => {
 
   const totalSelectedOptionalAmount = allOptionalItems
     .filter((opt) => selectedOptionalIds.has(opt.option_id))
-    .reduce((sum, opt) => sum + (Number(opt.amount) || 0), 0);
+    .reduce(
+      (sum, opt) =>
+        sum + (Number(opt.amount) || 0) * (optionalQuantities[opt.option_id] || 1),
+      0,
+    );
 
   /* ───────────────────────────────────────────── */
   /* DATA FETCHING                                */
@@ -403,14 +447,20 @@ const PayInvoice = () => {
       }));
       setOptFees(mappedOpt);
 
-      /* Sync savedOptionalIds from API response so pre-selection persists */
+      /* Sync savedOptionalIds (and their saved quantities) from API response
+         so pre-selection, including "x3", persists across modal reopens. */
       const selectedIds = new Set();
+      const selectedQuantities = {};
       mappedOpt.forEach((fee) => {
         (fee.selectedOptions || []).forEach((opt) => {
-          if (opt.option_id) selectedIds.add(opt.option_id);
+          if (opt.option_id) {
+            selectedIds.add(opt.option_id);
+            selectedQuantities[opt.option_id] = Number(opt.quantity) || 1;
+          }
         });
       });
       setSavedOptionalIds(selectedIds);
+      setOptionalQuantities((prev) => ({ ...selectedQuantities, ...prev }));
 
       setDataLoaded(true);
     } catch (err) {
@@ -1178,11 +1228,14 @@ const PayInvoice = () => {
                                 typeof opt === 'number'
                                   ? fee.optionsPool?.find((o) => o.option_id === opt)
                                   : opt;
+                              const quantity = Number(optionData?.quantity) || 1;
+                              const lineAmount =
+                                optionData?.line_amount ?? (optionData?.amount || 0) * quantity;
 
                               return (
                                 <Chip
                                   key={optionData?.option_id || oi}
-                                  label={`${optionData?.option_name || 'Option'} : ₦${format(optionData?.amount || 0)}`}
+                                  label={`${optionData?.option_name || 'Option'}${quantity > 1 ? ` x${quantity}` : ''} : ₦${format(lineAmount)}`}
                                   size="small"
                                   variant="outlined"
                                   color="primary"
@@ -1683,53 +1736,91 @@ const PayInvoice = () => {
                     {group.payment_name}
                   </Typography>
                   <Stack spacing={0.5} sx={{ pl: 1 }}>
-                    {group.options.map((opt) => (
-                      <FormControlLabel
-                        key={opt.option_id}
-                        control={
-                          <Checkbox
-                            checked={selectedOptionalIds.has(opt.option_id)}
-                            onChange={() => handleToggleOptionalItem(opt.option_id)}
-                            size="small"
-                            color="primary"
+                    {group.options.map((opt) => {
+                      const isSelected = selectedOptionalIds.has(opt.option_id);
+                      const quantity = optionalQuantities[opt.option_id] || 1;
+                      const unitAmount = Number(opt.amount) || 0;
+
+                      return (
+                        <Box key={opt.option_id} display="flex" alignItems="center" gap={1}>
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={isSelected}
+                                onChange={() => handleToggleOptionalItem(opt.option_id)}
+                                size="small"
+                                color="primary"
+                              />
+                            }
+                            label={
+                              <Box
+                                display="flex"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                width="100%"
+                                sx={{ minWidth: { xs: 140, sm: 200 } }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  noWrap
+                                  sx={{
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    mr: 1,
+                                    minWidth: 0,
+                                  }}
+                                >
+                                  {opt.option_name}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  fontWeight={700}
+                                  color="text.secondary"
+                                  sx={{
+                                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  ₦{(unitAmount * quantity).toLocaleString()}
+                                  {quantity > 1 && ` (${quantity} × ₦${unitAmount.toLocaleString()})`}
+                                </Typography>
+                              </Box>
+                            }
+                            sx={{ mx: 0, flex: 1, '& .MuiFormControlLabel-label': { width: '100%' } }}
                           />
-                        }
-                        label={
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            width="100%"
-                            sx={{ minWidth: { xs: 180, sm: 250 } }}
-                          >
-                            <Typography
-                              variant="body2"
-                              noWrap
-                              sx={{
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                mr: 1,
-                                minWidth: 0,
-                              }}
-                            >
-                              {opt.option_name}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              fontWeight={700}
-                              color="text.secondary"
-                              sx={{
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                              }}
-                            >
-                              ₦{(Number(opt.amount) || 0).toLocaleString()}
-                            </Typography>
-                          </Box>
-                        }
-                        sx={{ mx: 0, '& .MuiFormControlLabel-label': { width: '100%' } }}
-                      />
-                    ))}
+                          {isSelected && (
+                            <Box display="flex" flexDirection="column" alignItems="center" flexShrink={0}>
+                              <TextField
+                                type="number"
+                                size="small"
+                                label="Qty"
+                                value={quantity}
+                                onChange={(e) =>
+                                  handleOptionalQuantityChange(opt.option_id, e.target.value)
+                                }
+                                inputProps={{ min: 1, style: { textAlign: 'center' } }}
+                                sx={{
+                                  width: 76,
+                                  '& .MuiOutlinedInput-root': {
+                                    bgcolor: 'warning.lighter',
+                                    '& fieldset': { borderColor: 'warning.main', borderWidth: 1.5 },
+                                    '&:hover fieldset': { borderColor: 'warning.main' },
+                                    '&.Mui-focused fieldset': { borderColor: 'warning.main' },
+                                  },
+                                  '& .MuiInputLabel-root': { color: 'warning.dark', fontWeight: 600 },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ color: 'warning.dark', fontWeight: 600, mt: 0.25, whiteSpace: 'nowrap' }}
+                              >
+                                How many?
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })}
                   </Stack>
                 </Box>
               ))}

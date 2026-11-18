@@ -108,3 +108,13 @@ export const cancelPlan = async (tenantId) => {
   const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans/cancel`);
   return res.data;
 };
+
+// Manual circuit-breaker for a domain that's stuck — a run that settled at
+// 'failed' has no automatic path back (advancePlan() only ever starts a
+// domain with no run yet); a still-'running' domain only gets force-resumed
+// here if its lease has genuinely expired, same safety check the 5-minute
+// watchdog itself relies on.
+export const retryDomain = async (tenantId, domain) => {
+  const res = await api.post(`/v1/landlord/data-migration/${tenantId}/plans/retry`, { domain });
+  return res.data;
+};

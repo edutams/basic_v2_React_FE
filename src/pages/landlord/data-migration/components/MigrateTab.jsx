@@ -3,7 +3,7 @@ import { Alert, Box, Button, LinearProgress, Typography, useTheme } from '@mui/m
 import { IconAlertTriangle, IconCheck, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
 import { DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
-import { fetchPlanStatus, pausePlan, resumePlan, cancelPlan } from '@/api/landlord/dataMigration/dataMigrationApi';
+import { fetchPlanStatus, pausePlan, resumePlan, cancelPlan, retryDomain } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -126,6 +126,23 @@ const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
       await poll();
     } catch (e) {
       setActionError(e?.response?.data?.message || e?.message || 'That action failed — please try again.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Manual circuit-breaker for one domain — unlike pause/resume/cancel
+  // above (which act on the whole plan and return it), this returns the
+  // retried MigrationRun itself, so it refreshes via poll() rather than
+  // overwriting `plan` with the wrong shape.
+  const handleRetry = async (domain) => {
+    setActionLoading(true);
+    setActionError('');
+    try {
+      await retryDomain(tenantId, domain);
+      await poll();
+    } catch (e) {
+      setActionError(e?.response?.data?.message || e?.message || 'Could not retry this domain — please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -287,6 +304,17 @@ const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
                   <Typography sx={{ fontSize: 12.5, color: run?.status === 'failed' ? '#DC2626' : '#0f172a', fontWeight: 600 }}>
                     {detailFor(run)}
                   </Typography>
+                  {run?.status === 'failed' && (
+                    <Button
+                      size="small"
+                      variant="text"
+                      disabled={actionLoading}
+                      onClick={() => handleRetry(domain)}
+                      sx={{ textTransform: 'none', fontWeight: 700, fontSize: 12, flexShrink: 0, minWidth: 0, px: 1 }}
+                    >
+                      Retry
+                    </Button>
+                  )}
                 </Box>
                 {run?.status === 'running' && (
                   <LinearProgress

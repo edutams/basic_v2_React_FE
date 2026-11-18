@@ -40,6 +40,8 @@ import {
   Tune as TuneIcon,
   SwapHoriz as MigrateIcon,
   SyncAlt as SyncAltIcon,
+  MoreHoriz as OptionsIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import ReusableModal from '@/components/shared/ReusableModal';
 import {
@@ -99,6 +101,8 @@ const ScheduleCell = ({
   onToggle,
   onDelete,
   disabled,
+  isOptional,
+  onManageOptions,
 }) => {
   const hasSchedule = Boolean(cat.schedule_id);
   const isInactive = hasSchedule && cat.status === 'inactive';
@@ -284,6 +288,24 @@ const ScheduleCell = ({
           </Select>
         </FormControl>
       )}
+      {/* Optional payments can be priced as named variants (e.g. "School
+       * Bag" -> Large ₦2,500 / Medium ₦1,500) instead of one flat amount —
+       * only relevant for Optional items, and only once a category is
+       * actually scheduled. */}
+      {isOptional && hasSchedule && (
+        <Button
+          size="small"
+          variant="text"
+          onClick={onManageOptions}
+          disabled={disabled}
+          startIcon={<OptionsIcon sx={{ fontSize: 14 }} />}
+          sx={{ pl: '38px', justifyContent: 'flex-start', fontSize: 11, textTransform: 'none' }}
+        >
+          {cat.options?.length > 0
+            ? `${cat.options.length} option${cat.options.length === 1 ? '' : 's'}`
+            : 'No variants — flat fee'}
+        </Button>
+      )}
     </Box>
   );
 };
@@ -320,6 +342,159 @@ const ConfirmDialog = ({
     </DialogActions>
   </Dialog>
 );
+
+/**
+ * Define an Optional payment item's priced variants for one category — e.g.
+ * "School Bag" -> Large ₦2,500 / Medium ₦1,500 — instead of a single flat
+ * amount. With zero variants, it's just a flat fee and the amount field
+ * stays directly editable; the moment one variant is added, the total
+ * becomes the sum of the variants and the flat field is disabled, so the
+ * two can never disagree with each other.
+ */
+const ManageScheduleOptionsDialog = ({ open, schedule, categoryData, saving, onClose, onSave }) => {
+  const [options, setOptions] = useState([]);
+  const [flatAmount, setFlatAmount] = useState('');
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (open && categoryData) {
+      setOptions((categoryData.options || []).map((opt) => ({ ...opt })));
+      setFlatAmount(
+        (categoryData.options || []).length === 0 ? String(categoryData.amount || '') : '',
+      );
+      setErrors({});
+    }
+  }, [open, categoryData]);
+
+  const handleAddRow = () => {
+    setOptions((prev) => [...prev, { option_name: '', amount: '' }]);
+  };
+
+  const handleRemoveRow = (idx) => {
+    setOptions((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleRowChange = (idx, field, value) => {
+    setOptions((prev) => prev.map((opt, i) => (i === idx ? { ...opt, [field]: value } : opt)));
+  };
+
+  const total = options.reduce((sum, opt) => sum + (parseFloat(opt.amount) || 0), 0);
+
+  const validate = () => {
+    const newErrors = {};
+    if (options.length === 0) {
+      if (!flatAmount || parseFloat(flatAmount) <= 0) {
+        newErrors.flatAmount = 'Enter a flat amount, or add at least one variant';
+      }
+    } else {
+      options.forEach((opt, idx) => {
+        if (!opt.option_name || !opt.option_name.trim()) {
+          newErrors[`${idx}_name`] = 'Name required';
+        }
+        if (!opt.amount || parseFloat(opt.amount) <= 0) {
+          newErrors[`${idx}_amount`] = 'Amount required';
+        }
+      });
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (!validate()) return;
+    onSave(options, flatAmount);
+  };
+
+  return (
+    <Dialog open={open} onClose={() => !saving && onClose()} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ fontWeight: 600 }}>
+        Payment Options — {schedule?.payment_name?.name}
+        {categoryData?.name ? ` (${categoryData.name})` : ''}
+      </DialogTitle>
+      <DialogContent>
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Give this optional payment named, individually-priced variants (e.g. "Large" / "Medium")
+          for students to choose from, or leave it as a single flat amount.
+        </Alert>
+
+        {options.length === 0 && (
+          <TextField
+            fullWidth
+            size="small"
+            type="number"
+            label="Flat amount"
+            value={flatAmount}
+            onChange={(e) => setFlatAmount(e.target.value)}
+            error={!!errors.flatAmount}
+            helperText={errors.flatAmount}
+            InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+            sx={{ mb: 2 }}
+          />
+        )}
+
+        <Stack spacing={1.5}>
+          {options.map((opt, idx) => (
+            <Stack key={idx} direction="row" spacing={1} alignItems="flex-start">
+              <TextField
+                size="small"
+                label="Variant name"
+                placeholder="e.g. Large"
+                value={opt.option_name}
+                onChange={(e) => handleRowChange(idx, 'option_name', e.target.value)}
+                error={!!errors[`${idx}_name`]}
+                helperText={errors[`${idx}_name`]}
+                fullWidth
+              />
+              <TextField
+                size="small"
+                type="number"
+                label="Amount"
+                value={opt.amount}
+                onChange={(e) => handleRowChange(idx, 'amount', e.target.value)}
+                error={!!errors[`${idx}_amount`]}
+                helperText={errors[`${idx}_amount`]}
+                InputProps={{ startAdornment: <InputAdornment position="start">₦</InputAdornment> }}
+                sx={{ width: 160 }}
+              />
+              <IconButton size="small" onClick={() => handleRemoveRow(idx)} sx={{ mt: 0.5 }}>
+                <DeleteIcon fontSize="small" color="error" />
+              </IconButton>
+            </Stack>
+          ))}
+        </Stack>
+
+        <Button
+          size="small"
+          startIcon={<AddIcon fontSize="small" />}
+          onClick={handleAddRow}
+          sx={{ mt: 1.5, textTransform: 'none' }}
+        >
+          Add variant
+        </Button>
+
+        {options.length > 0 && (
+          <Typography variant="body2" fontWeight={600} sx={{ mt: 2 }}>
+            Total: ₦{new Intl.NumberFormat('en-NG').format(total)}
+          </Typography>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+        <Button
+          variant="contained"
+          size="small"
+          color="inherit"
+          onClick={onClose}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+        <Button size="small" variant="contained" onClick={handleSubmit} disabled={saving}>
+          {saving ? 'Saving...' : 'Save'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 const PaymentScheduleGrid = ({
   showSnackbar,
@@ -368,6 +543,13 @@ const PaymentScheduleGrid = ({
     categoryData: null,
   });
   const [paidStudents, setPaidStudents] = useState({ loading: false, data: null });
+
+  const [optionsDialog, setOptionsDialog] = useState({
+    open: false,
+    schedule: null,
+    categoryData: null,
+  });
+  const [savingOptions, setSavingOptions] = useState(false);
 
   const [bulkModal, setBulkModal] = useState(false);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
@@ -433,6 +615,11 @@ const PaymentScheduleGrid = ({
               bursary_installment_id: schedule.bursary_installment_id,
               status: schedule.status,
               invoices_count: schedule.invoices_count || 0,
+              options: (schedule.options || []).map((opt) => ({
+                id: opt.id,
+                option_name: opt.option_name,
+                amount: opt.amount,
+              })),
             })) || [];
 
           const scheduledIds = new Set(scheduledCategories.map((c) => c.id));
@@ -446,6 +633,7 @@ const PaymentScheduleGrid = ({
               bursary_installment_id: null,
               status: null,
               invoices_count: 0,
+              options: [],
             }));
 
           // Keep column order stable and matching allCategories, regardless
@@ -609,6 +797,7 @@ const PaymentScheduleGrid = ({
               amount: saved.amount,
               status: saved.status,
               bursary_installment_id: saved.bursary_installment_id,
+              ...(saved.options !== undefined && { options: saved.options }),
             });
           });
         }),
@@ -709,6 +898,7 @@ const PaymentScheduleGrid = ({
             status: null,
             invoices_count: 0,
             bursary_installment_id: null,
+            options: [],
           });
           refreshStats?.();
         } else {
@@ -778,6 +968,7 @@ const PaymentScheduleGrid = ({
                     status: null,
                     invoices_count: 0,
                     bursary_installment_id: null,
+                    options: [],
                   })),
                 }),
           ),
@@ -824,6 +1015,70 @@ const PaymentScheduleGrid = ({
     }
   };
 
+  const handleOpenOptionsDialog = (schedule, categoryData) => {
+    setOptionsDialog({ open: true, schedule, categoryData });
+  };
+
+  const closeOptionsDialog = () => {
+    if (savingOptions) return;
+    setOptionsDialog({ open: false, schedule: null, categoryData: null });
+  };
+
+  // Saves this one category's named sub-options (and the flat amount they
+  // sum to) via the same batchUpsertPaymentSchedule endpoint the amount
+  // field already auto-saves through — `options` is explicitly included
+  // (even as []) so clearing every variant back to a flat fee is sent and
+  // persisted, not silently skipped.
+  const handleSaveOptions = async (options, flatAmount) => {
+    const { schedule, categoryData } = optionsDialog;
+    if (!schedule || !categoryData) return;
+
+    const hasOptions = options.length > 0;
+    const amount = hasOptions
+      ? options.reduce((sum, opt) => sum + (parseFloat(opt.amount) || 0), 0)
+      : parseFloat(flatAmount) || 0;
+
+    try {
+      setSavingOptions(true);
+      const res = await batchUpsertPaymentSchedule({
+        bursary_payment_name_id: schedule.payment_name.id,
+        session_id: sessionId,
+        term_id: activeTermId,
+        class_id: classId,
+        categories: [
+          {
+            category_id: categoryData.id,
+            amount,
+            ...(categoryData.schedule_id && { schedule_id: categoryData.schedule_id }),
+            options: options.map((opt) => ({
+              option_name: opt.option_name,
+              amount: parseFloat(opt.amount),
+            })),
+          },
+        ],
+      });
+
+      const saved = res?.data?.schedules?.[0];
+      if (saved) {
+        patchCategoryLocally(schedule.payment_name.id, categoryData.id, {
+          schedule_id: saved.schedule_id,
+          amount: saved.amount,
+          status: saved.status,
+          bursary_installment_id: saved.bursary_installment_id,
+          options: saved.options || [],
+        });
+      }
+
+      showSnackbar?.('Payment options saved', 'success');
+      refreshStats?.();
+      setOptionsDialog({ open: false, schedule: null, categoryData: null });
+    } catch (err) {
+      showSnackbar?.(err?.response?.data?.message || 'Failed to save payment options', 'error');
+    } finally {
+      setSavingOptions(false);
+    }
+  };
+
   const handleOpenBulkModal = () => {
     setBulkCategoryId('');
     setBulkAmount('');
@@ -862,6 +1117,7 @@ const PaymentScheduleGrid = ({
               amount: saved.amount,
               status: saved.status,
               bursary_installment_id: saved.bursary_installment_id,
+              ...(saved.options !== undefined && { options: saved.options }),
             });
           });
         }),
@@ -1186,6 +1442,11 @@ const PaymentScheduleGrid = ({
                             e.stopPropagation();
                             handleCategoryActionClick(schedule, cat, 'delete');
                           }}
+                          isOptional={String(schedule.pay_option).toLowerCase() === 'optional'}
+                          onManageOptions={(e) => {
+                            e.stopPropagation();
+                            handleOpenOptionsDialog(schedule, cat);
+                          }}
                         />
                       </TableCell>
                     ))}
@@ -1284,6 +1545,16 @@ const PaymentScheduleGrid = ({
           </span>
         </Tooltip>
       </Menu>
+
+      {/* Optional payment variant pricing */}
+      <ManageScheduleOptionsDialog
+        open={optionsDialog.open}
+        schedule={optionsDialog.schedule}
+        categoryData={optionsDialog.categoryData}
+        saving={savingOptions}
+        onClose={closeOptionsDialog}
+        onSave={handleSaveOptions}
+      />
 
       {/* Whole-item delete confirmation */}
       <ConfirmDialog

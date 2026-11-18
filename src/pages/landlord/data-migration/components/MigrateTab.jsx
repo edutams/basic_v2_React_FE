@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, LinearProgress, Typography, useTheme } from '@mui/material';
 import { IconAlertTriangle, IconCheck, IconInfoCircle, IconPlayerPause, IconPlayerPlay, IconX } from '@tabler/icons-react';
 import SectionPaper from '@/pages/tenant/data-migration/components/SectionPaper';
-import { DATA_TYPE_BY_KEY } from '@/pages/tenant/data-migration/domainTypes';
+import { DATA_TYPE_BY_KEY, dependencyNames } from '@/pages/tenant/data-migration/domainTypes';
 import { fetchPlanStatus, pausePlan, resumePlan, cancelPlan, retryDomain } from '@/api/landlord/dataMigration/dataMigrationApi';
 
 const POLL_INTERVAL_MS = 3000;
@@ -49,8 +49,16 @@ const StatusIcon = ({ status }) => {
   return <Box sx={{ width: 18, height: 18, borderRadius: '50%', border: '2px dashed #cbd5e1', flexShrink: 0 }} />;
 };
 
-const detailFor = (run) => {
+const detailFor = (run, waitingOnDeps) => {
   if (!run) {
+    // Confirmed live, 2026-11-18: this domain's run doesn't exist yet
+    // because it's genuinely blocked on one of ITS OWN dependencies, not
+    // because a worker just hasn't picked it up — naming it here instead
+    // of a bare "Queued…" is the whole point of waiting_on.
+    if (waitingOnDeps?.length) {
+      return `Waiting on ${dependencyNames(waitingOnDeps)}`;
+    }
+
     return 'Queued…';
   }
   if (run.status === 'pending') {
@@ -80,6 +88,7 @@ const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
   const isDark = theme.palette.mode === 'dark';
   const [plan, setPlan] = useState(null);
   const [runsByDomain, setRunsByDomain] = useState({});
+  const [waitingOn, setWaitingOn] = useState({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
@@ -94,6 +103,7 @@ const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
       if (res?.status) {
         setPlan(res.data?.plan || null);
         setRunsByDomain(res.data?.runs || {});
+        setWaitingOn(res.data?.waiting_on || {});
       }
     } catch (e) {
       // Swallowed — a transient failed poll just tries again next tick;
@@ -302,7 +312,7 @@ const MigrateTab = ({ tenantId, school, onContinue, onBack }) => {
                   <StatusIcon status={run?.status} />
                   <Typography sx={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{DATA_TYPE_BY_KEY[domain]?.name || domain}</Typography>
                   <Typography sx={{ fontSize: 12.5, color: run?.status === 'failed' ? '#DC2626' : '#0f172a', fontWeight: 600 }}>
-                    {detailFor(run)}
+                    {detailFor(run, waitingOn[domain])}
                   </Typography>
                   {run?.status === 'failed' && (
                     <Button

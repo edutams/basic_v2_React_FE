@@ -69,9 +69,9 @@ const ActionButton = ({ icon, label, onClick }) => (
       flex: 1,
       py: 0.75,
       borderRadius: 1.5,
-      border: '1px solid #E5E7EB',
+      border: '1px solid #D1D5DB',
       cursor: 'pointer',
-      '&:hover': { bgcolor: '#F9FAFB', borderColor: '#D1D5DB' },
+      '&:hover': { bgcolor: '#F9FAFB', borderColor: '#9CA3AF' },
     }}
   >
     <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>

@@ -117,6 +117,7 @@ const StatFigure = ({ value, label, color, notSet, achievedBy }) => (
           mt: 0.75,
           mx: 'auto',
           maxWidth: '100%',
+          overflow: 'hidden',
           px: 1,
           py: 0.5,
           borderRadius: 1.5,
@@ -124,8 +125,20 @@ const StatFigure = ({ value, label, color, notSet, achievedBy }) => (
             theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.035)',
         }}
       >
-        <Typography variant="caption" fontWeight={700} display="block" noWrap sx={{ color }}>
-          {achievedBy}
+        {/* Label and amount on their own lines, not joined inline — a long
+         * label (e.g. "(Returning) Boarder Staff Ward") combined with a
+         * large amount previously overflowed the card with `noWrap` on one
+         * line. The label itself still gets an ellipsis if it alone is too
+         * wide for the card. */}
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          sx={{ color, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+        >
+          {achievedBy.label}
+        </Typography>
+        <Typography variant="caption" fontWeight={700} sx={{ color, display: 'block' }}>
+          ({achievedBy.amount})
         </Typography>
       </Box>
     )}
@@ -625,7 +638,7 @@ const PaymentShedule = () => {
                         notSet={stats.schedule.total === 0}
                         achievedBy={
                           stats.studentCategory.minLabel !== 'N/A'
-                            ? `${stats.studentCategory.minLabel} — ₦${stats.studentCategory.withMinSchedule?.toLocaleString()}`
+                            ? { label: stats.studentCategory.minLabel, amount: `₦${stats.studentCategory.withMinSchedule?.toLocaleString()}` }
                             : null
                         }
                       />
@@ -637,7 +650,7 @@ const PaymentShedule = () => {
                         notSet={stats.schedule.total === 0}
                         achievedBy={
                           stats.studentCategory.maxLabel !== 'N/A'
-                            ? `${stats.studentCategory.maxLabel} — ₦${stats.studentCategory.withMaxSchedule?.toLocaleString()}`
+                            ? { label: stats.studentCategory.maxLabel, amount: `₦${stats.studentCategory.withMaxSchedule?.toLocaleString()}` }
                             : null
                         }
                       />
@@ -691,7 +704,7 @@ const PaymentShedule = () => {
                         notSet={stats.schedule.total === 0}
                         achievedBy={
                           stats.paymentName.minLabel !== 'N/A'
-                            ? `${stats.paymentName.minLabel} — ₦${stats.paymentName.withMinSchedule?.toLocaleString()}`
+                            ? { label: stats.paymentName.minLabel, amount: `₦${stats.paymentName.withMinSchedule?.toLocaleString()}` }
                             : null
                         }
                       />
@@ -703,7 +716,7 @@ const PaymentShedule = () => {
                         notSet={stats.schedule.total === 0}
                         achievedBy={
                           stats.paymentName.maxLabel !== 'N/A'
-                            ? `${stats.paymentName.maxLabel} — ₦${stats.paymentName.withMaxSchedule?.toLocaleString()}`
+                            ? { label: stats.paymentName.maxLabel, amount: `₦${stats.paymentName.withMaxSchedule?.toLocaleString()}` }
                             : null
                         }
                       />

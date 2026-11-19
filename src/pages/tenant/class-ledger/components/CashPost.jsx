@@ -150,7 +150,7 @@ const CashPost = () => {
     const payload = {
       user_id,
       session_term_id: targetSessionTermId,
-      invoice_id: invoiceId || null,
+      invoice_id: invoiceId ?? null,
       payment_type: paymentType,
       description: description.trim() || null,
       items: [...buildItems(compFees), ...buildItems(optFees)],
@@ -176,7 +176,10 @@ const CashPost = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchData = useCallback(async () => {
-    if (!user_id || !invoiceId) return;
+    // invoiceId can be the legitimate number 0 — only bail when it's
+    // genuinely absent, not just falsy, or this never leaves the loading
+    // spinner for students whose invoice was never assigned a real number.
+    if (!user_id || invoiceId == null) return;
 
     setLoading(true);
     setError('');

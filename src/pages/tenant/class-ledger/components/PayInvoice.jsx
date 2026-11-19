@@ -302,7 +302,7 @@ const PayInvoice = () => {
   };
 
   const handleAddOptionalPayments = async () => {
-    if (!invoiceId || !user_id) return;
+    if (invoiceId == null || !user_id) return;
     const optionPaymentIds = [...selectedOptionalIds];
     const options = optionPaymentIds.map((optionId) => ({
       option_id: optionId,
@@ -346,7 +346,10 @@ const PayInvoice = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchInvoiceData = useCallback(async () => {
-    if (!invoiceId || !user_id) return;
+    // invoiceId can be the legitimate number 0 — only bail when it's
+    // genuinely absent, not just falsy, or this never leaves the loading
+    // spinner for students whose invoice was never assigned a real number.
+    if (invoiceId == null || !user_id) return;
 
     setLoading(true);
     setError('');

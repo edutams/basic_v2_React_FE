@@ -65,8 +65,12 @@ const Invoice = () => {
   const routeParams = useParams();
   const [searchParams] = useSearchParams();
   const tokenParams = decodeLinkParams(searchParams.get('t'));
-  const invoiceId = tokenParams.invoiceId || routeParams.invoiceId;
-  const user_id = tokenParams.user_id || routeParams.user_id;
+  // `??`, not `||` — a migrated invoice's invoice_number can legitimately
+  // be 0 (never assigned a real number), which `||` would treat as absent
+  // and fall through to the (unset) route param, breaking the page for
+  // exactly those students.
+  const invoiceId = tokenParams.invoiceId ?? routeParams.invoiceId;
+  const user_id = tokenParams.user_id ?? routeParams.user_id;
   const navigate = useNavigate();
 
   /* DATA STATE */
@@ -309,7 +313,7 @@ const Invoice = () => {
   };
 
   const handleAddOptionalPayments = async () => {
-    if (!invoiceId || !user_id) return;
+    if (invoiceId == null || !user_id) return;
 
     // Capture selections + quantities before closing modal (state resets on close)
     const options = [...selectedOptionalIds].map((optionId) => ({
@@ -358,7 +362,10 @@ const Invoice = () => {
   /* DATA FETCHING                                */
   /* ───────────────────────────────────────────── */
   const fetchInvoiceData = useCallback(async () => {
-    if (!invoiceId || !user_id) return;
+    // invoiceId can be the legitimate number 0 — only bail when it's
+    // genuinely absent, not just falsy, or this never leaves the loading
+    // spinner for students whose invoice was never assigned a real number.
+    if (invoiceId == null || !user_id) return;
 
     setLoading(true);
     setError('');

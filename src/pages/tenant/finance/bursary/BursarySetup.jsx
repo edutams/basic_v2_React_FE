@@ -51,6 +51,13 @@ const BursarySetup = () => {
   // rather than assumed present.
   const [lastTermUpdate, setLastTermUpdate] = useState({ at: null, by: null });
 
+  // True when the bursary-specific active term setting points at a
+  // session_term that no longer exists (as opposed to simply never having
+  // been configured yet). Surfaced so the UI can say so explicitly instead
+  // of silently substituting the tenant-wide active term, which looks fine
+  // but isn't what fee collection is actually using.
+  const [activeTermStale, setActiveTermStale] = useState(false);
+
   // Stats data for different tabs
   const [bursaryStats, setBursaryStats] = useState({
     totalCategories: 0,
@@ -140,16 +147,30 @@ const BursarySetup = () => {
 
     if (activeTermRes?.status && activeTermRes.data) {
       // Bursary has its own explicitly-configured active session term.
+      setActiveTermStale(false);
       setSelectedSessionTerm(activeTermRes.data.session_term_id);
       setLastTermUpdate({
         at: activeTermRes.data.last_activated_at || null,
         by: activeTermRes.data.last_activated_by || null,
       });
-    } else if (termsRes?.status) {
-      // Not configured yet — default to whichever session term is
-      // currently active tenant-wide, so the dropdown isn't left blank.
-      const activeTerm = termsRes.data.find((sterm) => sterm.status === 'active');
-      if (activeTerm) setSelectedSessionTerm(activeTerm.id);
+    } else {
+      const reason = activeTermResult.reason?.response?.data?.reason;
+      if (reason === 'stale_reference') {
+        // The configured active term was deleted/replaced underneath it.
+        // Don't guess a replacement from the tenant-wide active term — that
+        // would look fine while fee collection is still broken. Leave the
+        // selection empty so nothing shows as "Currently Active" until an
+        // admin explicitly reactivates the correct term.
+        setActiveTermStale(true);
+        setSelectedSessionTerm('');
+        setLastTermUpdate({ at: null, by: null });
+      } else if (termsRes?.status) {
+        // Genuinely never configured — default to whichever session term
+        // is currently active tenant-wide, so the dropdown isn't left blank.
+        setActiveTermStale(false);
+        const activeTerm = termsRes.data.find((sterm) => sterm.status === 'active');
+        if (activeTerm) setSelectedSessionTerm(activeTerm.id);
+      }
     }
   };
 
@@ -406,6 +427,8 @@ const BursarySetup = () => {
           sessionTerms={sessionTerms}
           selectedSessionTerm={selectedSessionTerm}
           setSelectedSessionTerm={setSelectedSessionTerm}
+          activeTermStale={activeTermStale}
+          onActiveTermFixed={() => setActiveTermStale(false)}
           lastTermUpdate={lastTermUpdate}
           onStatsChange={setBursaryStats}
           onLoadingChange={setBursaryStatsLoading}

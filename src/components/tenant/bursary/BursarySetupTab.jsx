@@ -236,6 +236,8 @@ const BursarySetupTab = ({
   sessionTerms,
   selectedSessionTerm,
   setSelectedSessionTerm,
+  activeTermStale,
+  onActiveTermFixed,
   lastTermUpdate,
   onStatsChange,
   onLoadingChange,
@@ -484,6 +486,7 @@ const BursarySetupTab = ({
     try {
       const res = await setActiveSessionTerm(sessionTermId);
       setSelectedSessionTerm(sessionTermId);
+      onActiveTermFixed?.();
       showSnackbar(res.message || 'Bursary active term updated successfully');
     } catch {
       showSnackbar('Failed to update bursary active term', 'error');
@@ -784,6 +787,14 @@ const BursarySetupTab = ({
                 title={`Activate Term for ${viewSession?.session_name || '—'}`}
                 subtitle="Select and activate the term for fee collection."
               />
+
+              {activeTermStale && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  The active term configured for fee collection could not be found (it may have
+                  been removed or replaced). Fee collection is not using any term right now —
+                  select and activate the correct term below to fix this.
+                </Alert>
+              )}
 
               {sessionsLoading ? (
                 <Stack spacing={1.5}>

@@ -76,21 +76,23 @@ const Sidebar = () => {
           <Box
             sx={{
               height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             {/* ------------------------------------------- */}
             {/* Logo */}
             {/* ------------------------------------------- */}
-            <Box px={3}>
+            <Box px={3} sx={{ flexShrink: 0 }}>
               <Logo />
             </Box>
-            <Scrollbar sx={{ height: 'calc(100% - 244px)' }}>
+            <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
               {/* ------------------------------------------- */}
               {/* Sidebar Items */}
               {/* ------------------------------------------- */}
               <SidebarItems />
             </Scrollbar>
-            {isCollapse === "full-sidebar" ? <Box sx={{ px: 3, pb: 3 }}>
+            {isCollapse === "full-sidebar" ? <Box sx={{ px: 3, pb: 3, flexShrink: 0 }}>
               {/* <SidebarProfile /> */}
             </Box> : ''}
 

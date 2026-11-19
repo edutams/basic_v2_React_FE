@@ -68,12 +68,14 @@ const SchoolSidebar = () => {
           <Box
             sx={{
               height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <Box px={3}>
+            <Box px={3} sx={{ flexShrink: 0 }}>
               <Logo logoUrl={tenantInfo?.logo_url} />
             </Box>
-            <Scrollbar sx={{ height: 'calc(100% - 244px)' }}>
+            <Scrollbar sx={{ flex: 1, minHeight: 0 }}>
               <SchoolSidebarItems />
             </Scrollbar>
           </Box>

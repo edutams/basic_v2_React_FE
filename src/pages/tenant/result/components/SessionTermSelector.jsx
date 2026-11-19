@@ -32,7 +32,8 @@ const SessionTermSelector = ({ onSessionTermChange, loading: externalLoading, ri
         setSessions(list);
 
         if (list.length > 0) {
-          setSelectedSession(String(list[0].id));
+          const active = list.find((s) => s.status === 'active');
+          setSelectedSession(String((active ?? list[0]).id));
         } else {
           setError('No sessions found. Please create a session first.');
         }

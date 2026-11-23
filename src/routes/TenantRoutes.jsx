@@ -183,6 +183,10 @@ const PaySchoolFees = Loadable(
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
 );
+const Invoicing = Loadable(lazy(() => import('@/pages/tenant/finance/invoicing/Invoicing')));
+const VendorProfile = Loadable(
+  lazy(() => import('@/pages/tenant/finance/vendor-management/VendorProfile')),
+);
 const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
 const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
 const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
@@ -649,6 +653,22 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="chart_of_accounts.index">
             <ChartOfAccounts />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'invoicing',
+        element: (
+          <TenantProtectedRoute permission="invoicing.index">
+            <Invoicing />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'vendor-profile',
+        element: (
+          <TenantProtectedRoute permission="vendor_manager.profile.index">
+            <VendorProfile />
           </TenantProtectedRoute>
         ),
       },

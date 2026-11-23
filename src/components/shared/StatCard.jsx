@@ -93,6 +93,9 @@ const StatCard = ({
   icon: Icon,
   color,
   colorIndex = 0,
+  iconBg,
+  iconColor,
+  valueColor,
   loading,
   subtitle,
   onClick,
@@ -108,7 +111,10 @@ const StatCard = ({
   const { isCardShadow } = useContext(CustomizerContext);
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
-  const scheme = schemeMap[colorIndex % schemeMap.length];
+  const scheme = {
+    bg: iconBg ?? schemeMap[colorIndex % schemeMap.length].bg,
+    color: iconColor ?? schemeMap[colorIndex % schemeMap.length].color,
+  };
   const isLeft = align === 'left';
 
   if (loading) {
@@ -249,7 +255,7 @@ const StatCard = ({
               lineHeight: 1,
               letterSpacing: '-0.02em',
               mt: isLeft ? 0.5 : 0,
-              color: isDark ? '#fff' : scheme.color,
+              color: isDark ? '#fff' : (valueColor ?? scheme.color),
             }}
           >
             {count}
@@ -348,6 +354,9 @@ StatCard.propTypes = {
   icon: PropTypes.elementType.isRequired,
   color: PropTypes.string,
   colorIndex: PropTypes.number,
+  iconBg: PropTypes.string,
+  iconColor: PropTypes.string,
+  valueColor: PropTypes.string,
   loading: PropTypes.bool,
   onClick: PropTypes.func,
   tooltip: PropTypes.node,

@@ -94,6 +94,8 @@ const iconMapper = {
   Door: IconDoor,
   LayoutGrid: IconLayoutGrid,
   UserSearch: IconUserSearch,
+  UserCircle: IconUserCircle,
+  Category: IconClipboardList,
 };
 
 const SchoolSidebarItems = () => {

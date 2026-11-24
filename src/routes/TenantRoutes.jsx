@@ -187,6 +187,15 @@ const Invoicing = Loadable(lazy(() => import('@/pages/tenant/finance/invoicing/I
 const VendorProfile = Loadable(
   lazy(() => import('@/pages/tenant/finance/vendor-management/VendorProfile')),
 );
+const PostExpenditure = Loadable(
+  lazy(() => import('@/pages/tenant/finance/expenditure/PostExpenditure')),
+);
+const IncomeExpenditureReport = Loadable(
+  lazy(() => import('@/pages/tenant/finance/reports/IncomeExpenditureReport')),
+);
+const BalanceSheetReport = Loadable(
+  lazy(() => import('@/pages/tenant/finance/reports/balance-sheet/BalanceSheetReport')),
+);
 const ResultModule = Loadable(lazy(() => import('@/pages/tenant/result/ResultModule')));
 const ScoreManagerPage = Loadable(lazy(() => import('@/pages/tenant/result/ScoreManagerPage')));
 const UploadScoresPage = Loadable(lazy(() => import('@/pages/tenant/result/UploadScoresPage')));
@@ -669,6 +678,30 @@ const TenantRoutes = [
         element: (
           <TenantProtectedRoute permission="vendor_manager.profile.index">
             <VendorProfile />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'post-expenditure',
+        element: (
+          <TenantProtectedRoute permission="expenditure_manager.post_expenditure.index">
+            <PostExpenditure />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'reports/income-expenditure',
+        element: (
+          <TenantProtectedRoute permission="finance_reports.income_expenditure.index">
+            <IncomeExpenditureReport />
+          </TenantProtectedRoute>
+        ),
+      },
+      {
+        path: 'reports/balance-sheet',
+        element: (
+          <TenantProtectedRoute permission="finance_reports.balance_sheet.index">
+            <BalanceSheetReport />
           </TenantProtectedRoute>
         ),
       },

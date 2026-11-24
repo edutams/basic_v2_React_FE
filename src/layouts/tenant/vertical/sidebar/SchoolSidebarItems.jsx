@@ -47,6 +47,8 @@ import {
   IconDoor,
   IconLayoutGrid,
   IconUserSearch,
+  IconReceiptRefund,
+  IconLayersIntersect,
 } from '@tabler/icons-react';
 
 const iconMapper = {
@@ -96,6 +98,8 @@ const iconMapper = {
   UserSearch: IconUserSearch,
   UserCircle: IconUserCircle,
   Category: IconClipboardList,
+  ReceiptRefund: IconReceiptRefund,
+  LayersIntersect: IconLayersIntersect,
 };
 
 const SchoolSidebarItems = () => {

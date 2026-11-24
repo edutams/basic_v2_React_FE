@@ -106,6 +106,7 @@ const StatCard = ({
   countFontSize,
   showChevron = false,
   accent = false,
+  subtitleAfterValue = false,
   sx,
 }) => {
   const { isCardShadow } = useContext(CustomizerContext);
@@ -235,7 +236,7 @@ const StatCard = ({
             </Typography>
           )}
 
-          {isLeft && subtitle && (
+          {isLeft && subtitle && !subtitleAfterValue && (
             <Typography
               sx={{
                 mt: 0.25,
@@ -252,14 +253,28 @@ const StatCard = ({
             sx={{
               fontSize: countFontSize ?? (isLeft ? 24 : 22),
               fontWeight: 800,
-              lineHeight: 1,
+              lineHeight: 1.15,
               letterSpacing: '-0.02em',
               mt: isLeft ? 0.5 : 0,
               color: isDark ? '#fff' : (valueColor ?? scheme.color),
+              wordBreak: 'break-word',
             }}
           >
             {count}
           </Typography>
+
+          {isLeft && subtitle && subtitleAfterValue && (
+            <Typography
+              sx={{
+                mt: 0.5,
+                fontSize: 11,
+                fontWeight: 500,
+                color: isDark ? 'rgba(255,255,255,0.7)' : '#6B7280',
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
 
           {!isLeft && (
             <Typography
@@ -365,6 +380,7 @@ StatCard.propTypes = {
   countFontSize: PropTypes.number,
   showChevron: PropTypes.bool,
   accent: PropTypes.bool,
+  subtitleAfterValue: PropTypes.bool,
 };
 
 export default StatCard;

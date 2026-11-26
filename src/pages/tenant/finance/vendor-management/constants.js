@@ -7,9 +7,10 @@ export function formatNaira(amount) {
   return `₦${Number(amount).toLocaleString('en-NG')}`;
 }
 
+// Kept as a separate export (rather than inlining formatNaira at every call
+// site) so chart/tooltip code that asked for a "compact" formatter still
+// works unchanged — it just no longer abbreviates to K/M, per explicit
+// request to always show the real figure.
 export function formatCompact(amount) {
-  const n = Number(amount);
-  if (Math.abs(n) >= 1_000_000) return `₦${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `₦${(n / 1_000).toFixed(1)}K`;
-  return `₦${n}`;
+  return formatNaira(amount);
 }

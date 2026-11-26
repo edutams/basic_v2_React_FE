@@ -63,6 +63,7 @@ function buildActions(summary, expenditureRows, outstandingBalance) {
   const actions = [];
   if (outstandingBalance > 0) {
     actions.push({
+      type: 'outstanding',
       icon: 'database',
       title: 'Review outstanding payments',
       description: `(${formatNaira(outstandingBalance)}) and raise installments.`,
@@ -70,18 +71,19 @@ function buildActions(summary, expenditureRows, outstandingBalance) {
   }
   if (expenditureRows.length >= 2) {
     actions.push({
+      type: 'high_cost',
       icon: 'chart',
       title: 'Monitor high-cost categories',
       description: `(${expenditureRows[0].item} & ${expenditureRows[1].item}).`,
     });
   } else if (expenditureRows.length === 1) {
-    actions.push({ icon: 'chart', title: 'Monitor high-cost categories', description: `(${expenditureRows[0].item}).` });
+    actions.push({ type: 'high_cost', icon: 'chart', title: 'Monitor high-cost categories', description: `(${expenditureRows[0].item}).` });
   }
-  actions.push({ icon: 'calendar', title: 'Project next term’s income and expenditure.', description: '' });
+  actions.push({ type: 'projection', icon: 'calendar', title: 'Project next term’s income and expenditure.', description: '' });
   return actions;
 }
 
-const AccountSummaryTab = ({ data, loading }) => {
+const AccountSummaryTab = ({ data, loading, onAction }) => {
   const theme = useTheme();
 
   const summary = data?.summary;
@@ -265,7 +267,7 @@ const AccountSummaryTab = ({ data, loading }) => {
               <InsightsCard items={insights} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <ActionsCard items={actions} />
+              <ActionsCard items={actions} onItemClick={(action) => onAction?.(action.type)} />
             </Grid>
           </Grid>
         </Grid>

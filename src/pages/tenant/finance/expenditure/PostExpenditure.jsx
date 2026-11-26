@@ -28,15 +28,23 @@ import {
   DialogActions,
   Snackbar,
 } from '@mui/material';
+import { usePermissions } from '@/context/TenantContext/permissions';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
 import ConfirmationDialog from '@/components/shared/ConfirmationDialog';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
+import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
 import SessionTermFilter from '@/components/shared/filters/SessionTermFilter';
-import PostingTrendChart from './components/PostingTrendChart';
 import PostExpenditureModal from './components/PostExpenditureModal';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchIncomeExpenditureSummary } from '@/api/tenant/finance/financeReportsApi';
+import {
+  fetchExpenditureEntries,
+  approveExpenditureInstallment,
+  rejectExpenditureInstallment,
+  bulkApproveExpenditureInstallments,
+  bulkRejectExpenditureInstallments,
+} from '@/api/tenant/finance/expenditureApi';
 import {
   IconLayersIntersect,
   IconSearch,
@@ -47,13 +55,13 @@ import {
   IconChartBar,
   IconInfoCircle,
   IconEye,
+  IconCircleX,
 } from '@tabler/icons';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   STATUS_TABS,
   getEntryTabStatus,
   getPendingInstallment,
-  mockPostingTrend,
   CATEGORY_DOT_COLORS,
   formatNaira,
   formatCompact,
@@ -66,6 +74,8 @@ const VENDOR_DOT_COLORS = ['#2563EB', '#16A34A', '#D97706', '#9333EA', '#64748B'
 
 const PostExpenditure = () => {
   const theme = useTheme();
+  const { can } = usePermissions();
+  const canApprove = can('expenditure_manager.post_expenditure.approve');
 
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState([]);
@@ -89,17 +99,25 @@ const PostExpenditure = () => {
   const [categoryDetailsOpen, setCategoryDetailsOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  const [postingTrend, setPostingTrend] = useState([]);
+
+  useEffect(() => {
+    fetchIncomeExpenditureSummary()
+      .then((res) => {
+        const trend = res?.data?.trend || [];
+        setPostingTrend(trend.map((t) => ({ term: t.term, actual: Number(t.expenditure) })));
+      })
+      .catch(() => setPostingTrend([]));
+  }, []);
+
   const fetchEntries = useCallback(() => {
     setLoading(true);
-    tenantApi
-      .get('/expenditure/fetch_entries', {
-        params: {
-          ...(searchQuery ? { search: searchQuery } : {}),
-          ...(sessionTerm.sessionId ? { session_id: sessionTerm.sessionId } : {}),
-          ...(sessionTerm.termId ? { term_id: sessionTerm.termId } : {}),
-        },
+    fetchExpenditureEntries({
+        ...(searchQuery ? { search: searchQuery } : {}),
+        ...(sessionTerm.sessionId ? { session_id: sessionTerm.sessionId } : {}),
+        ...(sessionTerm.termId ? { term_id: sessionTerm.termId } : {}),
       })
-      .then((res) => setEntries(res.data?.data || []))
+      .then((res) => setEntries(res?.data || []))
       .catch(() => setSnackbar({ open: true, message: 'Could not load expenditure entries.', severity: 'error' }))
       .finally(() => setLoading(false));
   }, [searchQuery, sessionTerm]);
@@ -228,10 +246,10 @@ const PostExpenditure = () => {
     const { type, installmentIds } = confirmAction;
 
     let request;
-    if (type === 'approve') request = tenantApi.put(`/expenditure/installment/${installmentIds[0]}/approve`);
-    else if (type === 'reject') request = tenantApi.put(`/expenditure/installment/${installmentIds[0]}/reject`, { rejection_reason: rejectReason || null });
-    else if (type === 'bulkApprove') request = tenantApi.post('/expenditure/installments/bulk_approve', { installment_ids: installmentIds });
-    else request = tenantApi.post('/expenditure/installments/bulk_reject', { installment_ids: installmentIds, rejection_reason: rejectReason || null });
+    if (type === 'approve') request = approveExpenditureInstallment(installmentIds[0]);
+    else if (type === 'reject') request = rejectExpenditureInstallment(installmentIds[0], rejectReason || null);
+    else if (type === 'bulkApprove') request = bulkApproveExpenditureInstallments(installmentIds);
+    else request = bulkRejectExpenditureInstallments(installmentIds, rejectReason || null);
 
     request
       .then(() => {
@@ -493,7 +511,7 @@ const PostExpenditure = () => {
                             !pendingRowsOnPage.every((r) => selectedIds.includes(getPendingInstallment(r).id))
                           }
                           onChange={toggleAllOnPage}
-                          disabled={pendingRowsOnPage.length === 0}
+                          disabled={pendingRowsOnPage.length === 0 || !canApprove}
                         />
                       </TableCell>
                       <TableCell rowSpan={2} sx={{ ...thCell, verticalAlign: 'bottom' }}>
@@ -546,7 +564,7 @@ const PostExpenditure = () => {
                         return (
                           <TableRow key={row.id} hover selected={isSelected}>
                             <TableCell padding="checkbox">
-                              <Checkbox size="small" checked={isSelected} disabled={!pending} onChange={() => toggleRow(row)} />
+                              <Checkbox size="small" checked={isSelected} disabled={!pending || !canApprove} onChange={() => toggleRow(row)} />
                             </TableCell>
                             <TableCell sx={{ ...tdCell, fontWeight: 700, color: theme.palette.primary.main }}>
                               {row.ref_no}
@@ -570,15 +588,12 @@ const PostExpenditure = () => {
                             </TableCell>
                             <TableCell sx={tdCell}>
                               {pending ? (
-                                <Chip label={`#${pending.sequence_no}`} size="small" sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700, borderRadius: '8px' }} />
+                                <Chip label={`${pending.sequence_no}`} size="small" sx={{ bgcolor: '#DBEAFE', color: '#1D4ED8', fontWeight: 700, borderRadius: '8px' }} />
                               ) : (
                                 '–'
                               )}
                             </TableCell>
                             <TableCell sx={tdCell} align="center">
-                              <IconButton size="small" onClick={() => openRowModal(row)}>
-                                <IconEye size={16} />
-                              </IconButton>
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                                 <MoreVertIcon fontSize="small" />
                               </IconButton>
@@ -687,10 +702,15 @@ const PostExpenditure = () => {
                   '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
                 }}
               >
-                <Alert severity="info" sx={{ mb: 1, fontSize: 11.5, py: 0 }}>
-                  Illustrative only — term-over-term posting trend isn&apos;t wired to real data yet.
-                </Alert>
-                <PostingTrendChart data={mockPostingTrend} />
+                <ReusableAreaChart
+                  data={postingTrend}
+                  nameKey="term"
+                  dataKey="actual"
+                  name="Expenditure"
+                  color={theme.palette.primary.main}
+                  height={160}
+                  valueFormatter={formatCompact}
+                />
               </ParentCard>
 
               {/* Vendor Concentration */}
@@ -781,15 +801,21 @@ const PostExpenditure = () => {
 
       {/* Row action menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => openRowModal(selectedRow)}>View Details</MenuItem>
-        {selectedRow?._tab === 'pending' && [
-          <MenuItem key="approve" onClick={() => requestApprove(selectedRow)}>Approve</MenuItem>,
-          <MenuItem key="reject" onClick={() => requestReject(selectedRow)} sx={{ color: 'error.main' }}>
-            Reject
+        <MenuItem onClick={() => openRowModal(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+          <IconEye size={16} /> View Details
+        </MenuItem>
+        {selectedRow?._tab === 'pending' && canApprove && [
+          <MenuItem key="approve" onClick={() => requestApprove(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+            <IconCircleCheck size={16} /> Approve
+          </MenuItem>,
+          <MenuItem key="reject" onClick={() => requestReject(selectedRow)} sx={{ display: 'flex', gap: 1, color: 'error.main' }}>
+            <IconCircleX size={16} /> Reject
           </MenuItem>,
         ]}
         {selectedRow?._tab === 'outstanding' && (
-          <MenuItem onClick={() => openRowModal(selectedRow)}>Add Installment</MenuItem>
+          <MenuItem onClick={() => openRowModal(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+            <IconPlus size={16} /> Add Installment
+          </MenuItem>
         )}
       </Menu>
 
@@ -798,6 +824,15 @@ const PostExpenditure = () => {
         onClose={() => setModalOpen(false)}
         entry={modalEntry}
         onSaved={fetchEntries}
+        canApprove={canApprove}
+        onApprove={(row) => {
+          setModalOpen(false);
+          requestApprove(row);
+        }}
+        onReject={(row) => {
+          setModalOpen(false);
+          requestReject(row);
+        }}
       />
 
       {/* Confirmation dialog — approve / reject / bulk approve / bulk reject */}
@@ -871,7 +906,7 @@ const PostExpenditure = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}

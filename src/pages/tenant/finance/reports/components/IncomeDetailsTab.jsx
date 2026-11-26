@@ -59,7 +59,7 @@ function buildInsights(stats, incomeByAccount) {
   return insights;
 }
 
-const IncomeDetailsTab = ({ data, loading }) => {
+const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const theme = useTheme();
 
   const stats = data?.stats;
@@ -169,6 +169,7 @@ const IncomeDetailsTab = ({ data, loading }) => {
               <Button
                 size="small"
                 endIcon={<IconChevronRight size={14} />}
+                onClick={onViewAllTransactions}
                 sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12.5 }}
               >
                 View All Transactions

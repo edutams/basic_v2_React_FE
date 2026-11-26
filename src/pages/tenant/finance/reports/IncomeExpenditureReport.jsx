@@ -1,7 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Box, Typography, Button, Select, MenuItem, FormControl, Tabs, Tab, useTheme } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Typography, Button, Select, MenuItem, FormControl, Tabs, Tab, Menu, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import tenantApi from '@/api/tenant/tenant_api';
+import {
+  fetchFinancePeriods,
+  fetchIncomeExpenditureSummary,
+  fetchIncomeDetails,
+  fetchExpenditureDetails,
+  fetchIncomeTransactions,
+  fetchExpenditureTransactions,
+} from '@/api/tenant/finance/financeReportsApi';
 import {
   IconChartBar,
   IconFileText,
@@ -21,6 +29,53 @@ import AccountSummaryTab from './components/AccountSummaryTab';
 import IncomeDetailsTab from './components/IncomeDetailsTab';
 import ExpenditureDetailsTab from './components/ExpenditureDetailsTab';
 import TrendAnalysisTab from './components/TrendAnalysisTab';
+import AllTransactionsModal from './components/AllTransactionsModal';
+import CardsPeriodFilter from './components/CardsPeriodFilter';
+
+// Builds a CSV from whichever table is this tab's "primary" dataset — the
+// same rows already rendered on screen for that tab, not a re-derivation.
+function buildCsv(tab, data) {
+  if (tab === 'income') {
+    const rows = data?.income_by_account || [];
+    const header = ['Income Account', 'Amount', '% of Total', 'vs. Prior Term (%)'];
+    const body = rows.map((r) => [r.account, r.amount, r.pct_of_total, r.vs_prior_term_pct ?? '']);
+    return [header, ...body];
+  }
+  if (tab === 'expenditure') {
+    const rows = data?.expenditure_by_account || [];
+    const header = ['Expenditure Account', 'Amount', '% of Total', 'vs. Prior Term (%)'];
+    const body = rows.map((r) => [r.account, r.amount, r.pct_of_total, r.vs_prior_term_pct ?? '']);
+    return [header, ...body];
+  }
+  if (tab === 'trend') {
+    const rows = data?.trend || [];
+    const header = ['Term', 'Income', 'Expenditure'];
+    const body = rows.map((r) => [r.term, r.income, r.expenditure]);
+    return [header, ...body];
+  }
+  // summary
+  const incomeRows = data?.statement?.income_rows || [];
+  const expenditureRows = data?.statement?.expenditure_rows || [];
+  const header = ['Item', 'Section', 'Amount', '% of Income'];
+  const body = [
+    ...incomeRows.map((r) => [r.item, 'Income', r.amount, r.pct_of_income]),
+    ...expenditureRows.map((r) => [r.item, 'Expenditure', r.amount, r.pct_of_income]),
+  ];
+  return [header, ...body];
+}
+
+function downloadCsv(rows, filename) {
+  const csv = rows
+    .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 const TAB_COMPONENTS = {
   summary: AccountSummaryTab,
@@ -29,10 +84,10 @@ const TAB_COMPONENTS = {
   trend: TrendAnalysisTab,
 };
 
-const TAB_ENDPOINTS = {
-  summary: '/finance_reports/income_expenditure_summary',
-  income: '/finance_reports/income_details',
-  expenditure: '/finance_reports/expenditure_details',
+const TAB_FETCHERS = {
+  summary: fetchIncomeExpenditureSummary,
+  income: fetchIncomeDetails,
+  expenditure: fetchExpenditureDetails,
 };
 
 // Trend & Analysis's headline figures and 7-term trend are all already
@@ -43,42 +98,53 @@ const SHARED_DATA_KEY = { trend: 'summary' };
 
 const IncomeExpenditureReport = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('summary');
   const [periods, setPeriods] = useState([]);
   const [periodId, setPeriodId] = useState('');
   const [comparePeriodId, setComparePeriodId] = useState('');
   const [tabData, setTabData] = useState({});
   const [tabLoading, setTabLoading] = useState({});
+  const [transactionsLedger, setTransactionsLedger] = useState(null); // 'income' | 'expenditure' | null
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+
+  // The "cards" filter — fully independent of periodId/comparePeriodId
+  // above (those stay dedicated to the stats row only). Drives everything
+  // the active tab's tables/charts actually show.
+  const [cardsFilter, setCardsFilter] = useState({ periodId: '', weekFromId: '', weekToId: '' });
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];
   const activeDataKey = SHARED_DATA_KEY[activeTab] || activeTab;
+  const currentPeriod = periods.find((p) => p.id === periodId);
+  const cardsCurrentPeriod = periods.find((p) => p.id === cardsFilter.periodId);
 
-  const fetchTab = useCallback((tabKey, currentPeriodId, currentComparePeriodId, periodList) => {
-    const endpoint = TAB_ENDPOINTS[tabKey];
-    if (!endpoint) return;
+  const fetchTab = useCallback((tabKey, currentPeriodId, currentComparePeriodId, periodList, currentCardsFilter) => {
+    const fetchFn = TAB_FETCHERS[tabKey];
+    if (!fetchFn) return;
     const current = periodList.find((p) => p.id === currentPeriodId);
     if (!current) return;
     const compare = periodList.find((p) => p.id === currentComparePeriodId);
+    const cardsPeriod = periodList.find((p) => p.id === currentCardsFilter?.periodId);
 
     setTabLoading((prev) => ({ ...prev, [tabKey]: true }));
-    tenantApi
-      .get(endpoint, {
-        params: {
-          session_id: current.session_id,
-          term_id: current.term_id,
-          ...(compare ? { compare_session_id: compare.session_id, compare_term_id: compare.term_id } : {}),
-        },
+    fetchFn({
+        session_id: current.session_id,
+        term_id: current.term_id,
+        ...(compare ? { compare_session_id: compare.session_id, compare_term_id: compare.term_id } : {}),
+        ...(cardsPeriod ? { cards_session_id: cardsPeriod.session_id, cards_term_id: cardsPeriod.term_id } : {}),
+        ...(currentCardsFilter?.weekFromId && currentCardsFilter?.weekToId
+          ? { week_from_id: currentCardsFilter.weekFromId, week_to_id: currentCardsFilter.weekToId }
+          : {}),
       })
-      .then((res) => setTabData((prev) => ({ ...prev, [tabKey]: res.data?.data || null })))
+      .then((res) => setTabData((prev) => ({ ...prev, [tabKey]: res?.data || null })))
       .catch(() => setTabData((prev) => ({ ...prev, [tabKey]: null })))
       .finally(() => setTabLoading((prev) => ({ ...prev, [tabKey]: false })));
   }, []);
 
   useEffect(() => {
-    tenantApi
-      .get('/finance_reports/periods')
+    fetchFinancePeriods()
       .then((res) => {
-        const list = res.data?.data || [];
+        const list = res?.data || [];
         setPeriods(list);
         if (list.length > 0) {
           const activeIndex = list.findIndex((p) => p.is_active);
@@ -87,7 +153,9 @@ const IncomeExpenditureReport = () => {
           const previous = currentIndex > 0 ? list[currentIndex - 1] : null;
           setPeriodId(current.id);
           setComparePeriodId(previous?.id || '');
-          fetchTab('summary', current.id, previous?.id || '', list);
+          const initialCardsFilter = { periodId: current.id, weekFromId: '', weekToId: '' };
+          setCardsFilter(initialCardsFilter);
+          fetchTab('summary', current.id, previous?.id || '', list, initialCardsFilter);
         }
       })
       .catch(() => {});
@@ -97,15 +165,41 @@ const IncomeExpenditureReport = () => {
   // Fetch a tab's data lazily the first time it's visited for the current
   // period selection, instead of eagerly loading all 4 tabs up front.
   useEffect(() => {
-    if (TAB_ENDPOINTS[activeDataKey] && !tabData[activeDataKey] && !tabLoading[activeDataKey] && periodId) {
-      fetchTab(activeDataKey, periodId, comparePeriodId, periods);
+    if (TAB_FETCHERS[activeDataKey] && !tabData[activeDataKey] && !tabLoading[activeDataKey] && periodId) {
+      fetchTab(activeDataKey, periodId, comparePeriodId, periods, cardsFilter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDataKey, periodId, comparePeriodId, periods]);
 
   const handleGenerateReport = () => {
     setTabData({});
-    fetchTab(activeDataKey, periodId, comparePeriodId, periods);
+    fetchTab(activeDataKey, periodId, comparePeriodId, periods, cardsFilter);
+  };
+
+  const handlePrint = () => window.print();
+
+  const handleExport = () => {
+    const rows = buildCsv(activeTab, tabData[activeDataKey]);
+    const tabLabel = REPORT_TABS.find((t) => t.value === activeTab)?.label || activeTab;
+    downloadCsv(rows, `${tabLabel.replace(/\s+/g, '-').toLowerCase()}-${currentPeriod?.period_label || 'report'}.csv`);
+    setExportAnchorEl(null);
+  };
+
+  // "Review outstanding payments" sends the bursar to where they'd actually
+  // raise/approve an installment (a different page, not this report);
+  // "Monitor high-cost categories"/"Project next term's..." just switch
+  // this same report to the tab that already shows that detail.
+  const handleSummaryAction = (type) => {
+    if (type === 'outstanding') navigate('/post-expenditure');
+    else if (type === 'high_cost') setActiveTab('expenditure');
+    else if (type === 'projection') setActiveTab('trend');
+  };
+
+  // Drill Down always means "show me the transactions behind these
+  // numbers" — on Income/Expenditure Details that's this tab's own ledger;
+  // on Summary/Trend (which show both) it defaults to Income.
+  const handleDrillDown = () => {
+    setTransactionsLedger(activeTab === 'expenditure' ? 'expenditure' : 'income');
   };
 
   return (
@@ -234,6 +328,18 @@ const IncomeExpenditureReport = () => {
 
         <ReportStatsRow tab={activeTab} data={tabData[activeDataKey]} loading={tabLoading[activeDataKey]} />
 
+        <Box
+          sx={{
+            mb: 2,
+            p: 1.25,
+            borderRadius: '8px',
+            bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
+            border: `1px solid ${theme.palette.divider}`,
+          }}
+        >
+          <CardsPeriodFilter mode="range" periods={periods} value={cardsFilter} onChange={setCardsFilter} />
+        </Box>
+
         {/* ===================== Tabs + toolbar ===================== */}
         <Box
           sx={{
@@ -287,15 +393,20 @@ const IncomeExpenditureReport = () => {
               size="small"
               startIcon={<IconDownload size={15} />}
               endIcon={<IconChevronDown size={13} />}
+              onClick={(e) => setExportAnchorEl(e.currentTarget)}
               sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
             >
               Export
             </Button>
+            <Menu anchorEl={exportAnchorEl} open={Boolean(exportAnchorEl)} onClose={() => setExportAnchorEl(null)}>
+              <MenuItem onClick={handleExport}>Export as CSV</MenuItem>
+            </Menu>
             <Button
               variant="outlined"
               color="inherit"
               size="small"
               startIcon={<IconPrinter size={15} />}
+              onClick={handlePrint}
               sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
             >
               Print
@@ -305,6 +416,7 @@ const IncomeExpenditureReport = () => {
               color="inherit"
               size="small"
               startIcon={<IconZoomCode size={15} />}
+              onClick={handleDrillDown}
               sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
             >
               Drill Down
@@ -312,8 +424,45 @@ const IncomeExpenditureReport = () => {
           </Box>
         </Box>
 
-        <ActiveTabComponent data={tabData[activeDataKey]} loading={tabLoading[activeDataKey]} />
+        <ActiveTabComponent
+          data={tabData[activeDataKey]}
+          loading={tabLoading[activeDataKey]}
+          onAction={handleSummaryAction}
+          onViewAllTransactions={() => setTransactionsLedger(activeTab)}
+        />
       </Box>
+
+      <AllTransactionsModal
+        open={Boolean(transactionsLedger)}
+        onClose={() => setTransactionsLedger(null)}
+        title={transactionsLedger === 'expenditure' ? 'All Expenditure Transactions' : 'All Income Transactions'}
+        fetchFn={transactionsLedger === 'expenditure' ? fetchExpenditureTransactions : fetchIncomeTransactions}
+        periodParams={{
+          session_id: currentPeriod?.session_id,
+          term_id: currentPeriod?.term_id,
+          cards_session_id: cardsCurrentPeriod?.session_id,
+          cards_term_id: cardsCurrentPeriod?.term_id,
+          ...(cardsFilter.weekFromId && cardsFilter.weekToId
+            ? { week_from_id: cardsFilter.weekFromId, week_to_id: cardsFilter.weekToId }
+            : {}),
+        }}
+        columns={
+          transactionsLedger === 'expenditure'
+            ? [
+                { header: 'Date', render: (row) => new Date(row.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+                { header: 'Description / Purpose', render: (row) => row.description },
+                { header: 'Expenditure Account', render: (row) => row.account },
+                { header: 'Amount (₦)', align: 'right', render: (row) => row.amount.toLocaleString('en-NG') },
+                { header: 'Vendor / Supplier', render: (row) => row.vendor || '—' },
+              ]
+            : [
+                { header: 'Date', render: (row) => new Date(row.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) },
+                { header: 'Description / Payer', render: (row) => `${row.description}${row.payer ? ` – ${row.payer}` : ''}` },
+                { header: 'Income Account', render: (row) => row.account },
+                { header: 'Amount (₦)', align: 'right', render: (row) => row.amount.toLocaleString('en-NG') },
+              ]
+        }
+      />
     </PageContainer>
   );
 };

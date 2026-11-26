@@ -30,7 +30,7 @@ import {
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchChartOfAccountsTree, createAccount, updateAccount, toggleAccountStatus } from '@/api/tenant/finance/chartOfAccountsApi';
 import {
   IconSearch,
   IconPlus,
@@ -132,9 +132,8 @@ const ChartOfAccounts = () => {
 
   const fetchTree = useCallback(() => {
     setLoading(true);
-    tenantApi
-      .get('/chart_of_accounts/fetch_tree')
-      .then((res) => setRoots(res.data?.data || []))
+    fetchChartOfAccountsTree()
+      .then((res) => setRoots(res?.data || []))
       .catch(() =>
         setSnackbar({
           open: true,
@@ -180,8 +179,8 @@ const ChartOfAccounts = () => {
     setSubmitting(true);
     const request =
       modalMode === 'create'
-        ? tenantApi.post('/chart_of_accounts/create_account', payload)
-        : tenantApi.put(`/chart_of_accounts/update_account/${payload.id}`, {
+        ? createAccount(payload)
+        : updateAccount(payload.id, {
             name: payload.name,
             description: payload.description,
             posting_allowed: payload.posting_allowed,
@@ -209,8 +208,7 @@ const ChartOfAccounts = () => {
   };
 
   const handleConfirmStatusToggle = () => {
-    tenantApi
-      .put(`/chart_of_accounts/toggle_account_status/${selectedRow.id}`)
+    toggleAccountStatus(selectedRow.id)
       .then(() => {
         setOpenStatusModal(false);
         setSnackbar({
@@ -687,7 +685,7 @@ const ChartOfAccounts = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}

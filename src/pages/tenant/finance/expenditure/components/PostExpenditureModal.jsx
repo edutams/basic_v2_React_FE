@@ -27,8 +27,10 @@ import {
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { IconLayersIntersect, IconX, IconFileText, IconPlus, IconCreditCard, IconHistory, IconSend } from '@tabler/icons';
-import tenantApi from '@/api/tenant/tenant_api';
+import { IconLayersIntersect, IconX, IconFileText, IconPlus, IconCreditCard, IconHistory, IconSend, IconWallet, IconHourglass, IconTrendingUp, IconCircleCheck, IconCircleX } from '@tabler/icons';
+import { createExpenditureEntry, submitExpenditureInstallment } from '@/api/tenant/finance/expenditureApi';
+import { fetchVendors as fetchVendorsApi, createVendor } from '@/api/tenant/finance/vendorApi';
+import { fetchDetailAccountOptions } from '@/api/tenant/finance/chartOfAccountsApi';
 import AddVendorModal from '../../vendor-management/components/AddVendorModal';
 import { formatDateDisplay, formatNaira, todayISO } from '../constants';
 
@@ -73,10 +75,30 @@ const FieldLabel = ({ children, required }) => (
   </Typography>
 );
 
-const PaymentChip = ({ label, value, color, bg }) => (
+const PaymentChip = ({ icon: Icon, label, value, color, bg }) => (
   <Box sx={{ borderRadius: '10px', bgcolor: bg, p: 1.25, flex: 1, minWidth: 0 }}>
-    <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+      {Icon && <Icon size={14} color={color} />}
+      <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
+    </Box>
     <Typography sx={{ fontSize: 15, fontWeight: 800, color, mt: 0.25 }}>{value}</Typography>
+  </Box>
+);
+
+const PaymentProgressChip = ({ pct, theme }) => (
+  <Box sx={{ borderRadius: '10px', bgcolor: '#F1F5F9', p: 1.25, flex: 1, minWidth: 0 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <IconTrendingUp size={14} color={theme.palette.text.secondary} />
+        <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>Payment Progress</Typography>
+      </Box>
+    </Box>
+    <Typography sx={{ fontSize: 15, fontWeight: 800, mt: 0.25, mb: 0.5 }}>{Math.round(pct)}%</Typography>
+    <LinearProgress
+      variant="determinate"
+      value={pct}
+      sx={{ height: 6, borderRadius: 3, bgcolor: '#E2E8F0', '& .MuiLinearProgress-bar': { borderRadius: 3 } }}
+    />
   </Box>
 );
 
@@ -86,6 +108,21 @@ const INSTALLMENT_STATUS_META = {
   rejected: { label: 'Rejected', bg: '#FEE2E2', color: '#DC2626' },
 };
 
+const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+const ordinalFor = (n) => ORDINALS[n - 1] || `${n}th`;
+
+/** Running balance + "Nth Instalment (pct%)" label for each row, in sequence order. */
+const withPaymentTypeAndBalance = (installments, actualAmount) => {
+  let cumulative = 0;
+  return [...installments]
+    .sort((a, b) => a.sequence_no - b.sequence_no)
+    .map((i) => {
+      cumulative += Number(i.amount);
+      const pct = actualAmount > 0 ? Math.round((Number(i.amount) / actualAmount) * 100) : 0;
+      return { ...i, paymentTypeLabel: `${ordinalFor(i.sequence_no)} Instalment (${pct}%)`, balanceAfter: Math.max(0, actualAmount - cumulative) };
+    });
+};
+
 /**
  * `entry` null => creating a brand-new expenditure (left panel editable,
  * this submission is both the entry and its first installment/full payment
@@ -93,7 +130,7 @@ const INSTALLMENT_STATUS_META = {
  * entry (left panel read-only, right panel shows real installment history
  * and validates against the real remaining budget).
  */
-const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
+const PostExpenditureModal = ({ open, onClose, entry, onSaved, canApprove, onApprove, onReject }) => {
   const theme = useTheme();
   const isAddInstallment = Boolean(entry);
 
@@ -120,8 +157,7 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
     onSubmit: (values) => {
       setServerError('');
       setSubmitting(true);
-      tenantApi
-        .post('/expenditure/create_entry', {
+      createExpenditureEntry({
           description: values.description,
           chart_of_account_id: values.chartOfAccountId,
           vendor_id: values.vendorId || null,
@@ -147,8 +183,7 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
     onSubmit: (values) => {
       setServerError('');
       setSubmitting(true);
-      tenantApi
-        .post(`/expenditure/${entry.id}/submit_installment`, {
+      submitExpenditureInstallment(entry.id, {
           amount: values.amount,
           payment_date: values.paymentDate,
           description: values.description,
@@ -163,9 +198,8 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
   });
 
   const fetchVendors = () => {
-    tenantApi
-      .get('/vendor_manager/fetch_vendors', { params: { status: 'active' } })
-      .then((res) => setVendors(res.data?.data || []))
+    fetchVendorsApi({ status: 'active' })
+      .then((res) => setVendors(res?.data || []))
       .catch(() => setVendors([]));
   };
 
@@ -174,9 +208,8 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
       setServerError('');
       createFormik.resetForm();
       installmentFormik.resetForm();
-      tenantApi
-        .get('/chart_of_accounts/fetch_detail_options', { params: { category: 'expenditure' } })
-        .then((res) => setChartAccounts(res.data?.data || []))
+      fetchDetailAccountOptions('expenditure')
+        .then((res) => setChartAccounts(res?.data || []))
         .catch(() => setChartAccounts([]));
       fetchVendors();
     }
@@ -184,12 +217,11 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
   }, [open]);
 
   const handleVendorCreated = (payload) => {
-    tenantApi
-      .post('/vendor_manager/create_vendor', payload)
+    createVendor(payload)
       .then((res) => {
         setAddVendorOpen(false);
         fetchVendors();
-        const newVendor = res.data?.data;
+        const newVendor = res?.data;
         if (newVendor) createFormik.setFieldValue('vendorId', String(newVendor.id));
       })
       .catch(() => {});
@@ -207,6 +239,7 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
   const outstandingAfterPayment = Math.max(0, Number(entry?.balance_amount || 0) - Number(installmentFormik.values.amount || 0));
   const hasPendingInstallment = installments.some((i) => i.status === 'pending_approval');
   const canRaisePayment = isAddInstallment && entry.status === 'active' && Number(entry.balance_amount) > 0 && !hasPendingInstallment;
+  const installmentsWithMeta = withPaymentTypeAndBalance(installments, actualAmount);
 
   // ===================== Create mode numbers =====================
   const createActualAmount = Number(createFormik.values.actualAmount) || 0;
@@ -219,7 +252,7 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="lg"
+      maxWidth="xl"
       PaperProps={{
         sx: { borderRadius: '16px', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' },
       }}
@@ -280,7 +313,7 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
           )}
           <Grid container spacing={2.5}>
             {/* ===================== Left: Expenditure Details ===================== */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 5 }}>
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '10px', overflow: 'hidden', bgcolor: '#fff' }}>
                 <SectionHeader icon={IconFileText} title="Expenditure Details" theme={theme} />
                 <Box sx={{ p: 2 }}>
@@ -418,29 +451,17 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
             </Grid>
 
             {/* ===================== Right: Payment / Instalment Management ===================== */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 7 }}>
               <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '10px', overflow: 'hidden', bgcolor: '#fff' }}>
                 <SectionHeader icon={IconCreditCard} title="Payment / Instalment Management" theme={theme} />
                 <Box sx={{ p: 2 }}>
                   {isAddInstallment && (
                     <>
                       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                        <PaymentChip label="Actual Amount (Commitment)" value={formatNaira(actualAmount)} color={theme.palette.text.primary} bg="#F1F5F9" />
-                        <PaymentChip label="Total Paid" value={formatNaira(totalPaid)} color="#15803D" bg="#DCFCE7" />
-                        <PaymentChip label="Outstanding Balance" value={formatNaira(entry.balance_amount)} color="#B45309" bg="#FEF3C7" />
-                      </Box>
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: 'text.secondary' }}>
-                            Payment Progress
-                          </Typography>
-                          <Typography sx={{ fontSize: 11.5, fontWeight: 700 }}>{Math.round(progressPct)}%</Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={progressPct}
-                          sx={{ height: 8, borderRadius: 4, bgcolor: '#E5E7EB', '& .MuiLinearProgress-bar': { borderRadius: 4 } }}
-                        />
+                        <PaymentChip icon={IconLayersIntersect} label="Actual Amount (Commitment)" value={formatNaira(actualAmount)} color={theme.palette.text.primary} bg="#F1F5F9" />
+                        <PaymentChip icon={IconWallet} label="Total Paid" value={formatNaira(totalPaid)} color="#15803D" bg="#DCFCE7" />
+                        <PaymentChip icon={IconHourglass} label="Outstanding Balance" value={formatNaira(entry.balance_amount)} color="#B45309" bg="#FEF3C7" />
+                        <PaymentProgressChip pct={progressPct} theme={theme} />
                       </Box>
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
@@ -449,28 +470,32 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
                       </Box>
                       <Table size="small" sx={{ mb: 2 }}>
                         <TableHead>
-                          <TableRow>
+                          <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
                             <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>#</TableCell>
                             <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Payment Date</TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Payment Type</TableCell>
                             <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }} align="right">Amount (₦)</TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }} align="right">Balance After (₦)</TableCell>
                             <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Status</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {installments.length === 0 ? (
+                          {installmentsWithMeta.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4} sx={{ px: 0.75, py: 1, fontSize: 12, color: 'text.secondary' }}>
+                              <TableCell colSpan={6} sx={{ px: 0.75, py: 1, fontSize: 12, color: 'text.secondary' }}>
                                 No instalments yet.
                               </TableCell>
                             </TableRow>
                           ) : (
-                            installments.map((p) => {
+                            installmentsWithMeta.map((p) => {
                               const meta = INSTALLMENT_STATUS_META[p.status];
                               return (
                                 <TableRow key={p.id}>
                                   <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{p.sequence_no}</TableCell>
                                   <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{formatDateDisplay(p.payment_date)}</TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{p.paymentTypeLabel}</TableCell>
                                   <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">{Number(p.amount).toLocaleString('en-NG')}</TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">{p.balanceAfter.toLocaleString('en-NG')}</TableCell>
                                   <TableCell sx={{ px: 0.75, py: 0.5 }}>
                                     <Chip label={meta.label} size="small" sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 700, fontSize: 11, height: 20 }} />
                                   </TableCell>
@@ -543,13 +568,41 @@ const PostExpenditureModal = ({ open, onClose, entry, onSaved }) => {
                           </Box>
                         </>
                       ) : (
-                        <Alert severity={entry.status === 'rejected' ? 'error' : hasPendingInstallment ? 'info' : 'success'}>
-                          {entry.status === 'rejected'
-                            ? 'This entry was rejected. Raise a new expenditure instead.'
-                            : hasPendingInstallment
-                              ? 'A payment request is already pending approval for this entry.'
-                              : 'This expenditure has been paid in full.'}
-                        </Alert>
+                        <>
+                          <Alert severity={entry.status === 'rejected' ? 'error' : hasPendingInstallment ? 'info' : 'success'} sx={{ mb: hasPendingInstallment && canApprove ? 1.5 : 0 }}>
+                            {entry.status === 'rejected'
+                              ? 'This entry was rejected. Raise a new expenditure instead.'
+                              : hasPendingInstallment
+                                ? 'A payment request is already pending approval for this entry.'
+                                : 'This expenditure has been paid in full.'}
+                          </Alert>
+                          {hasPendingInstallment && canApprove && (
+                            <Box sx={{ display: 'flex', gap: 1.5 }}>
+                              <Button
+                                type="button"
+                                variant="contained"
+                                color="success"
+                                fullWidth
+                                startIcon={<IconCircleCheck size={16} />}
+                                onClick={() => onApprove?.(entry)}
+                                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                color="error"
+                                fullWidth
+                                startIcon={<IconCircleX size={16} />}
+                                onClick={() => onReject?.(entry)}
+                                sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px' }}
+                              >
+                                Reject
+                              </Button>
+                            </Box>
+                          )}
+                        </>
                       )}
                     </>
                   )}

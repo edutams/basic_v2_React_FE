@@ -28,6 +28,7 @@ import {
   DialogActions,
   Snackbar,
 } from '@mui/material';
+import { usePermissions } from '@/context/TenantContext/permissions';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
@@ -36,7 +37,14 @@ import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
 import SessionTermFilter from '@/components/shared/filters/SessionTermFilter';
 import PostIncomeModal from './components/PostIncomeModal';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchIncomeExpenditureSummary } from '@/api/tenant/finance/financeReportsApi';
+import {
+  fetchIncomeEntries,
+  approveIncomeInstallment,
+  rejectIncomeInstallment,
+  bulkApproveIncomeInstallments,
+  bulkRejectIncomeInstallments,
+} from '@/api/tenant/finance/incomeApi';
 import {
   IconReportMoney,
   IconSearch,
@@ -47,13 +55,18 @@ import {
   IconChartBar,
   IconInfoCircle,
   IconEye,
+  IconCircleX,
+  IconTrendingUp,
+  IconTrendingDown,
+  IconGauge,
+  IconAlertTriangle,
+  IconCrown,
 } from '@tabler/icons';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
   STATUS_TABS,
   getEntryTabStatus,
   getPendingInstallment,
-  mockIncomeTrend,
   CATEGORY_DOT_COLORS,
   formatNaira,
   formatCompact,
@@ -64,6 +77,8 @@ const tdCell = { py: 0.75, px: 1.25 };
 
 const PostIncome = () => {
   const theme = useTheme();
+  const { can } = usePermissions();
+  const canApprove = can('income_manager.post_income.approve');
 
   const [loading, setLoading] = useState(true);
   const [entries, setEntries] = useState([]);
@@ -87,17 +102,25 @@ const PostIncome = () => {
   const [sourceDetailsOpen, setSourceDetailsOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
+  const [incomeTrend, setIncomeTrend] = useState([]);
+
+  useEffect(() => {
+    fetchIncomeExpenditureSummary()
+      .then((res) => {
+        const trend = res?.data?.trend || [];
+        setIncomeTrend(trend.map((t) => ({ term: t.term, actual: Number(t.income) })));
+      })
+      .catch(() => setIncomeTrend([]));
+  }, []);
+
   const fetchEntries = useCallback(() => {
     setLoading(true);
-    tenantApi
-      .get('/income/fetch_entries', {
-        params: {
-          ...(searchQuery ? { search: searchQuery } : {}),
-          ...(sessionTerm.sessionId ? { session_id: sessionTerm.sessionId } : {}),
-          ...(sessionTerm.termId ? { term_id: sessionTerm.termId } : {}),
-        },
+    fetchIncomeEntries({
+        ...(searchQuery ? { search: searchQuery } : {}),
+        ...(sessionTerm.sessionId ? { session_id: sessionTerm.sessionId } : {}),
+        ...(sessionTerm.termId ? { term_id: sessionTerm.termId } : {}),
       })
-      .then((res) => setEntries(res.data?.data || []))
+      .then((res) => setEntries(res?.data || []))
       .catch(() => setSnackbar({ open: true, message: 'Could not load income entries.', severity: 'error' }))
       .finally(() => setLoading(false));
   }, [searchQuery, sessionTerm]);
@@ -145,6 +168,23 @@ const PostIncome = () => {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [entries]);
+
+  const insights = useMemo(() => {
+    const last = incomeTrend[incomeTrend.length - 1];
+    const prev = incomeTrend[incomeTrend.length - 2];
+    const growthPct = prev && prev.actual > 0 ? ((last.actual - prev.actual) / prev.actual) * 100 : null;
+
+    const collectionRate = stats.totalIncome > 0 ? (stats.totalReceived / stats.totalIncome) * 100 : 0;
+    const collectionLabel = collectionRate >= 90 ? 'Strong' : collectionRate >= 70 ? 'Moderate' : 'Needs Attention';
+
+    const outstandingPct = stats.totalIncome > 0 ? (stats.outstandingBalance / stats.totalIncome) * 100 : 0;
+    const outstandingCount = entries.filter((e) => e.status === 'active' && Number(e.balance_amount) > 0).length;
+
+    const topSource = sourceBreakdown[0];
+    const topSourcePct = topSource && stats.totalIncome > 0 ? (topSource.value / stats.totalIncome) * 100 : 0;
+
+    return { last, prev, growthPct, collectionRate, collectionLabel, outstandingPct, outstandingCount, topSource, topSourcePct };
+  }, [incomeTrend, stats, entries, sourceBreakdown]);
 
   const installmentAmountById = useMemo(() => {
     const map = new Map();
@@ -207,10 +247,10 @@ const PostIncome = () => {
     const { type, installmentIds } = confirmAction;
 
     let request;
-    if (type === 'approve') request = tenantApi.put(`/income/installment/${installmentIds[0]}/approve`);
-    else if (type === 'reject') request = tenantApi.put(`/income/installment/${installmentIds[0]}/reject`, { rejection_reason: rejectReason || null });
-    else if (type === 'bulkApprove') request = tenantApi.post('/income/installments/bulk_approve', { installment_ids: installmentIds });
-    else request = tenantApi.post('/income/installments/bulk_reject', { installment_ids: installmentIds, rejection_reason: rejectReason || null });
+    if (type === 'approve') request = approveIncomeInstallment(installmentIds[0]);
+    else if (type === 'reject') request = rejectIncomeInstallment(installmentIds[0], rejectReason || null);
+    else if (type === 'bulkApprove') request = bulkApproveIncomeInstallments(installmentIds);
+    else request = bulkRejectIncomeInstallments(installmentIds, rejectReason || null);
 
     request
       .then(() => {
@@ -380,7 +420,7 @@ const PostIncome = () => {
                             !pendingRowsOnPage.every((r) => selectedIds.includes(getPendingInstallment(r).id))
                           }
                           onChange={toggleAllOnPage}
-                          disabled={pendingRowsOnPage.length === 0}
+                          disabled={pendingRowsOnPage.length === 0 || !canApprove}
                         />
                       </TableCell>
                       <TableCell rowSpan={2} sx={{ ...thCell, verticalAlign: 'bottom' }}>Ref. No.</TableCell>
@@ -416,7 +456,7 @@ const PostIncome = () => {
                         return (
                           <TableRow key={row.id} hover selected={isSelected}>
                             <TableCell padding="checkbox">
-                              <Checkbox size="small" checked={isSelected} disabled={!pending} onChange={() => toggleRow(row)} />
+                              <Checkbox size="small" checked={isSelected} disabled={!pending || !canApprove} onChange={() => toggleRow(row)} />
                             </TableCell>
                             <TableCell sx={{ ...tdCell, fontWeight: 700, color: theme.palette.success.dark }}>{row.ref_no}</TableCell>
                             <TableCell sx={{ ...tdCell, fontWeight: 600, maxWidth: 180 }}>
@@ -431,12 +471,9 @@ const PostIncome = () => {
                             </TableCell>
                             <TableCell sx={{ ...tdCell, fontWeight: 700 }}>{pending ? Number(pending.amount).toLocaleString('en-NG') : '–'}</TableCell>
                             <TableCell sx={tdCell}>
-                              {pending ? <Chip label={`#${pending.sequence_no}`} size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700, borderRadius: '8px' }} /> : '–'}
+                              {pending ? <Chip label={`${pending.sequence_no}`} size="small" sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700, borderRadius: '8px' }} /> : '–'}
                             </TableCell>
                             <TableCell sx={tdCell} align="center">
-                              <IconButton size="small" onClick={() => openRowModal(row)}>
-                                <IconEye size={16} />
-                              </IconButton>
                               <IconButton size="small" onClick={(e) => handleMenuOpen(e, row)}>
                                 <MoreVertIcon fontSize="small" />
                               </IconButton>
@@ -501,11 +538,8 @@ const PostIncome = () => {
                 }
                 sx={{ '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.75 }, '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } } }}
               >
-                <Alert severity="info" sx={{ mb: 1, fontSize: 11.5, py: 0 }}>
-                  Illustrative only — term-over-term income trend isn&apos;t wired to real data yet.
-                </Alert>
                 <ReusableAreaChart
-                  data={mockIncomeTrend}
+                  data={incomeTrend}
                   nameKey="term"
                   dataKey="actual"
                   name="Income"
@@ -514,23 +548,57 @@ const PostIncome = () => {
                   valueFormatter={formatCompact}
                 />
               </ParentCard>
+
+              <ParentCard
+                title={
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>Intelligent Insights</Typography>
+                    <Chip label="AI" size="small" sx={{ fontWeight: 800, fontSize: 11, bgcolor: '#EDE9FE', color: '#6D28D9', height: 20 }} />
+                  </Box>
+                }
+                sx={{ '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.75 }, '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } } }}
+              >
+                <IntelligentInsights insights={insights} theme={theme} />
+              </ParentCard>
             </Box>
           </Grid>
         </Grid>
       </Box>
 
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={() => openRowModal(selectedRow)}>View Details</MenuItem>
-        {selectedRow?._tab === 'pending' && [
-          <MenuItem key="approve" onClick={() => requestApprove(selectedRow)}>Approve</MenuItem>,
-          <MenuItem key="reject" onClick={() => requestReject(selectedRow)} sx={{ color: 'error.main' }}>
-            Reject
+        <MenuItem onClick={() => openRowModal(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+          <IconEye size={16} /> View Details
+        </MenuItem>
+        {selectedRow?._tab === 'pending' && canApprove && [
+          <MenuItem key="approve" onClick={() => requestApprove(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+            <IconCircleCheck size={16} /> Approve
+          </MenuItem>,
+          <MenuItem key="reject" onClick={() => requestReject(selectedRow)} sx={{ display: 'flex', gap: 1, color: 'error.main' }}>
+            <IconCircleX size={16} /> Reject
           </MenuItem>,
         ]}
-        {selectedRow?._tab === 'outstanding' && <MenuItem onClick={() => openRowModal(selectedRow)}>Add Installment</MenuItem>}
+        {selectedRow?._tab === 'outstanding' && (
+          <MenuItem onClick={() => openRowModal(selectedRow)} sx={{ display: 'flex', gap: 1 }}>
+            <IconPlus size={16} /> Add Installment
+          </MenuItem>
+        )}
       </Menu>
 
-      <PostIncomeModal open={modalOpen} onClose={() => setModalOpen(false)} entry={modalEntry} onSaved={fetchEntries} />
+      <PostIncomeModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        entry={modalEntry}
+        onSaved={fetchEntries}
+        canApprove={canApprove}
+        onApprove={(row) => {
+          setModalOpen(false);
+          requestApprove(row);
+        }}
+        onReject={(row) => {
+          setModalOpen(false);
+          requestReject(row);
+        }}
+      />
 
       <ConfirmationDialog
         open={Boolean(confirmAction)}
@@ -589,7 +657,7 @@ const PostIncome = () => {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
@@ -633,6 +701,87 @@ const IncomeBySource = ({ data }) => {
           })
         )}
       </Box>
+    </Box>
+  );
+};
+
+const InsightRow = ({ icon: Icon, iconBg, iconColor, title, description, badgeLabel, badgeBg, badgeColor }) => (
+  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+    <Box sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: iconBg, color: iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Icon size={16} />
+    </Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>{title}</Typography>
+      <Typography sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.1 }}>{description}</Typography>
+    </Box>
+    {badgeLabel && (
+      <Chip label={badgeLabel} size="small" sx={{ bgcolor: badgeBg, color: badgeColor, fontWeight: 700, fontSize: 11, flexShrink: 0 }} />
+    )}
+  </Box>
+);
+
+/**
+ * Derived entirely from data already on this page (the trend series, the
+ * source breakdown, the entries list) — nothing fetched separately. No
+ * "overdue" flag here: income_entries has no due_date column, so an
+ * "overdue" count can't honestly be computed; "outstanding entries" is
+ * shown instead.
+ */
+const IntelligentInsights = ({ insights, theme }) => {
+  const { last, prev, growthPct, collectionRate, collectionLabel, outstandingPct, outstandingCount, topSource, topSourcePct } = insights;
+
+  if (!last) {
+    return <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Not enough data yet to generate insights.</Typography>;
+  }
+
+  const growthUp = growthPct === null || growthPct >= 0;
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.75 }}>
+      <InsightRow
+        icon={growthUp ? IconTrendingUp : IconTrendingDown}
+        iconBg={growthUp ? '#DCFCE7' : '#FEE2E2'}
+        iconColor={growthUp ? '#15803D' : '#DC2626'}
+        title="Income Growth"
+        description={
+          growthPct === null
+            ? `Total income this term: ${formatNaira(last.actual)}.`
+            : `Total income ${growthUp ? 'increased' : 'decreased'} by ${Math.abs(growthPct).toFixed(1)}% vs. the previous term (${formatCompact(prev.actual)} → ${formatCompact(last.actual)}).`
+        }
+        badgeLabel={growthPct === null ? '—' : `${growthUp ? '+' : ''}${growthPct.toFixed(1)}%`}
+        badgeBg={growthUp ? '#DCFCE7' : '#FEE2E2'}
+        badgeColor={growthUp ? '#15803D' : '#DC2626'}
+      />
+      <InsightRow
+        icon={IconGauge}
+        iconBg="#DBEAFE"
+        iconColor="#1D4ED8"
+        title="Collection Performance"
+        description={`Collection rate is ${collectionRate.toFixed(1)}%.`}
+        badgeLabel={collectionLabel}
+        badgeBg={collectionRate >= 90 ? '#DCFCE7' : collectionRate >= 70 ? '#FEF3C7' : '#FEE2E2'}
+        badgeColor={collectionRate >= 90 ? '#15803D' : collectionRate >= 70 ? '#B45309' : '#DC2626'}
+      />
+      <InsightRow
+        icon={IconAlertTriangle}
+        iconBg="#FEF3C7"
+        iconColor="#B45309"
+        title="Outstanding Balance"
+        description={`${outstandingPct.toFixed(1)}% of total income is still outstanding, across ${outstandingCount} active ${outstandingCount === 1 ? 'entry' : 'entries'}.`}
+        badgeLabel={`${outstandingCount} outstanding`}
+        badgeBg="#FEF3C7"
+        badgeColor="#B45309"
+      />
+      <InsightRow
+        icon={IconCrown}
+        iconBg="#EDE9FE"
+        iconColor="#6D28D9"
+        title="Top Income Source"
+        description={topSource ? `${topSource.name} contributed ${topSourcePct.toFixed(1)}% of total income.` : 'No income posted yet.'}
+        badgeLabel={topSource ? formatCompact(topSource.value) : '—'}
+        badgeBg="#EDE9FE"
+        badgeColor="#6D28D9"
+      />
     </Box>
   );
 };

@@ -21,7 +21,7 @@ import {
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { IconX, IconCheck, IconUsers, IconShieldCheck, IconCircleCheck } from '@tabler/icons';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchBanks, resolveVendorAccount } from '@/api/tenant/finance/vendorApi';
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Vendor name is required'),
@@ -69,9 +69,8 @@ const AddVendorModal = ({ open, onClose, onSubmit, mode = 'create', vendor = nul
   useEffect(() => {
     if (open && banks.length === 0) {
       setBanksLoading(true);
-      tenantApi
-        .get('/vendor_manager/fetch_banks')
-        .then((res) => setBanks(res.data?.data?.result || []))
+      fetchBanks()
+        .then((res) => setBanks(res?.data?.result || []))
         .catch(() => setBanks([]))
         .finally(() => setBanksLoading(false));
     }
@@ -100,14 +99,13 @@ const AddVendorModal = ({ open, onClose, onSubmit, mode = 'create', vendor = nul
   const handleValidateAccount = () => {
     setResolveError('');
     setResolving(true);
-    tenantApi
-      .post('/vendor_manager/resolve_account', {
+    resolveVendorAccount({
         account_number: formik.values.accountNumber,
         bank_code: formik.values.bankCode,
         bank_name: formik.values.bankName,
       })
       .then((res) => {
-        formik.setFieldValue('accountName', res.data?.data?.account_name || '');
+        formik.setFieldValue('accountName', res?.data?.account_name || '');
         formik.setFieldValue('accountVerified', true);
       })
       .catch((err) => {

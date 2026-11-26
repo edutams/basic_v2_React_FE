@@ -53,7 +53,7 @@ function buildInsights(stats) {
   return insights;
 }
 
-const EquityDetailsTab = ({ data, loading }) => {
+const EquityDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const theme = useTheme();
 
   const stats = data?.stats;
@@ -133,7 +133,7 @@ const EquityDetailsTab = ({ data, loading }) => {
                 <IconCalendarEvent size={17} color={theme.palette.primary.main} />
                 <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Recent Equity Transactions</Typography>
               </Box>
-              <Button size="small" endIcon={<IconChevronRight size={14} />} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12.5 }}>
+              <Button size="small" endIcon={<IconChevronRight size={14} />} onClick={onViewAllTransactions} sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12.5 }}>
                 View All Transactions
               </Button>
             </Box>

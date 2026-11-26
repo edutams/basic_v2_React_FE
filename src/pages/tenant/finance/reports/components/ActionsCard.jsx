@@ -8,7 +8,7 @@ const ICONS = { database: IconDatabase, chart: IconChartBar, calendar: IconCalen
 // Account Summary tab's "Actions & Next Steps" card — a clickable punch
 // list, visually distinct from InsightsCard (purple header, chevron rows)
 // since it reads as actionable rather than informational.
-const ActionsCard = ({ items }) => {
+const ActionsCard = ({ items, onItemClick }) => {
   const theme = useTheme();
   return (
     <ParentCard
@@ -34,6 +34,7 @@ const ActionsCard = ({ items }) => {
           return (
             <Box
               key={action.title}
+              onClick={() => onItemClick?.(action)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',

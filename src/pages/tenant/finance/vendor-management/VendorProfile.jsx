@@ -34,7 +34,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
-import tenantApi from '@/api/tenant/tenant_api';
+import { fetchVendors as fetchVendorsApi, fetchVendor, toggleVendorStatus, createVendor, updateVendor } from '@/api/tenant/finance/vendorApi';
 import {
   IconUsers,
   IconPlus,
@@ -109,10 +109,9 @@ const VendorProfile = () => {
 
   const fetchVendors = useCallback(() => {
     setLoading(true);
-    tenantApi
-      .get('/vendor_manager/fetch_vendors')
+    fetchVendorsApi()
       .then((res) => {
-        const data = res.data?.data || [];
+        const data = res?.data || [];
         setVendors(data);
         setSelectedVendor((prev) => prev ?? data[0] ?? null);
       })
@@ -131,10 +130,9 @@ const VendorProfile = () => {
   useEffect(() => {
     if (!selectedVendor?.id) return;
     setIntelLoading(true);
-    tenantApi
-      .get(`/vendor_manager/fetch_vendor/${selectedVendor.id}`)
+    fetchVendor(selectedVendor.id)
       .then((res) => {
-        const detail = res.data?.data;
+        const detail = res?.data;
         if (detail) {
           setSelectedVendor((prev) => (prev && prev.id === detail.id ? { ...prev, ...detail } : prev));
         }
@@ -202,8 +200,7 @@ const VendorProfile = () => {
   };
 
   const handleConfirmStatusToggle = () => {
-    tenantApi
-      .put(`/vendor_manager/toggle_vendor_status/${vendorForStatusChange.id}`)
+    toggleVendorStatus(vendorForStatusChange.id)
       .then(() => {
         setStatusConfirmOpen(false);
         setSnackbar({
@@ -224,12 +221,11 @@ const VendorProfile = () => {
 
   const handleAddVendorSubmit = (payload) => {
     setSubmitting(true);
-    tenantApi
-      .post('/vendor_manager/create_vendor', payload)
+    createVendor(payload)
       .then((res) => {
         setAddVendorOpen(false);
         setSnackbar({ open: true, message: 'Vendor created.', severity: 'success' });
-        setSelectedVendor(res.data?.data || null);
+        setSelectedVendor(res?.data || null);
         fetchVendors();
       })
       .catch((err) =>
@@ -244,8 +240,7 @@ const VendorProfile = () => {
 
   const handleEditVendorSubmit = (payload) => {
     setSubmitting(true);
-    tenantApi
-      .put(`/vendor_manager/update_vendor/${vendorToEdit.id}`, payload)
+    updateVendor(vendorToEdit.id, payload)
       .then(() => {
         setEditVendorOpen(false);
         setSnackbar({ open: true, message: 'Vendor updated.', severity: 'success' });
@@ -734,7 +729,7 @@ const VendorProfile = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}

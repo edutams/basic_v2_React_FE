@@ -25,9 +25,10 @@ function changeSubtitle(pct, suffix = 'vs. compare period') {
 // One stat row, swapped by tab — each Income & Expenditure report tab has
 // its own set of headline numbers, but they all render as the same
 // StatCard grid directly below the page header (above the tab bar itself).
-// `data`/`loading` are the real /finance_reports/income_expenditure_summary
-// response — only the Account Summary/Trend & Analysis branch consumes
-// them so far; Income/Expenditure Details still use their own mock stats.
+// `data`/`loading` is this tab's own real API response (each tab hits its
+// own /finance_reports/* endpoint — see IncomeExpenditureReport.jsx's
+// TAB_ENDPOINTS); every branch below reads real `stats` fields the backend
+// actually returns, nothing here is mock.
 const ReportStatsRow = ({ tab, data, loading }) => {
   if (tab === 'income') {
     const stats = data?.stats;

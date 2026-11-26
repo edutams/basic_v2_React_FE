@@ -2,11 +2,12 @@ export function formatNaira(amount) {
   return `₦${Number(amount).toLocaleString('en-NG')}`;
 }
 
+// Kept as a separate export (rather than inlining formatNaira at every call
+// site) so chart/tooltip code that asked for a "compact" formatter still
+// works unchanged — it just no longer abbreviates to K/M, per explicit
+// request to always show the real figure.
 export function formatCompact(amount) {
-  const n = Number(amount);
-  if (Math.abs(n) >= 1_000_000) return `₦${(n / 1_000_000).toFixed(1)}M`;
-  if (Math.abs(n) >= 1_000) return `₦${(n / 1_000).toFixed(0)}K`;
-  return `₦${n}`;
+  return formatNaira(amount);
 }
 
 export function todayISO() {
@@ -44,16 +45,3 @@ export function getEntryTabStatus(entry) {
 export function getPendingInstallment(entry) {
   return (entry.installments || []).find((i) => i.status === 'pending_approval') || null;
 }
-
-// Income Trend (last 7 terms) has no backing aggregation endpoint yet —
-// this report belongs with the Reports module's term-over-term wiring, not
-// this operational page, so it stays an explicit placeholder for now.
-export const mockIncomeTrend = [
-  { term: '2024 T1', actual: 520000, paid: 480000, balance: 40000 },
-  { term: '2024 T2', actual: 560000, paid: 510000, balance: 50000 },
-  { term: '2024 T3', actual: 590000, paid: 540000, balance: 50000 },
-  { term: '2025 T1', actual: 630000, paid: 580000, balance: 50000 },
-  { term: '2025 T2', actual: 670000, paid: 610000, balance: 60000 },
-  { term: '2025 T3', actual: 710000, paid: 650000, balance: 60000 },
-  { term: '2026 T1', actual: 742000, paid: 687000, balance: 55000 },
-];

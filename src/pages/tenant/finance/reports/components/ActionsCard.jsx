@@ -23,6 +23,11 @@ const ActionsCard = ({ items }) => {
         '& .MuiCardContent-root': { p: 1, '&:last-child': { pb: 1 } },
       }}
     >
+      {items.length === 0 ? (
+        <Box sx={{ minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }}>Nothing to show yet.</Typography>
+        </Box>
+      ) : (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         {items.map((action) => {
           const Icon = ICONS[action.icon] || IconDatabase;
@@ -65,6 +70,7 @@ const ActionsCard = ({ items }) => {
           );
         })}
       </Box>
+      )}
     </ParentCard>
   );
 };

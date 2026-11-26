@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ParentCard from '@/components/shared/ParentCard';
@@ -6,22 +6,107 @@ import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import ReusableTrendChart from '@/components/shared/charts/ReusableTrendChart';
 import { IconChartAreaLine, IconChartDonut, IconChartBar, IconReportAnalytics, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons';
 import InsightsCard from '../../components/InsightsCard';
-import {
-  financialStructure,
-  periodMovementAnalysis,
-  financialRatiosTrend,
-  trendAnalysisInsights,
-  balanceSheetStats,
-  COLORS,
-  formatCompact,
-  formatNaira,
-} from '../constants';
+import { COLORS, formatCompact, formatNaira } from '../constants';
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
 
-const TrendAnalysisTab = () => {
+function pctChange(current, previous) {
+  if (previous === null || previous === undefined || previous === 0) return null;
+  return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
+}
+
+function ppChange(current, previous) {
+  if (current === null || current === undefined || previous === null || previous === undefined) return null;
+  return Math.round((current - previous) * 10) / 10;
+}
+
+/**
+ * Current-vs-previous-term rows for the Financial Ratios Trend table, all
+ * derived from the same 7-term trend array the Financial Position chart
+ * already renders — no separate endpoint for this tab.
+ */
+function buildFinancialRatios(trendData) {
+  if (trendData.length === 0) return [];
+  const current = trendData[trendData.length - 1];
+  const previous = trendData.length >= 2 ? trendData[trendData.length - 2] : null;
+
+  const currentRatioChange = ppChange(current.current_ratio, previous?.current_ratio);
+  const equityRatioChange = ppChange(current.equity_ratio, previous?.equity_ratio);
+  const liabilitiesRatioChange = ppChange(current.liabilities_ratio, previous?.liabilities_ratio);
+  const assetGrowth = pctChange(current.assets, previous?.assets);
+
+  return [
+    {
+      metric: 'Current Ratio',
+      previous: previous?.current_ratio !== null && previous?.current_ratio !== undefined ? `${previous.current_ratio} : 1` : '—',
+      current: current.current_ratio !== null && current.current_ratio !== undefined ? `${current.current_ratio} : 1` : '—',
+      change: currentRatioChange,
+      changeLabel: currentRatioChange !== null ? `${currentRatioChange >= 0 ? '+' : ''}${currentRatioChange}` : '—',
+      good: currentRatioChange === null ? null : currentRatioChange >= 0,
+    },
+    {
+      metric: 'Equity Ratio',
+      previous: previous?.equity_ratio !== null && previous?.equity_ratio !== undefined ? `${previous.equity_ratio}%` : '—',
+      current: current.equity_ratio !== null && current.equity_ratio !== undefined ? `${current.equity_ratio}%` : '—',
+      change: equityRatioChange,
+      changeLabel: equityRatioChange !== null ? `${equityRatioChange >= 0 ? '+' : '−'}${Math.abs(equityRatioChange)} pp` : '—',
+      good: equityRatioChange === null ? null : equityRatioChange >= 0,
+    },
+    {
+      metric: 'Liabilities Ratio',
+      previous: previous?.liabilities_ratio !== null && previous?.liabilities_ratio !== undefined ? `${previous.liabilities_ratio}%` : '—',
+      current: current.liabilities_ratio !== null && current.liabilities_ratio !== undefined ? `${current.liabilities_ratio}%` : '—',
+      change: liabilitiesRatioChange,
+      changeLabel: liabilitiesRatioChange !== null ? `${liabilitiesRatioChange >= 0 ? '+' : '−'}${Math.abs(liabilitiesRatioChange)} pp` : '—',
+      good: liabilitiesRatioChange === null ? null : liabilitiesRatioChange <= 0,
+    },
+    {
+      metric: 'Asset Growth',
+      previous: previous ? formatNaira(previous.assets) : '—',
+      current: formatNaira(current.assets),
+      change: assetGrowth,
+      changeLabel: assetGrowth !== null ? `${assetGrowth >= 0 ? '+' : ''}${assetGrowth}%` : '—',
+      good: assetGrowth === null ? null : assetGrowth >= 0,
+    },
+  ];
+}
+
+function buildInsights(summary, ratios) {
+  if (!summary) return [];
+  const insights = [];
+
+  if (summary.total_assets_change_pct !== null && summary.total_assets_change_pct !== undefined) {
+    insights.push(`Total assets ${summary.total_assets_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_assets_change_pct)}% to ${formatNaira(summary.total_assets)}.`);
+  }
+  if (summary.total_liabilities_change_pct !== null && summary.total_liabilities_change_pct !== undefined) {
+    insights.push(`Total liabilities ${summary.total_liabilities_change_pct >= 0 ? 'rose' : 'fell'} by ${Math.abs(summary.total_liabilities_change_pct)}% to ${formatNaira(summary.total_liabilities)}.`);
+  }
+  if (summary.total_equity_change_pct !== null && summary.total_equity_change_pct !== undefined) {
+    insights.push(`Total equity (net assets) ${summary.total_equity_change_pct >= 0 ? 'grew' : 'shrank'} by ${Math.abs(summary.total_equity_change_pct)}% to ${formatNaira(summary.total_equity)}.`);
+  }
+  if (summary.equity_ratio !== null && summary.equity_ratio !== undefined) {
+    insights.push(`Equity ratio is ${summary.equity_ratio}%, ${summary.equity_ratio >= 50 ? 'indicating a strong and stable financial position' : 'below the 50% mark typically considered stable'}.`);
+  }
+  if (summary.current_ratio !== null && summary.current_ratio !== undefined) {
+    insights.push(`Current ratio is ${summary.current_ratio}:1, ${summary.current_ratio >= 1 ? 'showing good short-term liquidity' : 'suggesting a short-term liquidity risk'}.`);
+  }
+
+  return insights;
+}
+
+const TrendAnalysisTab = ({ data, loading }) => {
   const theme = useTheme();
+
+  const summary = data?.summary;
+  const trendData = data?.trend || [];
+
+  const financialRatios = useMemo(() => buildFinancialRatios(trendData), [trendData]);
+  const insights = useMemo(() => buildInsights(summary, financialRatios), [summary, financialRatios]);
+
+  const totalLiabilities = summary?.total_liabilities ?? 0;
+  const totalEquity = summary?.total_equity ?? 0;
+  const totalFunds = totalLiabilities + totalEquity;
 
   return (
     <Box>
@@ -40,7 +125,7 @@ const TrendAnalysisTab = () => {
             }}
           >
             <ReusableTrendChart
-              data={periodMovementAnalysis}
+              data={trendData}
               nameKey="term"
               series={[
                 { dataKey: 'assets', name: 'Total Assets', color: COLORS.assets },
@@ -70,25 +155,28 @@ const TrendAnalysisTab = () => {
           >
             <ReusableDonutChart
               data={[
-                { name: 'Equity (Net Assets)', value: financialStructure[0].value, color: COLORS.equity },
-                { name: 'Liabilities', value: financialStructure[1].value, color: COLORS.liabilities },
+                { name: 'Equity (Net Assets)', value: totalEquity, color: COLORS.equity },
+                { name: 'Liabilities', value: totalLiabilities, color: COLORS.liabilities },
               ]}
               height={180}
               innerRadius={60}
               outerRadius={84}
               paddingAngle={2}
-              centerValue={formatCompact(balanceSheetStats.totalAssets)}
-              centerTitle="Total Assets"
+              centerValue={formatCompact(totalFunds)}
+              centerTitle="Total Funds"
               valueFontSize={17}
               tooltipFormatter={(value, name) => [formatNaira(value), name]}
             />
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1.5 }}>
-              {financialStructure.map((c, idx) => (
+              {[
+                { name: 'Equity (Net Assets)', color: COLORS.equity, value: totalEquity },
+                { name: 'Liabilities', color: COLORS.liabilities, value: totalLiabilities },
+              ].map((c) => (
                 <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: idx === 0 ? COLORS.equity : COLORS.liabilities, flexShrink: 0 }} />
+                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: c.color, flexShrink: 0 }} />
                   <Typography sx={{ fontSize: 12.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
                   <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: 'text.secondary' }}>
-                    {formatCompact(c.value)} ({c.pct}%)
+                    {formatCompact(c.value)} ({totalFunds > 0 ? (c.value / totalFunds * 100).toFixed(1) : 0}%)
                   </Typography>
                 </Box>
               ))}
@@ -112,7 +200,7 @@ const TrendAnalysisTab = () => {
             }}
           >
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={periodMovementAnalysis} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <BarChart data={trendData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f0f0f0'} />
                 <XAxis dataKey="term" tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} tickFormatter={formatCompact} />
@@ -149,30 +237,38 @@ const TrendAnalysisTab = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {financialRatiosTrend.map((row) => {
-                  const DirectionIcon = row.direction === 'up' ? IconArrowUpRight : IconArrowDownRight;
-                  const color = row.good ? '#15803D' : '#DC2626';
-                  return (
-                    <TableRow key={row.metric} hover>
-                      <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.metric}</TableCell>
-                      <TableCell sx={{ ...tdCell, color: 'text.secondary' }} align="right">{row.previous}</TableCell>
-                      <TableCell sx={{ ...tdCell, fontWeight: 700 }} align="right">{row.current}</TableCell>
-                      <TableCell sx={{ ...tdCell, color, fontWeight: 700 }} align="right">
-                        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
-                          <DirectionIcon size={13} />
-                          {row.changeLabel}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {financialRatios.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                      {loading ? 'Loading…' : 'No data for this period.'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  financialRatios.map((row) => {
+                    const DirectionIcon = (row.change ?? 0) < 0 ? IconArrowDownRight : IconArrowUpRight;
+                    const color = row.good === null ? theme.palette.text.secondary : row.good ? '#15803D' : '#DC2626';
+                    return (
+                      <TableRow key={row.metric} hover>
+                        <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.metric}</TableCell>
+                        <TableCell sx={{ ...tdCell, color: 'text.secondary' }} align="right">{row.previous}</TableCell>
+                        <TableCell sx={{ ...tdCell, fontWeight: 700 }} align="right">{row.current}</TableCell>
+                        <TableCell sx={{ ...tdCell, color, fontWeight: 700 }} align="right">
+                          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
+                            {row.change !== null && <DirectionIcon size={13} />}
+                            {row.changeLabel}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </ParentCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 3 }}>
-          <InsightsCard title="Key Insights" items={trendAnalysisInsights} />
+          <InsightsCard title="Key Insights" items={insights} />
         </Grid>
       </Grid>
     </Box>

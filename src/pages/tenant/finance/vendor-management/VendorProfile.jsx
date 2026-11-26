@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -28,47 +28,36 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PageContainer from '@/components/container/PageContainer';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
+import tenantApi from '@/api/tenant/tenant_api';
 import {
   IconUsers,
-  IconSettings,
-  IconUpload,
   IconPlus,
-  IconChevronDown,
   IconCircleCheck,
   IconInfoCircle,
-  IconCategory,
-  IconStar,
   IconSearch,
   IconRefresh,
   IconEye,
   IconEdit,
-  IconTrash,
+  IconBan,
+  IconRotate,
   IconBuildingStore,
   IconArrowRight,
   IconChartBar,
-  IconUser,
-  IconPhone,
-  IconMail,
-  IconId,
-  IconMapPin,
-  IconCalendar,
+  IconFileDescription,
+  IconBuildingBank,
+  IconCreditCard,
+  IconUserCircle,
   IconCoins,
+  IconCalendar,
 } from '@tabler/icons';
 import AddVendorModal from './components/AddVendorModal';
-import {
-  VENDOR_CATEGORY_META,
-  VENDOR_CATEGORIES,
-  STATUS_META,
-  mockVendors,
-  spendTrend,
-  quickInsights,
-  formatCompact,
-} from './constants';
+import { STATUS_META, formatCompact } from './constants';
 
 const thCell = { fontWeight: 700, py: 0.75, px: 1.25 };
 const tdCell = { py: 0.5, px: 1.25 };
@@ -95,11 +84,10 @@ const VendorProfile = () => {
   const theme = useTheme();
 
   const [loading, setLoading] = useState(true);
-  const [vendors, setVendors] = useState(mockVendors);
-  const [selectedVendor, setSelectedVendor] = useState(mockVendors[0] || null);
+  const [vendors, setVendors] = useState([]);
+  const [selectedVendor, setSelectedVendor] = useState(null);
 
   const [activeTab, setActiveTab] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -108,22 +96,57 @@ const VendorProfile = () => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuRow, setMenuRow] = useState(null);
-  const [categoriesMenuAnchor, setCategoriesMenuAnchor] = useState(null);
 
   const [addVendorOpen, setAddVendorOpen] = useState(false);
   const [editVendorOpen, setEditVendorOpen] = useState(false);
   const [vendorToEdit, setVendorToEdit] = useState(null);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [vendorToDelete, setVendorToDelete] = useState(null);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [vendorForStatusChange, setVendorForStatusChange] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const [intelLoading, setIntelLoading] = useState(false);
+
+  const fetchVendors = useCallback(() => {
+    setLoading(true);
+    tenantApi
+      .get('/vendor_manager/fetch_vendors')
+      .then((res) => {
+        const data = res.data?.data || [];
+        setVendors(data);
+        setSelectedVendor((prev) => prev ?? data[0] ?? null);
+      })
+      .catch(() => setSnackbar({ open: true, message: 'Could not load vendors.', severity: 'error' }))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchVendors();
+  }, [fetchVendors]);
+
+  // Vendor Intelligence (spend trend + insights) is only worth fetching
+  // once a vendor is actually selected, and is per-vendor — the list
+  // endpoint already carries transactions/total_spend/years_active, this
+  // just fills in the 12-month trend and the computed insight sentences.
+  useEffect(() => {
+    if (!selectedVendor?.id) return;
+    setIntelLoading(true);
+    tenantApi
+      .get(`/vendor_manager/fetch_vendor/${selectedVendor.id}`)
+      .then((res) => {
+        const detail = res.data?.data;
+        if (detail) {
+          setSelectedVendor((prev) => (prev && prev.id === detail.id ? { ...prev, ...detail } : prev));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIntelLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVendor?.id]);
 
   const counts = useMemo(() => {
     const total = vendors.length;
-    const active = vendors.filter((v) => v.status === 'Active').length;
+    const active = vendors.filter((v) => v.is_active).length;
     return { total, active, inactive: total - active };
   }, [vendors]);
 
@@ -132,37 +155,28 @@ const VendorProfile = () => {
     setPage(1);
     if (val === 'active') setStatusFilter('Active');
     else if (val === 'inactive') setStatusFilter('Inactive');
-    else if (val === 'all') setStatusFilter('All');
+    else setStatusFilter('All');
   };
 
   const filteredData = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    let data = vendors.filter((v) => {
-      const matchesCategory = categoryFilter === 'All' || v.category === categoryFilter;
-      const matchesStatus = statusFilter === 'All' || v.status === statusFilter;
+    return vendors.filter((v) => {
+      const status = v.is_active ? 'Active' : 'Inactive';
+      const matchesStatus = statusFilter === 'All' || status === statusFilter;
       const matchesSearch =
         !q ||
         v.name.toLowerCase().includes(q) ||
-        v.email.toLowerCase().includes(q) ||
-        v.phone.toLowerCase().includes(q) ||
-        v.tin.toLowerCase().includes(q);
-      return matchesCategory && matchesStatus && matchesSearch;
+        (v.description || '').toLowerCase().includes(q) ||
+        (v.account_number || '').toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
     });
-
-    if (activeTab === 'category') {
-      data = [...data].sort((a, b) => a.category.localeCompare(b.category));
-    } else if (activeTab === 'rating') {
-      data = [...data].sort((a, b) => b.rating - a.rating);
-    }
-    return data;
-  }, [vendors, categoryFilter, statusFilter, searchQuery, activeTab]);
+  }, [vendors, statusFilter, searchQuery]);
 
   const pageCount = Math.max(1, Math.ceil(filteredData.length / rowsPerPage));
   const safePage = Math.min(page, pageCount);
   const paginatedData = filteredData.slice((safePage - 1) * rowsPerPage, safePage * rowsPerPage);
 
   const handleResetFilters = () => {
-    setCategoryFilter('All');
     setStatusFilter(activeTab === 'active' ? 'Active' : activeTab === 'inactive' ? 'Inactive' : 'All');
     setSearchQuery('');
     setPage(1);
@@ -181,47 +195,73 @@ const VendorProfile = () => {
     handleMenuClose();
   };
 
-  const handleDeleteClick = (row) => {
-    setVendorToDelete(row);
-    setDeleteConfirmOpen(true);
+  const handleStatusClick = (row) => {
+    setVendorForStatusChange(row);
+    setStatusConfirmOpen(true);
     handleMenuClose();
   };
 
-  const handleConfirmDelete = () => {
-    setVendors((prev) => prev.filter((v) => v.id !== vendorToDelete.id));
-    if (selectedVendor?.id === vendorToDelete.id) {
-      const remaining = vendors.filter((v) => v.id !== vendorToDelete.id);
-      setSelectedVendor(remaining[0] || null);
-    }
-    setDeleteConfirmOpen(false);
-    setVendorToDelete(null);
+  const handleConfirmStatusToggle = () => {
+    tenantApi
+      .put(`/vendor_manager/toggle_vendor_status/${vendorForStatusChange.id}`)
+      .then(() => {
+        setStatusConfirmOpen(false);
+        setSnackbar({
+          open: true,
+          message: vendorForStatusChange.is_active ? 'Vendor deactivated.' : 'Vendor activated.',
+          severity: 'success',
+        });
+        fetchVendors();
+      })
+      .catch((err) =>
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.message || 'Something went wrong. Please try again.',
+          severity: 'error',
+        }),
+      );
   };
 
-  const handleAddVendorSubmit = (data) => {
-    const newVendor = {
-      ...data,
-      id: `${Date.now()}`,
-      transactions: 0,
-      totalSpend: 0,
-      rating: 0,
-      yearsActive: 0,
-    };
-    setVendors((prev) => [newVendor, ...prev]);
-    setSelectedVendor(newVendor);
+  const handleAddVendorSubmit = (payload) => {
+    setSubmitting(true);
+    tenantApi
+      .post('/vendor_manager/create_vendor', payload)
+      .then((res) => {
+        setAddVendorOpen(false);
+        setSnackbar({ open: true, message: 'Vendor created.', severity: 'success' });
+        setSelectedVendor(res.data?.data || null);
+        fetchVendors();
+      })
+      .catch((err) =>
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.message || 'Something went wrong. Please try again.',
+          severity: 'error',
+        }),
+      )
+      .finally(() => setSubmitting(false));
   };
 
-  const handleEditVendorSubmit = (data) => {
-    setVendors((prev) =>
-      prev.map((v) => (v.id === vendorToEdit.id ? { ...v, ...data } : v)),
-    );
-    if (selectedVendor?.id === vendorToEdit.id) {
-      setSelectedVendor((prev) => ({ ...prev, ...data }));
-    }
+  const handleEditVendorSubmit = (payload) => {
+    setSubmitting(true);
+    tenantApi
+      .put(`/vendor_manager/update_vendor/${vendorToEdit.id}`, payload)
+      .then(() => {
+        setEditVendorOpen(false);
+        setSnackbar({ open: true, message: 'Vendor updated.', severity: 'success' });
+        fetchVendors();
+      })
+      .catch((err) =>
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.message || 'Something went wrong. Please try again.',
+          severity: 'error',
+        }),
+      )
+      .finally(() => setSubmitting(false));
   };
 
-  const selectedMeta = selectedVendor ? VENDOR_CATEGORY_META[selectedVendor.category] : null;
-  const SelectedIcon = selectedMeta?.icon;
-  const selectedStatusMeta = selectedVendor ? STATUS_META[selectedVendor.status] : null;
+  const selectedStatusMeta = selectedVendor ? STATUS_META[selectedVendor.is_active ? 'Active' : 'Inactive'] : null;
 
   return (
     <PageContainer title="Vendor Profile Management" description="Maintain supplier and service provider records">
@@ -264,24 +304,6 @@ const VendorProfile = () => {
           </Box>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25 }}>
             <Button
-              variant="outlined"
-              color="inherit"
-              onClick={(e) => setCategoriesMenuAnchor(e.currentTarget)}
-              startIcon={<IconSettings size={16} />}
-              endIcon={<IconChevronDown size={14} />}
-              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
-            >
-              Manage Categories
-            </Button>
-            <Button
-              variant="outlined"
-              color="inherit"
-              startIcon={<IconUpload size={16} />}
-              sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}
-            >
-              Import Vendors
-            </Button>
-            <Button
               variant="contained"
               onClick={() => setAddVendorOpen(true)}
               startIcon={<IconPlus size={18} />}
@@ -311,17 +333,15 @@ const VendorProfile = () => {
                   <Tab icon={<IconUsers size={15} />} iconPosition="start" label={`All Vendors (${counts.total})`} value="all" />
                   <Tab icon={<IconCircleCheck size={15} />} iconPosition="start" label={`Active (${counts.active})`} value="active" />
                   <Tab icon={<IconInfoCircle size={15} />} iconPosition="start" label={`Inactive (${counts.inactive})`} value="inactive" />
-                  <Tab icon={<IconCategory size={15} />} iconPosition="start" label="By Category" value="category" />
-                  <Tab icon={<IconStar size={15} />} iconPosition="start" label="By Rating" value="rating" />
                 </Tabs>
               </Box>
 
               <Grid container spacing={1.5} sx={{ mb: 2 }}>
-                <Grid size={{ xs: 12, md: 5 }}>
+                <Grid size={{ xs: 12, md: 7 }}>
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="Search vendor by name, email, phone or TIN..."
+                    placeholder="Search vendor by name, description or account number..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -340,25 +360,6 @@ const VendorProfile = () => {
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <FormControl fullWidth size="small">
                     <Select
-                      value={categoryFilter}
-                      onChange={(e) => {
-                        setCategoryFilter(e.target.value);
-                        setPage(1);
-                      }}
-                      sx={{ borderRadius: '8px' }}
-                    >
-                      <MenuItem value="All">All Categories</MenuItem>
-                      {VENDOR_CATEGORIES.map((cat) => (
-                        <MenuItem key={cat} value={cat}>
-                          {cat}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                  <FormControl fullWidth size="small">
-                    <Select
                       value={statusFilter}
                       onChange={(e) => {
                         setStatusFilter(e.target.value);
@@ -372,7 +373,7 @@ const VendorProfile = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
+                <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                   <Button
                     fullWidth
                     variant="outlined"
@@ -387,7 +388,7 @@ const VendorProfile = () => {
               </Grid>
 
               <TableContainer>
-                <Table size="small" sx={{ minWidth: 900 }}>
+                <Table size="small" sx={{ minWidth: 820 }}>
                   <TableHead
                     sx={{
                       bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : theme.palette.action.hover,
@@ -400,9 +401,8 @@ const VendorProfile = () => {
                     >
                       <TableCell sx={thCell}>#</TableCell>
                       <TableCell sx={thCell}>Vendor Name</TableCell>
-                      <TableCell sx={thCell}>Category</TableCell>
-                      <TableCell sx={thCell}>Contact Person</TableCell>
-                      <TableCell sx={thCell}>Phone / Email</TableCell>
+                      <TableCell sx={thCell}>Description</TableCell>
+                      <TableCell sx={thCell}>Bank / Account</TableCell>
                       <TableCell sx={thCell}>Status</TableCell>
                       <TableCell sx={thCell} align="center">
                         Actions
@@ -413,7 +413,7 @@ const VendorProfile = () => {
                     {loading ? (
                       Array.from({ length: 6 }).map((_, idx) => (
                         <TableRow key={idx}>
-                          {Array.from({ length: 7 }).map((__, cellIdx) => (
+                          {Array.from({ length: 6 }).map((__, cellIdx) => (
                             <TableCell key={cellIdx} sx={tdCell}>
                               <Skeleton variant="text" height={20} />
                             </TableCell>
@@ -422,9 +422,7 @@ const VendorProfile = () => {
                       ))
                     ) : paginatedData.length > 0 ? (
                       paginatedData.map((row, idx) => {
-                        const meta = VENDOR_CATEGORY_META[row.category] || {};
-                        const Icon = meta.icon;
-                        const statusMeta = STATUS_META[row.status];
+                        const statusMeta = STATUS_META[row.is_active ? 'Active' : 'Inactive'];
                         return (
                           <TableRow
                             key={row.id}
@@ -443,40 +441,29 @@ const VendorProfile = () => {
                                     width: 28,
                                     height: 28,
                                     borderRadius: '8px',
-                                    bgcolor: meta.bg,
-                                    color: meta.color,
+                                    bgcolor: theme.palette.primary.light,
+                                    color: theme.palette.primary.main,
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     flexShrink: 0,
                                   }}
                                 >
-                                  {Icon && <Icon size={14} />}
+                                  <IconUserCircle size={15} />
                                 </Box>
                                 <Typography sx={{ fontWeight: 600, fontSize: 13 }}>{row.name}</Typography>
                               </Box>
                             </TableCell>
-                            <TableCell sx={tdCell}>
-                              <Chip
-                                label={row.category}
-                                size="small"
-                                sx={{
-                                  bgcolor: meta.bg,
-                                  color: meta.color,
-                                  fontWeight: 700,
-                                  borderRadius: '8px',
-                                  fontSize: 11,
-                                }}
-                              />
+                            <TableCell sx={{ ...tdCell, fontSize: 12.5, color: 'text.secondary', maxWidth: 220 }}>
+                              {row.description || '—'}
                             </TableCell>
-                            <TableCell sx={{ ...tdCell, fontSize: 12.5 }}>{row.contactPerson}</TableCell>
                             <TableCell sx={tdCell}>
-                              <Typography sx={{ fontSize: 12.5 }}>{row.phone}</Typography>
-                              <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{row.email}</Typography>
+                              <Typography sx={{ fontSize: 12.5 }}>{row.bank_name || '—'}</Typography>
+                              <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{row.account_number || ''}</Typography>
                             </TableCell>
                             <TableCell sx={tdCell}>
                               <Chip
-                                label={row.status}
+                                label={row.is_active ? 'Active' : 'Inactive'}
                                 size="small"
                                 sx={{
                                   bgcolor: statusMeta.bg,
@@ -497,7 +484,7 @@ const VendorProfile = () => {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
+                        <TableCell colSpan={6} align="center">
                           <Alert severity="info" sx={{ my: 2, justifyContent: 'center' }}>
                             {searchQuery
                               ? 'No vendors match the current search.'
@@ -546,18 +533,9 @@ const VendorProfile = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <ParentCard
                 title={
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <IconBuildingStore size={17} />
-                      <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Selected Vendor Information</Typography>
-                    </Box>
-                    <Button
-                      size="small"
-                      endIcon={<IconArrowRight size={13} />}
-                      sx={{ color: '#fff', textTransform: 'none', fontWeight: 600, fontSize: 12 }}
-                    >
-                      View All
-                    </Button>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <IconBuildingStore size={17} />
+                    <Typography sx={{ fontWeight: 700, fontSize: 14 }}>Selected Vendor Information</Typography>
                   </Box>
                 }
                 sx={{
@@ -578,21 +556,21 @@ const VendorProfile = () => {
                           width: 44,
                           height: 44,
                           borderRadius: '10px',
-                          bgcolor: selectedMeta?.bg,
-                          color: selectedMeta?.color,
+                          bgcolor: theme.palette.primary.light,
+                          color: theme.palette.primary.main,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        {SelectedIcon && <SelectedIcon size={22} />}
+                        <IconUserCircle size={22} />
                       </Box>
                       <Box sx={{ minWidth: 0 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography sx={{ fontWeight: 700, fontSize: 14.5 }}>{selectedVendor.name}</Typography>
                           <Chip
-                            label={selectedVendor.status}
+                            label={selectedVendor.is_active ? 'Active' : 'Inactive'}
                             size="small"
                             sx={{
                               bgcolor: selectedStatusMeta?.bg,
@@ -603,16 +581,14 @@ const VendorProfile = () => {
                             }}
                           />
                         </Box>
-                        <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>{selectedVendor.category}</Typography>
                       </Box>
                     </Box>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.1 }}>
-                      <DetailRow icon={IconUser} label="Contact Person" value={selectedVendor.contactPerson} theme={theme} />
-                      <DetailRow icon={IconPhone} label="Phone" value={selectedVendor.phone} theme={theme} />
-                      <DetailRow icon={IconMail} label="Email" value={selectedVendor.email} theme={theme} />
-                      <DetailRow icon={IconId} label="TIN" value={selectedVendor.tin} theme={theme} />
-                      <DetailRow icon={IconMapPin} label="Address" value={selectedVendor.address} theme={theme} />
+                      <DetailRow icon={IconFileDescription} label="Description" value={selectedVendor.description} theme={theme} />
+                      <DetailRow icon={IconBuildingBank} label="Bank" value={selectedVendor.bank_name} theme={theme} />
+                      <DetailRow icon={IconCreditCard} label="Account No." value={selectedVendor.account_number} theme={theme} />
+                      <DetailRow icon={IconUserCircle} label="Account Name" value={selectedVendor.account_name} theme={theme} />
                     </Box>
                   </>
                 ) : (
@@ -644,23 +620,20 @@ const VendorProfile = () => {
                 }}
               >
                 <Grid container spacing={1} sx={{ mb: 1.75 }}>
-                  <Grid size={3}>
+                  <Grid size={4}>
                     <MiniStat icon={IconUsers} value={selectedVendor?.transactions ?? 0} label="Transactions" bg="#DBEAFE" color="#2563EB" />
                   </Grid>
-                  <Grid size={3}>
-                    <MiniStat icon={IconCoins} value={formatCompact(selectedVendor?.totalSpend ?? 0)} label="Total Spend" bg="#DCFCE7" color="#16A34A" />
+                  <Grid size={4}>
+                    <MiniStat icon={IconCoins} value={formatCompact(selectedVendor?.total_spend ?? 0)} label="Total Spend" bg="#DCFCE7" color="#16A34A" />
                   </Grid>
-                  <Grid size={3}>
-                    <MiniStat icon={IconStar} value={`${selectedVendor?.rating ?? 0}/5`} label="Rating" bg="#F3E8FF" color="#9333EA" />
-                  </Grid>
-                  <Grid size={3}>
-                    <MiniStat icon={IconCalendar} value={selectedVendor?.yearsActive ?? 0} label="Years" bg="#FEF3C7" color="#D97706" />
+                  <Grid size={4}>
+                    <MiniStat icon={IconCalendar} value={selectedVendor?.years_active ?? 0} label="Years" bg="#FEF3C7" color="#D97706" />
                   </Grid>
                 </Grid>
 
                 <Typography sx={{ fontWeight: 700, fontSize: 12.5, mb: 1 }}>Spend Trend (Last 12 Months)</Typography>
                 <ReusableAreaChart
-                  data={spendTrend}
+                  data={selectedVendor?.spend_trend || []}
                   nameKey="month"
                   dataKey="spend"
                   name="Spend"
@@ -672,14 +645,20 @@ const VendorProfile = () => {
                   yTickFontSize={9}
                 />
 
-                <Box sx={{ bgcolor: '#DCFCE7', borderRadius: '10px', p: 1.5, mt: 1.5 }}>
+                <Box sx={{ bgcolor: '#DCFCE7', borderRadius: '10px', p: 1.5, mt: 1.5, minHeight: 90 }}>
                   <Typography sx={{ fontWeight: 700, fontSize: 12.5, mb: 0.75 }}>Quick Insights</Typography>
-                  {quickInsights.map((text) => (
-                    <Box key={text} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, mb: 0.5, '&:last-of-type': { mb: 0 } }}>
-                      <IconCircleCheck size={13} color="#16A34A" style={{ marginTop: 2, flexShrink: 0 }} />
-                      <Typography sx={{ fontSize: 11.5 }}>{text}</Typography>
-                    </Box>
-                  ))}
+                  {(selectedVendor?.quick_insights || []).length === 0 ? (
+                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
+                      {intelLoading ? 'Loading…' : 'No activity with this vendor yet.'}
+                    </Typography>
+                  ) : (
+                    selectedVendor.quick_insights.map((text) => (
+                      <Box key={text} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, mb: 0.5, '&:last-of-type': { mb: 0 } }}>
+                        <IconCircleCheck size={13} color="#16A34A" style={{ marginTop: 2, flexShrink: 0 }} />
+                        <Typography sx={{ fontSize: 11.5 }}>{text}</Typography>
+                      </Box>
+                    ))
+                  )}
                 </Box>
               </ParentCard>
             </Box>
@@ -702,44 +681,65 @@ const VendorProfile = () => {
           <IconEdit size={16} style={{ marginRight: 8 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={() => handleDeleteClick(menuRow)} sx={{ color: 'error.main' }}>
-          <IconTrash size={16} style={{ marginRight: 8 }} />
-          Delete
+        <MenuItem onClick={() => handleStatusClick(menuRow)} sx={{ color: menuRow?.is_active ? 'error.main' : 'success.main' }}>
+          {menuRow?.is_active ? (
+            <IconBan size={16} style={{ marginRight: 8 }} />
+          ) : (
+            <IconRotate size={16} style={{ marginRight: 8 }} />
+          )}
+          {menuRow?.is_active ? 'Deactivate' : 'Activate'}
         </MenuItem>
       </Menu>
 
-      {/* Manage Categories menu — visual placeholder until that flow's design is given */}
-      <Menu anchorEl={categoriesMenuAnchor} open={Boolean(categoriesMenuAnchor)} onClose={() => setCategoriesMenuAnchor(null)}>
-        <MenuItem onClick={() => setCategoriesMenuAnchor(null)}>Add Category</MenuItem>
-        <MenuItem onClick={() => setCategoriesMenuAnchor(null)}>Edit Categories</MenuItem>
-        <MenuItem onClick={() => setCategoriesMenuAnchor(null)}>View All Categories</MenuItem>
-      </Menu>
-
-      <AddVendorModal open={addVendorOpen} onClose={() => setAddVendorOpen(false)} onSubmit={handleAddVendorSubmit} />
+      <AddVendorModal
+        open={addVendorOpen}
+        onClose={() => setAddVendorOpen(false)}
+        onSubmit={handleAddVendorSubmit}
+        submitting={submitting}
+      />
       <AddVendorModal
         open={editVendorOpen}
         onClose={() => setEditVendorOpen(false)}
         onSubmit={handleEditVendorSubmit}
         mode="edit"
         vendor={vendorToEdit}
+        submitting={submitting}
       />
 
-      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirm Delete</DialogTitle>
+      <Dialog open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>{vendorForStatusChange?.is_active ? 'Deactivate Vendor' : 'Activate Vendor'}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete <b>{vendorToDelete?.name}</b>? This action cannot be undone.
+            {vendorForStatusChange?.is_active
+              ? `Once deactivated, "${vendorForStatusChange?.name}" can no longer be selected for new postings anywhere in the app.`
+              : `"${vendorForStatusChange?.name}" will become available for new postings again.`}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" size="small" color="inherit" onClick={() => setDeleteConfirmOpen(false)}>
+          <Button variant="outlined" size="small" color="inherit" onClick={() => setStatusConfirmOpen(false)}>
             Cancel
           </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
-            Delete
+          <Button
+            variant="contained"
+            size="small"
+            color={vendorForStatusChange?.is_active ? 'error' : 'success'}
+            onClick={handleConfirmStatusToggle}
+          >
+            {vendorForStatusChange?.is_active ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };

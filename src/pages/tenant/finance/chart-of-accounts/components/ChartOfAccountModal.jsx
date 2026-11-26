@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,16 +8,16 @@ import {
   TextField,
   Button,
   FormControl,
-  InputLabel,
   Select,
   MenuItem,
   FormHelperText,
   Typography,
   Chip,
-  Switch,
   IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
+  Switch,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
   useTheme,
 } from '@mui/material';
 import { useFormik } from 'formik';
@@ -33,37 +33,64 @@ import {
   IconCircleCheck,
   IconCheck,
 } from '@tabler/icons';
-import { CATEGORIES, CATEGORY_META, suggestAccountCode } from '../constants';
+import { CATEGORIES, CATEGORY_META, CATEGORY_API_VALUE, CLASSIFICATIONS_BY_CATEGORY } from '../constants';
 
 const MAX_DESCRIPTION_LENGTH = 250;
 
 const validationSchema = Yup.object({
   name: Yup.string().required('Account Name is required'),
   category: Yup.string().required('Category is required'),
-  postingAllowed: Yup.boolean(),
+  classification: Yup.string().required('Classification is required'),
   description: Yup.string().max(MAX_DESCRIPTION_LENGTH),
-  status: Yup.string().required('Status is required'),
 });
 
-const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, existingAccounts = [] }) => {
+// `categoryRootMap` is { [categoryLabel]: rootNodeId } — the real
+// chart_of_accounts row id for each of the 5 seeded root categories, only
+// used to preview/label where the account sits; the actual create request
+// sends `category`/`classification` directly, not a parent_id (detail
+// accounts sit straight under their root now — see the backend's
+// ChartOfAccountSeeder docblock for why there's no classification row to
+// nest under any more).
+const ChartOfAccountModal = ({
+  open,
+  onClose,
+  mode,
+  selectedRow,
+  onSubmit,
+  categoryRootMap = {},
+  submitting = false,
+}) => {
   const theme = useTheme();
 
   const formik = useFormik({
     initialValues: {
       name: '',
       category: '',
-      postingAllowed: true,
+      classification: '',
       description: '',
-      status: 'Active',
+      postingAllowed: true,
+      isActive: true,
     },
     validationSchema,
     onSubmit: (values) => {
-      const code =
-        mode === 'edit' && selectedRow
-          ? selectedRow.code
-          : suggestAccountCode(values.category, existingAccounts);
-      onSubmit({ ...values, code });
-      onClose();
+      if (mode === 'edit' && selectedRow) {
+        onSubmit({
+          id: selectedRow.id,
+          name: values.name,
+          description: values.description,
+          posting_allowed: values.postingAllowed,
+          is_active: values.isActive,
+        });
+        return;
+      }
+      onSubmit({
+        category: CATEGORY_API_VALUE[values.category],
+        classification: values.classification,
+        name: values.name,
+        description: values.description,
+        posting_allowed: values.postingAllowed,
+        is_active: values.isActive,
+      });
     },
   });
 
@@ -73,9 +100,10 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
         formik.setValues({
           name: selectedRow.name || '',
           category: selectedRow.category || '',
-          postingAllowed: selectedRow.postingAllowed ?? true,
+          classification: selectedRow.classificationKey || '',
           description: selectedRow.description || '',
-          status: selectedRow.status || 'Active',
+          postingAllowed: selectedRow.postingAllowed ?? true,
+          isActive: selectedRow.isActive ?? true,
         });
       } else {
         formik.resetForm();
@@ -84,14 +112,14 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode, selectedRow]);
 
-  const suggestedCode = useMemo(() => {
-    if (mode === 'edit' && selectedRow) return selectedRow.code;
-    return formik.values.category
-      ? suggestAccountCode(formik.values.category, existingAccounts)
-      : '';
-  }, [formik.values.category, mode, selectedRow, existingAccounts]);
-
   const categoryMeta = CATEGORY_META[formik.values.category];
+  const classificationOptions = CLASSIFICATIONS_BY_CATEGORY[formik.values.category] || [];
+  const previewCode =
+    mode === 'edit' && selectedRow
+      ? selectedRow.code
+      : formik.values.category && formik.values.classification
+        ? 'auto-generated on save'
+        : '';
 
   return (
     <Dialog
@@ -134,7 +162,7 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
               </Typography>
               <Typography sx={{ fontSize: 13.5, color: 'text.secondary', mt: 0.25 }}>
                 {mode === 'create'
-                  ? 'Create a new account in the chart of accounts.'
+                  ? 'Create a new detail account under a classification in the chart of accounts.'
                   : 'Update this account in the chart of accounts.'}
               </Typography>
             </Box>
@@ -177,56 +205,24 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
                 </Box>
 
                 <Grid container spacing={2} sx={{ mb: 2.5 }}>
-                  <Grid size={{ xs: 12, sm: 5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
-                      <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>
-                        Account Code <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-                      </Typography>
-                      <IconInfoCircle size={14} color={theme.palette.text.disabled} />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        border: `1px solid ${theme.palette.divider}`,
-                        borderRadius: '8px',
-                        bgcolor: theme.palette.action.hover,
-                        px: 1.5,
-                        height: 40,
-                      }}
-                    >
-                      <Typography sx={{ fontWeight: 600, flexGrow: 1 }}>
-                        {suggestedCode || '—'}
-                      </Typography>
-                      <Chip
-                        icon={<IconBolt size={13} />}
-                        label="Auto-generated"
-                        size="small"
-                        sx={{
-                          bgcolor: theme.palette.primary.light,
-                          color: theme.palette.primary.main,
-                          fontWeight: 600,
-                          fontSize: 11,
-                          '& .MuiChip-icon': { color: theme.palette.primary.main },
-                        }}
-                      />
-                    </Box>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 7 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: 13.5, mb: 0.75 }}>
                       Category <Box component="span" sx={{ color: 'error.main' }}>*</Box>
                     </Typography>
                     <FormControl
                       fullWidth
                       size="small"
+                      disabled={mode === 'edit'}
                       error={formik.touched.category && Boolean(formik.errors.category)}
                     >
                       <Select
                         displayEmpty
                         name="category"
                         value={formik.values.category}
-                        onChange={formik.handleChange}
+                        onChange={(e) => {
+                          formik.setFieldValue('category', e.target.value);
+                          formik.setFieldValue('classification', '');
+                        }}
                         onBlur={formik.handleBlur}
                       >
                         <MenuItem value="" disabled>
@@ -243,21 +239,89 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
                       )}
                     </FormControl>
                   </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: 13.5, mb: 0.75 }}>
+                      Classification <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                    </Typography>
+                    <FormControl
+                      fullWidth
+                      size="small"
+                      disabled={mode === 'edit' || !formik.values.category}
+                      error={formik.touched.classification && Boolean(formik.errors.classification)}
+                    >
+                      <Select
+                        displayEmpty
+                        name="classification"
+                        value={formik.values.classification}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                      >
+                        <MenuItem value="" disabled>
+                          {formik.values.category ? 'Select classification' : 'Select category first'}
+                        </MenuItem>
+                        {classificationOptions.map((c) => (
+                          <MenuItem key={c.key} value={c.key}>
+                            {c.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {formik.touched.classification && formik.errors.classification && (
+                        <FormHelperText>{formik.errors.classification}</FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
                 </Grid>
 
                 <Box sx={{ mb: 2.5 }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: 13.5, mb: 0.75 }}>
-                    Posting Allowed <Box component="span" sx={{ color: 'error.main' }}>*</Box>
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Switch
-                      checked={formik.values.postingAllowed}
-                      onChange={(e) => formik.setFieldValue('postingAllowed', e.target.checked)}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>Account Code</Typography>
+                    <IconInfoCircle size={14} color={theme.palette.text.disabled} />
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: '8px',
+                      bgcolor: theme.palette.action.hover,
+                      px: 1.5,
+                      height: 40,
+                    }}
+                  >
+                    <Typography sx={{ fontWeight: 600, flexGrow: 1, color: previewCode ? 'text.primary' : 'text.disabled' }}>
+                      {previewCode || '—'}
+                    </Typography>
+                    <Chip
+                      icon={<IconBolt size={13} />}
+                      label="Auto-generated"
+                      size="small"
+                      sx={{
+                        bgcolor: theme.palette.primary.light,
+                        color: theme.palette.primary.main,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        '& .MuiChip-icon': { color: theme.palette.primary.main },
+                      }}
                     />
-                    <Typography sx={{ fontSize: 13.5, color: 'text.secondary' }}>
-                      Yes, allow financial transactions to be posted to this account
+                  </Box>
+                </Box>
+
+                <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: `1px solid ${theme.palette.divider}`, borderRadius: '8px', px: 1.5, py: 1 }}>
+                  <Box>
+                    <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>
+                      Posting Allowed <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                    </Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+                      {formik.values.postingAllowed
+                        ? 'Yes, allow financial transactions to be posted to this account'
+                        : 'No, this account is informational only — nothing can be posted to it'}
                     </Typography>
                   </Box>
+                  <Switch
+                    checked={formik.values.postingAllowed}
+                    onChange={(e) => formik.setFieldValue('postingAllowed', e.target.checked)}
+                  />
                 </Box>
 
                 <Box sx={{ mb: 2.5 }}>
@@ -286,43 +350,14 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
                   <Typography sx={{ fontWeight: 600, fontSize: 13.5, mb: 0.75 }}>
                     Status <Box component="span" sx={{ color: 'error.main' }}>*</Box>
                   </Typography>
-                  <ToggleButtonGroup
-                    exclusive
-                    value={formik.values.status}
-                    onChange={(e, val) => val && formik.setFieldValue('status', val)}
-                    sx={{ gap: 1.5 }}
+                  <RadioGroup
+                    row
+                    value={formik.values.isActive ? 'active' : 'inactive'}
+                    onChange={(e) => formik.setFieldValue('isActive', e.target.value === 'active')}
                   >
-                    <ToggleButton
-                      value="Active"
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderRadius: '8px !important',
-                        border: `1px solid ${theme.palette.divider} !important`,
-                        px: 2,
-                        '&.Mui-selected': {
-                          bgcolor: theme.palette.success.light,
-                          color: theme.palette.success.dark,
-                          borderColor: `${theme.palette.success.main} !important`,
-                          '&:hover': { bgcolor: theme.palette.success.light },
-                        },
-                      }}
-                    >
-                      ● Active
-                    </ToggleButton>
-                    <ToggleButton
-                      value="Inactive"
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        borderRadius: '8px !important',
-                        border: `1px solid ${theme.palette.divider} !important`,
-                        px: 2,
-                      }}
-                    >
-                      ○ Inactive
-                    </ToggleButton>
-                  </ToggleButtonGroup>
+                    <FormControlLabel value="active" control={<Radio size="small" />} label="Active" />
+                    <FormControlLabel value="inactive" control={<Radio size="small" />} label="Inactive" />
+                  </RadioGroup>
                 </Box>
               </Box>
             </Grid>
@@ -381,13 +416,12 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
                 >
                   <IconCircleCheck size={18} color={theme.palette.success.main} style={{ flexShrink: 0, marginTop: 1 }} />
                   <Typography sx={{ fontSize: 12.5, color: theme.palette.success.dark, flexGrow: 1 }}>
-                    {formik.values.category ? (
+                    {formik.values.category && formik.values.classification ? (
                       <>
-                        You are creating a{formik.values.category === 'Assets' ? 'n' : ''}{' '}
-                        {formik.values.category} account. Suggested code: <b>{suggestedCode}</b>
+                        This will be created under <b>{categoryMeta ? formik.values.category : ''} → {classificationOptions.find((c) => c.key === formik.values.classification)?.label}</b>.
                       </>
                     ) : (
-                      'Select a category to get a suggested account code.'
+                      'Select a category and classification to see where this account will sit.'
                     )}
                   </Typography>
                   <IconInfoCircle size={14} color={theme.palette.success.main} style={{ flexShrink: 0 }} />
@@ -407,7 +441,7 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
                   {[
                     'Use a clear and short account name.',
                     'Select the correct category (Assets, Liabilities, Equity, Income or Expenditure).',
-                    'Enable posting if transactions will be recorded to this account.',
+                    'Every account also needs a classification — the two fixed options under its category.',
                     'Add a brief description for better understanding.',
                   ].map((tip) => (
                     <Box key={tip} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1, '&:last-of-type': { mb: 0 } }}>
@@ -428,6 +462,7 @@ const ChartOfAccountModal = ({ open, onClose, mode, selectedRow, onSubmit, exist
           <Button
             variant="contained"
             type="submit"
+            disabled={submitting}
             startIcon={<IconCheck size={18} />}
             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '8px', px: 2.5 }}
           >

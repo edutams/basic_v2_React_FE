@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
@@ -6,18 +6,7 @@ import ReusableTrendChart from '@/components/shared/charts/ReusableTrendChart';
 import { IconClipboardList, IconChartLine, IconChartDonut } from '@tabler/icons';
 import InsightsCard from './InsightsCard';
 import ActionsCard from './ActionsCard';
-import {
-  statementIncomeRows,
-  statementExpenditureRows,
-  incomeVsExpenditureTrend,
-  expenditureByCategory,
-  EXPENSE_CATEGORY_META,
-  summaryStats,
-  accountSummaryInsights,
-  actionsNextSteps,
-  formatCompact,
-  formatNaira,
-} from '../constants';
+import { CATEGORY_DOT_COLORS, formatCompact, formatNaira } from '../constants';
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
@@ -30,10 +19,85 @@ const SectionBand = ({ label, color }) => (
   </TableRow>
 );
 
-const AccountSummaryTab = () => {
+/**
+ * Builds the same style of plain-English bullets the original mockup
+ * showed ("The school recorded a surplus of..."), but templated from the
+ * real numbers the summary endpoint returns, instead of fixed mock text.
+ */
+function buildInsights(summary, incomeRows, expenditureRows) {
+  if (!summary) return [];
+  const insights = [];
+  const surplusPct = summary.total_income > 0 ? Math.abs((summary.surplus / summary.total_income) * 100).toFixed(1) : '0.0';
+  insights.push(
+    `The school recorded a ${summary.surplus >= 0 ? 'surplus' : 'deficit'} of ${formatNaira(Math.abs(summary.surplus))} (${surplusPct}% of income) for the period.`,
+  );
+
+  if (summary.total_income_change_pct !== null && summary.total_income_change_pct !== undefined) {
+    insights.push(
+      `Total income ${summary.total_income_change_pct >= 0 ? 'grew' : 'declined'} by ${Math.abs(summary.total_income_change_pct)}% compared to the comparison period.`,
+    );
+  }
+
+  if (summary.total_expenditure_change_pct !== null && summary.total_expenditure_change_pct !== undefined) {
+    const comparisonNote =
+      summary.total_income_change_pct !== null && summary.total_income_change_pct !== undefined
+        ? `, which is ${summary.total_expenditure_change_pct < summary.total_income_change_pct ? 'below' : 'above'} the income growth rate.`
+        : '.';
+    insights.push(
+      `Total expenditure ${summary.total_expenditure_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_expenditure_change_pct)}%${comparisonNote}`,
+    );
+  }
+
+  if (expenditureRows.length >= 2) {
+    const top2 = expenditureRows.slice(0, 2);
+    const top2Pct = summary.total_expenditure > 0 ? ((top2[0].amount + top2[1].amount) / summary.total_expenditure * 100).toFixed(1) : '0.0';
+    insights.push(`${top2[0].item} and ${top2[1].item} account for ${top2Pct}% of total expenditure.`);
+  } else if (expenditureRows.length === 1) {
+    insights.push(`${expenditureRows[0].item} accounts for all of total expenditure for the period.`);
+  }
+
+  return insights;
+}
+
+function buildActions(summary, expenditureRows, outstandingBalance) {
+  const actions = [];
+  if (outstandingBalance > 0) {
+    actions.push({
+      icon: 'database',
+      title: 'Review outstanding payments',
+      description: `(${formatNaira(outstandingBalance)}) and raise installments.`,
+    });
+  }
+  if (expenditureRows.length >= 2) {
+    actions.push({
+      icon: 'chart',
+      title: 'Monitor high-cost categories',
+      description: `(${expenditureRows[0].item} & ${expenditureRows[1].item}).`,
+    });
+  } else if (expenditureRows.length === 1) {
+    actions.push({ icon: 'chart', title: 'Monitor high-cost categories', description: `(${expenditureRows[0].item}).` });
+  }
+  actions.push({ icon: 'calendar', title: 'Project next term’s income and expenditure.', description: '' });
+  return actions;
+}
+
+const AccountSummaryTab = ({ data, loading }) => {
   const theme = useTheme();
-  const totalExpenditurePctOfIncome = (summaryStats.totalExpenditure / summaryStats.totalIncome) * 100;
-  const surplusPctOfIncome = (summaryStats.surplus / summaryStats.totalIncome) * 100;
+
+  const summary = data?.summary;
+  const incomeRows = data?.statement?.income_rows || [];
+  const expenditureRows = data?.statement?.expenditure_rows || [];
+  const trend = data?.trend || [];
+  const expenditureByCategory = data?.expenditure_by_category || [];
+
+  const totalExpenditurePctOfIncome = summary?.expenditure_ratio ?? 0;
+  const surplusPctOfIncome = summary && summary.total_income > 0 ? ((summary.surplus / summary.total_income) * 100).toFixed(1) : 0;
+
+  const insights = useMemo(() => buildInsights(summary, incomeRows, expenditureRows), [summary, incomeRows, expenditureRows]);
+  const actions = useMemo(
+    () => buildActions(summary, expenditureRows, summary?.outstanding_expenditure_balance ?? 0),
+    [summary, expenditureRows],
+  );
 
   return (
     <Box>
@@ -48,7 +112,7 @@ const AccountSummaryTab = () => {
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Income &amp; Expenditure Account</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.25 }}>
-                  For the First Term, 2025/2026
+                  For the {data?.period?.label || 'selected period'}
                 </Typography>
               </Box>
             }
@@ -71,21 +135,29 @@ const AccountSummaryTab = () => {
               </TableHead>
               <TableBody>
                 <SectionBand label="Income" color="#DCFCE7" />
-                {statementIncomeRows.map((row) => (
-                  <TableRow key={row.item} hover>
-                    <TableCell sx={tdCell}>{row.item}</TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {row.amount.toLocaleString('en-NG')}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {row.pctOfIncome}%
+                {incomeRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                      {loading ? 'Loading…' : 'No income posted for this period.'}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  incomeRows.map((row) => (
+                    <TableRow key={row.item} hover>
+                      <TableCell sx={tdCell}>{row.item}</TableCell>
+                      <TableCell sx={tdCell} align="right">
+                        {row.amount.toLocaleString('en-NG')}
+                      </TableCell>
+                      <TableCell sx={tdCell} align="right">
+                        {row.pct_of_income}%
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
                 <TableRow sx={{ bgcolor: '#DCFCE7' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Income</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summaryStats.totalIncome)}
+                    {formatNaira(summary?.total_income ?? 0)}
                   </TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
                     100.0%
@@ -93,34 +165,42 @@ const AccountSummaryTab = () => {
                 </TableRow>
 
                 <SectionBand label="Expenditure" color="#FEE2E2" />
-                {statementExpenditureRows.map((row) => (
-                  <TableRow key={row.item} hover>
-                    <TableCell sx={tdCell}>{row.item}</TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {row.amount.toLocaleString('en-NG')}
-                    </TableCell>
-                    <TableCell sx={tdCell} align="right">
-                      {row.pctOfIncome}%
+                {expenditureRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                      {loading ? 'Loading…' : 'No expenditure posted for this period.'}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  expenditureRows.map((row) => (
+                    <TableRow key={row.item} hover>
+                      <TableCell sx={tdCell}>{row.item}</TableCell>
+                      <TableCell sx={tdCell} align="right">
+                        {row.amount.toLocaleString('en-NG')}
+                      </TableCell>
+                      <TableCell sx={tdCell} align="right">
+                        {row.pct_of_income}%
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
                 <TableRow sx={{ bgcolor: '#FEE2E2' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Expenditure</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summaryStats.totalExpenditure)}
+                    {formatNaira(summary?.total_expenditure ?? 0)}
                   </TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {totalExpenditurePctOfIncome.toFixed(1)}%
+                    {totalExpenditurePctOfIncome}%
                   </TableCell>
                 </TableRow>
 
                 <TableRow sx={{ bgcolor: '#DBEAFE' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Surplus / (Deficit)</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summaryStats.surplus)}
+                    {formatNaira(summary?.surplus ?? 0)}
                   </TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {surplusPctOfIncome.toFixed(1)}%
+                    {surplusPctOfIncome}%
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -146,7 +226,7 @@ const AccountSummaryTab = () => {
                 }}
               >
                 <ReusableTrendChart
-                  data={incomeVsExpenditureTrend}
+                  data={trend}
                   nameKey="term"
                   series={[
                     { dataKey: 'income', name: 'Income', color: '#16A34A' },
@@ -175,17 +255,17 @@ const AccountSummaryTab = () => {
                   '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
                 }}
               >
-                <ExpenditureByCategoryMini />
+                <ExpenditureByCategoryMini data={expenditureByCategory} loading={loading} />
               </ParentCard>
             </Grid>
           </Grid>
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <InsightsCard items={accountSummaryInsights} />
+              <InsightsCard items={insights} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <ActionsCard items={actionsNextSteps} />
+              <ActionsCard items={actions} />
             </Grid>
           </Grid>
         </Grid>
@@ -194,16 +274,27 @@ const AccountSummaryTab = () => {
   );
 };
 
-const ExpenditureByCategoryMini = () => {
-  const total = expenditureByCategory.reduce((sum, c) => sum + c.value, 0);
+const ExpenditureByCategoryMini = ({ data, loading }) => {
+  const total = data.reduce((sum, c) => sum + c.value, 0) || 1;
+  if (data.length === 0) {
+    // Reserves the same height the donut + legend would occupy with data,
+    // instead of collapsing the card down to a single line of text.
+    return (
+      <Box sx={{ minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+          {loading ? 'Loading…' : 'No expenditure posted yet.'}
+        </Typography>
+      </Box>
+    );
+  }
   return (
     <>
       <Box sx={{ width: '100%', mb: 1 }}>
         <ReusableDonutChart
-          data={expenditureByCategory.map((c) => ({
+          data={data.map((c, idx) => ({
             name: c.name,
             value: c.value,
-            color: EXPENSE_CATEGORY_META[c.name].color,
+            color: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length],
           }))}
           height={140}
           innerRadius={46}
@@ -216,12 +307,11 @@ const ExpenditureByCategoryMini = () => {
         />
       </Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        {expenditureByCategory.map((c) => {
-          const meta = EXPENSE_CATEGORY_META[c.name];
+        {data.map((c, idx) => {
           const pct = ((c.value / total) * 100).toFixed(0);
           return (
             <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: meta.color, flexShrink: 0 }} />
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length], flexShrink: 0 }} />
               <Typography sx={{ fontSize: 11.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
               <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'text.secondary' }}>{pct}%</Typography>
             </Box>

@@ -183,7 +183,7 @@ const PaySchoolFees = Loadable(
 const ChartOfAccounts = Loadable(
   lazy(() => import('@/pages/tenant/finance/chart-of-accounts/ChartOfAccounts')),
 );
-const Invoicing = Loadable(lazy(() => import('@/pages/tenant/finance/invoicing/Invoicing')));
+const PostIncome = Loadable(lazy(() => import('@/pages/tenant/finance/income/PostIncome')));
 const VendorProfile = Loadable(
   lazy(() => import('@/pages/tenant/finance/vendor-management/VendorProfile')),
 );
@@ -666,10 +666,10 @@ const TenantRoutes = [
         ),
       },
       {
-        path: 'invoicing',
+        path: 'post-income',
         element: (
-          <TenantProtectedRoute permission="invoicing.index">
-            <Invoicing />
+          <TenantProtectedRoute permission="income_manager.post_income.index">
+            <PostIncome />
           </TenantProtectedRoute>
         ),
       },

@@ -11,19 +11,26 @@ import {
   IconTrendingUp,
   IconReceipt,
 } from '@tabler/icons';
-import { formatNaira, balanceSheetStats, assetDetailsStats, liabilityDetailsStats, equityDetailsStats } from '../constants';
+import { formatNaira } from '../constants';
 
-const ReportStatsRow = ({ tab }) => {
+function changeSubtitle(pct, suffix = 'vs. compare period') {
+  if (pct === null || pct === undefined) return suffix;
+  return `${pct >= 0 ? '↑ +' : '↓ '}${Math.abs(pct)}% ${suffix}`;
+}
+
+const ReportStatsRow = ({ tab, data, loading }) => {
   if (tab === 'assets') {
+    const stats = data?.stats;
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Total Assets"
-            count={formatNaira(assetDetailsStats.totalAssets)}
-            subtitle={`↑ +${assetDetailsStats.totalAssetsChangePct}% vs. 31 Dec, 2025`}
+            count={formatNaira(stats?.total ?? 0)}
+            subtitle={changeSubtitle(stats?.total_change_pct)}
             icon={IconCoins}
             colorIndex={0}
           />
@@ -32,9 +39,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Non-Current Assets"
-            count={formatNaira(assetDetailsStats.nonCurrentAssets)}
-            subtitle={`${assetDetailsStats.nonCurrentAssetsPct}% of total assets`}
+            count={formatNaira(stats?.non_current ?? 0)}
+            subtitle={`${stats?.non_current_pct ?? 0}% of total assets`}
             icon={IconBuildingBank}
             colorIndex={1}
           />
@@ -43,9 +51,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Current Assets"
-            count={formatNaira(assetDetailsStats.currentAssets)}
-            subtitle={`${assetDetailsStats.currentAssetsPct}% of total assets`}
+            count={formatNaira(stats?.current ?? 0)}
+            subtitle={`${stats?.current_pct ?? 0}% of total assets`}
             icon={IconCoins}
             colorIndex={2}
           />
@@ -54,9 +63,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Asset Records"
-            count={assetDetailsStats.assetRecords}
-            subtitle="registered assets"
+            count={stats?.record_count ?? 0}
+            subtitle="postings to asset accounts"
             icon={IconClipboardList}
             colorIndex={3}
           />
@@ -65,9 +75,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Net Asset Movement"
-            count={`+${formatNaira(assetDetailsStats.netAssetMovement)}`}
-            subtitle={`(+${assetDetailsStats.netAssetMovementPct}%)`}
+            count={stats?.movement !== null && stats?.movement !== undefined ? formatNaira(stats.movement) : '—'}
+            subtitle={stats?.movement_pct !== null && stats?.movement_pct !== undefined ? `(${stats.movement_pct >= 0 ? '+' : ''}${stats.movement_pct}%)` : 'vs. compare period'}
             icon={IconTrendingUp}
             colorIndex={1}
           />
@@ -77,15 +88,17 @@ const ReportStatsRow = ({ tab }) => {
   }
 
   if (tab === 'liabilities') {
+    const stats = data?.stats;
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Total Liabilities"
-            count={formatNaira(liabilityDetailsStats.totalLiabilities)}
-            subtitle={`↑ +${liabilityDetailsStats.totalLiabilitiesChangePct}% vs. 31 Dec, 2025`}
+            count={formatNaira(stats?.total ?? 0)}
+            subtitle={changeSubtitle(stats?.total_change_pct)}
             icon={IconLayersIntersect}
             colorIndex={4}
           />
@@ -94,9 +107,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Non-Current Liabilities"
-            count={formatNaira(liabilityDetailsStats.nonCurrentLiabilities)}
-            subtitle={`${liabilityDetailsStats.nonCurrentLiabilitiesPct}% of total liabilities`}
+            count={formatNaira(stats?.non_current ?? 0)}
+            subtitle={`${stats?.non_current_pct ?? 0}% of total liabilities`}
             icon={IconScale}
             colorIndex={0}
             iconBg="#F3E8FF"
@@ -107,9 +121,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Current Liabilities"
-            count={formatNaira(liabilityDetailsStats.currentLiabilities)}
-            subtitle={`${liabilityDetailsStats.currentLiabilitiesPct}% of total liabilities`}
+            count={formatNaira(stats?.current ?? 0)}
+            subtitle={`${stats?.current_pct ?? 0}% of total liabilities`}
             icon={IconReceipt}
             colorIndex={2}
           />
@@ -118,9 +133,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Liability Records"
-            count={liabilityDetailsStats.liabilityRecords}
-            subtitle="active accounts"
+            count={stats?.record_count ?? 0}
+            subtitle="postings to liability accounts"
             icon={IconClipboardList}
             colorIndex={3}
           />
@@ -129,9 +145,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Liability Movement"
-            count={`+${formatNaira(liabilityDetailsStats.liabilityMovement)}`}
-            subtitle={`(+${liabilityDetailsStats.liabilityMovementPct}%)`}
+            count={stats?.movement !== null && stats?.movement !== undefined ? formatNaira(stats.movement) : '—'}
+            subtitle={stats?.movement_pct !== null && stats?.movement_pct !== undefined ? `(${stats.movement_pct >= 0 ? '+' : ''}${stats.movement_pct}%)` : 'vs. compare period'}
             icon={IconTrendingUp}
             colorIndex={4}
           />
@@ -141,15 +158,17 @@ const ReportStatsRow = ({ tab }) => {
   }
 
   if (tab === 'equity') {
+    const stats = data?.stats;
     return (
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Total Equity (Net Assets)"
-            count={formatNaira(equityDetailsStats.totalEquity)}
-            subtitle={`↑ +${equityDetailsStats.totalEquityChangePct}% vs. 31 Dec, 2025`}
+            count={formatNaira(stats?.total_equity ?? 0)}
+            subtitle={changeSubtitle(stats?.total_equity_change_pct)}
             icon={IconCoins}
             colorIndex={1}
           />
@@ -158,9 +177,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Accumulated Surplus"
-            count={formatNaira(equityDetailsStats.accumulatedSurplus)}
-            subtitle={`${equityDetailsStats.accumulatedSurplusPct}% of equity`}
+            count={formatNaira(stats?.accumulated_surplus ?? 0)}
+            subtitle={`${stats?.accumulated_surplus_pct ?? 0}% of equity`}
             icon={IconBuildingBank}
             colorIndex={0}
             iconBg="#F3E8FF"
@@ -171,9 +191,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Current Period Surplus"
-            count={formatNaira(equityDetailsStats.currentPeriodSurplus)}
-            subtitle={`${equityDetailsStats.currentPeriodSurplusPct}% of equity`}
+            count={formatNaira(stats?.current_period_surplus ?? 0)}
+            subtitle={`${stats?.current_period_surplus_pct ?? 0}% of equity`}
             icon={IconChartBar}
             colorIndex={2}
           />
@@ -182,8 +203,9 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
+            loading={loading}
             label="Equity Ratio"
-            count={`${equityDetailsStats.equityRatio}%`}
+            count={stats?.equity_ratio !== null && stats?.equity_ratio !== undefined ? `${stats.equity_ratio}%` : '—'}
             subtitle="of total assets"
             icon={IconScale}
             colorIndex={3}
@@ -193,9 +215,10 @@ const ReportStatsRow = ({ tab }) => {
           <StatCard
             align="left"
             subtitleAfterValue
-            label="Equity Movement"
-            count={`+${formatNaira(equityDetailsStats.equityMovement)}`}
-            subtitle={`(+${equityDetailsStats.equityMovementPct}%)`}
+            loading={loading}
+            label="Equity Growth"
+            count={stats?.total_equity_change_pct !== null && stats?.total_equity_change_pct !== undefined ? `${stats.total_equity_change_pct >= 0 ? '+' : ''}${stats.total_equity_change_pct}%` : '—'}
+            subtitle="vs. compare period"
             icon={IconTrendingUp}
             colorIndex={1}
           />
@@ -204,16 +227,19 @@ const ReportStatsRow = ({ tab }) => {
     );
   }
 
-  // Balance Sheet and Trend & Analysis share the same headline figures.
+  // Balance Sheet and Trend & Analysis share the same headline figures,
+  // computed for real from the balance_sheet_summary endpoint.
+  const summary = data?.summary;
   return (
     <Grid container spacing={2} sx={{ mb: 3 }}>
       <Grid size={{ xs: 12, sm: 6, lg: 2.4 }}>
         <StatCard
           align="left"
           subtitleAfterValue
+          loading={loading}
           label="Total Assets"
-          count={formatNaira(balanceSheetStats.totalAssets)}
-          subtitle={`↑ +${balanceSheetStats.totalAssetsChangePct}% vs. 31 Dec, 2025`}
+          count={formatNaira(summary?.total_assets ?? 0)}
+          subtitle={changeSubtitle(summary?.total_assets_change_pct)}
           icon={IconCoins}
           colorIndex={0}
         />
@@ -222,9 +248,10 @@ const ReportStatsRow = ({ tab }) => {
         <StatCard
           align="left"
           subtitleAfterValue
+          loading={loading}
           label="Total Liabilities"
-          count={formatNaira(balanceSheetStats.totalLiabilities)}
-          subtitle={`↑ +${balanceSheetStats.totalLiabilitiesChangePct}% vs. 31 Dec, 2025`}
+          count={formatNaira(summary?.total_liabilities ?? 0)}
+          subtitle={changeSubtitle(summary?.total_liabilities_change_pct)}
           icon={IconLayersIntersect}
           colorIndex={4}
         />
@@ -233,9 +260,10 @@ const ReportStatsRow = ({ tab }) => {
         <StatCard
           align="left"
           subtitleAfterValue
+          loading={loading}
           label="Net Assets (Equity)"
-          count={formatNaira(balanceSheetStats.netAssets)}
-          subtitle={`↑ +${balanceSheetStats.netAssetsChangePct}% vs. 31 Dec, 2025`}
+          count={formatNaira(summary?.total_equity ?? 0)}
+          subtitle={changeSubtitle(summary?.total_equity_change_pct)}
           icon={IconBuildingBank}
           colorIndex={1}
         />
@@ -244,9 +272,10 @@ const ReportStatsRow = ({ tab }) => {
         <StatCard
           align="left"
           subtitleAfterValue
+          loading={loading}
           label="Current Ratio"
-          count={balanceSheetStats.currentRatio}
-          subtitle={balanceSheetStats.currentRatioNote}
+          count={summary?.current_ratio !== null && summary?.current_ratio !== undefined ? `${summary.current_ratio} : 1` : '—'}
+          subtitle={summary?.current_ratio === null || summary?.current_ratio === undefined ? 'no current liabilities posted' : summary.current_ratio >= 1 ? 'Good liquidity' : 'Liquidity risk'}
           icon={IconScale}
           colorIndex={2}
         />
@@ -255,9 +284,10 @@ const ReportStatsRow = ({ tab }) => {
         <StatCard
           align="left"
           subtitleAfterValue
+          loading={loading}
           label="Equity Ratio"
-          count={`${balanceSheetStats.equityRatio}%`}
-          subtitle={balanceSheetStats.equityRatioNote}
+          count={summary?.equity_ratio !== null && summary?.equity_ratio !== undefined ? `${summary.equity_ratio}%` : '—'}
+          subtitle={summary?.equity_ratio !== null && summary?.equity_ratio >= 50 ? 'Financially stable' : 'of total assets'}
           icon={IconChartBar}
           colorIndex={3}
         />

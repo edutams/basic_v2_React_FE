@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, Typography, Button, Select, MenuItem, FormControl, Tabs, Tab, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
+import tenantApi from '@/api/tenant/tenant_api';
 import {
   IconLayersIntersect,
   IconChartBar,
@@ -12,7 +13,7 @@ import {
   IconChevronDown,
   IconPrinter,
 } from '@tabler/icons';
-import { AS_AT_DATES, COMPARE_DATES, BALANCE_SHEET_TABS } from './constants';
+import { BALANCE_SHEET_TABS } from './constants';
 import ReportStatsRow from './components/ReportStatsRow';
 import BalanceSheetTab from './components/BalanceSheetTab';
 import AssetDetailsTab from './components/AssetDetailsTab';
@@ -36,13 +37,84 @@ const TAB_ICONS = {
   trend: IconTrendingUp,
 };
 
+const TAB_ENDPOINTS = {
+  'balance-sheet': '/finance_reports/balance_sheet_summary',
+  assets: '/finance_reports/asset_details',
+  liabilities: '/finance_reports/liability_details',
+  equity: '/finance_reports/equity_details',
+};
+
+// Trend & Analysis's headline figures and 7-term trend are all already
+// part of the Balance Sheet summary response — it reads that tab's cached
+// data directly instead of triggering a second, redundant request.
+const SHARED_DATA_KEY = { trend: 'balance-sheet' };
+
 const BalanceSheetReport = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState('balance-sheet');
-  const [asAt, setAsAt] = useState(AS_AT_DATES[0]);
-  const [compareWith, setCompareWith] = useState(COMPARE_DATES[0]);
+  const [periods, setPeriods] = useState([]);
+  const [periodId, setPeriodId] = useState('');
+  const [comparePeriodId, setComparePeriodId] = useState('');
+  const [tabData, setTabData] = useState({});
+  const [tabLoading, setTabLoading] = useState({});
 
   const ActiveTabComponent = TAB_COMPONENTS[activeTab];
+  const activeDataKey = SHARED_DATA_KEY[activeTab] || activeTab;
+
+  const fetchTab = useCallback((tabKey, currentPeriodId, currentComparePeriodId, periodList) => {
+    const endpoint = TAB_ENDPOINTS[tabKey];
+    if (!endpoint) return;
+    const current = periodList.find((p) => p.id === currentPeriodId);
+    if (!current) return;
+    const compare = periodList.find((p) => p.id === currentComparePeriodId);
+
+    setTabLoading((prev) => ({ ...prev, [tabKey]: true }));
+    tenantApi
+      .get(endpoint, {
+        params: {
+          session_id: current.session_id,
+          term_id: current.term_id,
+          ...(compare ? { compare_session_id: compare.session_id, compare_term_id: compare.term_id } : {}),
+        },
+      })
+      .then((res) => setTabData((prev) => ({ ...prev, [tabKey]: res.data?.data || null })))
+      .catch(() => setTabData((prev) => ({ ...prev, [tabKey]: null })))
+      .finally(() => setTabLoading((prev) => ({ ...prev, [tabKey]: false })));
+  }, []);
+
+  useEffect(() => {
+    tenantApi
+      .get('/finance_reports/periods')
+      .then((res) => {
+        const list = res.data?.data || [];
+        setPeriods(list);
+        if (list.length > 0) {
+          const activeIndex = list.findIndex((p) => p.is_active);
+          const currentIndex = activeIndex !== -1 ? activeIndex : list.length - 1;
+          const current = list[currentIndex];
+          const previous = currentIndex > 0 ? list[currentIndex - 1] : null;
+          setPeriodId(current.id);
+          setComparePeriodId(previous?.id || '');
+          fetchTab('balance-sheet', current.id, previous?.id || '', list);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Fetch a tab's data lazily the first time it's visited for the current
+  // period selection, instead of eagerly loading all 5 tabs up front.
+  useEffect(() => {
+    if (TAB_ENDPOINTS[activeDataKey] && !tabData[activeDataKey] && !tabLoading[activeDataKey] && periodId) {
+      fetchTab(activeDataKey, periodId, comparePeriodId, periods);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDataKey, periodId, comparePeriodId, periods]);
+
+  const handleGenerateReport = () => {
+    setTabData({});
+    fetchTab(activeDataKey, periodId, comparePeriodId, periods);
+  };
 
   return (
     <PageContainer title="Balance Sheet Report" description="Statement of financial position showing assets, liabilities and equity">
@@ -95,8 +167,8 @@ const BalanceSheetReport = () => {
           >
             <FormControl size="small" sx={{ minWidth: 170, flexShrink: 0 }}>
               <Select
-                value={asAt}
-                onChange={(e) => setAsAt(e.target.value)}
+                value={periodId}
+                onChange={(e) => setPeriodId(e.target.value)}
                 startAdornment={<IconCalendar size={15} style={{ marginRight: 6 }} />}
                 sx={{
                   borderRadius: '8px',
@@ -110,21 +182,21 @@ const BalanceSheetReport = () => {
                     <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500, mr: 0.5 }}>
                       As at
                     </Box>
-                    {val}
+                    {periods.find((p) => p.id === val)?.period_label || ''}
                   </Box>
                 )}
               >
-                {AS_AT_DATES.map((d) => (
-                  <MenuItem key={d} value={d}>
-                    {d}
+                {periods.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.period_label}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 190, flexShrink: 0 }}>
               <Select
-                value={compareWith}
-                onChange={(e) => setCompareWith(e.target.value)}
+                value={comparePeriodId}
+                onChange={(e) => setComparePeriodId(e.target.value)}
                 startAdornment={<IconCalendar size={15} style={{ marginRight: 6 }} />}
                 sx={{
                   borderRadius: '8px',
@@ -138,19 +210,21 @@ const BalanceSheetReport = () => {
                     <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500, mr: 0.5 }}>
                       Compare With
                     </Box>
-                    {val}
+                    {periods.find((p) => p.id === val)?.period_label || 'None'}
                   </Box>
                 )}
               >
-                {COMPARE_DATES.map((d) => (
-                  <MenuItem key={d} value={d}>
-                    {d}
+                <MenuItem value="">None</MenuItem>
+                {periods.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>
+                    {p.period_label}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <Button
               variant="contained"
+              onClick={handleGenerateReport}
               startIcon={<IconRefresh size={16} />}
               sx={{
                 borderRadius: '8px',
@@ -165,7 +239,7 @@ const BalanceSheetReport = () => {
           </Box>
         </Box>
 
-        <ReportStatsRow tab={activeTab} />
+        <ReportStatsRow tab={activeTab} data={tabData[activeDataKey]} loading={tabLoading[activeDataKey]} />
 
         {/* ===================== Tabs + toolbar ===================== */}
         <Box
@@ -231,7 +305,7 @@ const BalanceSheetReport = () => {
           </Box>
         </Box>
 
-        <ActiveTabComponent />
+        <ActiveTabComponent data={tabData[activeDataKey]} loading={tabLoading[activeDataKey]} />
       </Box>
     </PageContainer>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -14,49 +14,55 @@ import {
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
-import { IconClipboardList, IconCalendarEvent, IconChevronRight, IconChevronDown, IconCircleCheck, IconArrowUpRight } from '@tabler/icons';
-import InsightsCard from '../../components/InsightsCard';
-import EquityTrendChart from './EquityTrendChart';
+import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
+import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
 import {
-  equityAccounts,
-  recentEquityTransactions,
-  equityTrend,
-  equityDetailsInsights,
-  balanceSheetStats,
-  COLORS,
-  formatCompact,
-  formatNaira,
-  formatDateDisplay,
-} from '../constants';
+  IconClipboardList,
+  IconCalendarEvent,
+  IconChevronRight,
+  IconCircleCheck,
+  IconArrowUpRight,
+  IconArrowDownRight,
+  IconInfoCircle,
+} from '@tabler/icons';
+import InsightsCard from '../../components/InsightsCard';
+import { COLORS, formatCompact, formatNaira, formatDateDisplay } from '../constants';
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
 
 const formatAmount = (n) => (n < 0 ? `(${Math.abs(n).toLocaleString('en-NG')})` : n.toLocaleString('en-NG'));
-const formatPct = (n) => (n < 0 ? `(${Math.abs(n).toFixed(1)}%)` : `${n}%`);
 
-const GroupBand = ({ group, color }) => (
-  <TableRow sx={{ bgcolor: color }}>
-    <TableCell sx={{ ...tdCell, fontWeight: 800 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-        <IconChevronDown size={14} />
-        {group.label}
-      </Box>
-    </TableCell>
-    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatAmount(group.balance)}</TableCell>
-    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatPct(group.pct)}</TableCell>
-    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{group.movement >= 0 ? `+${group.movement.toLocaleString('en-NG')}` : formatAmount(group.movement)}</TableCell>
-    <TableCell sx={{ ...tdCell, fontWeight: 800, color: '#15803D' }} align="right">
-      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
-        <IconArrowUpRight size={13} />
-        {group.changeLabel}
-      </Box>
-    </TableCell>
-  </TableRow>
-);
+function buildInsights(stats) {
+  if (!stats) return [];
+  const insights = [];
 
-const EquityDetailsTab = () => {
+  if (stats.total_equity_change_pct !== null && stats.total_equity_change_pct !== undefined) {
+    insights.push(`Total equity (net assets) is ${formatNaira(stats.total_equity)}, ${stats.total_equity_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_equity_change_pct)}% from the comparison period.`);
+  } else {
+    insights.push(`Total equity (net assets) is ${formatNaira(stats.total_equity)} for the selected period.`);
+  }
+
+  insights.push(`Accumulated surplus from prior terms accounts for ${stats.accumulated_surplus_pct}% (${formatNaira(stats.accumulated_surplus)}) of total equity.`);
+  insights.push(`Current period surplus is ${formatNaira(stats.current_period_surplus)} (${stats.current_period_surplus_pct}% of equity).`);
+
+  if (stats.equity_ratio !== null && stats.equity_ratio !== undefined) {
+    insights.push(`Equity ratio is ${stats.equity_ratio}% of total assets.`);
+  }
+
+  return insights;
+}
+
+const EquityDetailsTab = ({ data, loading }) => {
   const theme = useTheme();
+
+  const stats = data?.stats;
+  const accounts = data?.accounts || [];
+  const recentTransactions = data?.recent_transactions || [];
+  const composition = data?.composition || [];
+  const trend = data?.trend || [];
+
+  const insights = useMemo(() => buildInsights(stats), [stats]);
 
   return (
     <Grid container spacing={2}>
@@ -65,7 +71,7 @@ const EquityDetailsTab = () => {
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <IconClipboardList size={17} color={theme.palette.primary.main} />
-              <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Equity Accounts (Chart of Accounts)</Typography>
+              <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Equity (Chart of Accounts + Trading Surplus)</Typography>
             </Box>
           }
           sx={{
@@ -77,61 +83,44 @@ const EquityDetailsTab = () => {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
-                <TableCell sx={thCell}>Account / Equity Category</TableCell>
+                <TableCell sx={thCell}>Account / Equity Component</TableCell>
                 <TableCell sx={thCell} align="right">Balance (₦)</TableCell>
                 <TableCell sx={thCell} align="right">% of Total Equity</TableCell>
-                <TableCell sx={thCell} align="right">Movement (₦)</TableCell>
-                <TableCell sx={thCell} align="right">Change</TableCell>
+                <TableCell sx={thCell}>Trend</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              <GroupBand group={equityAccounts.accumulatedSurplus} color="#DBEAFE" />
-              {equityAccounts.accumulatedSurplus.rows.map((row) => (
-                <TableRow key={row.account} hover>
-                  <TableCell sx={tdCell}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 2 }}>
-                      <IconChevronRight size={12} color={theme.palette.text.disabled} />
-                      {row.account}
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={tdCell} align="right">{formatAmount(row.balance)}</TableCell>
-                  <TableCell sx={tdCell} align="right">{formatPct(row.pct)}</TableCell>
-                  <TableCell sx={tdCell} align="right">{row.movement === 0 ? '–' : (row.movement > 0 ? `+${row.movement.toLocaleString('en-NG')}` : formatAmount(row.movement))}</TableCell>
-                  <TableCell sx={tdCell} align="right">{row.changeLabel}</TableCell>
-                </TableRow>
-              ))}
-
-              <GroupBand group={equityAccounts.currentPeriodSurplus} color="#DCFCE7" />
-              {equityAccounts.currentPeriodSurplus.rows.map((row) => (
-                <TableRow key={row.account} hover>
-                  <TableCell sx={tdCell}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pl: 2 }}>
-                      <IconChevronRight size={12} color={theme.palette.text.disabled} />
-                      {row.account}
-                    </Box>
-                  </TableCell>
-                  <TableCell sx={tdCell} align="right">{formatAmount(row.balance)}</TableCell>
-                  <TableCell sx={tdCell} align="right">{formatPct(row.pct)}</TableCell>
-                  <TableCell sx={tdCell} align="right">{row.movement > 0 ? `+${row.movement.toLocaleString('en-NG')}` : formatAmount(row.movement)}</TableCell>
-                  <TableCell sx={{ ...tdCell, color: '#15803D' }} align="right">
-                    <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
-                      <IconArrowUpRight size={13} />
-                      {row.changeLabel}
-                    </Box>
+              {accounts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                    {loading ? 'Loading…' : 'No equity posted yet.'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                accounts.map((row, idx) => (
+                  <TableRow key={row.account} hover>
+                    <TableCell sx={tdCell}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {row.account}
+                        {idx < 2 && <IconInfoCircle size={12} color={theme.palette.text.disabled} />}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={tdCell} align="right">{formatAmount(row.balance)}</TableCell>
+                    <TableCell sx={tdCell} align="right">{row.pct_of_total}%</TableCell>
+                    <TableCell sx={{ ...tdCell, width: 90 }}>
+                      {row.trend?.length > 0 && (
+                        <ReusableSparkline data={row.trend.map((v) => ({ v }))} dataKey="v" color={COLORS.equity} height={24} />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
 
               <TableRow sx={{ bgcolor: '#F3E8FF' }}>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Equity (Net Assets)</TableCell>
-                <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(balanceSheetStats.netAssets)}</TableCell>
+                <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(stats?.total_equity ?? 0)}</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">100.0%</TableCell>
-                <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">+110,000</TableCell>
-                <TableCell sx={{ ...tdCell, fontWeight: 800, color: '#15803D' }} align="right">
-                  <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.25 }}>
-                    <IconArrowUpRight size={13} />+10.1%
-                  </Box>
-                </TableCell>
+                <TableCell sx={tdCell} />
               </TableRow>
             </TableBody>
           </Table>
@@ -166,18 +155,26 @@ const EquityDetailsTab = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {recentEquityTransactions.map((row) => (
-                <TableRow key={`${row.date}-${row.description}`} hover>
-                  <TableCell sx={{ ...tdCell, color: 'text.secondary' }}>{formatDateDisplay(row.date)}</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.description}</TableCell>
-                  <TableCell sx={tdCell}>{row.account}</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 700 }} align="right">{formatAmount(row.amount)}</TableCell>
-                  <TableCell sx={tdCell}>{row.type}</TableCell>
-                  <TableCell sx={tdCell}>
-                    <Chip label={row.status} size="small" icon={<IconCircleCheck size={12} />} sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: 11, height: 22 }} />
+              {recentTransactions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                    {loading ? 'Loading…' : 'No equity transactions for this period. (Most schools only post directly to Equity for one-off events like an investor contribution or a loan converted to equity.)'}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                recentTransactions.map((row, idx) => (
+                  <TableRow key={`${row.date}-${row.description}-${idx}`} hover>
+                    <TableCell sx={{ ...tdCell, color: 'text.secondary' }}>{formatDateDisplay(row.date)}</TableCell>
+                    <TableCell sx={{ ...tdCell, fontWeight: 600 }}>{row.description}</TableCell>
+                    <TableCell sx={tdCell}>{row.account}</TableCell>
+                    <TableCell sx={{ ...tdCell, fontWeight: 700 }} align="right">{formatAmount(row.amount)}</TableCell>
+                    <TableCell sx={tdCell}>{row.type}</TableCell>
+                    <TableCell sx={tdCell}>
+                      <Chip label="Posted" size="small" icon={<IconCircleCheck size={12} />} sx={{ bgcolor: '#DCFCE7', color: '#15803D', fontWeight: 700, fontSize: 11, height: 22 }} />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </ParentCard>
@@ -192,49 +189,56 @@ const EquityDetailsTab = () => {
               '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
-            <ReusableDonutChart
-              data={[
-                { name: 'Accumulated Surplus', value: equityAccounts.accumulatedSurplus.balance, color: COLORS.accumulatedSurplus },
-                { name: 'Current Period Surplus', value: equityAccounts.currentPeriodSurplus.balance, color: COLORS.currentPeriodSurplus },
-              ]}
-              height={150}
-              innerRadius={50}
-              outerRadius={70}
-              paddingAngle={2}
-              centerValue={formatCompact(balanceSheetStats.netAssets)}
-              centerTitle="Total Equity"
-              valueFontSize={16}
-              tooltipFormatter={(value, name) => [formatNaira(value), name]}
-            />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS.accumulatedSurplus, flexShrink: 0 }} />
-                <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>Accumulated Surplus</Typography>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>
-                  {formatCompact(equityAccounts.accumulatedSurplus.balance)} ({equityAccounts.accumulatedSurplus.pct}%)
-                </Typography>
+            {composition.length === 0 ? (
+              <Box sx={{ minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{loading ? 'Loading…' : 'No equity posted yet.'}</Typography>
               </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS.currentPeriodSurplus, flexShrink: 0 }} />
-                <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>Current Period Surplus</Typography>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>
-                  {formatCompact(equityAccounts.currentPeriodSurplus.balance)} ({equityAccounts.currentPeriodSurplus.pct}%)
-                </Typography>
-              </Box>
-            </Box>
+            ) : (
+              <>
+                <ReusableDonutChart
+                  data={composition.map((c, idx) => ({ name: c.name, value: c.value, color: Object.values(COLORS)[idx % 7] }))}
+                  height={150}
+                  innerRadius={50}
+                  outerRadius={70}
+                  paddingAngle={2}
+                  centerValue={formatCompact(stats?.total_equity ?? 0)}
+                  centerTitle="Total Equity"
+                  valueFontSize={16}
+                  tooltipFormatter={(value, name) => [formatNaira(value), name]}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
+                  {composition.map((c, idx) => (
+                    <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: Object.values(COLORS)[idx % 7], flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>{formatCompact(c.value)}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
           </ParentCard>
 
           <ParentCard
-            title={<Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>Equity Trend (Last 4 Terms)</Typography>}
+            title={<Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>Equity Trend (Last 7 Terms)</Typography>}
             sx={{
               '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.75 },
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <EquityTrendChart data={equityTrend} />
+            <ReusableAreaChart
+              data={trend}
+              nameKey="term"
+              dataKey="equity"
+              name="Total Equity"
+              color={COLORS.equity}
+              height={190}
+              showLabels={false}
+              valueFormatter={formatCompact}
+            />
           </ParentCard>
 
-          <InsightsCard items={equityDetailsInsights} />
+          <InsightsCard items={insights} />
         </Box>
       </Grid>
     </Grid>

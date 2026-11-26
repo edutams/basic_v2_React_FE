@@ -25,6 +25,14 @@ const InsightsCard = ({ title = 'Key Insights', items, layout = 'column' }) => {
         '& .MuiCardContent-root': { p: 2, '&:last-child': { pb: 2 } },
       }}
     >
+      {items.length === 0 ? (
+        // Reserves the same card height an empty InsightsCard would
+        // otherwise collapse to (header-only) while data is still loading
+        // or genuinely has nothing to say yet.
+        <Box sx={{ minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }}>Nothing to show yet.</Typography>
+        </Box>
+      ) : (
       <Box
         sx={
           layout === 'row'
@@ -47,6 +55,7 @@ const InsightsCard = ({ title = 'Key Insights', items, layout = 'column' }) => {
           </Box>
         ))}
       </Box>
+      )}
     </ParentCard>
   );
 };

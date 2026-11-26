@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -15,7 +15,6 @@ import {
   Chip,
   IconButton,
   useTheme,
-  Checkbox,
   TablePagination,
   TableFooter,
   Dialog,
@@ -26,11 +25,12 @@ import {
   Skeleton,
   Menu,
   MenuItem,
+  Snackbar,
 } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
-import Breadcrumb from '@/layouts/landlord/shared/breadcrumb/Breadcrumb';
 import ParentCard from '@/components/shared/ParentCard';
 import StatCard from '@/components/shared/StatCard';
+import tenantApi from '@/api/tenant/tenant_api';
 import {
   IconSearch,
   IconPlus,
@@ -38,173 +38,74 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconCirclePlus,
-  IconUsers,
   IconLayoutGrid,
   IconEdit,
-  IconTrash,
-  IconFilter,
-  IconArrowUp,
+  IconBan,
+  IconRotate,
+  IconUsers,
 } from '@tabler/icons';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ChartOfAccountModal from './components/ChartOfAccountModal';
-import { CATEGORIES, CATEGORY_META, ACCOUNT_TYPE_META, POSTING_ALLOWED_META } from './constants';
+import { CATEGORIES, CATEGORY_META, CATEGORY_LABEL_FROM_API, classificationLabel } from './constants';
 
-const BCrumb = [{ to: '/', title: 'Home' }, { title: 'Chart of Accounts' }];
+// Detail accounts sit directly under their root category now — no
+// classification header level to walk through any more (see the backend's
+// ChartOfAccountSeeder docblock for why).
+const flattenDetailRows = (roots) => {
+  const rows = [];
+  (roots || []).forEach((root) => {
+    const category = CATEGORY_LABEL_FROM_API[root.category];
+    (root.children || []).forEach((detail) => {
+      rows.push({
+        id: detail.id,
+        code: detail.code,
+        name: detail.name,
+        description: detail.description,
+        category,
+        classificationKey: detail.classification,
+        classification: classificationLabel(category, detail.classification),
+        nodeType: detail.node_type,
+        postingAllowed: detail.posting_allowed,
+        isActive: detail.is_active,
+        isSystem: detail.is_system,
+        createdAt: detail.created_at,
+        // Eager-loaded as the `createdBy` relation (see getChartOfAccounts),
+        // which Laravel serializes under the same snake_case key as the
+        // raw created_by column — the relation object wins that collision,
+        // so this is the {id, fname, lname} user, not the bare uuid.
+        createdBy: detail.created_by,
+      });
+    });
+  });
+  return rows;
+};
 
-const CREATORS = ['OA', 'AO'];
+// { [categoryLabel]: rootNodeId } — the real chart_of_accounts row id for
+// each of the 5 seeded root categories, so submitting a new detail account
+// can send the right parent category.
+const buildCategoryRootMap = (roots) => {
+  const map = {};
+  (roots || []).forEach((root) => {
+    map[CATEGORY_LABEL_FROM_API[root.category]] = root.id;
+  });
+  return map;
+};
 
-const mockAccounts = [
-  {
-    id: '1',
-    code: '1.1',
-    name: 'Cash at Bank',
-    category: 'Assets',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Main school bank account',
-    dateCreated: '2025-01-15',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '2',
-    code: '1.2',
-    name: 'Petty Cash',
-    category: 'Assets',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Cash for minor operations',
-    dateCreated: '2025-01-15',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '3',
-    code: '1.3',
-    name: 'Accounts Receivable (Student Fees)',
-    category: 'Assets',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Outstanding student fees',
-    dateCreated: '2025-01-16',
-    createdBy: 'AO',
-    status: 'Active',
-  },
-  {
-    id: '4',
-    code: '1.4',
-    name: 'Fixed Assets - Furniture',
-    category: 'Assets',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Furniture and fittings',
-    dateCreated: '2025-01-18',
-    createdBy: 'OA',
-    status: 'Inactive',
-  },
-  {
-    id: '5',
-    code: '2.1',
-    name: 'Accounts Payable',
-    category: 'Liabilities',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Amounts owed to suppliers',
-    dateCreated: '2025-01-16',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '6',
-    code: '2.2',
-    name: 'Accrued Expenses',
-    category: 'Liabilities',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Expenses incurred but not yet paid',
-    dateCreated: '2025-01-19',
-    createdBy: 'AO',
-    status: 'Active',
-  },
-  {
-    id: '7',
-    code: '3.1',
-    name: 'Staff Salaries',
-    category: 'Expenditure',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Salaries and related emoluments',
-    dateCreated: '2025-01-17',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '8',
-    code: '3.2',
-    name: 'Pension Contribution',
-    category: 'Expenditure',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Employer pension contribution',
-    dateCreated: '2025-01-17',
-    createdBy: 'AO',
-    status: 'Active',
-  },
-  {
-    id: '9',
-    code: '3.3',
-    name: 'Utilities',
-    category: 'Expenditure',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Electricity, water and internet',
-    dateCreated: '2025-01-20',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '10',
-    code: '4.1',
-    name: 'Tuition Fees',
-    category: 'Income',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Fees from student tuition',
-    dateCreated: '2025-01-17',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-  {
-    id: '11',
-    code: '4.2',
-    name: 'Other Income',
-    category: 'Income',
-    type: 'Detail',
-    postingAllowed: true,
-    description: 'Other school-generated income',
-    dateCreated: '2025-01-18',
-    createdBy: 'AO',
-    status: 'Active',
-  },
-  {
-    id: '12',
-    code: '5.1',
-    name: 'Owner Equity',
-    category: 'Equity',
-    type: 'Detail',
-    postingAllowed: false,
-    description: 'Proprietor capital contribution',
-    dateCreated: '2025-01-15',
-    createdBy: 'OA',
-    status: 'Active',
-  },
-];
+function initials(user) {
+  if (!user) return '—';
+  return `${(user.fname || '').charAt(0)}${(user.lname || '').charAt(0)}`.toUpperCase() || '—';
+}
+
+function formatDateShort(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 const ChartOfAccounts = () => {
   const theme = useTheme();
 
   const [loading, setLoading] = useState(true);
-  const [accountsData, setAccountsData] = useState(mockAccounts);
+  const [roots, setRoots] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
 
@@ -215,13 +116,28 @@ const ChartOfAccounts = () => {
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [openAccountModal, setOpenAccountModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openStatusModal, setOpenStatusModal] = useState(false);
   const [modalMode, setModalMode] = useState('create');
+  const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const fetchTree = useCallback(() => {
+    setLoading(true);
+    tenantApi
+      .get('/chart_of_accounts/fetch_tree')
+      .then((res) => setRoots(res.data?.data || []))
+      .catch(() =>
+        setSnackbar({ open: true, message: 'Could not load the chart of accounts.', severity: 'error' }),
+      )
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchTree();
+  }, [fetchTree]);
+
+  const accountsData = useMemo(() => flattenDetailRows(roots), [roots]);
+  const categoryRootMap = useMemo(() => buildCategoryRootMap(roots), [roots]);
 
   const handleMenuOpen = (event, row) => {
     setAnchorEl(event.currentTarget);
@@ -242,45 +158,75 @@ const ChartOfAccounts = () => {
     handleMenuClose();
   };
 
-  const handleOpenDelete = () => {
-    setOpenDeleteModal(true);
+  const handleOpenStatusConfirm = () => {
+    setOpenStatusModal(true);
     handleMenuClose();
   };
 
-  const handleAccountSubmit = (data) => {
-    if (modalMode === 'create') {
-      setAccountsData([
-        {
-          ...data,
-          id: `${Date.now()}`,
-          dateCreated: new Date().toISOString().slice(0, 10),
-          createdBy: 'OA',
-        },
-        ...accountsData,
-      ]);
-    } else {
-      setAccountsData(
-        accountsData.map((item) => (item.id === selectedRow.id ? { ...item, ...data } : item)),
-      );
-    }
+  const handleAccountSubmit = (payload) => {
+    setSubmitting(true);
+    const request =
+      modalMode === 'create'
+        ? tenantApi.post('/chart_of_accounts/create_account', payload)
+        : tenantApi.put(`/chart_of_accounts/update_account/${payload.id}`, {
+            name: payload.name,
+            description: payload.description,
+            posting_allowed: payload.posting_allowed,
+            is_active: payload.is_active,
+          });
+
+    request
+      .then(() => {
+        setOpenAccountModal(false);
+        setSnackbar({
+          open: true,
+          message: modalMode === 'create' ? 'Account created.' : 'Account updated.',
+          severity: 'success',
+        });
+        fetchTree();
+      })
+      .catch((err) =>
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.message || 'Something went wrong. Please try again.',
+          severity: 'error',
+        }),
+      )
+      .finally(() => setSubmitting(false));
   };
 
-  const handleConfirmDelete = () => {
-    setAccountsData(accountsData.filter((item) => item.id !== selectedRow.id));
-    setOpenDeleteModal(false);
+  const handleConfirmStatusToggle = () => {
+    tenantApi
+      .put(`/chart_of_accounts/toggle_account_status/${selectedRow.id}`)
+      .then(() => {
+        setOpenStatusModal(false);
+        setSnackbar({
+          open: true,
+          message: selectedRow.isActive ? 'Account deactivated.' : 'Account activated.',
+          severity: 'success',
+        });
+        fetchTree();
+      })
+      .catch((err) =>
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.message || 'Something went wrong. Please try again.',
+          severity: 'error',
+        }),
+      );
   };
 
   // ==================== Stats ====================
   const stats = useMemo(() => {
     const total = accountsData.length;
-    const active = accountsData.filter((a) => a.status === 'Active').length;
+    const active = accountsData.filter((a) => a.isActive).length;
     const inactive = total - active;
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const recentlyCreated = accountsData.filter(
-      (a) => new Date(a.dateCreated) >= thirtyDaysAgo,
+      (a) => a.createdAt && new Date(a.createdAt) >= thirtyDaysAgo,
     ).length;
-    const creators = new Set(accountsData.map((a) => a.createdBy)).size;
+    const creators = new Set(accountsData.filter((a) => a.createdBy?.id).map((a) => a.createdBy.id)).size;
     return { total, active, inactive, recentlyCreated, creators };
   }, [accountsData]);
 
@@ -300,7 +246,7 @@ const ChartOfAccounts = () => {
       !q ||
       item.name.toLowerCase().includes(q) ||
       item.code.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q);
+      (item.description || '').toLowerCase().includes(q);
     return matchesCategory && matchesSearch;
   });
 
@@ -310,8 +256,6 @@ const ChartOfAccounts = () => {
   return (
     <PageContainer title="Chart of Accounts" description="Manage Chart of Accounts">
       <Box sx={{ mt: 1 }}>
-        {/* <Breadcrumb title="Chart of Accounts" items={BCrumb} /> */}
-
         {/* ===================== Header ===================== */}
         <Box
           sx={{
@@ -411,8 +355,7 @@ const ChartOfAccounts = () => {
               label="Account Creators"
               count={stats.creators}
               icon={IconUsers}
-              iconBg="#E2E8F0"
-              iconColor="#475569"
+              colorIndex={3}
             />
           </Grid>
         </Grid>
@@ -489,34 +432,24 @@ const ChartOfAccounts = () => {
                   Accounts List ({filteredData.length})
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
-                  <TextField
-                    variant="outlined"
-                    size="small"
-                    placeholder="Search by code, name or description..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setPage(0);
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <IconSearch size={18} />
-                        </InputAdornment>
-                      ),
-                      sx: { borderRadius: '8px', minWidth: '280px' },
-                    }}
-                  />
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    startIcon={<IconFilter size={16} />}
-                    sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600 }}
-                  >
-                    Filter
-                  </Button>
-                </Box>
+                <TextField
+                  variant="outlined"
+                  size="small"
+                  placeholder="Search by code, name or description..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(0);
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IconSearch size={18} />
+                      </InputAdornment>
+                    ),
+                    sx: { borderRadius: '8px', minWidth: '280px' },
+                  }}
+                />
               </Box>
             </Box>
           }
@@ -527,7 +460,7 @@ const ChartOfAccounts = () => {
         >
           <Box>
             <TableContainer>
-              <Table sx={{ minWidth: 1100 }}>
+              <Table sx={{ minWidth: 900 }}>
                 <TableHead>
                   <TableRow
                     sx={{
@@ -537,14 +470,7 @@ const ChartOfAccounts = () => {
                       },
                     }}
                   >
-                    <TableCell padding="checkbox">
-                      <Checkbox size="small" />
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        Code <IconArrowUp size={14} />
-                      </Box>
-                    </TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Code</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Account Name</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Account Type</TableCell>
@@ -572,67 +498,47 @@ const ChartOfAccounts = () => {
                   ) : paginatedData.length > 0 ? (
                     paginatedData.map((row) => {
                       const meta = CATEGORY_META[row.category] || {};
-                      const typeMeta = ACCOUNT_TYPE_META[row.type] || ACCOUNT_TYPE_META.Detail;
-                      const postingMeta = POSTING_ALLOWED_META[String(row.postingAllowed)];
                       return (
                         <TableRow key={row.id} hover>
-                          <TableCell padding="checkbox">
-                            <Checkbox size="small" />
-                          </TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>{row.code}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                          <TableCell>
+                            <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>{row.name}</Typography>
+                            <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{row.classification}</Typography>
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={row.category}
                               size="small"
-                              sx={{
-                                bgcolor: meta.bg,
-                                color: meta.color,
-                                fontWeight: 700,
-                                borderRadius: '8px',
-                              }}
+                              sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 700, borderRadius: '8px' }}
                             />
                           </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={row.type}
-                              size="small"
-                              sx={{
-                                bgcolor: typeMeta.bg,
-                                color: typeMeta.color,
-                                fontWeight: 700,
-                                borderRadius: '8px',
-                              }}
-                            />
+                          <TableCell sx={{ color: 'text.secondary' }}>
+                            {row.nodeType === 'detail' ? 'Detail' : 'Header'}
                           </TableCell>
                           <TableCell>
                             <Chip
                               label={row.postingAllowed ? 'Yes' : 'No'}
                               size="small"
                               sx={{
-                                bgcolor: postingMeta.bg,
-                                color: postingMeta.color,
+                                bgcolor: row.postingAllowed ? '#DCFCE7' : '#F1F5F9',
+                                color: row.postingAllowed ? '#15803D' : '#64748B',
                                 fontWeight: 700,
                                 borderRadius: '8px',
                               }}
                             />
                           </TableCell>
                           <TableCell sx={{ color: 'text.secondary', maxWidth: 220 }}>
-                            {row.description}
+                            {row.description || '—'}
                           </TableCell>
-                          <TableCell sx={{ color: 'text.secondary' }}>
-                            {new Date(row.dateCreated).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
+                          <TableCell sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                            {formatDateShort(row.createdAt)}
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.createdBy}</TableCell>
+                          <TableCell sx={{ color: 'text.secondary' }}>{initials(row.createdBy)}</TableCell>
                           <TableCell>
                             <Chip
-                              label={row.status}
+                              label={row.isActive ? 'Active' : 'Inactive'}
                               size="small"
-                              color={row.status === 'Active' ? 'success' : 'default'}
+                              color={row.isActive ? 'success' : 'default'}
                               sx={{ fontWeight: 700, borderRadius: '8px' }}
                             />
                           </TableCell>
@@ -668,7 +574,7 @@ const ChartOfAccounts = () => {
                 <TableFooter>
                   <TableRow>
                     <TablePagination
-                      colSpan={columnCount + 1}
+                      colSpan={columnCount}
                       rowsPerPageOptions={[5, 10, 25]}
                       count={filteredData.length}
                       rowsPerPage={rowsPerPage}
@@ -693,9 +599,13 @@ const ChartOfAccounts = () => {
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={handleOpenDelete} sx={{ color: 'error.main' }}>
-          <IconTrash size={18} style={{ marginRight: 8 }} />
-          Delete
+        <MenuItem onClick={handleOpenStatusConfirm} sx={{ color: selectedRow?.isActive ? 'error.main' : 'success.main' }}>
+          {selectedRow?.isActive ? (
+            <IconBan size={18} style={{ marginRight: 8 }} />
+          ) : (
+            <IconRotate size={18} style={{ marginRight: 8 }} />
+          )}
+          {selectedRow?.isActive ? 'Deactivate' : 'Activate'}
         </MenuItem>
       </Menu>
 
@@ -705,35 +615,49 @@ const ChartOfAccounts = () => {
         mode={modalMode}
         selectedRow={selectedRow}
         onSubmit={handleAccountSubmit}
-        existingAccounts={accountsData}
+        categoryRootMap={categoryRootMap}
+        submitting={submitting}
       />
 
       <Dialog
-        open={openDeleteModal}
-        onClose={() => setOpenDeleteModal(false)}
+        open={openStatusModal}
+        onClose={() => setOpenStatusModal(false)}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>{selectedRow?.isActive ? 'Deactivate Account' : 'Activate Account'}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete this account? This action cannot be undone.
+            {selectedRow?.isActive
+              ? `Once deactivated, "${selectedRow?.name}" can no longer be used for new postings anywhere in the app. Existing postings are unaffected.`
+              : `"${selectedRow?.name}" will become available for new postings again.`}
           </Typography>
         </DialogContent>
         <DialogActions>
+          <Button variant="outlined" size="small" onClick={() => setOpenStatusModal(false)} color="inherit">
+            Cancel
+          </Button>
           <Button
             variant="contained"
             size="small"
-            onClick={() => setOpenDeleteModal(false)}
-            color="inherit"
+            color={selectedRow?.isActive ? 'error' : 'success'}
+            onClick={handleConfirmStatusToggle}
           >
-            Cancel
-          </Button>
-          <Button variant="contained" size="small" color="error" onClick={handleConfirmDelete}>
-            Delete
+            {selectedRow?.isActive ? 'Deactivate' : 'Activate'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </PageContainer>
   );
 };

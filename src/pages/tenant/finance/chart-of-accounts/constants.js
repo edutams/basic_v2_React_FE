@@ -1,33 +1,59 @@
 import { IconDatabase, IconShieldCheck, IconScale, IconCoin, IconFolder } from '@tabler/icons';
 
+// Order and prefixes match the backend's seeded chart_of_accounts roots
+// (code "1".."5"): Assets, Liabilities, Equity, Income, Expenditure.
 export const CATEGORIES = ['Assets', 'Liabilities', 'Equity', 'Income', 'Expenditure'];
 
-// Code prefix, icon and color per category — shared between the accounts
-// table, the category filter pills and the Add Account modal's "Smart
-// Suggestion" so every surface agrees on the same scheme.
 export const CATEGORY_META = {
   Assets: { prefix: 1, bg: '#DBEAFE', color: '#2563EB', icon: IconDatabase },
   Liabilities: { prefix: 2, bg: '#F3E8FF', color: '#9333EA', icon: IconShieldCheck },
-  Expenditure: { prefix: 3, bg: '#FEE2E2', color: '#DC2626', icon: IconFolder },
+  Equity: { prefix: 3, bg: '#DCFCE7', color: '#16A34A', icon: IconScale },
   Income: { prefix: 4, bg: '#FEF3C7', color: '#D97706', icon: IconCoin },
-  Equity: { prefix: 5, bg: '#DCFCE7', color: '#16A34A', icon: IconScale },
+  Expenditure: { prefix: 5, bg: '#FEE2E2', color: '#DC2626', icon: IconFolder },
 };
 
-// Badge colors for the "Account Type" column — Detail accounts accept
-// posted transactions directly, Header accounts are summary/parent rows.
-export const ACCOUNT_TYPE_META = {
-  Detail: { bg: '#DBEAFE', color: '#2563EB' },
-  Header: { bg: '#E2E8F0', color: '#475569' },
+// Every category has exactly 2 fixed classification values a detail account
+// must carry — Assets/Liabilities/Equity use Current vs Non-Current,
+// Income/Expenditure use Fees Collection vs Non-Fees Collection. This is a
+// plain field on the detail account itself, not a separate account row to
+// nest under (there's no "X.1 Non-Current Assets" row any more — see the
+// backend's ChartOfAccountSeeder docblock).
+export const CLASSIFICATIONS_BY_CATEGORY = {
+  Assets: [
+    { key: 'non_current', label: 'Non-Current Assets' },
+    { key: 'current', label: 'Current Assets' },
+  ],
+  Liabilities: [
+    { key: 'non_current', label: 'Non-Current Liabilities' },
+    { key: 'current', label: 'Current Liabilities' },
+  ],
+  Equity: [
+    { key: 'non_current', label: 'Non-Current Equity' },
+    { key: 'current', label: 'Current Equity' },
+  ],
+  Income: [
+    { key: 'fees_collection', label: 'Fees Collection' },
+    { key: 'non_fees_collection', label: 'Non-Fees Collection' },
+  ],
+  Expenditure: [
+    { key: 'fees_collection', label: 'Fees Collection' },
+    { key: 'non_fees_collection', label: 'Non-Fees Collection' },
+  ],
 };
 
-export const POSTING_ALLOWED_META = {
-  true: { bg: '#DCFCE7', color: '#15803D' },
-  false: { bg: '#F1F5F9', color: '#64748B' },
+export const CATEGORY_API_VALUE = {
+  Assets: 'assets',
+  Liabilities: 'liabilities',
+  Equity: 'equity',
+  Income: 'income',
+  Expenditure: 'expenditure',
 };
 
-export function suggestAccountCode(category, existingAccounts) {
-  const meta = CATEGORY_META[category];
-  if (!meta) return '';
-  const countInCategory = existingAccounts.filter((a) => a.category === category).length;
-  return `${meta.prefix}.${countInCategory + 1}`;
+export const CATEGORY_LABEL_FROM_API = Object.fromEntries(
+  Object.entries(CATEGORY_API_VALUE).map(([label, value]) => [value, label]),
+);
+
+export function classificationLabel(category, classificationKey) {
+  const match = (CLASSIFICATIONS_BY_CATEGORY[category] || []).find((c) => c.key === classificationKey);
+  return match?.label || classificationKey;
 }

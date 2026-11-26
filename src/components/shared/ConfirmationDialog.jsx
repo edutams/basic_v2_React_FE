@@ -10,6 +10,7 @@ const ConfirmationDialog = ({
   onConfirm,
   title = 'Confirm Action',
   message = 'Are you sure you want to proceed?',
+  content,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   severity = 'info',
@@ -60,6 +61,7 @@ const ConfirmationDialog = ({
       onClose={onClose}
       title={title}
       contentText={message}
+      content={content}
       actions={actions}
       maxWidth={maxWidth}
       {...dialogProps}
@@ -73,6 +75,7 @@ ConfirmationDialog.propTypes = {
   onConfirm: PropTypes.func.isRequired,
   title: PropTypes.string,
   message: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+  content: PropTypes.node,
   confirmText: PropTypes.string,
   cancelText: PropTypes.string,
   confirmColor: PropTypes.string,

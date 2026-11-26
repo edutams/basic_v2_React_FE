@@ -46,7 +46,12 @@ import {
 } from '@tabler/icons';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ChartOfAccountModal from './components/ChartOfAccountModal';
-import { CATEGORIES, CATEGORY_META, CATEGORY_LABEL_FROM_API, classificationLabel } from './constants';
+import {
+  CATEGORIES,
+  CATEGORY_META,
+  CATEGORY_LABEL_FROM_API,
+  classificationLabel,
+} from './constants';
 
 // Detail accounts sit directly under their root category now — no
 // classification header level to walk through any more (see the backend's
@@ -93,12 +98,16 @@ const buildCategoryRootMap = (roots) => {
 
 function initials(user) {
   if (!user) return '—';
-  return `${(user.fname || '').charAt(0)}${(user.lname || '').charAt(0)}`.toUpperCase() || '—';
+  return `${user.fname || ''} ${user.lname || ''}` || '—';
 }
 
 function formatDateShort(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 const ChartOfAccounts = () => {
@@ -127,7 +136,11 @@ const ChartOfAccounts = () => {
       .get('/chart_of_accounts/fetch_tree')
       .then((res) => setRoots(res.data?.data || []))
       .catch(() =>
-        setSnackbar({ open: true, message: 'Could not load the chart of accounts.', severity: 'error' }),
+        setSnackbar({
+          open: true,
+          message: 'Could not load the chart of accounts.',
+          severity: 'error',
+        }),
       )
       .finally(() => setLoading(false));
   }, []);
@@ -226,7 +239,8 @@ const ChartOfAccounts = () => {
     const recentlyCreated = accountsData.filter(
       (a) => a.createdAt && new Date(a.createdAt) >= thirtyDaysAgo,
     ).length;
-    const creators = new Set(accountsData.filter((a) => a.createdBy?.id).map((a) => a.createdBy.id)).size;
+    const creators = new Set(accountsData.filter((a) => a.createdBy?.id).map((a) => a.createdBy.id))
+      .size;
     return { total, active, inactive, recentlyCreated, creators };
   }, [accountsData]);
 
@@ -502,14 +516,23 @@ const ChartOfAccounts = () => {
                         <TableRow key={row.id} hover>
                           <TableCell sx={{ fontWeight: 600 }}>{row.code}</TableCell>
                           <TableCell>
-                            <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>{row.name}</Typography>
-                            <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{row.classification}</Typography>
+                            <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>
+                              {row.name}
+                            </Typography>
+                            <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
+                              {row.classification}
+                            </Typography>
                           </TableCell>
                           <TableCell>
                             <Chip
                               label={row.category}
                               size="small"
-                              sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 700, borderRadius: '8px' }}
+                              sx={{
+                                bgcolor: meta.bg,
+                                color: meta.color,
+                                fontWeight: 700,
+                                borderRadius: '8px',
+                              }}
                             />
                           </TableCell>
                           <TableCell sx={{ color: 'text.secondary' }}>
@@ -533,7 +556,9 @@ const ChartOfAccounts = () => {
                           <TableCell sx={{ color: 'text.secondary', whiteSpace: 'nowrap' }}>
                             {formatDateShort(row.createdAt)}
                           </TableCell>
-                          <TableCell sx={{ color: 'text.secondary' }}>{initials(row.createdBy)}</TableCell>
+                          <TableCell sx={{ color: 'text.secondary' }}>
+                            {initials(row.createdBy)}
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={row.isActive ? 'Active' : 'Inactive'}
@@ -599,7 +624,10 @@ const ChartOfAccounts = () => {
           <IconEdit size={18} style={{ marginRight: 8 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={handleOpenStatusConfirm} sx={{ color: selectedRow?.isActive ? 'error.main' : 'success.main' }}>
+        <MenuItem
+          onClick={handleOpenStatusConfirm}
+          sx={{ color: selectedRow?.isActive ? 'error.main' : 'success.main' }}
+        >
           {selectedRow?.isActive ? (
             <IconBan size={18} style={{ marginRight: 8 }} />
           ) : (
@@ -625,7 +653,9 @@ const ChartOfAccounts = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>{selectedRow?.isActive ? 'Deactivate Account' : 'Activate Account'}</DialogTitle>
+        <DialogTitle>
+          {selectedRow?.isActive ? 'Deactivate Account' : 'Activate Account'}
+        </DialogTitle>
         <DialogContent>
           <Typography>
             {selectedRow?.isActive
@@ -634,7 +664,12 @@ const ChartOfAccounts = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" size="small" onClick={() => setOpenStatusModal(false)} color="inherit">
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setOpenStatusModal(false)}
+            color="inherit"
+          >
             Cancel
           </Button>
           <Button

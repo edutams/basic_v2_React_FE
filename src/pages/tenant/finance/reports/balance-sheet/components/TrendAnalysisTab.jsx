@@ -80,24 +80,31 @@ function buildFinancialRatios(trendData) {
   ];
 }
 
-function buildInsights(summary, ratios) {
-  if (!summary) return [];
+// Absolute figures ("to ₦X", "is Y:1") come from `current` — the cards
+// period's own latest trend point (same source `buildFinancialRatios`
+// already uses for this tab's table/charts) — not `summary`, which stays
+// tied to the separate, independent stats Period/Compare dropdowns and can
+// legitimately be a different term. Only the `_change_pct` clauses are
+// supposed to stay stats-scoped (the explicit growth-vs-compare-period
+// figures).
+function buildInsights(summary, current) {
+  if (!summary || !current) return [];
   const insights = [];
 
   if (summary.total_assets_change_pct !== null && summary.total_assets_change_pct !== undefined) {
-    insights.push(`Total assets ${summary.total_assets_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_assets_change_pct)}% to ${formatNaira(summary.total_assets)}.`);
+    insights.push(`Total assets ${summary.total_assets_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_assets_change_pct)}% to ${formatNaira(current.assets)}.`);
   }
   if (summary.total_liabilities_change_pct !== null && summary.total_liabilities_change_pct !== undefined) {
-    insights.push(`Total liabilities ${summary.total_liabilities_change_pct >= 0 ? 'rose' : 'fell'} by ${Math.abs(summary.total_liabilities_change_pct)}% to ${formatNaira(summary.total_liabilities)}.`);
+    insights.push(`Total liabilities ${summary.total_liabilities_change_pct >= 0 ? 'rose' : 'fell'} by ${Math.abs(summary.total_liabilities_change_pct)}% to ${formatNaira(current.liabilities)}.`);
   }
   if (summary.total_equity_change_pct !== null && summary.total_equity_change_pct !== undefined) {
-    insights.push(`Total equity (net assets) ${summary.total_equity_change_pct >= 0 ? 'grew' : 'shrank'} by ${Math.abs(summary.total_equity_change_pct)}% to ${formatNaira(summary.total_equity)}.`);
+    insights.push(`Total equity (net assets) ${summary.total_equity_change_pct >= 0 ? 'grew' : 'shrank'} by ${Math.abs(summary.total_equity_change_pct)}% to ${formatNaira(current.equity)}.`);
   }
-  if (summary.equity_ratio !== null && summary.equity_ratio !== undefined) {
-    insights.push(`Equity ratio is ${summary.equity_ratio}%, ${summary.equity_ratio >= 50 ? 'indicating a strong and stable financial position' : 'below the 50% mark typically considered stable'}.`);
+  if (current.equity_ratio !== null && current.equity_ratio !== undefined) {
+    insights.push(`Equity ratio is ${current.equity_ratio}%, ${current.equity_ratio >= 50 ? 'indicating a strong and stable financial position' : 'below the 50% mark typically considered stable'}.`);
   }
-  if (summary.current_ratio !== null && summary.current_ratio !== undefined) {
-    insights.push(`Current ratio is ${summary.current_ratio}:1, ${summary.current_ratio >= 1 ? 'showing good short-term liquidity' : 'suggesting a short-term liquidity risk'}.`);
+  if (current.current_ratio !== null && current.current_ratio !== undefined) {
+    insights.push(`Current ratio is ${current.current_ratio}:1, ${current.current_ratio >= 1 ? 'showing good short-term liquidity' : 'suggesting a short-term liquidity risk'}.`);
   }
 
   return insights;
@@ -108,12 +115,13 @@ const TrendAnalysisTab = ({ data, loading }) => {
 
   const summary = data?.summary;
   const trendData = data?.trend || [];
+  const currentTrendPoint = trendData[trendData.length - 1];
 
   const financialRatios = useMemo(() => buildFinancialRatios(trendData), [trendData]);
-  const insights = useMemo(() => buildInsights(summary, financialRatios), [summary, financialRatios]);
+  const insights = useMemo(() => buildInsights(summary, currentTrendPoint), [summary, currentTrendPoint]);
 
-  const totalLiabilities = summary?.total_liabilities ?? 0;
-  const totalEquity = summary?.total_equity ?? 0;
+  const totalLiabilities = currentTrendPoint?.liabilities ?? 0;
+  const totalEquity = currentTrendPoint?.equity ?? 0;
   const totalFunds = totalLiabilities + totalEquity;
 
   return (

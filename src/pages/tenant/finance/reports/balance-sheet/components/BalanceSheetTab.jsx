@@ -36,26 +36,32 @@ const StatementRowsSkeleton = ({ rows = 2 }) => (
   </>
 );
 
-function buildInsights(summary) {
+// Absolute figures ("to ₦X") come from the cards-scoped statement rows
+// passed in (`cardsTotalAssets`/`cardsTotalLiabilities`/`cardsTotalEquity`/
+// `cardsCurrentRatio`) — `summary` stays only for the `_change_pct` clauses,
+// which are specifically the stats-dropdown-vs-compare-period growth
+// figures and can legitimately describe a different term than the cards
+// breakdown this card sits beside.
+function buildInsights(summary, cardsTotalAssets, cardsTotalLiabilities, cardsTotalEquity, cardsCurrentRatio) {
   if (!summary) return [];
   const insights = [];
 
   if (summary.total_assets_change_pct !== null && summary.total_assets_change_pct !== undefined) {
-    insights.push(`Total assets ${summary.total_assets_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_assets_change_pct)}% to ${formatNaira(summary.total_assets)}.`);
+    insights.push(`Total assets ${summary.total_assets_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_assets_change_pct)}% to ${formatNaira(cardsTotalAssets)}.`);
   } else {
-    insights.push(`Total assets are ${formatNaira(summary.total_assets)} as at the selected period.`);
+    insights.push(`Total assets are ${formatNaira(cardsTotalAssets)} as at the selected period.`);
   }
 
   if (summary.total_liabilities_change_pct !== null && summary.total_liabilities_change_pct !== undefined) {
-    insights.push(`Total liabilities ${summary.total_liabilities_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_liabilities_change_pct)}% to ${formatNaira(summary.total_liabilities)}.`);
+    insights.push(`Total liabilities ${summary.total_liabilities_change_pct >= 0 ? 'increased' : 'decreased'} by ${Math.abs(summary.total_liabilities_change_pct)}% to ${formatNaira(cardsTotalLiabilities)}.`);
   }
 
   if (summary.total_equity_change_pct !== null && summary.total_equity_change_pct !== undefined) {
-    insights.push(`Net assets (equity) ${summary.total_equity_change_pct >= 0 ? 'grew' : 'shrank'} by ${Math.abs(summary.total_equity_change_pct)}% to ${formatNaira(summary.total_equity)}.`);
+    insights.push(`Net assets (equity) ${summary.total_equity_change_pct >= 0 ? 'grew' : 'shrank'} by ${Math.abs(summary.total_equity_change_pct)}% to ${formatNaira(cardsTotalEquity)}.`);
   }
 
-  if (summary.current_ratio !== null && summary.current_ratio !== undefined) {
-    insights.push(`Current ratio is ${summary.current_ratio}:1, ${summary.current_ratio >= 1 ? 'indicating a healthy liquidity position' : 'indicating a potential liquidity risk'}.`);
+  if (cardsCurrentRatio !== null && cardsCurrentRatio !== undefined) {
+    insights.push(`Current ratio is ${cardsCurrentRatio}:1, ${cardsCurrentRatio >= 1 ? 'indicating a healthy liquidity position' : 'indicating a potential liquidity risk'}.`);
   }
 
   return insights;
@@ -75,10 +81,22 @@ const BalanceSheetTab = ({ data, loading }) => {
   // BalanceSheetTab wants only the last 4 of the shared 7-term trend array.
   const trend = (data?.trend || []).slice(-4);
 
-  const totalAssets = summary?.total_assets ?? 0;
-  const totalLiabilitiesAndEquity = (summary?.total_liabilities ?? 0) + (summary?.total_equity ?? 0);
+  // Cards-scoped totals, derived from the statement rows actually shown —
+  // `summary.total_assets`/`total_liabilities`/`total_equity` stay tied to
+  // the separate, independent stats Period/Compare dropdowns and can
+  // legitimately be a different term/week than the Cards filter above.
+  const totalAssets = assetsRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsTotalLiabilities = liabilitiesRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsTotalEquity = equityRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const totalLiabilitiesAndEquity = cardsTotalLiabilities + cardsTotalEquity;
+  const cardsCurrentAssets = assetsRows.find((r) => r.item === 'Current Assets')?.amount ?? 0;
+  const cardsCurrentLiabilities = liabilitiesRows.find((r) => r.item === 'Current Liabilities')?.amount ?? 0;
+  const cardsCurrentRatio = cardsCurrentLiabilities > 0 ? Math.round((cardsCurrentAssets / cardsCurrentLiabilities) * 100) / 100 : null;
 
-  const insights = useMemo(() => buildInsights(summary), [summary]);
+  const insights = useMemo(
+    () => buildInsights(summary, totalAssets, cardsTotalLiabilities, cardsTotalEquity, cardsCurrentRatio),
+    [summary, totalAssets, cardsTotalLiabilities, cardsTotalEquity, cardsCurrentRatio],
+  );
 
   const renderGroupRow = (row, key) => {
     const accounts = row.accounts || [];
@@ -144,7 +162,7 @@ const BalanceSheetTab = ({ data, loading }) => {
                   <IconClipboardList size={17} color={theme.palette.primary.main} />
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Balance Sheet Statement</Typography>
                 </Box>
-                <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>As at {data?.period?.label || 'selected period'}</Typography>
+                <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>As at {data?.cards_period?.label || 'selected period'}</Typography>
               </Box>
             }
             sx={{
@@ -173,9 +191,9 @@ const BalanceSheetTab = ({ data, loading }) => {
                 {loading ? <StatementRowsSkeleton /> : liabilitiesRows.map((row) => renderGroupRow(row, `liabilities-${row.item}`))}
                 <TableRow sx={{ bgcolor: '#FEE2E2' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Liabilities</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(summary?.total_liabilities ?? 0)}</TableCell>
+                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(cardsTotalLiabilities)}</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {totalAssets > 0 ? ((summary?.total_liabilities ?? 0) / totalAssets * 100).toFixed(1) : '0.0'}%
+                    {totalAssets > 0 ? (cardsTotalLiabilities / totalAssets * 100).toFixed(1) : '0.0'}%
                   </TableCell>
                 </TableRow>
 
@@ -183,9 +201,9 @@ const BalanceSheetTab = ({ data, loading }) => {
                 {loading ? <StatementRowsSkeleton rows={1} /> : equityRows.map((row) => renderGroupRow(row, `equity-${row.item}`))}
                 <TableRow sx={{ bgcolor: '#DCFCE7' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Equity (Net Assets)</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(summary?.total_equity ?? 0)}</TableCell>
+                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(cardsTotalEquity)}</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {totalAssets > 0 ? ((summary?.total_equity ?? 0) / totalAssets * 100).toFixed(1) : '0.0'}%
+                    {totalAssets > 0 ? (cardsTotalEquity / totalAssets * 100).toFixed(1) : '0.0'}%
                   </TableCell>
                 </TableRow>
 

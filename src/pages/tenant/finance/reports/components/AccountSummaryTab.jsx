@@ -29,25 +29,17 @@ const StatementRowsSkeleton = ({ rows = 3 }) => (
   </>
 );
 
-const SectionBand = ({ label, color }) => (
-  <TableRow>
-    <TableCell colSpan={3} sx={{ bgcolor: color, fontWeight: 700, fontSize: 13, py: 0.75, px: 1.25 }}>
-      {label}
-    </TableCell>
-  </TableRow>
-);
-
 /**
  * Builds the same style of plain-English bullets the original mockup
  * showed ("The school recorded a surplus of..."), but templated from the
  * real numbers the summary endpoint returns, instead of fixed mock text.
  */
-function buildInsights(summary, incomeRows, expenditureRows) {
+function buildInsights(summary, incomeRows, expenditureRows, cardsTotalIncome, cardsSurplus, cardsTotalExpenditure) {
   if (!summary) return [];
   const insights = [];
-  const surplusPct = summary.total_income > 0 ? Math.abs((summary.surplus / summary.total_income) * 100).toFixed(1) : '0.0';
+  const surplusPct = cardsTotalIncome > 0 ? Math.abs((cardsSurplus / cardsTotalIncome) * 100).toFixed(1) : '0.0';
   insights.push(
-    `The school recorded a ${summary.surplus >= 0 ? 'surplus' : 'deficit'} of ${formatNaira(Math.abs(summary.surplus))} (${surplusPct}% of income) for the period.`,
+    `The school recorded a ${cardsSurplus >= 0 ? 'surplus' : 'deficit'} of ${formatNaira(Math.abs(cardsSurplus))} (${surplusPct}% of income) for the period.`,
   );
 
   if (summary.total_income_change_pct !== null && summary.total_income_change_pct !== undefined) {
@@ -68,7 +60,7 @@ function buildInsights(summary, incomeRows, expenditureRows) {
 
   if (expenditureRows.length >= 2) {
     const top2 = expenditureRows.slice(0, 2);
-    const top2Pct = summary.total_expenditure > 0 ? ((top2[0].amount + top2[1].amount) / summary.total_expenditure * 100).toFixed(1) : '0.0';
+    const top2Pct = cardsTotalExpenditure > 0 ? ((top2[0].amount + top2[1].amount) / cardsTotalExpenditure * 100).toFixed(1) : '0.0';
     insights.push(`${top2[0].item} and ${top2[1].item} account for ${top2Pct}% of total expenditure.`);
   } else if (expenditureRows.length === 1) {
     insights.push(`${expenditureRows[0].item} accounts for all of total expenditure for the period.`);
@@ -110,12 +102,27 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
   const trend = data?.trend || [];
   const expenditureByCategory = data?.expenditure_by_category || [];
 
-  const totalExpenditurePctOfIncome = summary?.expenditure_ratio ?? 0;
-  const surplusPctOfIncome = summary && summary.total_income > 0 ? ((summary.surplus / summary.total_income) * 100).toFixed(1) : 0;
+  // The statement table (income/expenditure rows + their totals below) is
+  // entirely "cards"-scoped — it must stay internally consistent with
+  // whichever term/week range the Cards filter is currently showing, not
+  // `summary` (which stays tied to the separate, independent stats Period/
+  // Compare dropdowns and can legitimately be a different term entirely).
+  const cardsTotalIncome = incomeRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsTotalExpenditure = expenditureRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsSurplus = cardsTotalIncome - cardsTotalExpenditure;
+  const totalExpenditurePctOfIncome = cardsTotalIncome > 0 ? ((cardsTotalExpenditure / cardsTotalIncome) * 100).toFixed(1) : '0.0';
+  const surplusPctOfIncome = cardsTotalIncome > 0 ? ((cardsSurplus / cardsTotalIncome) * 100).toFixed(1) : '0.0';
 
-  const insights = useMemo(() => buildInsights(summary, incomeRows, expenditureRows), [summary, incomeRows, expenditureRows]);
+  const insights = useMemo(
+    () => buildInsights(summary, incomeRows, expenditureRows, cardsTotalIncome, cardsSurplus, cardsTotalExpenditure),
+    [summary, incomeRows, expenditureRows, cardsTotalIncome, cardsSurplus, cardsTotalExpenditure],
+  );
   const actions = useMemo(
-    () => buildActions(summary, expenditureRows, summary?.outstanding_expenditure_balance ?? 0),
+    // Cards-scoped outstanding balance — this action card sits among
+    // cards-scoped content (the statement table above), so it must track
+    // whichever term/week the Cards filter is showing, not `summary`'s
+    // separate stats period.
+    () => buildActions(summary, expenditureRows, summary?.cards_outstanding_expenditure_balance ?? 0),
     [summary, expenditureRows],
   );
 
@@ -135,7 +142,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>Income &amp; Expenditure Account</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 11.5, color: 'text.secondary', mt: 0.25 }}>
-                  For the {data?.period?.label || 'selected period'}
+                  For the {data?.cards_period?.label || 'selected period'}
                 </Typography>
               </Box>
             }
@@ -146,6 +153,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
           >
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
               <Box sx={{ flex: 1, minWidth: 0, borderRight: { sm: `1px solid ${theme.palette.divider}` } }}>
+                <Box sx={{ bgcolor: '#DCFCE7', fontWeight: 700, fontSize: 13, py: 0.75, px: 1.25 }}>Income</Box>
                 <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
@@ -160,7 +168,6 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      <SectionBand label="Income" color="#DCFCE7" />
                       {loading ? (
                         <StatementRowsSkeleton />
                       ) : incomeRows.length === 0 ? (
@@ -190,7 +197,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                     <TableRow sx={{ bgcolor: '#DCFCE7' }}>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Income</TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                        {formatNaira(summary?.total_income ?? 0)}
+                        {formatNaira(cardsTotalIncome)}
                       </TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
                         100.0%
@@ -201,6 +208,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ bgcolor: '#FEE2E2', fontWeight: 700, fontSize: 13, py: 0.75, px: 1.25 }}>Expenditure</Box>
                 <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
                   <Table size="small" stickyHeader>
                     <TableHead>
@@ -215,7 +223,6 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      <SectionBand label="Expenditure" color="#FEE2E2" />
                       {loading ? (
                         <StatementRowsSkeleton />
                       ) : expenditureRows.length === 0 ? (
@@ -245,7 +252,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                     <TableRow sx={{ bgcolor: '#FEE2E2' }}>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Expenditure</TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                        {formatNaira(summary?.total_expenditure ?? 0)}
+                        {formatNaira(cardsTotalExpenditure)}
                       </TableCell>
                       <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
                         {totalExpenditurePctOfIncome}%
@@ -269,7 +276,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
             >
               <Typography sx={{ fontWeight: 800, fontSize: 13 }}>Surplus / (Deficit)</Typography>
               <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
-                {formatNaira(summary?.surplus ?? 0)} ({surplusPctOfIncome}%)
+                {formatNaira(cardsSurplus)} ({surplusPctOfIncome}%)
               </Typography>
             </Box>
           </ParentCard>

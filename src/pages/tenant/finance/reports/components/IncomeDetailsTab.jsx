@@ -32,20 +32,31 @@ function formatDateDisplayLocal(iso) {
  * Plain-English bullets templated from the real income_details response,
  * matching AccountSummaryTab's buildInsights pattern.
  */
-function buildInsights(stats, incomeByAccount) {
+function pctChange(current, previous) {
+  if (previous === null || previous === undefined || previous === 0) return null;
+  return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
+}
+
+// `cardsTotalIncome` (sum of the cards-scoped `incomeByAccount` rows) is the
+// amount actually described by this card's own breakdown — `stats.total_income`
+// is the separate, independent stats-dropdown period and can legitimately
+// be a different term entirely. The one exception is `total_income_change_pct`,
+// which is specifically the stats-period-vs-compare-period growth figure by
+// design, so that one clause stays sourced from `stats`.
+function buildInsights(stats, incomeByAccount, cardsTotalIncome) {
   if (!stats) return [];
   const insights = [];
 
   if (stats.total_income_change_pct !== null && stats.total_income_change_pct !== undefined) {
     insights.push(
-      `Total income is ${formatNaira(stats.total_income)}, ${stats.total_income_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_income_change_pct)}% compared to the comparison period.`,
+      `Total income is ${formatNaira(cardsTotalIncome)}, ${stats.total_income_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_income_change_pct)}% compared to the comparison period.`,
     );
   } else {
-    insights.push(`Total income is ${formatNaira(stats.total_income)} for the period.`);
+    insights.push(`Total income is ${formatNaira(cardsTotalIncome)} for the period.`);
   }
 
-  if (stats.top_account_name) {
-    insights.push(`${stats.top_account_name} accounts for ${stats.top_account_share_pct}% of total income (${formatNaira(incomeByAccount[0]?.amount ?? 0)}).`);
+  if (stats.cards_top_account_name) {
+    insights.push(`${stats.cards_top_account_name} accounts for ${stats.cards_top_account_share_pct}% of total income (${formatNaira(incomeByAccount[0]?.amount ?? 0)}).`);
   }
 
   if (incomeByAccount.length > 1) {
@@ -53,8 +64,8 @@ function buildInsights(stats, incomeByAccount) {
     insights.push(`The remaining ${incomeByAccount.length - 1} account${incomeByAccount.length - 1 === 1 ? '' : 's'} contributed ${restPct}% of total income.`);
   }
 
-  if (stats.school_fees_collection_rate !== null && stats.school_fees_collection_rate !== undefined) {
-    insights.push(`School fees collection rate is ${stats.school_fees_collection_rate}% for the period.`);
+  if (stats.cards_school_fees_collection_rate !== null && stats.cards_school_fees_collection_rate !== undefined) {
+    insights.push(`School fees collection rate is ${stats.cards_school_fees_collection_rate}% for the period.`);
   }
 
   return insights;
@@ -70,7 +81,16 @@ const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const trend = data?.trend || [];
   const totalComposition = composition.reduce((sum, c) => sum + c.value, 0);
 
-  const insights = useMemo(() => buildInsights(stats, incomeByAccount), [stats, incomeByAccount]);
+  // Cards-scoped total — this table's own footer must match the rows it's
+  // actually totaling, not the separate stats-dropdown period's figure.
+  const cardsTotalIncome = incomeByAccount.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsIncomeChangePct = (() => {
+    const current = trend[trend.length - 1]?.income;
+    const prior = trend.length >= 2 ? trend[trend.length - 2]?.income : null;
+    return pctChange(current, prior);
+  })();
+
+  const insights = useMemo(() => buildInsights(stats, incomeByAccount, cardsTotalIncome), [stats, incomeByAccount, cardsTotalIncome]);
 
   return (
     <Grid container spacing={2}>
@@ -156,12 +176,12 @@ const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               <TableRow sx={{ bgcolor: '#DCFCE7' }}>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} colSpan={2}>Total Income</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                  {formatNaira(stats?.total_income ?? 0)}
+                  {formatNaira(cardsTotalIncome)}
                 </TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">100.0%</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800, color: '#15803D' }} align="right">
-                  {stats?.total_income_change_pct !== null && stats?.total_income_change_pct !== undefined
-                    ? `${stats.total_income_change_pct >= 0 ? '+' : ''}${stats.total_income_change_pct}%`
+                  {cardsIncomeChangePct !== null
+                    ? `${cardsIncomeChangePct >= 0 ? '+' : ''}${cardsIncomeChangePct}%`
                     : '—'}
                 </TableCell>
                 <TableCell sx={tdCell} />

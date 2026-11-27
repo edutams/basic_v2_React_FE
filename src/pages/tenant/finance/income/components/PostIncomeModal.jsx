@@ -27,7 +27,21 @@ import {
 } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import { IconReportMoney, IconX, IconFileText, IconPlus, IconCreditCard, IconHistory, IconSend, IconLayersIntersect, IconWallet, IconHourglass, IconTrendingUp, IconCircleCheck, IconCircleX } from '@tabler/icons';
+import {
+  IconReportMoney,
+  IconX,
+  IconFileText,
+  IconPlus,
+  IconCreditCard,
+  IconHistory,
+  IconSend,
+  IconLayersIntersect,
+  IconWallet,
+  IconHourglass,
+  IconTrendingUp,
+  IconCircleCheck,
+  IconCircleX,
+} from '@tabler/icons';
 import { createIncomeEntry, submitIncomeInstallment } from '@/api/tenant/finance/incomeApi';
 import { fetchVendors as fetchVendorsApi, createVendor } from '@/api/tenant/finance/vendorApi';
 import { fetchDetailAccountOptions } from '@/api/tenant/finance/chartOfAccountsApi';
@@ -38,19 +52,37 @@ const createValidationSchema = Yup.object({
   description: Yup.string().required('Description / Purpose is required'),
   chartOfAccountId: Yup.string().required('Income account is required'),
   vendorId: Yup.string(),
-  actualAmount: Yup.number().typeError('Amount must be a number').positive().required('Actual amount is required'),
+  actualAmount: Yup.number()
+    .typeError('Amount must be a number')
+    .positive()
+    .required('Actual amount is required'),
   incomeDate: Yup.string().required('Income date is required'),
   paymentType: Yup.string().required(),
-  amountToPay: Yup.number().typeError('Amount must be a number').positive().required('Amount to receive is required'),
+  amountToPay: Yup.number()
+    .typeError('Amount must be a number')
+    .positive()
+    .required('Amount to receive is required'),
 });
 
 const installmentValidationSchema = Yup.object({
-  amount: Yup.number().typeError('Amount must be a number').positive().required('Amount to receive is required'),
+  amount: Yup.number()
+    .typeError('Amount must be a number')
+    .positive()
+    .required('Amount to receive is required'),
   paymentDate: Yup.string().required('Payment date is required'),
 });
 
 const SectionHeader = ({ icon: Icon, title, theme }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#DCFCE7', px: 2, py: 1.1 }}>
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      bgcolor: '#DCFCE7',
+      px: 2,
+      py: 1.1,
+    }}
+  >
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Icon size={16} color={theme.palette.success.dark} />
       <Typography sx={{ fontWeight: 700, fontSize: 13.5 }}>{title}</Typography>
@@ -60,7 +92,12 @@ const SectionHeader = ({ icon: Icon, title, theme }) => (
 
 const FieldLabel = ({ children, required }) => (
   <Typography sx={{ fontWeight: 600, fontSize: 12.5, mb: 0.5 }}>
-    {children} {required && <Box component="span" sx={{ color: 'error.main' }}>*</Box>}
+    {children}{' '}
+    {required && (
+      <Box component="span" sx={{ color: 'error.main' }}>
+        *
+      </Box>
+    )}
   </Typography>
 );
 
@@ -68,7 +105,9 @@ const PaymentChip = ({ icon: Icon, label, value, color, bg }) => (
   <Box sx={{ borderRadius: '10px', bgcolor: bg, p: 1.25, flex: 1, minWidth: 0 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
       {Icon && <Icon size={14} color={color} />}
-      <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>
+        {label}
+      </Typography>
     </Box>
     <Typography sx={{ fontSize: 15, fontWeight: 800, color, mt: 0.25 }}>{value}</Typography>
   </Box>
@@ -78,13 +117,22 @@ const PaymentProgressChip = ({ pct, theme }) => (
   <Box sx={{ borderRadius: '10px', bgcolor: '#F1F5F9', p: 1.25, flex: 1, minWidth: 0 }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
       <IconTrendingUp size={14} color={theme.palette.text.secondary} />
-      <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>Payment Progress</Typography>
+      <Typography sx={{ fontSize: 11, color: 'text.secondary', fontWeight: 600 }}>
+        Payment Progress
+      </Typography>
     </Box>
-    <Typography sx={{ fontSize: 15, fontWeight: 800, mt: 0.25, mb: 0.5 }}>{Math.round(pct)}%</Typography>
+    <Typography sx={{ fontSize: 15, fontWeight: 800, mt: 0.25, mb: 0.5 }}>
+      {Math.round(pct)}%
+    </Typography>
     <LinearProgress
       variant="determinate"
       value={pct}
-      sx={{ height: 6, borderRadius: 3, bgcolor: '#E2E8F0', '& .MuiLinearProgress-bar': { borderRadius: 3 } }}
+      sx={{
+        height: 6,
+        borderRadius: 3,
+        bgcolor: '#E2E8F0',
+        '& .MuiLinearProgress-bar': { borderRadius: 3 },
+      }}
     />
   </Box>
 );
@@ -110,7 +158,9 @@ const withPaymentTypeAndBalance = (installments, actualAmount) => {
       cumulative += Number(i.amount);
       const pct = actualAmount > 0 ? Math.round((Number(i.amount) / actualAmount) * 100) : 0;
       const isFullPayment = i.sequence_no === 1 && Number(i.amount) >= actualAmount;
-      const paymentTypeLabel = isFullPayment ? 'Full Payment' : `${ordinalFor(i.sequence_no)} Instalment (${pct}%)`;
+      const paymentTypeLabel = isFullPayment
+        ? 'Full Payment'
+        : `${ordinalFor(i.sequence_no)} Instalment (${pct}%)`;
       return { ...i, paymentTypeLabel, balanceAfter: Math.max(0, actualAmount - cumulative) };
     });
 };
@@ -150,21 +200,23 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
       setServerError('');
       setSubmitting(true);
       createIncomeEntry({
-          description: values.description,
-          chart_of_account_id: values.chartOfAccountId,
-          vendor_id: values.vendorId || null,
-          actual_amount: values.actualAmount,
-          entry_date: values.incomeDate,
-          payment_type: values.paymentType,
-          amount_to_pay: values.paymentType === 'full' ? values.actualAmount : values.amountToPay,
-          payment_date: values.paymentDate,
-          remarks: values.paymentRemarks,
-        })
+        description: values.description,
+        chart_of_account_id: values.chartOfAccountId,
+        vendor_id: values.vendorId || null,
+        actual_amount: values.actualAmount,
+        entry_date: values.incomeDate,
+        payment_type: values.paymentType,
+        amount_to_pay: values.paymentType === 'full' ? values.actualAmount : values.amountToPay,
+        payment_date: values.paymentDate,
+        remarks: values.paymentRemarks,
+      })
         .then(() => {
           onSaved?.();
           onClose();
         })
-        .catch((err) => setServerError(err.response?.data?.message || 'Something went wrong. Please try again.'))
+        .catch((err) =>
+          setServerError(err.response?.data?.message || 'Something went wrong. Please try again.'),
+        )
         .finally(() => setSubmitting(false));
     },
   });
@@ -176,15 +228,17 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
       setServerError('');
       setSubmitting(true);
       submitIncomeInstallment(entry.id, {
-          amount: values.amount,
-          payment_date: values.paymentDate,
-          description: values.description,
-        })
+        amount: values.amount,
+        payment_date: values.paymentDate,
+        description: values.description,
+      })
         .then(() => {
           onSaved?.();
           onClose();
         })
-        .catch((err) => setServerError(err.response?.data?.message || 'Something went wrong. Please try again.'))
+        .catch((err) =>
+          setServerError(err.response?.data?.message || 'Something went wrong. Please try again.'),
+        )
         .finally(() => setSubmitting(false));
     },
   });
@@ -227,13 +281,23 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
   const maxPostable = Math.max(0, actualAmount - reserved);
   const progressPct = actualAmount > 0 ? Math.min(100, (totalPaid / actualAmount) * 100) : 0;
   const exceedsMax = Number(installmentFormik.values.amount || 0) > maxPostable;
-  const outstandingAfterPayment = Math.max(0, Number(entry?.balance_amount || 0) - Number(installmentFormik.values.amount || 0));
+  const outstandingAfterPayment = Math.max(
+    0,
+    Number(entry?.balance_amount || 0) - Number(installmentFormik.values.amount || 0),
+  );
   const hasPendingInstallment = installments.some((i) => i.status === 'pending_approval');
-  const canRaisePayment = isAddInstallment && entry.status === 'active' && Number(entry.balance_amount) > 0 && !hasPendingInstallment;
+  const canRaisePayment =
+    isAddInstallment &&
+    entry.status === 'active' &&
+    Number(entry.balance_amount) > 0 &&
+    !hasPendingInstallment;
   const installmentsWithMeta = withPaymentTypeAndBalance(installments, actualAmount);
 
   const createActualAmount = Number(createFormik.values.actualAmount) || 0;
-  const createAmountToPay = createFormik.values.paymentType === 'full' ? createActualAmount : Number(createFormik.values.amountToPay) || 0;
+  const createAmountToPay =
+    createFormik.values.paymentType === 'full'
+      ? createActualAmount
+      : Number(createFormik.values.amountToPay) || 0;
   const createExceedsMax = createAmountToPay > createActualAmount;
   const createOutstandingAfter = Math.max(0, createActualAmount - createAmountToPay);
 
@@ -242,8 +306,16 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="xl"
-      PaperProps={{ sx: { borderRadius: '16px', overflow: 'hidden', maxHeight: '92vh', display: 'flex', flexDirection: 'column' } }}
+      maxWidth="lg"
+      PaperProps={{
+        sx: {
+          borderRadius: '16px',
+          overflow: 'hidden',
+          maxHeight: '92vh',
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      }}
     >
       <Box
         sx={{
@@ -258,7 +330,18 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
         }}
       >
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          <Box sx={{ width: 40, height: 40, borderRadius: '10px', bgcolor: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: '10px',
+              bgcolor: 'rgba(255,255,255,0.18)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             <IconReportMoney size={20} />
           </Box>
           <Box>
@@ -281,7 +364,15 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
         onSubmit={isAddInstallment ? installmentFormik.handleSubmit : createFormik.handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}
       >
-        <DialogContent sx={{ bgcolor: '#F8FAFC', p: { xs: 2, md: 2.5 }, overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        <DialogContent
+          sx={{
+            bgcolor: '#F8FAFC',
+            p: { xs: 2, md: 2.5 },
+            overflowY: 'auto',
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
           {serverError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {serverError}
@@ -290,18 +381,29 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
           <Grid container spacing={2.5}>
             {/* ===================== Left: Income Details ===================== */}
             <Grid size={{ xs: 12, md: 5 }}>
-              <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '10px', overflow: 'hidden', bgcolor: '#fff' }}>
+              <Box
+                sx={{
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  bgcolor: '#fff',
+                }}
+              >
                 <SectionHeader icon={IconFileText} title="Income Details" theme={theme} />
                 <Box sx={{ p: 2 }}>
                   {isAddInstallment ? (
                     <Grid container spacing={2}>
                       <Grid size={12}>
                         <FieldLabel>Description / Purpose</FieldLabel>
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>{entry.description}</Typography>
+                        <Typography sx={{ fontSize: 13.5, fontWeight: 600 }}>
+                          {entry.description}
+                        </Typography>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldLabel>Income Account</FieldLabel>
-                        <Typography sx={{ fontSize: 13.5 }}>{entry.chart_of_account?.name || '—'}</Typography>
+                        <Typography sx={{ fontSize: 13.5 }}>
+                          {entry.chart_of_account?.name || '—'}
+                        </Typography>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldLabel>Payer / Source</FieldLabel>
@@ -309,11 +411,15 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldLabel>Reference No.</FieldLabel>
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{entry.ref_no}</Typography>
+                        <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>
+                          {entry.ref_no}
+                        </Typography>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
                         <FieldLabel>Actual (Commitment) Amount (₦)</FieldLabel>
-                        <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>{formatNaira(actualAmount)}</Typography>
+                        <Typography sx={{ fontSize: 13.5, fontWeight: 700 }}>
+                          {formatNaira(actualAmount)}
+                        </Typography>
                       </Grid>
                     </Grid>
                   ) : (
@@ -326,14 +432,29 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                           name="description"
                           value={createFormik.values.description}
                           onChange={createFormik.handleChange}
-                          error={createFormik.touched.description && Boolean(createFormik.errors.description)}
+                          error={
+                            createFormik.touched.description &&
+                            Boolean(createFormik.errors.description)
+                          }
                         />
                       </Grid>
 
                       <Grid size={12}>
                         <FieldLabel required>Income Account</FieldLabel>
-                        <FormControl fullWidth size="small" error={createFormik.touched.chartOfAccountId && Boolean(createFormik.errors.chartOfAccountId)}>
-                          <Select displayEmpty name="chartOfAccountId" value={createFormik.values.chartOfAccountId} onChange={createFormik.handleChange}>
+                        <FormControl
+                          fullWidth
+                          size="small"
+                          error={
+                            createFormik.touched.chartOfAccountId &&
+                            Boolean(createFormik.errors.chartOfAccountId)
+                          }
+                        >
+                          <Select
+                            displayEmpty
+                            name="chartOfAccountId"
+                            value={createFormik.values.chartOfAccountId}
+                            onChange={createFormik.handleChange}
+                          >
                             <MenuItem value="" disabled>
                               Select account
                             </MenuItem>
@@ -347,7 +468,14 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                       </Grid>
 
                       <Grid size={12}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            mb: 0.5,
+                          }}
+                        >
                           <FieldLabel>Payer / Source</FieldLabel>
                           <Button
                             type="button"
@@ -360,7 +488,12 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                           </Button>
                         </Box>
                         <FormControl fullWidth size="small">
-                          <Select displayEmpty name="vendorId" value={createFormik.values.vendorId} onChange={createFormik.handleChange}>
+                          <Select
+                            displayEmpty
+                            name="vendorId"
+                            value={createFormik.values.vendorId}
+                            onChange={createFormik.handleChange}
+                          >
                             <MenuItem value="">No payer / internal</MenuItem>
                             {vendors.map((v) => (
                               <MenuItem key={v.id} value={String(v.id)}>
@@ -380,7 +513,10 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                           name="actualAmount"
                           value={createFormik.values.actualAmount}
                           onChange={createFormik.handleChange}
-                          error={createFormik.touched.actualAmount && Boolean(createFormik.errors.actualAmount)}
+                          error={
+                            createFormik.touched.actualAmount &&
+                            Boolean(createFormik.errors.actualAmount)
+                          }
                         />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 6 }}>
@@ -392,13 +528,22 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                           name="incomeDate"
                           value={createFormik.values.incomeDate}
                           onChange={createFormik.handleChange}
-                          error={createFormik.touched.incomeDate && Boolean(createFormik.errors.incomeDate)}
+                          error={
+                            createFormik.touched.incomeDate &&
+                            Boolean(createFormik.errors.incomeDate)
+                          }
                         />
                       </Grid>
 
                       <Grid size={12}>
                         <FieldLabel>Remarks (Optional)</FieldLabel>
-                        <TextField fullWidth size="small" name="remarks" value={createFormik.values.remarks} onChange={createFormik.handleChange} />
+                        <TextField
+                          fullWidth
+                          size="small"
+                          name="remarks"
+                          value={createFormik.values.remarks}
+                          onChange={createFormik.handleChange}
+                        />
                       </Grid>
                     </Grid>
                   )}
@@ -408,37 +553,96 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
 
             {/* ===================== Right: Payment / Instalment Management ===================== */}
             <Grid size={{ xs: 12, md: 7 }}>
-              <Box sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: '10px', overflow: 'hidden', bgcolor: '#fff' }}>
-                <SectionHeader icon={IconCreditCard} title="Payment / Instalment Management" theme={theme} />
+              <Box
+                sx={{
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  bgcolor: '#fff',
+                }}
+              >
+                <SectionHeader
+                  icon={IconCreditCard}
+                  title="Payment / Instalment Management"
+                  theme={theme}
+                />
                 <Box sx={{ p: 2 }}>
                   {isAddInstallment && (
                     <>
                       <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                        <PaymentChip icon={IconLayersIntersect} label="Actual Amount (Commitment)" value={formatNaira(actualAmount)} color={theme.palette.text.primary} bg="#F1F5F9" />
-                        <PaymentChip icon={IconWallet} label="Total Received" value={formatNaira(totalPaid)} color="#15803D" bg="#DCFCE7" />
-                        <PaymentChip icon={IconHourglass} label="Outstanding Balance" value={formatNaira(entry.balance_amount)} color="#B45309" bg="#FEF3C7" />
+                        <PaymentChip
+                          icon={IconLayersIntersect}
+                          label="Actual Amount (Commitment)"
+                          value={formatNaira(actualAmount)}
+                          color={theme.palette.text.primary}
+                          bg="#F1F5F9"
+                        />
+                        <PaymentChip
+                          icon={IconWallet}
+                          label="Total Received"
+                          value={formatNaira(totalPaid)}
+                          color="#15803D"
+                          bg="#DCFCE7"
+                        />
+                        <PaymentChip
+                          icon={IconHourglass}
+                          label="Outstanding Balance"
+                          value={formatNaira(entry.balance_amount)}
+                          color="#B45309"
+                          bg="#FEF3C7"
+                        />
                         <PaymentProgressChip pct={progressPct} theme={theme} />
                       </Box>
 
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                         <IconHistory size={14} color={theme.palette.text.secondary} />
-                        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>Previous Instalment Receipts</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: 13 }}>
+                          Previous Instalment Receipts
+                        </Typography>
                       </Box>
                       <Table size="small" sx={{ mb: 2 }}>
                         <TableHead>
-                          <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>#</TableCell>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Payment Date</TableCell>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Payment Type</TableCell>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }} align="right">Amount (₦)</TableCell>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }} align="right">Balance After (₦)</TableCell>
-                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>Status</TableCell>
+                          <TableRow
+                            sx={{
+                              bgcolor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255,255,255,0.04)'
+                                  : '#F8FAFC',
+                            }}
+                          >
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>
+                              #
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>
+                              Payment Date
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>
+                              Payment Type
+                            </TableCell>
+                            <TableCell
+                              sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}
+                              align="right"
+                            >
+                              Amount (₦)
+                            </TableCell>
+                            <TableCell
+                              sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}
+                              align="right"
+                            >
+                              Balance After (₦)
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 11 }}>
+                              Status
+                            </TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {installmentsWithMeta.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={6} sx={{ px: 0.75, py: 1, fontSize: 12, color: 'text.secondary' }}>
+                              <TableCell
+                                colSpan={6}
+                                sx={{ px: 0.75, py: 1, fontSize: 12, color: 'text.secondary' }}
+                              >
                                 No instalments yet.
                               </TableCell>
                             </TableRow>
@@ -447,13 +651,33 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                               const meta = INSTALLMENT_STATUS_META[p.status];
                               return (
                                 <TableRow key={p.id}>
-                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{p.sequence_no}</TableCell>
-                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{formatDateDisplay(p.payment_date)}</TableCell>
-                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>{p.paymentTypeLabel}</TableCell>
-                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">{Number(p.amount).toLocaleString('en-NG')}</TableCell>
-                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">{p.balanceAfter.toLocaleString('en-NG')}</TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>
+                                    {p.sequence_no}
+                                  </TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>
+                                    {formatDateDisplay(p.payment_date)}
+                                  </TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }}>
+                                    {p.paymentTypeLabel}
+                                  </TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">
+                                    {Number(p.amount).toLocaleString('en-NG')}
+                                  </TableCell>
+                                  <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12 }} align="right">
+                                    {p.balanceAfter.toLocaleString('en-NG')}
+                                  </TableCell>
                                   <TableCell sx={{ px: 0.75, py: 0.5 }}>
-                                    <Chip label={meta.label} size="small" sx={{ bgcolor: meta.bg, color: meta.color, fontWeight: 700, fontSize: 11, height: 20 }} />
+                                    <Chip
+                                      label={meta.label}
+                                      size="small"
+                                      sx={{
+                                        bgcolor: meta.bg,
+                                        color: meta.color,
+                                        fontWeight: 700,
+                                        fontSize: 11,
+                                        height: 20,
+                                      }}
+                                    />
                                   </TableCell>
                                 </TableRow>
                               );
@@ -464,7 +688,9 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
 
                       {canRaisePayment ? (
                         <>
-                          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>Raise Payment (New Instalment)</Typography>
+                          <Typography sx={{ fontWeight: 700, fontSize: 13, mb: 1 }}>
+                            Raise Payment (New Instalment)
+                          </Typography>
                           <Grid container spacing={2}>
                             <Grid size={{ xs: 12, sm: 6 }}>
                               <FieldLabel required>Amount to Receive (₦)</FieldLabel>
@@ -475,8 +701,16 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                                 name="amount"
                                 value={installmentFormik.values.amount}
                                 onChange={installmentFormik.handleChange}
-                                error={(installmentFormik.touched.amount && Boolean(installmentFormik.errors.amount)) || exceedsMax}
-                                helperText={exceedsMax ? `Maximum you can post is ${formatNaira(maxPostable)}.` : ' '}
+                                error={
+                                  (installmentFormik.touched.amount &&
+                                    Boolean(installmentFormik.errors.amount)) ||
+                                  exceedsMax
+                                }
+                                helperText={
+                                  exceedsMax
+                                    ? `Maximum you can post is ${formatNaira(maxPostable)}.`
+                                    : ' '
+                                }
                               />
                             </Grid>
                             <Grid size={{ xs: 12, sm: 6 }}>
@@ -488,23 +722,56 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                                 name="paymentDate"
                                 value={installmentFormik.values.paymentDate}
                                 onChange={installmentFormik.handleChange}
-                                error={installmentFormik.touched.paymentDate && Boolean(installmentFormik.errors.paymentDate)}
+                                error={
+                                  installmentFormik.touched.paymentDate &&
+                                  Boolean(installmentFormik.errors.paymentDate)
+                                }
                               />
                             </Grid>
                             <Grid size={12}>
                               <FieldLabel>Payment Remarks (Optional)</FieldLabel>
-                              <TextField fullWidth size="small" name="description" value={installmentFormik.values.description} onChange={installmentFormik.handleChange} />
+                              <TextField
+                                fullWidth
+                                size="small"
+                                name="description"
+                                value={installmentFormik.values.description}
+                                onChange={installmentFormik.handleChange}
+                              />
                             </Grid>
                           </Grid>
 
-                          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#DCFCE7', borderRadius: '8px', px: 1.5, py: 1 }}>
-                            <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#15803D' }}>Outstanding Balance After This Payment:</Typography>
-                            <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#15803D' }}>{formatNaira(outstandingAfterPayment)}</Typography>
+                          <Box
+                            sx={{
+                              mt: 2,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              bgcolor: '#DCFCE7',
+                              borderRadius: '8px',
+                              px: 1.5,
+                              py: 1,
+                            }}
+                          >
+                            <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#15803D' }}>
+                              Outstanding Balance After This Payment:
+                            </Typography>
+                            <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#15803D' }}>
+                              {formatNaira(outstandingAfterPayment)}
+                            </Typography>
                           </Box>
                         </>
                       ) : (
                         <>
-                          <Alert severity={entry.status === 'rejected' ? 'error' : hasPendingInstallment ? 'info' : 'success'} sx={{ mb: hasPendingInstallment && canApprove ? 1.5 : 0 }}>
+                          <Alert
+                            severity={
+                              entry.status === 'rejected'
+                                ? 'error'
+                                : hasPendingInstallment
+                                  ? 'info'
+                                  : 'success'
+                            }
+                            sx={{ mb: hasPendingInstallment && canApprove ? 1.5 : 0 }}
+                          >
                             {entry.status === 'rejected'
                               ? 'This entry was rejected. Post a new income entry instead.'
                               : hasPendingInstallment
@@ -548,9 +815,24 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 7 }}>
                           <FieldLabel required>Payment Type</FieldLabel>
-                          <RadioGroup row name="paymentType" value={createFormik.values.paymentType} onChange={createFormik.handleChange}>
-                            <FormControlLabel value="full" control={<Radio size="small" />} label={<Typography sx={{ fontSize: 12.5 }}>Full Payment</Typography>} />
-                            <FormControlLabel value="installment" control={<Radio size="small" />} label={<Typography sx={{ fontSize: 12.5 }}>Instalment Payment</Typography>} />
+                          <RadioGroup
+                            row
+                            name="paymentType"
+                            value={createFormik.values.paymentType}
+                            onChange={createFormik.handleChange}
+                          >
+                            <FormControlLabel
+                              value="full"
+                              control={<Radio size="small" />}
+                              label={<Typography sx={{ fontSize: 12.5 }}>Full Payment</Typography>}
+                            />
+                            <FormControlLabel
+                              value="installment"
+                              control={<Radio size="small" />}
+                              label={
+                                <Typography sx={{ fontSize: 12.5 }}>Instalment Payment</Typography>
+                              }
+                            />
                           </RadioGroup>
                         </Grid>
                         <Grid size={{ xs: 12, sm: 5 }}>
@@ -560,28 +842,64 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
                             size="small"
                             type="number"
                             name="amountToPay"
-                            value={createFormik.values.paymentType === 'full' ? createActualAmount || '' : createFormik.values.amountToPay}
+                            value={
+                              createFormik.values.paymentType === 'full'
+                                ? createActualAmount || ''
+                                : createFormik.values.amountToPay
+                            }
                             onChange={createFormik.handleChange}
                             disabled={createFormik.values.paymentType === 'full'}
-                            error={(createFormik.touched.amountToPay && Boolean(createFormik.errors.amountToPay)) || createExceedsMax}
+                            error={
+                              (createFormik.touched.amountToPay &&
+                                Boolean(createFormik.errors.amountToPay)) ||
+                              createExceedsMax
+                            }
                             helperText={createExceedsMax ? 'Cannot exceed the actual amount.' : ' '}
                           />
                         </Grid>
 
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <FieldLabel required>Proposed Payment Date</FieldLabel>
-                          <TextField fullWidth size="small" type="date" name="paymentDate" value={createFormik.values.paymentDate} onChange={createFormik.handleChange} />
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="date"
+                            name="paymentDate"
+                            value={createFormik.values.paymentDate}
+                            onChange={createFormik.handleChange}
+                          />
                         </Grid>
 
                         <Grid size={12}>
                           <FieldLabel>Payment Remarks (Optional)</FieldLabel>
-                          <TextField fullWidth size="small" name="paymentRemarks" value={createFormik.values.paymentRemarks} onChange={createFormik.handleChange} />
+                          <TextField
+                            fullWidth
+                            size="small"
+                            name="paymentRemarks"
+                            value={createFormik.values.paymentRemarks}
+                            onChange={createFormik.handleChange}
+                          />
                         </Grid>
                       </Grid>
 
-                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#DCFCE7', borderRadius: '8px', px: 1.5, py: 1 }}>
-                        <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#15803D' }}>Outstanding Balance After This Payment:</Typography>
-                        <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#15803D' }}>{formatNaira(createOutstandingAfter)}</Typography>
+                      <Box
+                        sx={{
+                          mt: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          bgcolor: '#DCFCE7',
+                          borderRadius: '8px',
+                          px: 1.5,
+                          py: 1,
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#15803D' }}>
+                          Outstanding Balance After This Payment:
+                        </Typography>
+                        <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#15803D' }}>
+                          {formatNaira(createOutstandingAfter)}
+                        </Typography>
                       </Box>
                     </>
                   )}
@@ -591,8 +909,24 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, py: 2, display: 'flex', justifyContent: 'flex-end', gap: 1.5, borderTop: `1px solid ${theme.palette.divider}`, flexShrink: 0 }}>
-          <Button type="button" variant="outlined" color="inherit" onClick={onClose} sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}>
+        <DialogActions
+          sx={{
+            px: 3,
+            py: 2,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 1.5,
+            borderTop: `1px solid ${theme.palette.divider}`,
+            flexShrink: 0,
+          }}
+        >
+          <Button
+            type="button"
+            variant="outlined"
+            color="inherit"
+            onClick={onClose}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}
+          >
             {isAddInstallment && !canRaisePayment ? 'Close' : 'Cancel'}
           </Button>
           {(!isAddInstallment || canRaisePayment) && (
@@ -610,7 +944,11 @@ const PostIncomeModal = ({ open, onClose, entry, onSaved, canApprove, onApprove,
         </DialogActions>
       </form>
 
-      <AddVendorModal open={addVendorOpen} onClose={() => setAddVendorOpen(false)} onSubmit={handleVendorCreated} />
+      <AddVendorModal
+        open={addVendorOpen}
+        onClose={() => setAddVendorOpen(false)}
+        onSubmit={handleVendorCreated}
+      />
     </Dialog>
   );
 };

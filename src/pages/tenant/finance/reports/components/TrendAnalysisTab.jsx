@@ -156,10 +156,17 @@ const TrendAnalysisTab = ({ data, loading }) => {
   const keyFinancialTrends = useMemo(() => buildKeyFinancialTrends(trendData), [trendData]);
   const insights = useMemo(() => buildInsights(summary, keyFinancialTrends), [summary, keyFinancialTrends]);
 
-  const totalIncome = summary?.total_income ?? 0;
-  const totalExpenditure = summary?.total_expenditure ?? 0;
-  const surplus = summary?.surplus ?? 0;
-  const expenditurePct = summary?.expenditure_ratio ?? 0;
+  // Cards-scoped — this tab's whole body (trend chart, bar chart, Key
+  // Financial Trends table) is already built from `trendData` (the cards
+  // period's own trailing window), so the Composition donut must read its
+  // "current period" figures from the same source, not `summary` (the
+  // separate, independent stats-dropdown period, which can legitimately be
+  // a different term).
+  const currentTrendPoint = trendData[trendData.length - 1];
+  const totalIncome = currentTrendPoint?.income ?? 0;
+  const totalExpenditure = currentTrendPoint?.expenditure ?? 0;
+  const surplus = totalIncome - totalExpenditure;
+  const expenditurePct = totalIncome > 0 ? Math.round((totalExpenditure / totalIncome) * 1000) / 10 : 0;
   const surplusPct = totalIncome > 0 ? Math.round((surplus / totalIncome) * 1000) / 10 : 0;
 
   const currentLabel = trendData[trendData.length - 1]?.term || 'Current Term';

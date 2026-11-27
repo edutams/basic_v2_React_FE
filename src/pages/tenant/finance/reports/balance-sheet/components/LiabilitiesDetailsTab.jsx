@@ -46,18 +46,24 @@ const GroupBand = ({ label, color, records, balance }) => (
   </TableRow>
 );
 
-function buildInsights(stats, accounts) {
+// Absolute figures come from the cards-scoped composition/account rows
+// passed in — `stats.total`/`non_current`/`current` are the separate,
+// independent stats-dropdown period and can legitimately be a different
+// term. Only `total_change_pct` is supposed to stay stats-scoped.
+function buildInsights(stats, accounts, cardsTotal, cardsNonCurrent, cardsCurrent) {
   if (!stats) return [];
   const insights = [];
+  const nonCurrentPct = cardsTotal > 0 ? Math.round((cardsNonCurrent / cardsTotal) * 1000) / 10 : 0;
+  const currentPct = cardsTotal > 0 ? Math.round((cardsCurrent / cardsTotal) * 1000) / 10 : 0;
 
   if (stats.total_change_pct !== null && stats.total_change_pct !== undefined) {
-    insights.push(`Total liabilities are ${formatNaira(stats.total)}, ${stats.total_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_change_pct)}% from the comparison period.`);
+    insights.push(`Total liabilities are ${formatNaira(cardsTotal)}, ${stats.total_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_change_pct)}% from the comparison period.`);
   } else {
-    insights.push(`Total liabilities are ${formatNaira(stats.total)} for the selected period.`);
+    insights.push(`Total liabilities are ${formatNaira(cardsTotal)} for the selected period.`);
   }
 
-  insights.push(`Non-current liabilities account for ${stats.non_current_pct}% (${formatNaira(stats.non_current)}) of total liabilities.`);
-  insights.push(`Current liabilities account for ${stats.current_pct}% (${formatNaira(stats.current)}) of total liabilities.`);
+  insights.push(`Non-current liabilities account for ${nonCurrentPct}% (${formatNaira(cardsNonCurrent)}) of total liabilities.`);
+  insights.push(`Current liabilities account for ${currentPct}% (${formatNaira(cardsCurrent)}) of total liabilities.`);
 
   const topMover = accounts.filter((a) => a.movement).sort((a, b) => Math.abs(b.movement) - Math.abs(a.movement))[0];
   if (topMover) {
@@ -73,13 +79,24 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const stats = data?.stats;
   const accounts = data?.accounts || [];
   const recentTransactions = data?.recent_transactions || [];
-  const composition = (data?.composition || []).filter((c) => c.value !== 0);
+  const rawComposition = data?.composition || [];
+  const composition = rawComposition.filter((c) => c.value !== 0);
   const trend = data?.trend || [];
+
+  // Cards-scoped totals, derived from the already-cards-scoped composition
+  // rows — see AssetDetailsTab's identical comment for why.
+  const cardsNonCurrent = rawComposition.find((c) => c.name === 'Non-Current Liabilities')?.value ?? 0;
+  const cardsCurrent = rawComposition.find((c) => c.name === 'Current Liabilities')?.value ?? 0;
+  const cardsTotal = cardsNonCurrent + cardsCurrent;
 
   const nonCurrentAccounts = accounts.filter((a) => a.classification === 'non_current');
   const currentAccounts = accounts.filter((a) => a.classification === 'current');
+  const cardsRecordCount = accounts.reduce((sum, a) => sum + (a.record_count || 0), 0);
 
-  const insights = useMemo(() => buildInsights(stats, accounts), [stats, accounts]);
+  const insights = useMemo(
+    () => buildInsights(stats, accounts, cardsTotal, cardsNonCurrent, cardsCurrent),
+    [stats, accounts, cardsTotal, cardsNonCurrent, cardsCurrent],
+  );
 
   return (
     <Grid container spacing={2}>
@@ -125,20 +142,20 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
                 </TableRow>
               ) : (
                 <>
-                  <GroupBand label="A. Non-Current Liabilities" color="#DBEAFE" records={nonCurrentAccounts.reduce((s, a) => s + (a.record_count || 0), 0)} balance={stats?.non_current ?? 0} />
+                  <GroupBand label="A. Non-Current Liabilities" color="#DBEAFE" records={nonCurrentAccounts.reduce((s, a) => s + (a.record_count || 0), 0)} balance={cardsNonCurrent} />
                   {nonCurrentAccounts.map((row) => (
                     <AccountRow key={row.account} row={row} />
                   ))}
 
-                  <GroupBand label="B. Current Liabilities" color="#DCFCE7" records={currentAccounts.reduce((s, a) => s + (a.record_count || 0), 0)} balance={stats?.current ?? 0} />
+                  <GroupBand label="B. Current Liabilities" color="#DCFCE7" records={currentAccounts.reduce((s, a) => s + (a.record_count || 0), 0)} balance={cardsCurrent} />
                   {currentAccounts.map((row) => (
                     <AccountRow key={row.account} row={row} />
                   ))}
 
                   <TableRow sx={{ bgcolor: '#F3E8FF' }}>
                     <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Liabilities</TableCell>
-                    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{stats?.record_count ?? 0}</TableCell>
-                    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(stats?.total ?? 0)}</TableCell>
+                    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{cardsRecordCount}</TableCell>
+                    <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(cardsTotal)}</TableCell>
                     <TableCell sx={tdCell} />
                   </TableRow>
                 </>
@@ -241,14 +258,14 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               <>
                 <ReusableDonutChart
                   data={[
-                    { name: 'Non-Current Liabilities', value: stats?.non_current ?? 0, color: COLORS.nonCurrentLiabilities },
-                    { name: 'Current Liabilities', value: stats?.current ?? 0, color: COLORS.currentLiabilities },
+                    { name: 'Non-Current Liabilities', value: cardsNonCurrent, color: COLORS.nonCurrentLiabilities },
+                    { name: 'Current Liabilities', value: cardsCurrent, color: COLORS.currentLiabilities },
                   ]}
                   height={150}
                   innerRadius={50}
                   outerRadius={70}
                   paddingAngle={2}
-                  centerValue={formatCompact(stats?.total ?? 0)}
+                  centerValue={formatCompact(cardsTotal)}
                   centerTitle="Total Liabilities"
                   valueFontSize={16}
                   tooltipFormatter={(value, name) => [formatNaira(value), name]}
@@ -257,12 +274,12 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS.nonCurrentLiabilities, flexShrink: 0 }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>Non-Current Liabilities</Typography>
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>{formatCompact(stats?.non_current ?? 0)}</Typography>
+                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>{formatCompact(cardsNonCurrent)}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: COLORS.currentLiabilities, flexShrink: 0 }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>Current Liabilities</Typography>
-                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>{formatCompact(stats?.current ?? 0)}</Typography>
+                    <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>{formatCompact(cardsCurrent)}</Typography>
                   </Box>
                 </Box>
               </>

@@ -34,21 +34,28 @@ const tdCell = { py: 0.75, px: 1.25 };
 
 const formatAmount = (n) => (n < 0 ? `(${Math.abs(n).toLocaleString('en-NG')})` : n.toLocaleString('en-NG'));
 
-function buildInsights(stats) {
+// Absolute figures come from the cards-scoped composition/account rows
+// passed in — `stats.total_equity`/`accumulated_surplus`/
+// `current_period_surplus`/`equity_ratio` are the separate, independent
+// stats-dropdown period and can legitimately be a different term. Only
+// `total_equity_change_pct` is supposed to stay stats-scoped.
+function buildInsights(stats, cardsTotalEquity, cardsAccumulatedSurplus, cardsCurrentPeriodSurplus) {
   if (!stats) return [];
   const insights = [];
+  const accumulatedSurplusPct = cardsTotalEquity !== 0 ? Math.round((cardsAccumulatedSurplus / cardsTotalEquity) * 1000) / 10 : 0;
+  const currentPeriodSurplusPct = cardsTotalEquity !== 0 ? Math.round((cardsCurrentPeriodSurplus / cardsTotalEquity) * 1000) / 10 : 0;
 
   if (stats.total_equity_change_pct !== null && stats.total_equity_change_pct !== undefined) {
-    insights.push(`Total equity (net assets) is ${formatNaira(stats.total_equity)}, ${stats.total_equity_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_equity_change_pct)}% from the comparison period.`);
+    insights.push(`Total equity (net assets) is ${formatNaira(cardsTotalEquity)}, ${stats.total_equity_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_equity_change_pct)}% from the comparison period.`);
   } else {
-    insights.push(`Total equity (net assets) is ${formatNaira(stats.total_equity)} for the selected period.`);
+    insights.push(`Total equity (net assets) is ${formatNaira(cardsTotalEquity)} for the selected period.`);
   }
 
-  insights.push(`Accumulated surplus from prior terms accounts for ${stats.accumulated_surplus_pct}% (${formatNaira(stats.accumulated_surplus)}) of total equity.`);
-  insights.push(`Current period surplus is ${formatNaira(stats.current_period_surplus)} (${stats.current_period_surplus_pct}% of equity).`);
+  insights.push(`Accumulated surplus from prior terms accounts for ${accumulatedSurplusPct}% (${formatNaira(cardsAccumulatedSurplus)}) of total equity.`);
+  insights.push(`Current period surplus is ${formatNaira(cardsCurrentPeriodSurplus)} (${currentPeriodSurplusPct}% of equity).`);
 
-  if (stats.equity_ratio !== null && stats.equity_ratio !== undefined) {
-    insights.push(`Equity ratio is ${stats.equity_ratio}% of total assets.`);
+  if (stats.cards_equity_ratio !== null && stats.cards_equity_ratio !== undefined) {
+    insights.push(`Equity ratio is ${stats.cards_equity_ratio}% of total assets.`);
   }
 
   return insights;
@@ -63,7 +70,16 @@ const EquityDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const composition = data?.composition || [];
   const trend = data?.trend || [];
 
-  const insights = useMemo(() => buildInsights(stats), [stats]);
+  // Cards-scoped totals, derived from the already-cards-scoped composition
+  // rows — see AssetDetailsTab's identical comment for why.
+  const cardsTotalEquity = composition.reduce((sum, c) => sum + c.value, 0);
+  const cardsAccumulatedSurplus = composition.find((c) => c.name === 'Accumulated Surplus')?.value ?? 0;
+  const cardsCurrentPeriodSurplus = composition.find((c) => c.name === 'Current Period Surplus')?.value ?? 0;
+
+  const insights = useMemo(
+    () => buildInsights(stats, cardsTotalEquity, cardsAccumulatedSurplus, cardsCurrentPeriodSurplus),
+    [stats, cardsTotalEquity, cardsAccumulatedSurplus, cardsCurrentPeriodSurplus],
+  );
 
   return (
     <Grid container spacing={2}>
@@ -129,7 +145,7 @@ const EquityDetailsTab = ({ data, loading, onViewAllTransactions }) => {
 
               <TableRow sx={{ bgcolor: '#F3E8FF' }}>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Equity (Net Assets)</TableCell>
-                <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(stats?.total_equity ?? 0)}</TableCell>
+                <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(cardsTotalEquity)}</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">100.0%</TableCell>
                 <TableCell sx={tdCell} />
               </TableRow>
@@ -233,7 +249,7 @@ const EquityDetailsTab = ({ data, loading, onViewAllTransactions }) => {
                   innerRadius={50}
                   outerRadius={70}
                   paddingAngle={2}
-                  centerValue={formatCompact(stats?.total_equity ?? 0)}
+                  centerValue={formatCompact(cardsTotalEquity)}
                   centerTitle="Total Equity"
                   valueFontSize={16}
                   tooltipFormatter={(value, name) => [formatNaira(value), name]}

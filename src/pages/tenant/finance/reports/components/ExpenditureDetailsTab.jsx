@@ -41,23 +41,34 @@ function formatDateDisplayLocal(iso) {
  * response, matching AccountSummaryTab/IncomeDetailsTab's buildInsights
  * pattern.
  */
-function buildInsights(stats, expenditureByAccount, vendorConcentration) {
+function pctChange(current, previous) {
+  if (previous === null || previous === undefined || previous === 0) return null;
+  return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
+}
+
+// `cardsTotalExpenditure` (sum of the cards-scoped `expenditureByAccount`
+// rows) is what this card's own breakdown actually describes —
+// `stats.total_expenditure` is the separate, independent stats-dropdown
+// period and can legitimately be a different term. `total_expenditure_change_pct`
+// is the one clause that's supposed to stay stats-scoped (the explicit
+// growth-vs-compare-period figure), so that one keeps reading from `stats`.
+function buildInsights(stats, expenditureByAccount, vendorConcentration, cardsTotalExpenditure) {
   if (!stats) return [];
   const insights = [];
 
   if (stats.total_expenditure_change_pct !== null && stats.total_expenditure_change_pct !== undefined) {
     insights.push(
-      `Total expenditure is ${formatNaira(stats.total_expenditure)}, ${stats.total_expenditure_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_expenditure_change_pct)}% compared to the comparison period.`,
+      `Total expenditure is ${formatNaira(cardsTotalExpenditure)}, ${stats.total_expenditure_change_pct >= 0 ? 'up' : 'down'} by ${Math.abs(stats.total_expenditure_change_pct)}% compared to the comparison period.`,
     );
   } else {
-    insights.push(`Total expenditure is ${formatNaira(stats.total_expenditure)} for the period.`);
+    insights.push(`Total expenditure is ${formatNaira(cardsTotalExpenditure)} for the period.`);
   }
 
   if (expenditureByAccount.length >= 1) {
     insights.push(`${expenditureByAccount[0].account} accounts for ${expenditureByAccount[0].pct_of_total}% of total expenditure (${formatNaira(expenditureByAccount[0].amount)}).`);
   }
 
-  insights.push(`${formatNaira(stats.outstanding_amount)} (${stats.outstanding_amount_pct}%) remains outstanding across ${stats.outstanding_records} of ${stats.expenditure_records} expenditure records.`);
+  insights.push(`${formatNaira(stats.cards_outstanding_amount)} (${stats.cards_outstanding_amount_pct}%) remains outstanding across ${stats.cards_outstanding_records} of ${stats.cards_expenditure_records} expenditure records.`);
 
   if (vendorConcentration.length >= 1) {
     insights.push(`${vendorConcentration[0].vendor} is the top vendor by spend, accounting for ${vendorConcentration[0].share_pct}% of total expenditure.`);
@@ -77,9 +88,18 @@ const ExpenditureDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const vendorConcentration = data?.vendor_concentration || [];
   const totalComposition = composition.reduce((sum, c) => sum + c.value, 0);
 
+  // Cards-scoped total — this table's own footer must match the rows it's
+  // actually totaling, not the separate stats-dropdown period's figure.
+  const cardsTotalExpenditure = expenditureByAccount.reduce((sum, row) => sum + Number(row.amount), 0);
+  const cardsExpenditureChangePct = (() => {
+    const current = trend[trend.length - 1]?.expenditure;
+    const prior = trend.length >= 2 ? trend[trend.length - 2]?.expenditure : null;
+    return pctChange(current, prior);
+  })();
+
   const insights = useMemo(
-    () => buildInsights(stats, expenditureByAccount, vendorConcentration),
-    [stats, expenditureByAccount, vendorConcentration],
+    () => buildInsights(stats, expenditureByAccount, vendorConcentration, cardsTotalExpenditure),
+    [stats, expenditureByAccount, vendorConcentration, cardsTotalExpenditure],
   );
 
   return (
@@ -168,12 +188,12 @@ const ExpenditureDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               <TableRow sx={{ bgcolor: '#FEE2E2' }}>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} colSpan={2}>Total Expenditure</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                  {formatNaira(stats?.total_expenditure ?? 0)}
+                  {formatNaira(cardsTotalExpenditure)}
                 </TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">100.0%</TableCell>
                 <TableCell sx={{ ...tdCell, fontWeight: 800, color: '#B45309' }} align="right">
-                  {stats?.total_expenditure_change_pct !== null && stats?.total_expenditure_change_pct !== undefined
-                    ? `${stats.total_expenditure_change_pct >= 0 ? '+' : ''}${stats.total_expenditure_change_pct}%`
+                  {cardsExpenditureChangePct !== null
+                    ? `${cardsExpenditureChangePct >= 0 ? '+' : ''}${cardsExpenditureChangePct}%`
                     : '—'}
                 </TableCell>
                 <TableCell sx={tdCell} />

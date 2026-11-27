@@ -57,6 +57,7 @@ import {
   IconCalendar,
 } from '@tabler/icons';
 import AddVendorModal from './components/AddVendorModal';
+import VendorInsightsModal from './components/VendorInsightsModal';
 import { STATUS_META, formatCompact } from './constants';
 
 const thCell = { fontWeight: 700, py: 0.75, px: 1.25 };
@@ -72,11 +73,20 @@ const DetailRow = ({ icon: Icon, label, value, theme }) => (
   </Box>
 );
 
-const MiniStat = ({ icon: Icon, value, label, bg, color }) => (
-  <Box sx={{ bgcolor: bg, borderRadius: '10px', p: 1, textAlign: 'center' }}>
+const MiniStat = ({ icon: Icon, value, label, bg, color, loading }) => (
+  <Box sx={{ bgcolor: bg, borderRadius: '10px', p: 1, textAlign: 'center', minHeight: 64 }}>
     <Icon size={16} color={color} style={{ marginBottom: 2 }} />
-    <Typography sx={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2 }}>{value}</Typography>
-    <Typography sx={{ fontSize: 9.5, color: 'text.secondary' }}>{label}</Typography>
+    {loading ? (
+      <>
+        <Skeleton variant="text" width="60%" height={18} sx={{ mx: 'auto' }} />
+        <Skeleton variant="text" width="80%" height={12} sx={{ mx: 'auto' }} />
+      </>
+    ) : (
+      <>
+        <Typography sx={{ fontWeight: 800, fontSize: 13, lineHeight: 1.2 }}>{value}</Typography>
+        <Typography sx={{ fontSize: 9.5, color: 'text.secondary' }}>{label}</Typography>
+      </>
+    )}
   </Box>
 );
 
@@ -106,6 +116,7 @@ const VendorProfile = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const [intelLoading, setIntelLoading] = useState(false);
+  const [insightsModalOpen, setInsightsModalOpen] = useState(false);
 
   const fetchVendors = useCallback(() => {
     setLoading(true);
@@ -604,6 +615,8 @@ const VendorProfile = () => {
                       size="small"
                       endIcon={<IconArrowRight size={13} />}
                       sx={{ textTransform: 'none', fontWeight: 600, fontSize: 12 }}
+                      onClick={() => setInsightsModalOpen(true)}
+                      disabled={!selectedVendor}
                     >
                       View Insights
                     </Button>
@@ -616,36 +629,48 @@ const VendorProfile = () => {
               >
                 <Grid container spacing={1} sx={{ mb: 1.75 }}>
                   <Grid size={4}>
-                    <MiniStat icon={IconUsers} value={selectedVendor?.transactions ?? 0} label="Transactions" bg="#DBEAFE" color="#2563EB" />
+                    <MiniStat icon={IconUsers} value={selectedVendor?.transactions ?? 0} label="Transactions" bg="#DBEAFE" color="#2563EB" loading={intelLoading} />
                   </Grid>
                   <Grid size={4}>
-                    <MiniStat icon={IconCoins} value={formatCompact(selectedVendor?.total_spend ?? 0)} label="Total Spend" bg="#DCFCE7" color="#16A34A" />
+                    <MiniStat icon={IconCoins} value={formatCompact(selectedVendor?.total_spend ?? 0)} label="Total Spend" bg="#DCFCE7" color="#16A34A" loading={intelLoading} />
                   </Grid>
                   <Grid size={4}>
-                    <MiniStat icon={IconCalendar} value={selectedVendor?.years_active ?? 0} label="Years" bg="#FEF3C7" color="#D97706" />
+                    <MiniStat icon={IconCalendar} value={selectedVendor?.years_active ?? 0} label="Years" bg="#FEF3C7" color="#D97706" loading={intelLoading} />
                   </Grid>
                 </Grid>
 
                 <Typography sx={{ fontWeight: 700, fontSize: 12.5, mb: 1 }}>Spend Trend (Last 12 Months)</Typography>
-                <ReusableAreaChart
-                  data={selectedVendor?.spend_trend || []}
-                  nameKey="month"
-                  dataKey="spend"
-                  name="Spend"
-                  color={theme.palette.primary.main}
-                  height={140}
-                  showLabels={false}
-                  valueFormatter={formatCompact}
-                  xTickFontSize={9}
-                  yTickFontSize={9}
-                />
+                {intelLoading ? (
+                  <Box sx={{ height: 140, display: 'flex', flexDirection: 'column', justifyContent: 'space-around' }}>
+                    {[95, 70, 85, 55].map((w, idx) => (
+                      <Skeleton key={idx} variant="text" width={`${w}%`} height={16} />
+                    ))}
+                  </Box>
+                ) : (
+                  <ReusableAreaChart
+                    data={selectedVendor?.spend_trend || []}
+                    nameKey="month"
+                    dataKey="spend"
+                    name="Spend"
+                    color={theme.palette.primary.main}
+                    height={140}
+                    showLabels={false}
+                    valueFormatter={formatCompact}
+                    xTickFontSize={9}
+                    yTickFontSize={9}
+                  />
+                )}
 
                 <Box sx={{ bgcolor: '#DCFCE7', borderRadius: '10px', p: 1.5, mt: 1.5, minHeight: 90 }}>
                   <Typography sx={{ fontWeight: 700, fontSize: 12.5, mb: 0.75 }}>Quick Insights</Typography>
-                  {(selectedVendor?.quick_insights || []).length === 0 ? (
-                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>
-                      {intelLoading ? 'Loading…' : 'No activity with this vendor yet.'}
-                    </Typography>
+                  {intelLoading ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                      {[85, 65, 75].map((w, idx) => (
+                        <Skeleton key={idx} variant="text" width={`${w}%`} height={14} />
+                      ))}
+                    </Box>
+                  ) : (selectedVendor?.quick_insights || []).length === 0 ? (
+                    <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>No activity with this vendor yet.</Typography>
                   ) : (
                     selectedVendor.quick_insights.map((text) => (
                       <Box key={text} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75, mb: 0.5, '&:last-of-type': { mb: 0 } }}>
@@ -699,6 +724,12 @@ const VendorProfile = () => {
         mode="edit"
         vendor={vendorToEdit}
         submitting={submitting}
+      />
+
+      <VendorInsightsModal
+        open={insightsModalOpen}
+        onClose={() => setInsightsModalOpen(false)}
+        vendor={selectedVendor}
       />
 
       <Dialog open={statusConfirmOpen} onClose={() => setStatusConfirmOpen(false)} maxWidth="xs" fullWidth>

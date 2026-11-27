@@ -666,13 +666,27 @@ const PostIncome = () => {
   );
 };
 
+const TOP_BREAKDOWN_LIMIT = 4;
+
+/** Collapses a sorted [{name, value}] breakdown to its top N entries plus
+ * one combined "Others (N Categories)" row — the full list still lives in
+ * the View Details modal, this is only for the compact card/donut view. */
+const summarizeTopN = (data, limit = TOP_BREAKDOWN_LIMIT) => {
+  if (data.length <= limit) return data;
+  const top = data.slice(0, limit);
+  const rest = data.slice(limit);
+  const othersValue = rest.reduce((sum, c) => sum + c.value, 0);
+  return [...top, { name: `Others (${rest.length} Categories)`, value: othersValue }];
+};
+
 const IncomeBySource = ({ data }) => {
   const total = data.reduce((sum, c) => sum + c.value, 0) || 1;
+  const display = summarizeTopN(data);
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
         <ReusableDonutChart
-          data={data.map((c, idx) => ({ name: c.name, value: c.value, color: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length] }))}
+          data={display.map((c, idx) => ({ name: c.name, value: c.value, color: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length] }))}
           height={140}
           innerRadius={48}
           outerRadius={66}
@@ -683,11 +697,11 @@ const IncomeBySource = ({ data }) => {
           tooltipFormatter={(value, name) => [formatNaira(value), name]}
         />
       </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flexGrow: 1, minWidth: 0, width: '100%' }}>
-        {data.length === 0 ? (
-          <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No income posted yet.</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flexGrow: 1, minWidth: 0, width: '100%', minHeight: 110, justifyContent: display.length === 0 ? 'center' : 'flex-start' }}>
+        {display.length === 0 ? (
+          <Typography sx={{ fontSize: 12, color: 'text.secondary', textAlign: 'center' }}>No income posted yet.</Typography>
         ) : (
-          data.map((c, idx) => {
+          display.map((c, idx) => {
             const pct = ((c.value / total) * 100).toFixed(0);
             return (
               <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
@@ -731,7 +745,14 @@ const IntelligentInsights = ({ insights, theme }) => {
   const { last, prev, growthPct, collectionRate, collectionLabel, outstandingPct, outstandingCount, topSource, topSourcePct } = insights;
 
   if (!last) {
-    return <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Not enough data yet to generate insights.</Typography>;
+    // Reserves the same card height the 4-row populated state takes, so the
+    // "Intelligent Insights" card doesn't collapse to a single line while
+    // there's nothing to say yet.
+    return (
+      <Box sx={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }}>Not enough data yet to generate insights.</Typography>
+      </Box>
+    );
   }
 
   const growthUp = growthPct === null || growthPct >= 0;

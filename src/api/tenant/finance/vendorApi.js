@@ -10,6 +10,11 @@ export const fetchVendor = async (id) => {
     return res.data;
 };
 
+export const fetchVendorTransactions = async (id, params) => {
+    const res = await api.get(`/vendor_manager/fetch_vendor_transactions/${id}`, { params });
+    return res.data;
+};
+
 export const createVendor = async (payload) => {
     const res = await api.post('/vendor_manager/create_vendor', payload);
     return res.data;

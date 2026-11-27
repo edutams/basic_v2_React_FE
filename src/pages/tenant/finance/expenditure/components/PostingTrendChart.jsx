@@ -27,6 +27,14 @@ const PostingTrendChart = ({ data, height = 230 }) => {
   const balanceColor = '#D97706';
   const actualColor = theme.palette.primary.main;
 
+  if (data.length === 0) {
+    return (
+      <Box sx={{ height, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No data for this period.</Typography>
+      </Box>
+    );
+  }
+
   const lastPoint = data[data.length - 1];
 
   /* eslint-disable react/prop-types */

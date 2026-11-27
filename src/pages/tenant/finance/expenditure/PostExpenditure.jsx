@@ -916,13 +916,27 @@ const PostExpenditure = () => {
   );
 };
 
+const TOP_BREAKDOWN_LIMIT = 4;
+
+/** Collapses a sorted [{name, value}] breakdown to its top N entries plus
+ * one combined "Others (N Categories)" row — the full list still lives in
+ * the View Details modal, this is only for the compact card/donut view. */
+const summarizeTopN = (data, limit = TOP_BREAKDOWN_LIMIT) => {
+  if (data.length <= limit) return data;
+  const top = data.slice(0, limit);
+  const rest = data.slice(limit);
+  const othersValue = rest.reduce((sum, c) => sum + c.value, 0);
+  return [...top, { name: `Others (${rest.length} Categories)`, value: othersValue }];
+};
+
 const ExpenditureByCategory = ({ data }) => {
   const total = data.reduce((sum, c) => sum + c.value, 0) || 1;
+  const display = summarizeTopN(data);
   return (
     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 1.5 }}>
       <Box sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}>
         <ReusableDonutChart
-          data={data.map((c, idx) => ({
+          data={display.map((c, idx) => ({
             name: c.name,
             value: c.value,
             color: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length],
@@ -937,11 +951,11 @@ const ExpenditureByCategory = ({ data }) => {
           tooltipFormatter={(value, name) => [formatNaira(value), name]}
         />
       </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flexGrow: 1, minWidth: 0, width: '100%' }}>
-        {data.length === 0 ? (
-          <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No expenditure posted yet.</Typography>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, flexGrow: 1, minWidth: 0, width: '100%', minHeight: 110, justifyContent: display.length === 0 ? 'center' : 'flex-start' }}>
+        {display.length === 0 ? (
+          <Typography sx={{ fontSize: 12, color: 'text.secondary', textAlign: 'center' }}>No expenditure posted yet.</Typography>
         ) : (
-          data.map((c, idx) => {
+          display.map((c, idx) => {
             const pct = ((c.value / total) * 100).toFixed(0);
             return (
               <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>

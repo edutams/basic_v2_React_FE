@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { Box, Typography, Skeleton, useTheme } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import { IconBulb, IconCircleCheck } from '@tabler/icons';
 
@@ -10,7 +10,7 @@ import { IconBulb, IconCircleCheck } from '@tabler/icons';
 // strip instead of a vertical list, matching the full-width summary tabs
 // (Balance Sheet, Trend & Analysis) rather than the narrower right-rail
 // placement the other tabs use.
-const InsightsCard = ({ title = 'Key Insights', items, layout = 'column' }) => {
+const InsightsCard = ({ title = 'Key Insights', items, layout = 'column', loading = false }) => {
   const theme = useTheme();
   return (
     <ParentCard
@@ -25,10 +25,16 @@ const InsightsCard = ({ title = 'Key Insights', items, layout = 'column' }) => {
         '& .MuiCardContent-root': { p: 2, '&:last-child': { pb: 2 } },
       }}
     >
-      {items.length === 0 ? (
+      {loading ? (
+        <Box sx={{ minHeight: 120, display: 'flex', flexDirection: 'column', gap: 1.25, justifyContent: 'center' }}>
+          {[90, 75, 60].map((w, idx) => (
+            <Skeleton key={idx} variant="text" width={`${w}%`} height={16} />
+          ))}
+        </Box>
+      ) : items.length === 0 ? (
         // Reserves the same card height an empty InsightsCard would
-        // otherwise collapse to (header-only) while data is still loading
-        // or genuinely has nothing to say yet.
+        // otherwise collapse to (header-only) when it genuinely has
+        // nothing to say yet.
         <Box sx={{ minHeight: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }}>Nothing to show yet.</Typography>
         </Box>

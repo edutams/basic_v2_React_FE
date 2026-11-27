@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, Skeleton, useTheme } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import ReusableTrendChart from '@/components/shared/charts/ReusableTrendChart';
@@ -10,6 +10,24 @@ import { CATEGORY_DOT_COLORS, formatCompact, formatNaira } from '../constants';
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
+
+const StatementRowsSkeleton = ({ rows = 3 }) => (
+  <>
+    {Array.from({ length: rows }).map((_, idx) => (
+      <TableRow key={idx}>
+        <TableCell sx={tdCell}>
+          <Skeleton variant="text" width="70%" />
+        </TableCell>
+        <TableCell sx={tdCell} align="right">
+          <Skeleton variant="text" width="60%" sx={{ ml: 'auto' }} />
+        </TableCell>
+        <TableCell sx={tdCell} align="right">
+          <Skeleton variant="text" width="40%" sx={{ ml: 'auto' }} />
+        </TableCell>
+      </TableRow>
+    ))}
+  </>
+);
 
 const SectionBand = ({ label, color }) => (
   <TableRow>
@@ -104,8 +122,11 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
   return (
     <Box>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        {/* Statement table */}
-        <Grid size={{ xs: 12, lg: 5 }}>
+        {/* Statement table — Income and Expenditure side by side (each its
+            own scroll area) instead of one long stacked table, so a long
+            account list can't dwarf the Key Insights/Next Steps cards on
+            the right and leave them looking cut off. */}
+        <Grid size={{ xs: 12, lg: 6 }}>
           <ParentCard
             title={
               <Box>
@@ -123,95 +144,139 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
               '& .MuiCardContent-root': { p: 0, '&:last-child': { pb: 0 } },
             }}
           >
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
-                  <TableCell sx={thCell}>Item</TableCell>
-                  <TableCell sx={thCell} align="right">
-                    Amount (₦)
-                  </TableCell>
-                  <TableCell sx={thCell} align="right">
-                    % of Income
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <SectionBand label="Income" color="#DCFCE7" />
-                {incomeRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                      {loading ? 'Loading…' : 'No income posted for this period.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  incomeRows.map((row) => (
-                    <TableRow key={row.item} hover>
-                      <TableCell sx={tdCell}>{row.item}</TableCell>
-                      <TableCell sx={tdCell} align="right">
-                        {row.amount.toLocaleString('en-NG')}
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' } }}>
+              <Box sx={{ flex: 1, minWidth: 0, borderRight: { sm: `1px solid ${theme.palette.divider}` } }}>
+                <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
+                        <TableCell sx={thCell}>Item</TableCell>
+                        <TableCell sx={thCell} align="right">
+                          Amount (₦)
+                        </TableCell>
+                        <TableCell sx={thCell} align="right">
+                          %
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <SectionBand label="Income" color="#DCFCE7" />
+                      {loading ? (
+                        <StatementRowsSkeleton />
+                      ) : incomeRows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                            No income posted for this period.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        incomeRows.map((row) => (
+                          <TableRow key={row.item} hover>
+                            <TableCell sx={tdCell}>{row.item}</TableCell>
+                            <TableCell sx={tdCell} align="right">
+                              {row.amount.toLocaleString('en-NG')}
+                            </TableCell>
+                            <TableCell sx={tdCell} align="right">
+                              {row.pct_of_income}%
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </Box>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow sx={{ bgcolor: '#DCFCE7' }}>
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Income</TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
+                        {formatNaira(summary?.total_income ?? 0)}
                       </TableCell>
-                      <TableCell sx={tdCell} align="right">
-                        {row.pct_of_income}%
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-                <TableRow sx={{ bgcolor: '#DCFCE7' }}>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Income</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summary?.total_income ?? 0)}
-                  </TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    100.0%
-                  </TableCell>
-                </TableRow>
-
-                <SectionBand label="Expenditure" color="#FEE2E2" />
-                {expenditureRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                      {loading ? 'Loading…' : 'No expenditure posted for this period.'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  expenditureRows.map((row) => (
-                    <TableRow key={row.item} hover>
-                      <TableCell sx={tdCell}>{row.item}</TableCell>
-                      <TableCell sx={tdCell} align="right">
-                        {row.amount.toLocaleString('en-NG')}
-                      </TableCell>
-                      <TableCell sx={tdCell} align="right">
-                        {row.pct_of_income}%
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
+                        100.0%
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-                <TableRow sx={{ bgcolor: '#FEE2E2' }}>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Expenditure</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summary?.total_expenditure ?? 0)}
-                  </TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {totalExpenditurePctOfIncome}%
-                  </TableCell>
-                </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
 
-                <TableRow sx={{ bgcolor: '#DBEAFE' }}>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Surplus / (Deficit)</TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {formatNaira(summary?.surplus ?? 0)}
-                  </TableCell>
-                  <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
-                    {surplusPctOfIncome}%
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : '#F8FAFC' }}>
+                        <TableCell sx={thCell}>Item</TableCell>
+                        <TableCell sx={thCell} align="right">
+                          Amount (₦)
+                        </TableCell>
+                        <TableCell sx={thCell} align="right">
+                          %
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <SectionBand label="Expenditure" color="#FEE2E2" />
+                      {loading ? (
+                        <StatementRowsSkeleton />
+                      ) : expenditureRows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
+                            No expenditure posted for this period.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        expenditureRows.map((row) => (
+                          <TableRow key={row.item} hover>
+                            <TableCell sx={tdCell}>{row.item}</TableCell>
+                            <TableCell sx={tdCell} align="right">
+                              {row.amount.toLocaleString('en-NG')}
+                            </TableCell>
+                            <TableCell sx={tdCell} align="right">
+                              {row.pct_of_income}%
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </Box>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow sx={{ bgcolor: '#FEE2E2' }}>
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Expenditure</TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
+                        {formatNaira(summary?.total_expenditure ?? 0)}
+                      </TableCell>
+                      <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">
+                        {totalExpenditurePctOfIncome}%
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                bgcolor: '#DBEAFE',
+                borderTop: `1px solid ${theme.palette.divider}`,
+                px: 1.25,
+                py: 0.75,
+              }}
+            >
+              <Typography sx={{ fontWeight: 800, fontSize: 13 }}>Surplus / (Deficit)</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: 13 }}>
+                {formatNaira(summary?.surplus ?? 0)} ({surplusPctOfIncome}%)
+              </Typography>
+            </Box>
           </ParentCard>
         </Grid>
 
         {/* Right column: trend + category row, then insights + actions stacked under them */}
-        <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Grid container spacing={2} sx={{ mb: 2 }}>
             {/* Income vs Expenditure trend */}
             <Grid size={{ xs: 12, sm: 7 }}>
@@ -227,19 +292,27 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
                   '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
                 }}
               >
-                <ReusableTrendChart
-                  data={trend}
-                  nameKey="term"
-                  series={[
-                    { dataKey: 'income', name: 'Income', color: '#16A34A' },
-                    { dataKey: 'expenditure', name: 'Expenditure', color: '#2563EB' },
-                  ]}
-                  type="line"
-                  height={230}
-                  showDots
-                  valueFormatter={formatCompact}
-                  cardSx={{ border: 'none' }}
-                />
+                {loading ? (
+                  <Box sx={{ height: 230, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.25, px: 1 }}>
+                    {[85, 65, 75, 50, 70].map((w, idx) => (
+                      <Skeleton key={idx} variant="text" width={`${w}%`} height={18} />
+                    ))}
+                  </Box>
+                ) : (
+                  <ReusableTrendChart
+                    data={trend}
+                    nameKey="term"
+                    series={[
+                      { dataKey: 'income', name: 'Income', color: '#16A34A' },
+                      { dataKey: 'expenditure', name: 'Expenditure', color: '#2563EB' },
+                    ]}
+                    type="line"
+                    height={230}
+                    showDots
+                    valueFormatter={formatCompact}
+                    cardSx={{ border: 'none' }}
+                  />
+                )}
               </ParentCard>
             </Grid>
 
@@ -264,7 +337,7 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <InsightsCard items={insights} />
+              <InsightsCard items={insights} loading={loading} />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <ActionsCard items={actions} onItemClick={(action) => onAction?.(action.type)} />
@@ -278,14 +351,26 @@ const AccountSummaryTab = ({ data, loading, onAction }) => {
 
 const ExpenditureByCategoryMini = ({ data, loading }) => {
   const total = data.reduce((sum, c) => sum + c.value, 0) || 1;
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: 260 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+          <Skeleton variant="circular" width={140} height={140} />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <Skeleton key={idx} variant="text" width={`${70 - idx * 10}%`} />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
   if (data.length === 0) {
     // Reserves the same height the donut + legend would occupy with data,
     // instead of collapsing the card down to a single line of text.
     return (
       <Box sx={{ minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-          {loading ? 'Loading…' : 'No expenditure posted yet.'}
-        </Typography>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No expenditure posted yet.</Typography>
       </Box>
     );
   }

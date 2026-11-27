@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, Skeleton, useTheme } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -37,6 +37,18 @@ const METRIC_ICONS = {
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
+
+/** Staggered text-line placeholder for a chart card while it's loading —
+ * keeps the whole module's loading language to text-shaped skeletons
+ * instead of a solid block, matching the row-skeleton convention already
+ * used elsewhere in the Finance module. */
+const ChartSkeleton = ({ height = 260 }) => (
+  <Box sx={{ height, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.25, px: 1 }}>
+    {[85, 65, 75, 50, 70].map((w, idx) => (
+      <Skeleton key={idx} variant="text" width={`${w}%`} height={18} />
+    ))}
+  </Box>
+);
 
 const SurplusDeficitBarLabel = (props) => {
   const { x, y, width, value } = props;
@@ -171,18 +183,22 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <ReusableTrendChart
-              data={trendData}
-              nameKey="term"
-              series={[
-                { dataKey: 'income', name: 'Income', color: '#16A34A' },
-                { dataKey: 'expenditure', name: 'Expenditure', color: '#2563EB' },
-              ]}
-              type="area"
-              height={260}
-              valueFormatter={formatCompact}
-              cardSx={{ border: 'none' }}
-            />
+            {loading ? (
+              <ChartSkeleton height={260} />
+            ) : (
+              <ReusableTrendChart
+                data={trendData}
+                nameKey="term"
+                series={[
+                  { dataKey: 'income', name: 'Income', color: '#16A34A' },
+                  { dataKey: 'expenditure', name: 'Expenditure', color: '#2563EB' },
+                ]}
+                type="area"
+                height={260}
+                valueFormatter={formatCompact}
+                cardSx={{ border: 'none' }}
+              />
+            )}
           </ParentCard>
         </Grid>
 
@@ -199,15 +215,19 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={surplusDeficitTrend} margin={{ top: 24, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f0f0f0'} />
-                <XAxis dataKey="term" tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} tickFormatter={formatCompact} />
-                <Tooltip formatter={(v) => formatNaira(v)} />
-                <Bar dataKey="value" name="Surplus" fill="#A78BFA" radius={[6, 6, 0, 0]} barSize={26} label={<SurplusDeficitBarLabel />} />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <ChartSkeleton height={260} />
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={surplusDeficitTrend} margin={{ top: 24, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f0f0f0'} />
+                  <XAxis dataKey="term" tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} tickFormatter={formatCompact} />
+                  <Tooltip formatter={(v) => formatNaira(v)} />
+                  <Bar dataKey="value" name="Surplus" fill="#A78BFA" radius={[6, 6, 0, 0]} barSize={26} label={<SurplusDeficitBarLabel />} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </ParentCard>
         </Grid>
       </Grid>
@@ -237,10 +257,20 @@ const TrendAnalysisTab = ({ data, loading }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {keyFinancialTrends.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <TableRow key={idx}>
+                      {Array.from({ length: 5 }).map((__, cellIdx) => (
+                        <TableCell key={cellIdx} sx={tdCell}>
+                          <Skeleton variant="text" height={18} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : keyFinancialTrends.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                      {loading ? 'Loading…' : 'No data for this period.'}
+                      No data for this period.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -298,41 +328,55 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
-            <ReusableDonutChart
-              data={[
-                { name: 'Expenditure', value: totalExpenditure, color: '#2563EB' },
-                { name: 'Surplus', value: Math.max(surplus, 0), color: '#16A34A' },
-              ]}
-              height={160}
-              innerRadius={54}
-              outerRadius={74}
-              paddingAngle={2}
-              centerValue={formatCompact(totalIncome)}
-              centerTitle="Total Income"
-              valueFontSize={16}
-              tooltipFormatter={(value, name) => [formatNaira(value), name]}
-            />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
-              {[
-                { name: 'Expenditure', color: '#2563EB', value: totalExpenditure, pct: expenditurePct },
-                { name: 'Surplus', color: '#16A34A', value: surplus, pct: surplusPct },
-              ].map((row) => (
-                <Box key={row.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: row.color, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>
-                    {row.name} ({row.pct}%)
-                  </Typography>
-                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>
-                    {formatCompact(row.value)}
-                  </Typography>
+            {loading ? (
+              <Box sx={{ minHeight: 160 + 8 + 2 * 20 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                  <Skeleton variant="circular" width={148} height={148} />
                 </Box>
-              ))}
-            </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Skeleton variant="text" width="75%" />
+                  <Skeleton variant="text" width="60%" />
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <ReusableDonutChart
+                  data={[
+                    { name: 'Expenditure', value: totalExpenditure, color: '#2563EB' },
+                    { name: 'Surplus', value: Math.max(surplus, 0), color: '#16A34A' },
+                  ]}
+                  height={160}
+                  innerRadius={54}
+                  outerRadius={74}
+                  paddingAngle={2}
+                  centerValue={formatCompact(totalIncome)}
+                  centerTitle="Total Income"
+                  valueFontSize={16}
+                  tooltipFormatter={(value, name) => [formatNaira(value), name]}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
+                  {[
+                    { name: 'Expenditure', color: '#2563EB', value: totalExpenditure, pct: expenditurePct },
+                    { name: 'Surplus', color: '#16A34A', value: surplus, pct: surplusPct },
+                  ].map((row) => (
+                    <Box key={row.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: row.color, flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 12, fontWeight: 600, flexGrow: 1 }}>
+                        {row.name} ({row.pct}%)
+                      </Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 700, color: 'text.secondary' }}>
+                        {formatCompact(row.value)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
           </ParentCard>
         </Grid>
 
         <Grid size={{ xs: 12, lg: 3 }}>
-          <InsightsCard title="Insights & Analysis" items={insights} />
+          <InsightsCard title="Insights & Analysis" items={insights} loading={loading} />
         </Grid>
       </Grid>
     </Box>

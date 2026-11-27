@@ -10,6 +10,7 @@ import {
   TableRow,
   Chip,
   Button,
+  Skeleton,
   useTheme,
 } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
@@ -106,10 +107,20 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {accounts.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRow key={idx}>
+                    {Array.from({ length: 4 }).map((__, cellIdx) => (
+                      <TableCell key={cellIdx} sx={tdCell}>
+                        <Skeleton variant="text" height={18} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : accounts.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                    {loading ? 'Loading…' : 'No liabilities posted yet.'}
+                    No liabilities posted yet.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -165,10 +176,20 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {recentTransactions.length === 0 ? (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRow key={idx}>
+                    {Array.from({ length: 6 }).map((__, cellIdx) => (
+                      <TableCell key={cellIdx} sx={tdCell}>
+                        <Skeleton variant="text" height={18} />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : recentTransactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                    {loading ? 'Loading…' : 'No liability transactions for this period.'}
+                    No liability transactions for this period.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -201,9 +222,20 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
-            {composition.length === 0 ? (
+            {loading ? (
+              <Box sx={{ minHeight: 260 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                  <Skeleton variant="circular" width={140} height={140} />
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  {[70, 55].map((w, idx) => (
+                    <Skeleton key={idx} variant="text" width={`${w}%`} />
+                  ))}
+                </Box>
+              </Box>
+            ) : composition.length === 0 ? (
               <Box sx={{ minHeight: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{loading ? 'Loading…' : 'No liabilities posted yet.'}</Typography>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No liabilities posted yet.</Typography>
               </Box>
             ) : (
               <>
@@ -244,23 +276,31 @@ const LiabilitiesDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <ReusableTrendChart
-              data={trend}
-              nameKey="term"
-              series={[
-                { dataKey: 'total', name: 'Total Liabilities', color: COLORS.liabilities },
-                { dataKey: 'non_current', name: 'Non-Current', color: COLORS.nonCurrentLiabilities },
-                { dataKey: 'current', name: 'Current', color: COLORS.currentLiabilities },
-              ]}
-              type="line"
-              height={190}
-              showDots
-              valueFormatter={formatCompact}
-              cardSx={{ border: 'none' }}
-            />
+            {loading ? (
+              <Box sx={{ height: 190, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.25, px: 1 }}>
+                {[80, 60, 70, 45].map((w, idx) => (
+                  <Skeleton key={idx} variant="text" width={`${w}%`} height={16} />
+                ))}
+              </Box>
+            ) : (
+              <ReusableTrendChart
+                data={trend}
+                nameKey="term"
+                series={[
+                  { dataKey: 'total', name: 'Total Liabilities', color: COLORS.liabilities },
+                  { dataKey: 'non_current', name: 'Non-Current', color: COLORS.nonCurrentLiabilities },
+                  { dataKey: 'current', name: 'Current', color: COLORS.currentLiabilities },
+                ]}
+                type="line"
+                height={190}
+                showDots
+                valueFormatter={formatCompact}
+                cardSx={{ border: 'none' }}
+              />
+            )}
           </ParentCard>
 
-          <InsightsCard items={insights} />
+          <InsightsCard items={insights} loading={loading} />
         </Box>
       </Grid>
     </Grid>

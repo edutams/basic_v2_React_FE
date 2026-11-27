@@ -98,7 +98,10 @@ const INSTALLMENT_STATUS_META = {
 const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
 const ordinalFor = (n) => ORDINALS[n - 1] || `${n}th`;
 
-/** Running balance + "Nth Instalment (pct%)" label for each row, in sequence order. */
+/** Running balance + "Nth Instalment (pct%)" label for each row, in sequence
+ * order. A first payment that covers the whole actual amount in one shot
+ * isn't really an "instalment" at all — label it as a Full Payment instead
+ * of the misleading "1st Instalment (100%)". */
 const withPaymentTypeAndBalance = (installments, actualAmount) => {
   let cumulative = 0;
   return [...installments]
@@ -106,7 +109,9 @@ const withPaymentTypeAndBalance = (installments, actualAmount) => {
     .map((i) => {
       cumulative += Number(i.amount);
       const pct = actualAmount > 0 ? Math.round((Number(i.amount) / actualAmount) * 100) : 0;
-      return { ...i, paymentTypeLabel: `${ordinalFor(i.sequence_no)} Instalment (${pct}%)`, balanceAfter: Math.max(0, actualAmount - cumulative) };
+      const isFullPayment = i.sequence_no === 1 && Number(i.amount) >= actualAmount;
+      const paymentTypeLabel = isFullPayment ? 'Full Payment' : `${ordinalFor(i.sequence_no)} Instalment (${pct}%)`;
+      return { ...i, paymentTypeLabel, balanceAfter: Math.max(0, actualAmount - cumulative) };
     });
 };
 

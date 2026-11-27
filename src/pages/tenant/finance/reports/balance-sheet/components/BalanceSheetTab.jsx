@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
-import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
+import React, { useMemo, useState } from 'react';
+import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, Collapse, Skeleton, useTheme } from '@mui/material';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import ReusableTrendChart from '@/components/shared/charts/ReusableTrendChart';
-import { IconClipboardList, IconChartDonut, IconCalendarEvent } from '@tabler/icons';
+import { IconClipboardList, IconChartDonut, IconCalendarEvent, IconChevronRight } from '@tabler/icons';
 import InsightsCard from '../../components/InsightsCard';
 import { COLORS, formatCompact, formatNaira } from '../constants';
 
@@ -16,6 +16,24 @@ const SectionBand = ({ label, color }) => (
       {label}
     </TableCell>
   </TableRow>
+);
+
+const StatementRowsSkeleton = ({ rows = 2 }) => (
+  <>
+    {Array.from({ length: rows }).map((_, idx) => (
+      <TableRow key={idx}>
+        <TableCell sx={tdCell}>
+          <Skeleton variant="text" width="70%" />
+        </TableCell>
+        <TableCell sx={tdCell} align="right">
+          <Skeleton variant="text" width="60%" sx={{ ml: 'auto' }} />
+        </TableCell>
+        <TableCell sx={tdCell} align="right">
+          <Skeleton variant="text" width="40%" sx={{ ml: 'auto' }} />
+        </TableCell>
+      </TableRow>
+    ))}
+  </>
 );
 
 function buildInsights(summary) {
@@ -45,6 +63,8 @@ function buildInsights(summary) {
 
 const BalanceSheetTab = ({ data, loading }) => {
   const theme = useTheme();
+  const [expandedRows, setExpandedRows] = useState({});
+  const toggleRow = (key) => setExpandedRows((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const summary = data?.summary;
   const assetsRows = data?.statement?.assets || [];
@@ -59,6 +79,58 @@ const BalanceSheetTab = ({ data, loading }) => {
   const totalLiabilitiesAndEquity = (summary?.total_liabilities ?? 0) + (summary?.total_equity ?? 0);
 
   const insights = useMemo(() => buildInsights(summary), [summary]);
+
+  const renderGroupRow = (row, key) => {
+    const accounts = row.accounts || [];
+    const hasAccounts = accounts.length > 0;
+    const isOpen = !!expandedRows[key];
+
+    return (
+      <React.Fragment key={key}>
+        <TableRow hover sx={hasAccounts ? { cursor: 'pointer' } : undefined} onClick={hasAccounts ? () => toggleRow(key) : undefined}>
+          <TableCell sx={tdCell}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {hasAccounts ? (
+                <IconChevronRight
+                  size={14}
+                  style={{ transition: 'transform 0.15s ease', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}
+                />
+              ) : (
+                <Box sx={{ width: 14, flexShrink: 0 }} />
+              )}
+              <span>{row.item}</span>
+            </Box>
+          </TableCell>
+          <TableCell sx={tdCell} align="right">{row.amount.toLocaleString('en-NG')}</TableCell>
+          <TableCell sx={tdCell} align="right">{row.pct}%</TableCell>
+        </TableRow>
+        {hasAccounts && (
+          <TableRow>
+            <TableCell colSpan={3} sx={{ p: 0, border: 0 }}>
+              <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                <Box
+                  sx={{
+                    pl: 4.5,
+                    pr: 1.25,
+                    py: 0.75,
+                    bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : '#FAFBFC',
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                  }}
+                >
+                  {accounts.map((a) => (
+                    <Box key={a.name} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4 }}>
+                      <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{a.name}</Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{formatNaira(a.balance)}</Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Collapse>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    );
+  };
 
   return (
     <Box>
@@ -90,13 +162,7 @@ const BalanceSheetTab = ({ data, loading }) => {
               </TableHead>
               <TableBody>
                 <SectionBand label="A. ASSETS" color="#DBEAFE" />
-                {assetsRows.map((row) => (
-                  <TableRow key={row.item} hover>
-                    <TableCell sx={tdCell}>▸ &nbsp;{row.item}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.amount.toLocaleString('en-NG')}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.pct}%</TableCell>
-                  </TableRow>
-                ))}
+                {loading ? <StatementRowsSkeleton /> : assetsRows.map((row) => renderGroupRow(row, `assets-${row.item}`))}
                 <TableRow sx={{ bgcolor: '#DBEAFE' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Assets</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(totalAssets)}</TableCell>
@@ -104,13 +170,7 @@ const BalanceSheetTab = ({ data, loading }) => {
                 </TableRow>
 
                 <SectionBand label="B. LIABILITIES" color="#FEE2E2" />
-                {liabilitiesRows.map((row) => (
-                  <TableRow key={row.item} hover>
-                    <TableCell sx={tdCell}>▸ &nbsp;{row.item}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.amount.toLocaleString('en-NG')}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.pct}%</TableCell>
-                  </TableRow>
-                ))}
+                {loading ? <StatementRowsSkeleton /> : liabilitiesRows.map((row) => renderGroupRow(row, `liabilities-${row.item}`))}
                 <TableRow sx={{ bgcolor: '#FEE2E2' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Liabilities</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(summary?.total_liabilities ?? 0)}</TableCell>
@@ -120,13 +180,7 @@ const BalanceSheetTab = ({ data, loading }) => {
                 </TableRow>
 
                 <SectionBand label="C. EQUITY / NET ASSETS" color="#DCFCE7" />
-                {equityRows.map((row) => (
-                  <TableRow key={row.item} hover>
-                    <TableCell sx={tdCell}>▸ &nbsp;{row.item}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.amount.toLocaleString('en-NG')}</TableCell>
-                    <TableCell sx={tdCell} align="right">{row.pct}%</TableCell>
-                  </TableRow>
-                ))}
+                {loading ? <StatementRowsSkeleton rows={1} /> : equityRows.map((row) => renderGroupRow(row, `equity-${row.item}`))}
                 <TableRow sx={{ bgcolor: '#DCFCE7' }}>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }}>Total Equity (Net Assets)</TableCell>
                   <TableCell sx={{ ...tdCell, fontWeight: 800 }} align="right">{formatNaira(summary?.total_equity ?? 0)}</TableCell>
@@ -164,9 +218,19 @@ const BalanceSheetTab = ({ data, loading }) => {
                   '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
                 }}
               >
-                {assetsComposition.length === 0 ? (
+                {loading ? (
+                  <Box sx={{ minHeight: 220 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                      <Skeleton variant="circular" width={128} height={128} />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                      <Skeleton variant="text" width="70%" />
+                      <Skeleton variant="text" width="55%" />
+                    </Box>
+                  </Box>
+                ) : assetsComposition.length === 0 ? (
                   <Box sx={{ minHeight: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{loading ? 'Loading…' : 'No assets posted yet.'}</Typography>
+                    <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>No assets posted yet.</Typography>
                   </Box>
                 ) : (
                   <>
@@ -214,31 +278,45 @@ const BalanceSheetTab = ({ data, loading }) => {
                   '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
                 }}
               >
-                <ReusableDonutChart
-                  data={[
-                    { name: 'Total Liabilities', value: liabilitiesEquityComposition[0]?.value ?? 0, color: COLORS.liabilities },
-                    { name: 'Total Equity', value: liabilitiesEquityComposition[1]?.value ?? 0, color: COLORS.equity },
-                  ]}
-                  height={140}
-                  innerRadius={46}
-                  outerRadius={64}
-                  paddingAngle={2}
-                  centerValue={formatCompact(totalLiabilitiesAndEquity)}
-                  centerTitle="Total Funds"
-                  valueFontSize={14}
-                  tooltipFormatter={(value, name) => [formatNaira(value), name]}
-                />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
-                  {liabilitiesEquityComposition.map((c, idx) => (
-                    <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: idx === 0 ? COLORS.liabilities : COLORS.equity, flexShrink: 0 }} />
-                      <Typography sx={{ fontSize: 11.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
-                      <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'text.secondary' }}>
-                        {formatCompact(c.value)} ({totalLiabilitiesAndEquity > 0 ? (c.value / totalLiabilitiesAndEquity * 100).toFixed(1) : 0}%)
-                      </Typography>
+                {loading ? (
+                  <Box sx={{ minHeight: 220 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                      <Skeleton variant="circular" width={128} height={128} />
                     </Box>
-                  ))}
-                </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                      <Skeleton variant="text" width="70%" />
+                      <Skeleton variant="text" width="55%" />
+                    </Box>
+                  </Box>
+                ) : (
+                  <>
+                    <ReusableDonutChart
+                      data={[
+                        { name: 'Total Liabilities', value: liabilitiesEquityComposition[0]?.value ?? 0, color: COLORS.liabilities },
+                        { name: 'Total Equity', value: liabilitiesEquityComposition[1]?.value ?? 0, color: COLORS.equity },
+                      ]}
+                      height={140}
+                      innerRadius={46}
+                      outerRadius={64}
+                      paddingAngle={2}
+                      centerValue={formatCompact(totalLiabilitiesAndEquity)}
+                      centerTitle="Total Funds"
+                      valueFontSize={14}
+                      tooltipFormatter={(value, name) => [formatNaira(value), name]}
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1 }}>
+                      {liabilitiesEquityComposition.map((c, idx) => (
+                        <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: idx === 0 ? COLORS.liabilities : COLORS.equity, flexShrink: 0 }} />
+                          <Typography sx={{ fontSize: 11.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
+                          <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'text.secondary' }}>
+                            {formatCompact(c.value)} ({totalLiabilitiesAndEquity > 0 ? (c.value / totalLiabilitiesAndEquity * 100).toFixed(1) : 0}%)
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </>
+                )}
               </ParentCard>
             </Grid>
           </Grid>
@@ -257,25 +335,33 @@ const BalanceSheetTab = ({ data, loading }) => {
                   '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
                 }}
               >
-                <ReusableTrendChart
-                  data={trend}
-                  nameKey="term"
-                  series={[
-                    { dataKey: 'assets', name: 'Total Assets', color: COLORS.assets },
-                    { dataKey: 'equity', name: 'Total Equity', color: COLORS.equity },
-                    { dataKey: 'liabilities', name: 'Total Liabilities', color: COLORS.liabilities },
-                  ]}
-                  type="line"
-                  height={230}
-                  showDots
-                  valueFormatter={formatCompact}
-                  cardSx={{ border: 'none' }}
-                />
+                {loading ? (
+                  <Box sx={{ height: 230, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.25, px: 1 }}>
+                    {[85, 65, 75, 50, 70].map((w, idx) => (
+                      <Skeleton key={idx} variant="text" width={`${w}%`} height={18} />
+                    ))}
+                  </Box>
+                ) : (
+                  <ReusableTrendChart
+                    data={trend}
+                    nameKey="term"
+                    series={[
+                      { dataKey: 'assets', name: 'Total Assets', color: COLORS.assets },
+                      { dataKey: 'equity', name: 'Total Equity', color: COLORS.equity },
+                      { dataKey: 'liabilities', name: 'Total Liabilities', color: COLORS.liabilities },
+                    ]}
+                    type="line"
+                    height={230}
+                    showDots
+                    valueFormatter={formatCompact}
+                    cardSx={{ border: 'none' }}
+                  />
+                )}
               </ParentCard>
             </Grid>
 
             <Grid size={{ xs: 12, lg: 4 }}>
-              <InsightsCard items={insights} />
+              <InsightsCard items={insights} loading={loading} />
             </Grid>
           </Grid>
         </Grid>

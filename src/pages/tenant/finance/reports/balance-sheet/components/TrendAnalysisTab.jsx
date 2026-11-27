@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, useTheme } from '@mui/material';
+import { Box, Grid, Typography, Table, TableBody, TableCell, TableHead, TableRow, Skeleton, useTheme } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
@@ -10,6 +10,14 @@ import { COLORS, formatCompact, formatNaira } from '../constants';
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25 };
 const tdCell = { py: 0.75, px: 1.25 };
+
+const ChartSkeleton = ({ height = 260 }) => (
+  <Box sx={{ height, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1.25, px: 1 }}>
+    {[85, 65, 75, 50, 70].map((w, idx) => (
+      <Skeleton key={idx} variant="text" width={`${w}%`} height={18} />
+    ))}
+  </Box>
+);
 
 function pctChange(current, previous) {
   if (previous === null || previous === undefined || previous === 0) return null;
@@ -124,19 +132,23 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <ReusableTrendChart
-              data={trendData}
-              nameKey="term"
-              series={[
-                { dataKey: 'assets', name: 'Total Assets', color: COLORS.assets },
-                { dataKey: 'equity', name: 'Total Equity', color: COLORS.equity },
-                { dataKey: 'liabilities', name: 'Total Liabilities', color: COLORS.liabilities },
-              ]}
-              type="area"
-              height={260}
-              valueFormatter={formatCompact}
-              cardSx={{ border: 'none' }}
-            />
+            {loading ? (
+              <ChartSkeleton height={260} />
+            ) : (
+              <ReusableTrendChart
+                data={trendData}
+                nameKey="term"
+                series={[
+                  { dataKey: 'assets', name: 'Total Assets', color: COLORS.assets },
+                  { dataKey: 'equity', name: 'Total Equity', color: COLORS.equity },
+                  { dataKey: 'liabilities', name: 'Total Liabilities', color: COLORS.liabilities },
+                ]}
+                type="area"
+                height={260}
+                valueFormatter={formatCompact}
+                cardSx={{ border: 'none' }}
+              />
+            )}
           </ParentCard>
         </Grid>
 
@@ -153,34 +165,48 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, '&:last-child': { pb: 1.5 } },
             }}
           >
-            <ReusableDonutChart
-              data={[
-                { name: 'Equity (Net Assets)', value: totalEquity, color: COLORS.equity },
-                { name: 'Liabilities', value: totalLiabilities, color: COLORS.liabilities },
-              ]}
-              height={180}
-              innerRadius={60}
-              outerRadius={84}
-              paddingAngle={2}
-              centerValue={formatCompact(totalFunds)}
-              centerTitle="Total Funds"
-              valueFontSize={17}
-              tooltipFormatter={(value, name) => [formatNaira(value), name]}
-            />
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1.5 }}>
-              {[
-                { name: 'Equity (Net Assets)', color: COLORS.equity, value: totalEquity },
-                { name: 'Liabilities', color: COLORS.liabilities, value: totalLiabilities },
-              ].map((c) => (
-                <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: c.color, flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: 'text.secondary' }}>
-                    {formatCompact(c.value)} ({totalFunds > 0 ? (c.value / totalFunds * 100).toFixed(1) : 0}%)
-                  </Typography>
+            {loading ? (
+              <Box sx={{ minHeight: 180 + 12 + 2 * 20 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                  <Skeleton variant="circular" width={168} height={168} />
                 </Box>
-              ))}
-            </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Skeleton variant="text" width="75%" />
+                  <Skeleton variant="text" width="60%" />
+                </Box>
+              </Box>
+            ) : (
+              <>
+                <ReusableDonutChart
+                  data={[
+                    { name: 'Equity (Net Assets)', value: totalEquity, color: COLORS.equity },
+                    { name: 'Liabilities', value: totalLiabilities, color: COLORS.liabilities },
+                  ]}
+                  height={180}
+                  innerRadius={60}
+                  outerRadius={84}
+                  paddingAngle={2}
+                  centerValue={formatCompact(totalFunds)}
+                  centerTitle="Total Funds"
+                  valueFontSize={17}
+                  tooltipFormatter={(value, name) => [formatNaira(value), name]}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1.5 }}>
+                  {[
+                    { name: 'Equity (Net Assets)', color: COLORS.equity, value: totalEquity },
+                    { name: 'Liabilities', color: COLORS.liabilities, value: totalLiabilities },
+                  ].map((c) => (
+                    <Box key={c.name} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: c.color, flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 12.5, fontWeight: 600, flexGrow: 1 }}>{c.name}</Typography>
+                      <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: 'text.secondary' }}>
+                        {formatCompact(c.value)} ({totalFunds > 0 ? (c.value / totalFunds * 100).toFixed(1) : 0}%)
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </>
+            )}
           </ParentCard>
         </Grid>
       </Grid>
@@ -199,18 +225,22 @@ const TrendAnalysisTab = ({ data, loading }) => {
               '& .MuiCardContent-root': { p: 1.5, pt: 0.5, '&:last-child': { pb: 1 } },
             }}
           >
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={trendData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f0f0f0'} />
-                <XAxis dataKey="term" tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} tickFormatter={formatCompact} />
-                <Tooltip formatter={(v) => formatNaira(v)} />
-                <Legend wrapperStyle={{ fontSize: 11.5 }} />
-                <Bar dataKey="assets" name="Assets" fill={COLORS.assets} radius={[4, 4, 0, 0]} barSize={14} />
-                <Bar dataKey="liabilities" name="Liabilities" fill={COLORS.liabilities} radius={[4, 4, 0, 0]} barSize={14} />
-                <Bar dataKey="equity" name="Equity" fill={COLORS.equity} radius={[4, 4, 0, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <ChartSkeleton height={260} />
+            ) : (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={trendData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#f0f0f0'} />
+                  <XAxis dataKey="term" tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: theme.palette.text.secondary }} axisLine={false} tickLine={false} tickFormatter={formatCompact} />
+                  <Tooltip formatter={(v) => formatNaira(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11.5 }} />
+                  <Bar dataKey="assets" name="Assets" fill={COLORS.assets} radius={[4, 4, 0, 0]} barSize={14} />
+                  <Bar dataKey="liabilities" name="Liabilities" fill={COLORS.liabilities} radius={[4, 4, 0, 0]} barSize={14} />
+                  <Bar dataKey="equity" name="Equity" fill={COLORS.equity} radius={[4, 4, 0, 0]} barSize={14} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </ParentCard>
         </Grid>
 
@@ -237,10 +267,20 @@ const TrendAnalysisTab = ({ data, loading }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {financialRatios.length === 0 ? (
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <TableRow key={idx}>
+                      {Array.from({ length: 4 }).map((__, cellIdx) => (
+                        <TableCell key={cellIdx} sx={tdCell}>
+                          <Skeleton variant="text" height={18} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : financialRatios.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                      {loading ? 'Loading…' : 'No data for this period.'}
+                      No data for this period.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -268,7 +308,7 @@ const TrendAnalysisTab = ({ data, loading }) => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 3 }}>
-          <InsightsCard title="Key Insights" items={insights} />
+          <InsightsCard title="Key Insights" items={insights} loading={loading} />
         </Grid>
       </Grid>
     </Box>

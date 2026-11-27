@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Select, MenuItem, FormControl, Tabs, Tab, Menu, useTheme } from '@mui/material';
 import PageContainer from '@/components/container/PageContainer';
@@ -170,6 +170,23 @@ const IncomeExpenditureReport = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDataKey, periodId, comparePeriodId, periods]);
+
+  // The Cards filter (unlike the main Period/Compare row) has no Generate/
+  // Apply button of its own, so picking a week must apply immediately
+  // instead of silently waiting on a distant, unrelated button — clear the
+  // cache and refetch the active tab with the fresh cardsFilter as soon as
+  // it changes.
+  const skipFirstCardsFilterRun = useRef(true);
+  useEffect(() => {
+    if (skipFirstCardsFilterRun.current) {
+      skipFirstCardsFilterRun.current = false;
+      return;
+    }
+    if (!periodId) return;
+    setTabData({});
+    fetchTab(activeDataKey, periodId, comparePeriodId, periods, cardsFilter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardsFilter.periodId, cardsFilter.weekFromId, cardsFilter.weekToId]);
 
   const handleGenerateReport = () => {
     setTabData({});

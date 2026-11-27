@@ -14,6 +14,7 @@ import {
   Box,
   Typography,
   IconButton,
+  Skeleton,
 } from '@mui/material';
 import { IconX } from '@tabler/icons';
 
@@ -74,10 +75,20 @@ const AllTransactionsModal = ({ open, onClose, title, fetchFn, periodParams, col
             </TableRow>
           </TableHead>
           <TableBody>
-            {rows.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 6 }).map((_, idx) => (
+                <TableRow key={idx}>
+                  {columns.map((col) => (
+                    <TableCell key={col.header} sx={tdCell} align={col.align || 'left'}>
+                      <Skeleton variant="text" height={18} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ ...tdCell, py: 3, color: 'text.secondary' }}>
-                  {loading ? 'Loading…' : 'No transactions found for this period.'}
+                  No transactions found for this period.
                 </TableCell>
               </TableRow>
             ) : (

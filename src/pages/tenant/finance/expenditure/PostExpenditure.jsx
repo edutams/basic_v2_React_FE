@@ -85,7 +85,7 @@ const PostExpenditure = () => {
   const [selectedIds, setSelectedIds] = useState([]);
 
   const [page, setPage] = useState(1);
-  const rowsPerPage = 5;
+  const rowsPerPage = 25;
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);

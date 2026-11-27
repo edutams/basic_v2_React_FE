@@ -17,7 +17,7 @@ import ParentCard from '@/components/shared/ParentCard';
 import ReusableDonutChart from '@/components/shared/charts/ReusableDonutChart';
 import ReusableAreaChart from '@/components/shared/charts/ReusableAreaChart';
 import ReusableSparkline from '@/components/shared/charts/ReusableSparkline';
-import { IconClipboardList, IconCalendarEvent, IconChevronRight, IconArrowUpRight, IconArrowDownRight } from '@tabler/icons';
+import { IconClipboardList, IconCalendarEvent, IconChevronRight, IconArrowUpRight, IconArrowDownRight, IconInfoCircle } from '@tabler/icons';
 import InsightsCard from './InsightsCard';
 import { CATEGORY_DOT_COLORS, formatCompact, formatNaira } from '../constants';
 
@@ -43,7 +43,7 @@ function pctChange(current, previous) {
 // be a different term entirely. The one exception is `total_income_change_pct`,
 // which is specifically the stats-period-vs-compare-period growth figure by
 // design, so that one clause stays sourced from `stats`.
-function buildInsights(stats, incomeByAccount, cardsTotalIncome) {
+function buildInsights(stats, incomeByAccount, cardsTotalIncome, vendorConcentration) {
   if (!stats) return [];
   const insights = [];
 
@@ -68,6 +68,10 @@ function buildInsights(stats, incomeByAccount, cardsTotalIncome) {
     insights.push(`School fees collection rate is ${stats.cards_school_fees_collection_rate}% for the period.`);
   }
 
+  if (vendorConcentration.length >= 1) {
+    insights.push(`${vendorConcentration[0].vendor} is the top payer/source by income, accounting for ${vendorConcentration[0].share_pct}% of total income.`);
+  }
+
   return insights;
 }
 
@@ -79,6 +83,7 @@ const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
   const recentTransactions = data?.recent_transactions || [];
   const composition = data?.composition || [];
   const trend = data?.trend || [];
+  const vendorConcentration = data?.vendor_concentration || [];
   const totalComposition = composition.reduce((sum, c) => sum + c.value, 0);
 
   // Cards-scoped total — this table's own footer must match the rows it's
@@ -90,7 +95,10 @@ const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
     return pctChange(current, prior);
   })();
 
-  const insights = useMemo(() => buildInsights(stats, incomeByAccount, cardsTotalIncome), [stats, incomeByAccount, cardsTotalIncome]);
+  const insights = useMemo(
+    () => buildInsights(stats, incomeByAccount, cardsTotalIncome, vendorConcentration),
+    [stats, incomeByAccount, cardsTotalIncome, vendorConcentration],
+  );
 
   return (
     <Grid container spacing={2}>
@@ -259,6 +267,74 @@ const IncomeDetailsTab = ({ data, loading, onViewAllTransactions }) => {
               )}
             </TableBody>
           </Table>
+        </ParentCard>
+
+        {/* Vendor Concentration — same ranked-table shape as the widget already
+            built on Post Income/Post Expenditure (dot + rank, actual/paid/
+            balance/share), just backed by one grouped query here instead of
+            client-derived from raw entries. */}
+        <ParentCard
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>Vendor Concentration</Typography>
+              <IconInfoCircle size={13} color={theme.palette.text.disabled} />
+            </Box>
+          }
+          sx={{
+            '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.75 },
+            '& .MuiCardContent-root': { p: 1, '&:last-child': { pb: 1 } },
+          }}
+        >
+          <Typography sx={{ fontSize: 11.5, color: 'text.secondary', px: 0.75, mb: 0.5 }}>
+            (Top 5 Payers / Sources)
+          </Typography>
+          <Box sx={{ maxHeight: 240, overflowX: 'auto', overflowY: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 480 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ ...thCell, px: 0.75 }}>#</TableCell>
+                  <TableCell sx={{ ...thCell, px: 0.75 }}>Payer / Source</TableCell>
+                  <TableCell sx={{ ...thCell, px: 0.75 }} align="right">Actual (₦)</TableCell>
+                  <TableCell sx={{ ...thCell, px: 0.75 }} align="right">Received (₦)</TableCell>
+                  <TableCell sx={{ ...thCell, px: 0.75 }} align="right">Balance (₦)</TableCell>
+                  <TableCell sx={{ ...thCell, px: 0.75 }} align="right">Share</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, idx) => (
+                    <TableRow key={idx}>
+                      {Array.from({ length: 6 }).map((__, cellIdx) => (
+                        <TableCell key={cellIdx} sx={{ px: 0.75, py: 0.5 }}>
+                          <Skeleton variant="text" height={16} />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : vendorConcentration.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ px: 0.75, py: 3, fontSize: 12, color: 'text.secondary' }}>
+                      No payer/source income yet.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  vendorConcentration.map((v, idx) => (
+                    <TableRow key={v.vendor} hover>
+                      <TableCell sx={{ px: 0.75, py: 0.5 }}>
+                        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: CATEGORY_DOT_COLORS[idx % CATEGORY_DOT_COLORS.length], display: 'inline-block', mr: 0.75 }} />
+                        {idx + 1}
+                      </TableCell>
+                      <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 600, fontSize: 12.5 }}>{v.vendor}</TableCell>
+                      <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5 }} align="right">{v.actual.toLocaleString('en-NG')}</TableCell>
+                      <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5, color: '#15803D' }} align="right">{v.paid.toLocaleString('en-NG')}</TableCell>
+                      <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5, color: v.balance ? '#B45309' : 'text.disabled' }} align="right">{v.balance.toLocaleString('en-NG')}</TableCell>
+                      <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 12.5 }} align="right">{v.share_pct}%</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Box>
         </ParentCard>
       </Grid>
 

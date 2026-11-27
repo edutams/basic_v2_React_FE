@@ -74,6 +74,7 @@ import {
 
 const thCell = { fontWeight: 700, py: 1, px: 1.25, whiteSpace: 'nowrap' };
 const tdCell = { py: 0.75, px: 1.25 };
+const VENDOR_DOT_COLORS = ['#2563EB', '#16A34A', '#D97706', '#9333EA', '#64748B'];
 
 const PostIncome = () => {
   const theme = useTheme();
@@ -88,7 +89,7 @@ const PostIncome = () => {
   const [selectedIds, setSelectedIds] = useState([]);
 
   const [page, setPage] = useState(1);
-  const rowsPerPage = 5;
+  const rowsPerPage = 25;
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -185,6 +186,23 @@ const PostIncome = () => {
 
     return { last, prev, growthPct, collectionRate, collectionLabel, outstandingPct, outstandingCount, topSource, topSourcePct };
   }, [incomeTrend, stats, entries, sourceBreakdown]);
+
+  const vendorConcentration = useMemo(() => {
+    const map = new Map();
+    entries.forEach((e) => {
+      if (!e.vendor) return;
+      const cur = map.get(e.vendor.name) || { vendor: e.vendor.name, actual: 0, paid: 0, balance: 0 };
+      cur.actual += Number(e.actual_amount);
+      cur.paid += Number(e.paid_amount);
+      cur.balance += Number(e.balance_amount);
+      map.set(e.vendor.name, cur);
+    });
+    const totalActual = stats.totalIncome || 1;
+    return Array.from(map.values())
+      .map((v) => ({ ...v, sharePct: Number(((v.actual / totalActual) * 100).toFixed(1)) }))
+      .sort((a, b) => b.actual - a.actual)
+      .slice(0, 5);
+  }, [entries, stats.totalIncome]);
 
   const installmentAmountById = useMemo(() => {
     const map = new Map();
@@ -547,6 +565,88 @@ const PostIncome = () => {
                   height={160}
                   valueFormatter={formatCompact}
                 />
+              </ParentCard>
+
+              {/* Vendor Concentration */}
+              <ParentCard
+                title={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>Vendor Concentration</Typography>
+                    <IconInfoCircle size={13} color={theme.palette.text.disabled} />
+                  </Box>
+                }
+                sx={{
+                  '& .MuiCardHeader-root': { pb: 0.5, pt: 1.25, px: 1.75 },
+                  '& .MuiCardContent-root': { p: 1, '&:last-child': { pb: 1 } },
+                }}
+              >
+                <Typography sx={{ fontSize: 11.5, color: 'text.secondary', px: 0.75, mb: 0.5 }}>
+                  (Top 5 Payers / Sources)
+                </Typography>
+                <Box sx={{ maxHeight: 240, overflowX: 'auto', overflowY: 'auto' }}>
+                  <Table size="small" sx={{ minWidth: 480 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ ...thCell, px: 0.75 }}>#</TableCell>
+                        <TableCell sx={{ ...thCell, px: 0.75 }}>Payer / Source</TableCell>
+                        <TableCell sx={{ ...thCell, px: 0.75 }} align="right">
+                          Actual (₦)
+                        </TableCell>
+                        <TableCell sx={{ ...thCell, px: 0.75 }} align="right">
+                          Received (₦)
+                        </TableCell>
+                        <TableCell sx={{ ...thCell, px: 0.75 }} align="right">
+                          Balance (₦)
+                        </TableCell>
+                        <TableCell sx={{ ...thCell, px: 0.75 }} align="right">
+                          Share
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {vendorConcentration.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} sx={{ px: 0.75, py: 1, fontSize: 12, color: 'text.secondary' }}>
+                            No payer/source income yet.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        vendorConcentration.map((v, idx) => (
+                          <TableRow key={v.vendor} hover>
+                            <TableCell sx={{ px: 0.75, py: 0.5 }}>
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: '50%',
+                                  bgcolor: VENDOR_DOT_COLORS[idx % VENDOR_DOT_COLORS.length],
+                                  display: 'inline-block',
+                                  mr: 0.75,
+                                }}
+                              />
+                              {idx + 1}
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 600, fontSize: 12.5 }}>
+                              {v.vendor}
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5 }} align="right">
+                              {v.actual.toLocaleString('en-NG')}
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5, color: '#15803D' }} align="right">
+                              {v.paid.toLocaleString('en-NG')}
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontSize: 12.5, color: v.balance ? '#B45309' : 'text.disabled' }} align="right">
+                              {v.balance.toLocaleString('en-NG')}
+                            </TableCell>
+                            <TableCell sx={{ px: 0.75, py: 0.5, fontWeight: 700, fontSize: 12.5 }} align="right">
+                              {v.sharePct}%
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </Box>
               </ParentCard>
 
               <ParentCard
